@@ -23,7 +23,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     return (
         <div className="dinolabsIDESettingsContainer">
             <button className="dinolabsIDESettingsCloseButton" onClick={onClose}> 
-                Close Settings
+                Close Profile
             </button>
         </div>
     ); 

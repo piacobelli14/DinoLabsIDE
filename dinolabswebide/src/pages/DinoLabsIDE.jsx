@@ -166,7 +166,7 @@ const DinoLabsIDE = () => {
   const panesRef = useRef(panes);
   const editorRefs = useRef({}); 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSettingsOpen, setIsSettigsOpen] = useState(false); 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false); 
   const [isAccountOpen, setIsAccountOpen] = useState(false); 
   const [unsavedChanges, setUnsavedChanges] = useState({});
   const [originalContents, setOriginalContents] = useState({});
@@ -1527,7 +1527,10 @@ const DinoLabsIDE = () => {
                     <button
                       className="leadingDirectoryZoomButton"
                       onClick={() => {
-                        setIsAccountOpen(!isAccountOpen);
+                        {isSettingsOpen && (
+                          setIsSettingsOpen(false)
+                        )}
+                        setIsAccountOpen(!isAccountOpen); 
                       }}
                     > 
                       <FontAwesomeIcon icon={faUserCircle}/>
@@ -1537,7 +1540,12 @@ const DinoLabsIDE = () => {
                   <Tippy content={"Settings"} theme="tooltip-light">
                     <button
                       className="leadingDirectoryZoomButton"
-                      onClick={() => setIsSettigsOpen(!isSettingsOpen)}
+                      onClick={() => {
+                        {isAccountOpen && (
+                          setIsAccountOpen(false)
+                        )}
+                        setIsSettingsOpen(!isSettingsOpen); 
+                      }}
                     > 
                       <FontAwesomeIcon icon={faGear}/>
                     </button>
@@ -1744,7 +1752,7 @@ const DinoLabsIDE = () => {
             )}
 
             {isSettingsOpen && (
-              <DinoLabsIDESettings onClose={() => setIsSettigsOpen(false)} />
+              <DinoLabsIDESettings onClose={() => setIsSettingsOpen(false)} />
             )}
 
             {isAccountOpen && (
