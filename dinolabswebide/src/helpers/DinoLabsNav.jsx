@@ -160,28 +160,6 @@ const DinoLabsNav = ({ activePage }) => {
                                 {isAdmin && (
                                     <>
                                         {token && !isTokenExpired && (
-                                            <button className="navigationButtonWrapper" onClick={()=> navigate("/organization-manager")}>
-                                                <div className="navigationButton" style={{"color": "#ced6dd"}}>
-                                                    <FontAwesomeIcon icon={faGear} className="navigationButtonIcon"/>
-                                                    Admin Manager
-                                                </div>
-
-                                                <div className="navigationButtonDivider" style={{"background-color": "#ced6dd"}}/>
-                                            </button>
-                                        )}
-
-                                        {token && !isTokenExpired && (
-                                            <button className="navigationButtonWrapper" onClick={()=> navigate("/status-manager")}>
-                                                <div className="navigationButton" style={{"color": "#ced6dd"}}>
-                                                    <FontAwesomeIcon icon={faSignal} className="navigationButtonIcon"/>
-                                                    Status Manager
-                                                </div>
-
-                                                <div className="navigationButtonDivider" style={{"background-color": "#ced6dd"}}/>
-                                            </button>
-                                        )}
-                                        
-                                        {token && !isTokenExpired && (
                                             <button className="navigationButtonWrapper" onClick={()=> navigate("/dinolabs-ide")}>
                                                 <div className="navigationButton" style={{"color": "#ced6dd"}}>
                                                     <FontAwesomeIcon icon={faCode} className="navigationButtonIcon"/>
@@ -191,7 +169,6 @@ const DinoLabsNav = ({ activePage }) => {
                                                 <div className="navigationButtonDivider" style={{"background-color": "#ced6dd"}}/>
                                             </button>
                                         )}
-                                        
                                     </>
                                 )}
 
