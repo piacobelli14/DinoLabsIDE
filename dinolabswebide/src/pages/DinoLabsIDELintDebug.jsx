@@ -1,18 +1,10 @@
-// DinoLabsIDEDebug.jsx
-
 import React, { useEffect, useState } from "react";
 import Tippy from "@tippyjs/react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faExclamationTriangle, faInfoCircle, faCheckCircle, faBug, faFilter, faDownload, faSearch, faFileExport, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import "../styles/mainStyles/DinoLabsIDEDebug.css";
-
-// Import icons from the DinoLabsIDELint subdirectory
 import icons from "./DinoLabsIDELint/DinoLabsIDELintIcons";
-
-// Import utility functions
 import { getLineNumber, removeDuplicateProblems } from "./DinoLabsIDELint/DinoLabsIDELintUtils";
-
-// Import detection functions
 import { detectionFunctions } from "./DinoLabsIDELint/DinoLabsIDELintDetectionFunctions";
 
 const DinoLabsIDEDebug = ({ code, language, onProblemClick, onProblemsDetected }) => {
@@ -36,7 +28,7 @@ const DinoLabsIDEDebug = ({ code, language, onProblemClick, onProblemsDetected }
                 severity: "warning",
                 message: `Syntax checking not supported for ${language}.`,
                 line: null,
-                filePath: null, // Added for consistency
+                filePath: null, 
             });
         }
 
@@ -138,7 +130,7 @@ const DinoLabsIDEDebug = ({ code, language, onProblemClick, onProblemsDetected }
                             key={index}
                             className={`dinolabsIDEDebugProblem ${problem.severity}`}
                             onClick={() => handleProblemItemClick(problem)}
-                            style={{ cursor: "pointer" }} // Indicate clickable
+                            style={{ cursor: "pointer" }}
                         >
                             {renderProblemIcon(problem.severity)}
                             <div className="dinolabsIDEDebugProblemText">

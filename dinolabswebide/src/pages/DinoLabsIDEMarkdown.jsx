@@ -690,13 +690,12 @@ const DinoLabsIDEMarkdown = forwardRef(({
                           );
                       }
 
-                      // **Added Section: Determine if the current line has any problems**
                       const problemsForLine = lintProblems.filter(problem => problem.line === lineNumber);
                       let dotColor = null;
                       if (problemsForLine.some(problem => problem.severity === 'error')) {
-                          dotColor = '#E54B4B'; // Red for errors
+                          dotColor = '#E54B4B'; 
                       } else if (problemsForLine.some(problem => problem.severity === 'warning')) {
-                          dotColor = '#EFDE2A'; // Yellow for warnings
+                          dotColor = '#EFDE2A'; 
                       }
 
                       return (
@@ -710,22 +709,18 @@ const DinoLabsIDEMarkdown = forwardRef(({
                           >
                               <span className="numberText">
                                   {lineNumber}
+
+                                  {dotColor && (
+                                    <span 
+                                        className="lineProblemDot" 
+                                        style={{
+                                            backgroundColor: dotColor,
+                                        }}
+                                    />
+                                )}
                               </span>
 
-                              {/* **Added Section: Render colored dot if applicable** */}
-                              {dotColor && (
-                                  <span 
-                                      className="lineProblemDot" 
-                                      style={{
-                                          display: 'inline-block',
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
-                                          backgroundColor: dotColor,
-                                          marginLeft: '4px'
-                                      }}
-                                  />
-                              )}
+                              
 
                               {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
                                   <span

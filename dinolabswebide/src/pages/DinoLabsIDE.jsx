@@ -1279,10 +1279,8 @@ const DinoLabsIDE = () => {
 
   const handleProblemClick = (filePath, lineNumber) => {
     if (filePath) {
-      // If filePath is provided, navigate to that file and line
       handleSearchSuggestionClick(filePath, lineNumber);
     } else {
-      // If filePath is null, navigate to the line in the active tab
       const activePane = panes[activePaneIndex];
       const activeTab = activePane.openedTabs.find(tab => tab.id === activePane.activeTabId);
       if (activeTab) {
@@ -1297,7 +1295,6 @@ const DinoLabsIDE = () => {
   const handleProblemsDetected = (problems) => {
       setLintProblems(problems);
   };
-
 
   return (
     <div
@@ -1760,7 +1757,7 @@ const DinoLabsIDE = () => {
                       code={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).content}
                       language={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).language}
                       onProblemClick={handleProblemClick}
-                      onProblemsDetected={handleProblemsDetected} // Added prop
+                      onProblemsDetected={handleProblemsDetected} 
                   />
 
                 </div>

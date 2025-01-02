@@ -1,7 +1,5 @@
-// Import utility functions
 import { getLineNumber } from "./DinoLabsIDELintUtils";
 
-// JavaScript Detection Functions
 export function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
@@ -159,7 +157,6 @@ export function detectJavaScriptSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-// Python Detection Functions
 export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const indentStack = [0];
@@ -417,7 +414,6 @@ export function detectPythonSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// C Detection Functions
 export function detectCSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
@@ -555,7 +551,6 @@ export function detectCSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// PHP Detection Functions
 export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
@@ -683,7 +678,6 @@ export function detectPHPSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-// Bash Detection Functions
 export function detectBashSyntaxErrors(codeStr, detectedProblems) {
     const quoteTypes = ["'", '"'];
     quoteTypes.forEach((quote) => {
@@ -809,7 +803,6 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-// CSS Detection Functions
 export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "("];
@@ -1101,7 +1094,6 @@ export function detectCSSSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-// HTML Detection Functions
 export function detectHTMLSyntaxErrors(codeStr, detectedProblems) {
     const selfClosingTags = new Set([
         "img",
@@ -1233,7 +1225,6 @@ export function detectHTMLSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// SQL Detection Functions
 export function detectSQLSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     lines.forEach((line, index) => {
@@ -1362,7 +1353,6 @@ export function detectSQLSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// Rust Detection Functions
 export function detectRustSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
@@ -1512,7 +1502,6 @@ export function detectRustSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// Swift Detection Functions
 export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
@@ -1655,7 +1644,6 @@ export function detectSwiftSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// Monkey C Detection Functions
 export function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
@@ -1795,7 +1783,6 @@ export function detectMonkeyCSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-// Assembly Detection Functions
 export function detectAssemblySyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const validOpcodes = new Set([
@@ -1911,7 +1898,6 @@ export function detectAssemblyBestPractices(codeStr, detectedProblems) {
     });
 }
 
-// Detection Functions Object
 export const detectionFunctions = {
     javascript: {
         syntax: detectJavaScriptSyntaxErrors,
