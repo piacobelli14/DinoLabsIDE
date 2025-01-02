@@ -172,6 +172,15 @@ const DinoLabsNav = ({ activePage }) => {
                                     </>
                                 )}
 
+                                <button className="navigationButtonWrapper" onClick={handleLogout}>
+                                    <div className="navigationButton" style={{"color": "#ced6dd"}}>
+                                        <FontAwesomeIcon icon={faRightFromBracket} className="navigationButtonIcon"/>
+                                        Sign Out
+                                    </div>   
+
+                                    <div className="navigationButtonDivider" style={{"background-color": "#ced6dd"}}/>
+                                </button>
+
                                 
 
                                 

@@ -8,8 +8,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         gap: 1.6vw; 
     }
 
@@ -44,8 +44,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         gap: 1.6vw; 
     }
 
@@ -112,8 +112,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         gap: 2.6vw; 
     }
 
@@ -148,8 +148,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         gap: 2.6vw; 
     }
 
