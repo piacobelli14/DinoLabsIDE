@@ -1,3 +1,4 @@
+
 export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, activeLineNumber = null) => {
     if (language.toLowerCase() === "unknown") {
         return escapeHtml(codeStr).replace(/\n/g, '<br/>');
@@ -120,22 +121,16 @@ export const escapeHtml = (str) => {
 export const escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
-
 export const tokenize = (codeStr, language) => {
     const tokenPatterns = getTokenPatterns(language);
     if (!tokenPatterns) {
         const allLines = codeStr.split(/\r?\n/);
-        const fallbackTokens = [];
-        
-        allLines.forEach((line, i) => {
-            fallbackTokens.push({
-                value: line,
-                lineNumber: i + 1 
-            });
-        });
-        return fallbackTokens;
+        return allLines.map((line, i) => ({
+            value: line,
+            lineNumber: i + 1
+        }));
     }
-  
+
     const regex = new RegExp(tokenPatterns.join('|'), 'g');
     let match;
     let lastIndex = 0;
@@ -156,17 +151,54 @@ export const tokenize = (codeStr, language) => {
             });
         }
 
+        let tokenType = null;
         for (let i = 1; i < match.length; i++) {
-            if (match[i]) {
-                const type = tokenTypes[language.toLowerCase()][i - 1];
-                tokens.push({ value: match[i], type, lineNumber: currentLine });
+            if (match[i] !== undefined) {
+                switch (i) {
+                    case 1:
+                        tokenType = 'string'; 
+                        break;
+                    case 2:
+                    case 3:
+                        tokenType = 'string'; 
+                        break;
+                    case 4:
+                        tokenType = 'comment'; 
+                        break;
+                    case 5:
+                        tokenType = 'keyword'; 
+                        break;
+                    case 6:
+                        tokenType = 'number'; 
+                        break;
+                    case 7:
+                        tokenType = 'operator'; 
+                        break;
+                    case 8:
+                        tokenType = 'identifier'; 
+                        break;
+                    default:
+                        tokenType = null;
+                }
                 break;
             }
         }
 
-        const matchedText = match[0];
-        const newLines = matchedText.split(/\r?\n/);
-        currentLine += newLines.length - 1;
+        if (match[0]) {
+            const lines = match[0].split(/\r?\n/);
+            lines.forEach((line, idx) => {
+                if (line) {
+                    tokens.push({
+                        value: line,
+                        type: tokenType,
+                        lineNumber: currentLine
+                    });
+                }
+                if (idx < lines.length - 1) {
+                    currentLine += 1;
+                }
+            });
+        }
 
         lastIndex = regex.lastIndex;
     }
@@ -450,14 +482,22 @@ export const getTokenPatterns = (language) => {
                     'break', 'except', 'in', 'raise',
                     'async', 'await', 'match', 'case'
                 ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `(#[^\n\r]*)`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
-                `\\b(__[a-zA-Z0-9_]+__)\\b`
+               `("""[\\s\\S]*?"""|'''[\\s\\S]*?''')`,
+                `("([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*')`,
+                `(#.*)`,
+                `\\b(${[
+                    'False', 'class', 'finally', 'is', 'return',
+                    'None', 'continue', 'for', 'lambda', 'try',
+                    'True', 'def', 'from', 'nonlocal', 'while',
+                    'and', 'del', 'global', 'not', 'with',
+                    'as', 'elif', 'if', 'or', 'yield',
+                    'assert', 'else', 'import', 'pass',
+                    'break', 'except', 'in', 'raise',
+                    'async', 'await', 'match', 'case'
+                ].join('|')})\\b`,
+                `(\\b\\d+(\\.\\d+)?\\b)`,
+                `([+\\-*/%=&|<>!^~]+)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`
             ];
         case 'javascript':
         case 'react js':
