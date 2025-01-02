@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
+//import ProtectedRoute from "./ProtectedRoute";
 import DinoLabsIDE from "./pages/DinoLabsIDE"; 
 import { useEffect, useState } from "react";
 
@@ -28,9 +28,7 @@ function App() {
       <div className={`App ${osClass}`}>
         <Routes>
           <Route path="/dinolabs-ide" element={
-            <ProtectedRoute>
               <DinoLabsIDE />
-            </ProtectedRoute>
           } />
 
           <Route index element={<Navigate to="dinolabs-ide" replace />} />

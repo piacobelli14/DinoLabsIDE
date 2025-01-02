@@ -4,7 +4,7 @@ import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsIDEAccount.jsx";
 import DinoLabsIDESettings from "./DinoLabsIDESettings.jsx";
-import DinoLabsIDEDebug from "./DinoLabsIDEDebug.jsx";
+import DinoLabsIDEDebug from "./DinoLabsIDELintDebug.jsx";
 import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/helperStyles/Tooltip.css";
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
@@ -166,7 +166,7 @@ const DinoLabsIDE = () => {
   const panesRef = useRef(panes);
   const editorRefs = useRef({}); 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false); 
+  const [isSettingsOpen, setIsSettigsOpen] = useState(false); 
   const [isAccountOpen, setIsAccountOpen] = useState(false); 
   const [unsavedChanges, setUnsavedChanges] = useState({});
   const [originalContents, setOriginalContents] = useState({});
@@ -1275,6 +1275,23 @@ const DinoLabsIDE = () => {
     return null;
   };
 
+  const handleProblemClick = (filePath, lineNumber) => {
+    if (filePath) {
+      // If filePath is provided, navigate to that file and line
+      handleSearchSuggestionClick(filePath, lineNumber);
+    } else {
+      // If filePath is null, navigate to the line in the active tab
+      const activePane = panes[activePaneIndex];
+      const activeTab = activePane.openedTabs.find(tab => tab.id === activePane.activeTabId);
+      if (activeTab) {
+        const editorRef = editorRefs.current[activePaneIndex][activeTab.id];
+        if (editorRef && editorRef.current && typeof editorRef.current.jumpToLine === 'function') {
+          editorRef.current.jumpToLine(lineNumber);
+        }
+      }
+    }
+  };
+
   return (
     <div
       className="dinolabsIDEPageWrapper"
@@ -1527,10 +1544,7 @@ const DinoLabsIDE = () => {
                     <button
                       className="leadingDirectoryZoomButton"
                       onClick={() => {
-                        {isSettingsOpen && (
-                          setIsSettingsOpen(false)
-                        )}
-                        setIsAccountOpen(!isAccountOpen); 
+                        setIsAccountOpen(!isAccountOpen);
                       }}
                     > 
                       <FontAwesomeIcon icon={faUserCircle}/>
@@ -1540,12 +1554,7 @@ const DinoLabsIDE = () => {
                   <Tippy content={"Settings"} theme="tooltip-light">
                     <button
                       className="leadingDirectoryZoomButton"
-                      onClick={() => {
-                        {isAccountOpen && (
-                          setIsAccountOpen(false)
-                        )}
-                        setIsSettingsOpen(!isSettingsOpen); 
-                      }}
+                      onClick={() => setIsSettigsOpen(!isSettingsOpen)}
                     > 
                       <FontAwesomeIcon icon={faGear}/>
                     </button>
@@ -1742,6 +1751,7 @@ const DinoLabsIDE = () => {
                   <DinoLabsIDEDebug 
                     code={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).content}
                     language={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).language}
+                    onProblemClick={handleProblemClick} // Pass the callback here
                   />
                 </div>
               </>
@@ -1752,7 +1762,7 @@ const DinoLabsIDE = () => {
             )}
 
             {isSettingsOpen && (
-              <DinoLabsIDESettings onClose={() => setIsSettingsOpen(false)} />
+              <DinoLabsIDESettings onClose={() => setIsSettigsOpen(false)} />
             )}
 
             {isAccountOpen && (

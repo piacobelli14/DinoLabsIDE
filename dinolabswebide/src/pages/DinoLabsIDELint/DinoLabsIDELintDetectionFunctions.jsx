@@ -1,103 +1,8 @@
+// Import utility functions
+import { getLineNumber } from "./DinoLabsIDELintUtils";
 
-import React, { useEffect, useState } from "react";
-import Tippy from "@tippyjs/react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faExclamationTriangle, faInfoCircle, faCheckCircle, faBug, faFilter, faDownload, faSearch, faFileExport, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import "../styles/mainStyles/DinoLabsIDEDebug.css";
-const icons = {
-    error: <FontAwesomeIcon icon={faTriangleExclamation}/>,
-    warning: <FontAwesomeIcon icon={faExclamationTriangle}/>,
-    info: <FontAwesomeIcon icon={faInfoCircle}/>,
-    bug: <FontAwesomeIcon icon={faBug}/>,
-    filter: <FontAwesomeIcon icon={faFilter}/>,
-    download: <FontAwesomeIcon icon={faDownload}/>,
-    search: <FontAwesomeIcon icon={faSearch}/>,
-};
-
-const getLineNumber = (codeStr, index) => {
-    return codeStr.slice(0, index).split(/\r?\n/).length;
-};
-
-const removeDuplicateProblems = (problems) => {
-    const unique = [];
-    const seen = new Set();
-
-    problems.forEach((problem) => {
-        const key = `${problem.type}-${problem.message}-${problem.line}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(problem);
-        }
-    });
-
-    return unique;
-};
-
-const detectionFunctions = {
-    javascript: {
-        syntax: detectJavaScriptSyntaxErrors,
-        semantic: detectJavaScriptSemanticErrors,
-    },
-    python: {
-        syntax: detectPythonSyntaxErrors,
-        semantic: detectPythonSemanticErrors,
-    },
-    "c": {
-        syntax: detectCSyntaxErrors,
-        semantic: detectCSemanticErrors,
-    },
-    "c++": {
-        syntax: detectCSyntaxErrors,
-        semantic: detectCSemanticErrors,
-    },
-    "c#": {
-        syntax: detectCSyntaxErrors,
-        semantic: detectCSemanticErrors,
-    },
-    php: {
-        syntax: detectPHPSyntaxErrors,
-        semantic: detectPHPSemanticErrors,
-    },
-    bash: {
-        syntax: detectBashSyntaxErrors,
-        semantic: () => { },
-    },
-    shell: {
-        syntax: detectBashSyntaxErrors,
-        semantic: () => { },
-    },
-    css: {
-        syntax: detectCSSSyntaxErrors,
-        semantic: detectCSSSemanticErrors,
-    },
-    html: {
-        syntax: detectHTMLSyntaxErrors,
-        semantic: detectHTMLSemanticErrors,
-    },
-    sql: {
-        syntax: detectSQLSyntaxErrors,
-        semantic: detectSQLSemanticErrors,
-    },
-    rust: {
-        syntax: detectRustSyntaxErrors,
-        semantic: detectRustSemanticErrors,
-    },
-    swift: {
-        syntax: detectSwiftSyntaxErrors,
-        semantic: detectSwiftSemanticErrors,
-    },
-    "monkey c": {
-        syntax: detectMonkeyCSyntaxErrors,
-        semantic: detectMonkeyCSemanticErrors,
-    },
-    assembly: {
-        syntax: detectAssemblySyntaxErrors,
-        semantic: detectAssemblySemanticErrors,
-        bestPractice: detectAssemblyBestPractices,
-    },
-};
-
-function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
+// JavaScript Detection Functions
+export function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
@@ -196,7 +101,7 @@ function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectJavaScriptSemanticErrors(codeStr, detectedProblems) {
+export function detectJavaScriptSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     let returnFound = false;
     const declaredFunctions = [];
@@ -254,7 +159,8 @@ function detectJavaScriptSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectPythonSyntaxErrors(codeStr, detectedProblems) {
+// Python Detection Functions
+export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const indentStack = [0];
     let indentSize = null;
@@ -421,7 +327,7 @@ function detectPythonSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectPythonSemanticErrors(codeStr, detectedProblems) {
+export function detectPythonSemanticErrors(codeStr, detectedProblems) {
     const importRegex = /^import\s+([a-zA-Z_][a-zA-Z0-9_]*)(\s+as\s+[a-zA-Z_][a-zA-Z0-9_]*)?/;
     const fromImportRegex = /^from\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+import\s+(.+)/;
     const lines = codeStr.split(/\r?\n/);
@@ -511,7 +417,8 @@ function detectPythonSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectCSyntaxErrors(codeStr, detectedProblems) {
+// C Detection Functions
+export function detectCSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
@@ -604,7 +511,7 @@ function detectCSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectCSemanticErrors(codeStr, detectedProblems) {
+export function detectCSemanticErrors(codeStr, detectedProblems) {
     const functionRegex = /(?:public|private|protected|internal)\s+(?:static\s+)?(?:void|int|float|double|char|bool|string|var|auto)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g;
     const functions = [];
     let match;
@@ -648,7 +555,8 @@ function detectCSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectPHPSyntaxErrors(codeStr, detectedProblems) {
+// PHP Detection Functions
+export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
@@ -735,7 +643,7 @@ function detectPHPSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectPHPSemanticErrors(codeStr, detectedProblems) {
+export function detectPHPSemanticErrors(codeStr, detectedProblems) {
     const functionRegex = /function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g;
     const functions = [];
     let match;
@@ -775,7 +683,8 @@ function detectPHPSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectBashSyntaxErrors(codeStr, detectedProblems) {
+// Bash Detection Functions
+export function detectBashSyntaxErrors(codeStr, detectedProblems) {
     const quoteTypes = ["'", '"'];
     quoteTypes.forEach((quote) => {
         const matches = codeStr.split(quote).length - 1;
@@ -900,7 +809,8 @@ function detectBashSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectCSSSyntaxErrors(codeStr, detectedProblems) {
+// CSS Detection Functions
+export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "("];
     const multiLineClosers = ["}", ")"];
@@ -1055,7 +965,7 @@ function detectCSSSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectCSSSemanticErrors(codeStr, detectedProblems) {
+export function detectCSSSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const selectors = new Set();
     const propertyUsage = {};
@@ -1191,7 +1101,8 @@ function detectCSSSemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectHTMLSyntaxErrors(codeStr, detectedProblems) {
+// HTML Detection Functions
+export function detectHTMLSyntaxErrors(codeStr, detectedProblems) {
     const selfClosingTags = new Set([
         "img",
         "br",
@@ -1247,7 +1158,7 @@ function detectHTMLSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectHTMLSemanticErrors(codeStr, detectedProblems) {
+export function detectHTMLSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const requiredAttributes = {
         img: ["alt"],
@@ -1322,7 +1233,8 @@ function detectHTMLSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectSQLSyntaxErrors(codeStr, detectedProblems) {
+// SQL Detection Functions
+export function detectSQLSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     lines.forEach((line, index) => {
         const trimmed = line.trim().toUpperCase();
@@ -1351,7 +1263,7 @@ function detectSQLSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectSQLSemanticErrors(codeStr, detectedProblems) {
+export function detectSQLSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const tableNames = [];
     const columnUsage = {};
@@ -1450,7 +1362,8 @@ function detectSQLSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectRustSyntaxErrors(codeStr, detectedProblems) {
+// Rust Detection Functions
+export function detectRustSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
@@ -1540,7 +1453,7 @@ function detectRustSyntaxErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectRustSemanticErrors(codeStr, detectedProblems) {
+export function detectRustSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const declaredVariables = [];
     const usedVariables = new Set();
@@ -1599,7 +1512,8 @@ function detectRustSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
+// Swift Detection Functions
+export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
@@ -1667,7 +1581,7 @@ function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectSwiftSemanticErrors(codeStr, detectedProblems) {
+export function detectSwiftSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const declaredVariables = [];
     const usedVariables = new Set();
@@ -1741,7 +1655,8 @@ function detectSwiftSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
+// Monkey C Detection Functions
+export function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
@@ -1818,7 +1733,7 @@ function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectMonkeyCSemanticErrors(codeStr, detectedProblems) {
+export function detectMonkeyCSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const declaredVariables = [];
     const usedVariables = new Set();
@@ -1880,7 +1795,8 @@ function detectMonkeyCSemanticErrors(codeStr, detectedProblems) {
     }
 }
 
-function detectAssemblySyntaxErrors(codeStr, detectedProblems) {
+// Assembly Detection Functions
+export function detectAssemblySyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const validOpcodes = new Set([
         "MOV",
@@ -1935,7 +1851,7 @@ function detectAssemblySyntaxErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectAssemblySemanticErrors(codeStr, detectedProblems) {
+export function detectAssemblySemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const labels = [];
     const usedLabels = new Set();
@@ -1978,7 +1894,7 @@ function detectAssemblySemanticErrors(codeStr, detectedProblems) {
     });
 }
 
-function detectAssemblyBestPractices(codeStr, detectedProblems) {
+export function detectAssemblyBestPractices(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const commentRegex = /^;/;
     lines.forEach((line, index) => {
@@ -1995,146 +1911,67 @@ function detectAssemblyBestPractices(codeStr, detectedProblems) {
     });
 }
 
-const DinoLabsIDEDebug = ({ code, language }) => {
-    const [problems, setProblems] = useState([]);
-    const [performanceMetrics, setPerformanceMetrics] = useState({ time: 0 });
-    const [filter, setFilter] = useState({ severity: "all" });
-
-    useEffect(() => {
-        const startTime = performance.now();
-        const identifiedProblems = [];
-
-        const lang = language.toLowerCase();
-        if (detectionFunctions[lang]) {
-            const { syntax, semantic, bestPractice } = detectionFunctions[lang];
-            if (syntax) syntax(code, identifiedProblems);
-            if (semantic) semantic(code, identifiedProblems);
-            if (bestPractice) bestPractice(code, identifiedProblems);
-        } else {
-            identifiedProblems.push({
-                type: "Unsupported Language",
-                severity: "warning",
-                message: `Syntax checking not supported for ${language}.`,
-                line: null,
-            });
-        }
-
-        const endTime = performance.now();
-        setPerformanceMetrics({ time: (endTime - startTime).toFixed(2) });
-
-        const uniqueProblems = removeDuplicateProblems(identifiedProblems);
-        setProblems(uniqueProblems);
-    }, [code, language]);
-
-    const renderProblemIcon = (severity) => {
-        switch (severity) {
-            case "error":
-                return icons.error;
-            case "warning":
-                return icons.warning;
-            case "info":
-                return icons.info;
-            default:
-                return icons.bug;
-        }
-    };
-
-    const filteredProblems = problems.filter((problem) => {
-        const severityMatch =
-            filter.severity === "all" || problem.severity === filter.severity;
-        return severityMatch;
-    });
-
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilter((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const exportProblems = () => {
-        const dataStr = JSON.stringify(problems, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "linting-report.json";
-        link.click();
-    };
-
-    return (
-        <div className="dinolabsIDEDebugContainer">
-            <div className="dinolabsIDELinterNavBar">
-                <div className="dinolabsIDEDebugHeader">
-                <label className="dinolabsIDELinterTitle"> 
-                        Dino Lint
-                    </label>
-                    <label className="dinolabsIDELinterPerformanceMetrics">
-                        <strong>Linting Time:</strong> {performanceMetrics.time} <strong>ms</strong>
-                    </label>
-                </div>
-
-                <div className="dinolabsIDEDebugControls">
-                    <div className="dinolabsIDEDebugControlsFiltering">
-
-                        <label className="dinolabsIDELinterSelection">
-                            <Tippy content="Filter by Severity" theme="tooltip-light">
-                                <select
-                                    name="severity"
-                                    value={filter.severity}
-                                    onChange={handleFilterChange}
-                                >
-                                    <option value="all">All</option>
-                                    <option value="error">Error</option>
-                                    <option value="warning">Warning</option>
-                                    <option value="info">Info</option>
-                                </select>  
-                            </Tippy> 
-                        </label>
-                        
-                        <Tippy content="Export Lint Report" theme="tooltip-light">
-                            <button className="dinolabsIDELintingExport" onClick={exportProblems}>
-                                <FontAwesomeIcon icon={faFileExport}/>
-                            </button>
-                        </Tippy>
-                       
-                    </div>
-
-                    
-                </div>
-            </div>
-
-            
-            {filteredProblems.length > 0 ? (
-                <div className="dinolabsIDEDebugProblems">
-                    {filteredProblems.map((problem, index) => (
-                        <div
-                            key={index}
-                            className={`dinolabsIDEDebugProblem ${problem.severity}`}
-                        >
-                            {renderProblemIcon(problem.severity)}
-                            <div className="dinolabsIDEDebugProblemText">
-
-                                <div className="dinolabsIDEDebugProblemLeading">
-                                    <strong>{problem.type}:</strong>
-                                    <span>{problem.message}</span>
-                                </div>
-
-                                <div className="dinolabsIDEDebugProblemTrailing">
-                                    {problem.line && (
-                                        <strong> (Line: {problem.line})</strong>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <label className="dinolabsIDEDebugNoProblems">
-                    No problems detected.
-                </label>
-            )}
-        </div>
-    );
+// Detection Functions Object
+export const detectionFunctions = {
+    javascript: {
+        syntax: detectJavaScriptSyntaxErrors,
+        semantic: detectJavaScriptSemanticErrors,
+    },
+    python: {
+        syntax: detectPythonSyntaxErrors,
+        semantic: detectPythonSemanticErrors,
+    },
+    "c": {
+        syntax: detectCSyntaxErrors,
+        semantic: detectCSemanticErrors,
+    },
+    "c++": {
+        syntax: detectCSyntaxErrors,
+        semantic: detectCSemanticErrors,
+    },
+    "c#": {
+        syntax: detectCSyntaxErrors,
+        semantic: detectCSemanticErrors,
+    },
+    php: {
+        syntax: detectPHPSyntaxErrors,
+        semantic: detectPHPSemanticErrors,
+    },
+    bash: {
+        syntax: detectBashSyntaxErrors,
+        semantic: () => { },
+    },
+    shell: {
+        syntax: detectBashSyntaxErrors,
+        semantic: () => { },
+    },
+    css: {
+        syntax: detectCSSSyntaxErrors,
+        semantic: detectCSSSemanticErrors,
+    },
+    html: {
+        syntax: detectHTMLSyntaxErrors,
+        semantic: detectHTMLSemanticErrors,
+    },
+    sql: {
+        syntax: detectSQLSyntaxErrors,
+        semantic: detectSQLSemanticErrors,
+    },
+    rust: {
+        syntax: detectRustSyntaxErrors,
+        semantic: detectRustSemanticErrors,
+    },
+    swift: {
+        syntax: detectSwiftSyntaxErrors,
+        semantic: detectSwiftSemanticErrors,
+    },
+    "monkey c": {
+        syntax: detectMonkeyCSyntaxErrors,
+        semantic: detectMonkeyCSemanticErrors,
+    },
+    assembly: {
+        syntax: detectAssemblySyntaxErrors,
+        semantic: detectAssemblySemanticErrors,
+        bestPractice: detectAssemblyBestPractices,
+    },
 };
-
-export default DinoLabsIDEDebug;
-
