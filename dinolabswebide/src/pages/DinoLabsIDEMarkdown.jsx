@@ -13,7 +13,7 @@ import {
   faSquare,
   faTableColumns,
   faXmark,
-  faCode 
+  faCode
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
@@ -68,6 +68,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
   onSave,     
   fileHandle,
   isGlobalSearchActive,
+  lintProblems,
 }, ref) => {
   const lineNumberRef = useRef(null);
   const lineNumbersContentRef = useRef(null);
@@ -650,74 +651,99 @@ const DinoLabsIDEMarkdown = forwardRef(({
   };
 
   const renderLineNumbers = (lineNumberMappings) => {
-    const totalLines = lineNumberMappings.length;
-    const totalHeight = totalLines * lineHeight;
+      const totalLines = lineNumberMappings.length;
+      const totalHeight = totalLines * lineHeight;
 
-    const startLine = visibleStartLine;
-    const endLine = Math.min(visibleEndLine, totalLines);
+      const startLine = visibleStartLine;
+      const endLine = Math.min(visibleEndLine, totalLines);
 
-    const visibleLines = lineNumberMappings.slice(startLine, endLine);
+      const visibleLines = lineNumberMappings.slice(startLine, endLine);
 
-    return (
-      <div style={{ height: totalHeight, position: 'relative', width: '100%' }}>
-        <div style={{ height: startLine * lineHeight }}></div>
-        <div
-          ref={lineNumbersContentRef}
-          className="lineNumberContainer"
-          style={{ position: 'relative' }}
-        >
-          {visibleLines.map((lineNumber, index) => {
-            const actualIndex = startLine + index;
-            const isRange = React.isValidElement(lineNumber) && typeof lineNumber.props.children === 'object';
-
-            if (isRange) {
-              const content = lineNumber; 
-              return (
-                <div
-                  key={`range-${actualIndex}-${editorId}`}
-                  className="lineNumber collapsedIndicator"
-                  style={{
-                    height: `${lineHeight}px`,
-                  }}
-                >
-                  <Tippy content={`Collapsed block from line ${content.props['data-start-line']} to line ${content.props['data-end-line']}`} theme="tooltip-light">
-                    <span className="ellipsisCaret">
-                      {content}
-                    </span>
-                  </Tippy>
-                </div>
-              );
-            }
-
-            return (
+      return (
+          <div style={{ height: totalHeight, position: 'relative', width: '100%' }}>
+              <div style={{ height: startLine * lineHeight }}></div>
               <div
-                key={`line-${lineNumber}-${actualIndex}-${editorId}`}
-                className={`lineNumber ${lineNumber === activeLineNumber ? 'activeLineNumber' : ''}`}
-                style={{
-                  height: `${lineHeight}px`,
-                  lineHeight: `${lineHeight}px`,
-                }}
+                  ref={lineNumbersContentRef}
+                  className="lineNumberContainer"
+                  style={{ position: 'relative' }}
               >
-                <span className="numberText">
-                  {lineNumber}
-                </span>
+                  {visibleLines.map((lineNumber, index) => {
+                      const actualIndex = startLine + index;
+                      const isRange = React.isValidElement(lineNumber) && typeof lineNumber.props.children === 'object';
 
-                {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
-                  <span
-                    className={`lineCaret ${collapsedLines.has(lineNumber - 1) ? "collapsed" : "expanded"}`}
-                    onClick={() => toggleCollapse(lineNumber - 1)}
-                  >
-                    {collapsedLines.has(lineNumber - 1) ? "▶" : "▼"}
-                  </span>
-                )}
+                      if (isRange) {
+                          const content = lineNumber; 
+                          return (
+                              <div
+                                  key={`range-${actualIndex}-${editorId}`}
+                                  className="lineNumber collapsedIndicator"
+                                  style={{
+                                      height: `${lineHeight}px`,
+                                  }}
+                              >
+                                  <Tippy content={`Collapsed block from line ${content.props['data-start-line']} to line ${content.props['data-end-line']}`} theme="tooltip-light">
+                                      <span className="ellipsisCaret">
+                                          {content}
+                                      </span>
+                                  </Tippy>
+                              </div>
+                          );
+                      }
+
+                      // **Added Section: Determine if the current line has any problems**
+                      const problemsForLine = lintProblems.filter(problem => problem.line === lineNumber);
+                      let dotColor = null;
+                      if (problemsForLine.some(problem => problem.severity === 'error')) {
+                          dotColor = '#E54B4B'; // Red for errors
+                      } else if (problemsForLine.some(problem => problem.severity === 'warning')) {
+                          dotColor = '#EFDE2A'; // Yellow for warnings
+                      }
+
+                      return (
+                          <div
+                              key={`line-${lineNumber}-${actualIndex}-${editorId}`}
+                              className={`lineNumber ${lineNumber === activeLineNumber ? 'activeLineNumber' : ''}`}
+                              style={{
+                                  height: `${lineHeight}px`,
+                                  lineHeight: `${lineHeight}px`,
+                              }}
+                          >
+                              <span className="numberText">
+                                  {lineNumber}
+                              </span>
+
+                              {/* **Added Section: Render colored dot if applicable** */}
+                              {dotColor && (
+                                  <span 
+                                      className="lineProblemDot" 
+                                      style={{
+                                          display: 'inline-block',
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          backgroundColor: dotColor,
+                                          marginLeft: '4px'
+                                      }}
+                                  />
+                              )}
+
+                              {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
+                                  <span
+                                      className={`lineCaret ${collapsedLines.has(lineNumber - 1) ? "collapsed" : "expanded"}`}
+                                      onClick={() => toggleCollapse(lineNumber - 1)}
+                                  >
+                                      {collapsedLines.has(lineNumber - 1) ? "▶" : "▼"}
+                                  </span>
+                              )}
+                          </div>
+                      );
+                  })}
               </div>
-            );
-          })}
-        </div>
-        <div style={{ height: (totalLines - endLine) * lineHeight }}></div>
-      </div>
-    );
+              <div style={{ height: (totalLines - endLine) * lineHeight }}></div>
+          </div>
+      );
   };
+
 
   const isSupported = currentLanguage !== "Unknown";
 

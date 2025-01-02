@@ -179,6 +179,8 @@ const DinoLabsIDE = () => {
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [isGlobalReplace, setIsGlobalReplace] = useState(false);
   const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
+  const [lintProblems, setLintProblems] = useState([]);
+
 
   const [collapsedFiles, setCollapsedFiles] = useState({});
 
@@ -1292,6 +1294,11 @@ const DinoLabsIDE = () => {
     }
   };
 
+  const handleProblemsDetected = (problems) => {
+      setLintProblems(problems);
+  };
+
+
   return (
     <div
       className="dinolabsIDEPageWrapper"
@@ -1698,6 +1705,7 @@ const DinoLabsIDE = () => {
                                 onSave={handleSave}
                                 fileHandle={tab.fileHandle}
                                 isGlobalSearchActive={!!globalSearchQuery}
+                                lintProblems={lintProblems}
                               />
                             </div>
                           ))
@@ -1749,10 +1757,12 @@ const DinoLabsIDE = () => {
                   style={{ height: `${consoleHeight}%` }}
                 >
                   <DinoLabsIDEDebug 
-                    code={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).content}
-                    language={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).language}
-                    onProblemClick={handleProblemClick} // Pass the callback here
+                      code={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).content}
+                      language={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).language}
+                      onProblemClick={handleProblemClick}
+                      onProblemsDetected={handleProblemsDetected} // Added prop
                   />
+
                 </div>
               </>
             )}

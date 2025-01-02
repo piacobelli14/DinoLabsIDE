@@ -15,7 +15,7 @@ import { getLineNumber, removeDuplicateProblems } from "./DinoLabsIDELint/DinoLa
 // Import detection functions
 import { detectionFunctions } from "./DinoLabsIDELint/DinoLabsIDELintDetectionFunctions";
 
-const DinoLabsIDEDebug = ({ code, language, onProblemClick }) => {
+const DinoLabsIDEDebug = ({ code, language, onProblemClick, onProblemsDetected }) => {
     const [problems, setProblems] = useState([]);
     const [performanceMetrics, setPerformanceMetrics] = useState({ time: 0 });
     const [filter, setFilter] = useState({ severity: "all" });
@@ -45,6 +45,10 @@ const DinoLabsIDEDebug = ({ code, language, onProblemClick }) => {
 
         const uniqueProblems = removeDuplicateProblems(identifiedProblems);
         setProblems(uniqueProblems);
+
+        if (onProblemsDetected && typeof onProblemsDetected === 'function') {
+            onProblemsDetected(uniqueProblems);
+        }
     }, [code, language]);
 
     const renderProblemIcon = (severity) => {
