@@ -147,7 +147,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             {isLoaded && (
                 <div className="dinolabsIDEAccountWrapper">
 
-                    <div className="dinolabsIDEAccountImageContainer"> 
+                    <div className="dinolabsIDEAccountInformationContainer"> 
                         <div className="dinolabsIDEPersonalWrapper"> 
                             <img className="dinolabsIDEAccountImage" src={image}/>
 
@@ -220,9 +220,17 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                             <div className="dinolabsIDEOrganizationWrapper"> 
                             </div>
                         )} 
-
-                       
                     </div> 
+
+                    <div className="dinolabsIDEAccountFunctionalityContainer"> 
+                        <div className="dinolabsIDEAccountFunctionalityCellLeading"> 
+
+                        </div> 
+
+                        <div className="dinolabsIDEAccountFunctionalityCellTrailing"> 
+                            
+                        </div> 
+                    </div>
 
                     
 
