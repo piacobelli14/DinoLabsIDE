@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark, faRightToBracket, faIdCard, faRightFromBracket, faPerson, faStopwatch, faDatabase, faListCheck, faGear, faFileZipper, faSignal, faComputer, faCaretDown, faCaretRight, faCode } from "@fortawesome/free-solid-svg-icons"; 
 
 import DLWhite from "/DinoLabsLogo-White.png";
-import "../styles/helperStyles/LandingNav.css";
+import "../styles/helperStyles/DinoLabsNav.css";
 import useAuth from "../UseAuth.jsx";
 import useIsTouchDevice from "../TouchDevice.jsx";
 

@@ -9,7 +9,7 @@ const ProtectedRoute = ({ children }) => {
     }
 
     if (!token) {
-        return <Navigate to="/dinolabs-ide" replace />;
+        return <Navigate to="/login" replace />;
     }
 
     return children;
