@@ -190,6 +190,12 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                         </label>
 
                                         <label className="dinolabsIDEAccountOrganizationSubName"> 
+                                            <FontAwesomeIcon icon={faIdCard}/>
+                                            <span>{organizationID}</span>
+                                        </label>
+
+
+                                        <label className="dinolabsIDEAccountOrganizationSubName"> 
                                             <FontAwesomeIcon icon={faEnvelope}/>
                                             <span>{organizationEmail}</span>
                                         </label>
