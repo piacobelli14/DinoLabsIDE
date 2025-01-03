@@ -181,7 +181,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             }
 
             setPersonalUsageByDay(
-                data.adminSigninInfo.map((item) => ({
+                data.personalUsageInfo.map((item) => ({
                     day: new Date(item.day), 
                     count: parseInt(item.usage_count, 0),
                 }))
