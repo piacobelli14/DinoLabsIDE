@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import "../../styles/mainStyles/AccountStyles/DinoLabsIDEAccount.css";
+import "../../styles/helperStyles/ConsoleToggleSwitch.css";
 import "../../styles/mainStyles/DinoLabsIDEPlots.css";
 import "../../styles/helperStyles/LoadingSpinner.css";
 import useIsTouchDevice from "../../TouchDevice"; 
@@ -41,7 +42,9 @@ import {
   faUsersGear,
   faKeyboard,
   faPallet,
-  faPalette
+  faPalette,
+  faSquareXmark,
+  faRectangleXmark
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -73,6 +76,15 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     
 
     const [selectedState, setSelectedState] = useState("none");
+
+    const [displayEmail, setDisplayEmail] = useState(true); 
+    const [displayPhone, setDisplayPhone] = useState(true);
+    
+    const [displayTeamID, setDisplayTeamID] = useState(true); 
+    const [displayTeamEmail, setDisplayTeamEmail] = useState(true); 
+    const [displayTeamPhone, setDisplayTeamPhone] = useState(true);
+    const [displayTeamAdminStatus, setDisplayTeamAdminStatus] = useState(true); 
+    const [displayTeamRole, setDisplayTeamRole] = useState(true); 
 
     useEffect(() => {
         const fetchData = async () => {
@@ -198,10 +210,9 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             <button className="dinolabsIDESettingsCloseButton" onClick={onClose}>
                 Close Profile
             </button>
-
+            
             {isLoaded && (
                 <div className="dinolabsIDEAccountWrapper">
-
                     <div className="dinolabsIDEAccountInformationContainer"> 
                         <div className="dinolabsIDEPersonalWrapper"> 
                             <img className="dinolabsIDEAccountImage" src={image}/>
@@ -218,17 +229,17 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                 <label className="dinolabsIDEAccountSubName"> 
                                     <FontAwesomeIcon icon={faEnvelope}/>
-                                    {email}
+                                    {displayEmail ? email : '•'.repeat(email.length)}
                                 </label>
 
                                 <label className="dinolabsIDEAccountSubName"> 
                                     <FontAwesomeIcon icon={faMobileScreen}/>
-                                    {phone}
+                                    {displayPhone ? phone : '•'.repeat(phone.length)}
                                 </label>
 
                                 <label className="dinolabsIDEAccountSubName"> 
                                     <FontAwesomeIcon icon={faCity}/>
-                                    <strong>{organizationName}</strong> <span>(ID: {organizationID})</span>
+                                    <strong>{organizationName}</strong> <span>(ID: {displayTeamID ? organizationID : '•'.repeat(organizationID.length)})</span>
                                 </label>
                             </div>
                         </div>
@@ -246,18 +257,18 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                         <label className="dinolabsIDEAccountOrganizationSubName"> 
                                             <FontAwesomeIcon icon={faIdCard}/>
-                                            <span>{organizationID}</span>
+                                            <span>{displayTeamID ? organizationID : '•'.repeat(organizationID.length)}</span>
                                         </label>
 
 
                                         <label className="dinolabsIDEAccountOrganizationSubName"> 
                                             <FontAwesomeIcon icon={faEnvelope}/>
-                                            <span>{organizationEmail}</span>
+                                            <span>{displayTeamEmail ? organizationEmail : '•'.repeat(organizationEmail.length)}</span>
                                         </label>
 
                                         <label className="dinolabsIDEAccountOrganizationSubName"> 
                                             <FontAwesomeIcon icon={faMobileScreen}/>
-                                            <span>{organizationPhone}</span>
+                                            <span>{displayTeamPhone ? organizationPhone : '•'.repeat(organizationPhone.length)}</span>
                                         </label>
 
                                     </div>
@@ -266,14 +277,14 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                 <label className="dinolasIDEAccountOrganizationSupplement"> 
                                     <FontAwesomeIcon icon={faUserTie}/>
                                     <span>
-                                        Admin at {organizationName}: <strong>{isAdmin === "admin" ? "True" : "False"}</strong>
+                                        Admin at {organizationName}: <strong>{displayTeamAdminStatus ? (isAdmin === "admin" ? "True" : "False") : "N/A"}</strong>
                                     </span>
                                 </label> 
 
                                 <label className="dinolasIDEAccountOrganizationSupplement"> 
                                     <FontAwesomeIcon icon={faPersonDigging}/>
                                     <span>
-                                        Role at {organizationName}: <strong>{role}</strong>
+                                        Role at {organizationName}: <strong>{displayTeamRole ? role : '•'.repeat(role.length)}</strong>
                                     </span>
                                 </label> 
                             </div>
@@ -286,70 +297,282 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                     <div className="dinolabsIDEAccountFunctionalityContainer"> 
                         <div className="dinolabsIDEAccountFunctionalityCellLeading"> 
                             <div className="dinolabsIDEAccountFunctionalityList">
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                <button className="dinolabsIDEAccountFunctionalityButton" 
+                                    onClick={()=>{
+                                        {selectedState === "personalInfo" ? (
+                                            setSelectedState("none")
+                                        ) : (
+                                            setSelectedState("personalInfo")
+                                        )}
+                                    }}
+                                    style={{"background-color": selectedState === "personalInfo" ? "rgba(255,255,255,0.1)" : ""}}
+                                > 
                                     <span>
                                         <FontAwesomeIcon icon={faUserGear}/>
                                         Update My Personal Information 
                                     </span>
 
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                    <FontAwesomeIcon icon={selectedState === "personalInfo" ? faSquareXmark : faUpRightFromSquare}/>
                                 </button> 
 
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                <button className="dinolabsIDEAccountFunctionalityButton" 
+                                    onClick={()=>{
+                                        {selectedState === "teamInfo" ? (
+                                            setSelectedState("none")
+                                        ) : (
+                                            setSelectedState("teamInfo")
+                                        )}
+                                    }}
+                                    style={{"background-color": selectedState === "teamInfo" ? "rgba(255,255,255,0.1)" : ""}}
+                                > 
                                     <span>
                                         <FontAwesomeIcon icon={faUsersGear}/>
                                         Update My Team Infomration 
                                     </span>
 
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                    <FontAwesomeIcon icon={selectedState === "teamInfo" ? faSquareXmark : faUpRightFromSquare}/>
                                 </button> 
 
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
-                                    <span>
-                                        <FontAwesomeIcon icon={faLock}/>
-                                        Update My Privacy & Security Preferences 
-                                    </span>
-
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
-                                </button> 
-
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                <button className="dinolabsIDEAccountFunctionalityButton" 
+                                    onClick={()=>{
+                                        {selectedState === "settingsManagement" ? (
+                                            setSelectedState("none")
+                                        ) : (
+                                            setSelectedState("settingsManagement")
+                                        )}
+                                    }}
+                                    style={{"background-color": selectedState === "settingsManagement" ? "rgba(255,255,255,0.1)" : ""}}
+                                > 
                                     <span>
                                         <FontAwesomeIcon icon={faCode}/>
                                         Edit My Dino Labs IDE Settings
                                     </span>
 
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                    <FontAwesomeIcon icon={selectedState === "settingsManagement" ? faSquareXmark : faUpRightFromSquare}/>
                                 </button> 
 
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                <button className="dinolabsIDEAccountFunctionalityButton" 
+                                    onClick={()=>{
+                                        {selectedState === "shortcutManagement" ? (
+                                            setSelectedState("none")
+                                        ) : (
+                                            setSelectedState("shortcutManagement")
+                                        )}
+                                    }}
+                                    style={{"background-color": selectedState === "shortcutManagement" ? "rgba(255,255,255,0.1)" : ""}}
+                                > 
                                     <span>
                                         <FontAwesomeIcon icon={faKeyboard}/>
                                         Configure My Keyboard Shortcuts
                                     </span>
 
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                    <FontAwesomeIcon icon={selectedState === "shortcutManagement" ? faSquareXmark : faUpRightFromSquare}/>
                                 </button> 
 
-                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                <button className="dinolabsIDEAccountFunctionalityButton" 
+                                    onClick={()=>{
+                                        {selectedState === "themeManagement" ? (
+                                            setSelectedState("none")
+                                        ) : (
+                                            setSelectedState("themeManagement")
+                                        )}
+                                    }}
+                                    style={{"background-color": selectedState === "themeManagement" ? "rgba(255,255,255,0.1)" : ""}}
+                                > 
                                     <span>
                                         <FontAwesomeIcon icon={faPalette}/>
                                         Change My Editor Theme
                                     </span>
 
-                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
-                                </button> 
-
-                                
+                                    <FontAwesomeIcon icon={selectedState === "themeManagement" ? faSquareXmark : faUpRightFromSquare}/>
+                                </button>
                             </div>
+                            
+                            <div className="dinolabsIDESettingsFootnoteWrapper"> 
+                                Changes to settings should save automatically, if you don't see your change reflected immediately, 
+                                try refeshing the browser or signing in again.
+                            </div> 
                         </div> 
                         
                     
                         <div className="dinolabsIDEAccountFunctionalityCellTrailing"> 
-                            <LinePlot
-                                plotType="adminAdministratorSigninsPlot"
-                                data={personalUsageByDay}
-                            />
+                            {selectedState === "none" ? (
+                                <LinePlot
+                                    plotType="adminAdministratorSigninsPlot"
+                                    data={personalUsageByDay}
+                                />
+                            ) : (
+                                <div className="dinolabsIDESettingsOperationsWrapper">
+                                    {selectedState === "personalInfo" && (
+                                        <>
+                                            <div className="dinolabsIDESettingsButtonWrapper">
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span>
+                                                        Display my email address. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Email Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayEmail} onChange={() => { 
+                                                                    setDisplayEmail(!displayEmail); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayEmail ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span> 
+                                                        Display my phone number. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Phone Number Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayPhone} onChange={() => { 
+                                                                    setDisplayPhone(!displayPhone); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+                                                    
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayPhone ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            <div className="dinolabsIDESettingsFootnoteWrapper"> 
+                                                To edit your actual account information, picture or contact info, please login to the main Dino Labs web platform 
+                                                and change it from the account management dashboard.                                                       
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {selectedState === "teamInfo" && (
+                                        <>
+                                            <div className="dinolabsIDESettingsButtonWrapper">
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span>
+                                                        Display my team's ID number. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Team ID Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayTeamID} onChange={() => { 
+                                                                    setDisplayTeamID(!displayTeamID); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayTeamID ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span> 
+                                                        Display my team's email. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Team Email Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayTeamEmail} onChange={() => { 
+                                                                    setDisplayTeamEmail(!displayTeamEmail); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+                                                    
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayTeamEmail ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span> 
+                                                        Display my team's phone number. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Team Phone Number Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayTeamPhone} onChange={() => { 
+                                                                    setDisplayTeamPhone(!displayTeamPhone); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+                                                    
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayTeamPhone ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span> 
+                                                        Display my admin status at {organizationName}. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Admin Info Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayTeamAdminStatus} onChange={() => { 
+                                                                    setDisplayTeamAdminStatus(!displayTeamAdminStatus); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+                                                    
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayTeamAdminStatus ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine"> 
+                                                    <span> 
+                                                        Display my role at {organizationName}. 
+                                                    </span>
+
+                                                    <span>
+                                                        <Tippy content="Toggle Role Display" theme="tooltip-light">
+                                                            <label className="consoleSwitch">
+                                                                <input type="checkbox" checked={displayTeamRole} onChange={() => { 
+                                                                    setDisplayTeamRole(!displayTeamRole); 
+                                                                }} />
+                                                                <span className="consoleSlider round"></span>
+                                                            </label>
+                                                        </Tippy>
+                                                    
+                                                        <label className="dinolabsIDESettingsToggleLabel"> 
+                                                            {displayTeamRole ? "Yes" : "No"}
+                                                        </label>
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            <div className="dinolabsIDESettingsFootnoteWrapper"> 
+                                                To edit your team affiliation information or affiliation status, please login to the main Dino Labs web platform 
+                                                and change it from the account management dashboard.                                                       
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div> 
                     </div>
 

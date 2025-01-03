@@ -118,7 +118,7 @@ const ManagerLinePlot = ({
   switch (plotType) {
     case "adminAdministratorSigninsPlot":
       title = "Personal Usage";
-      subtitle = "Last 30 Days";
+      subtitle = "Edits Saved In Last 30 Days";
       classname = "personalUsagePlotContainer";
       seriesName1 = `Edits Saved`;
       seriesName2 = ""; 
