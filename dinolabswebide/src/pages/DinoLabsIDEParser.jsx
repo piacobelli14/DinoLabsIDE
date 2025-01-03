@@ -1,10 +1,1067 @@
+export const escapeHtml = (str) => {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+};
 
-export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, activeLineNumber = null) => {
+export const escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+export const getTokenPatterns = (language) => {
+    switch (language.toLowerCase()) {
+        case 'python':
+            return [
+                `\\b(${[
+                    'False', 'class', 'finally', 'is', 'return',
+                    'None', 'continue', 'for', 'lambda', 'try',
+                    'True', 'def', 'from', 'nonlocal', 'while',
+                    'and', 'del', 'global', 'not', 'with',
+                    'as', 'elif', 'if', 'or', 'yield',
+                    'assert', 'else', 'import', 'pass',
+                    'break', 'except', 'in', 'raise',
+                    'async', 'await', 'match', 'case'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `("""[\\s\\S]*?"""|'''[\\s\\S]*?''')`,
+                `("([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*')`,
+                `(#.*)`,
+                `(\\b\\d+(\\.\\d+)?\\b)`,
+                `([+\\-*/%=&|<>!^~]+)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'print', 'len', 'range', 'open', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple', 'super', 'self'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'self', 'cls'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'async', 'await'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'List', 'Dict', 'Tuple', 'Optional', 'Union', 'Any', 'Callable', 'Iterable', 'Iterator', 'Generator', 'TypeVar', 'Generic', 'Protocol'
+                ].join('|')})\\b`,
+                `__([a-zA-Z_]+)__`
+            ];
+        case 'javascript':
+        case 'react':
+        case 'node':
+        case 'express':
+            return [
+                `\\b(${[
+                    'break', 'case', 'catch', 'class', 'const',
+                    'continue', 'debugger', 'default', 'delete', 'do',
+                    'else', 'export', 'extends', 'finally', 'for',
+                    'function', 'if', 'import', 'in', 'instanceof',
+                    'let', 'new', 'return', 'super', 'switch',
+                    'this', 'throw', 'try', 'typeof', 'var',
+                    'void', 'while', 'with', 'yield', 'await',
+                    'implements', 'interface', 'package',
+                    'private', 'protected', 'public', 'static', 'enum',
+                    'null', 'true', 'false'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|\\\`(?:[^\\\`\\\\]|\\\\.)*\\\`))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
+                `(\/(?:\\\/|[^\/\n])+\/[gimsuy]*)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?|===|!==|>>>=|<<=|>>=)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'console', 'window', 'document', 'require', 'module', 'exports', 'React', 'useState', 'useEffect', 'props', 'state'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Array', 'String', 'Number', 'Boolean', 'Object', 'Function', 'Date', 'RegExp', 'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'ReadonlyArray', 'Symbol', 'BigInt'
+                ].join('|')})\\b`,
+                `</?[A-Z][A-Za-z0-9]+\\b`,
+                `\\$\{[^}]+\}`
+            ];
+        case 'bash':
+        case 'shell':
+            return [
+                `\\b(${[
+                    'if', 'then', 'else', 'fi', 'for', 'while', 'do', 'done',
+                    'case', 'esac', 'function', 'in', 'select', 'until', 'declare',
+                    'readonly', 'return', 'continue', 'break', 'export',
+                    'local', 'shift', 'getopts', 'echo', 'printf', 'source',
+                    'alias', 'unalias', 'true', 'false', 'cd', 'pwd', 'ls', 'grep', 'awk', 'sed',
+                    'mkdir', 'rmdir', 'touch', 'rm', 'cp', 'mv', 'chmod', 'chown',
+                    'declare', 'typeset', 'readonly', 'let'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `(#.*)`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([;&|<>!(){}\\[\\]])`,
+                `\\$[a-zA-Z_][a-zA-Z0-9_]*`,
+                `\\$\{?[a-zA-Z_][a-zA-Z0-9_]*\}?`,
+                `\\b(${[
+                    'echo', 'printf', 'cd', 'pwd', 'ls', 'grep', 'awk', 'sed',
+                    'mkdir', 'rmdir', 'touch', 'rm', 'cp', 'mv', 'chmod', 'chown',
+                    'declare', 'typeset', 'readonly', 'let'
+                ].join('|')})\\b`,
+                `(/(?:[a-zA-Z0-9_.-]+/)*[a-zA-Z0-9_.-]+)`
+            ];
+        case 'c':
+            return [
+                `\\b(${[
+                    'auto', 'break', 'case', 'char', 'const', 'continue', 'default',
+                    'do', 'double', 'else', 'enum', 'extern', 'float', 'for',
+                    'goto', 'if', 'inline', 'int', 'long', 'register', 'restrict',
+                    'return', 'short', 'signed', 'sizeof', 'static', 'struct',
+                    'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile',
+                    'while'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `#include\\s*<[^>]+>`,
+                `\\b(${[
+                    'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
+                    'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'nullptr', 'NULL'
+                ].join('|')})\\b`,
+                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*>`,
+                `:\\s*(public|protected|private)\\s+[a-zA-Z_][a-zA-Z0-9_]*`
+            ];
+        case 'c++':
+            return [
+                `\\b(${[
+                    'auto', 'break', 'case', 'char', 'const', 'continue', 'default',
+                    'do', 'double', 'else', 'enum', 'extern', 'float', 'for',
+                    'goto', 'if', 'inline', 'int', 'long', 'register', 'restrict',
+                    'return', 'short', 'signed', 'sizeof', 'static', 'struct',
+                    'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile',
+                    'while', 'class', 'public', 'private', 'protected', 'namespace',
+                    'using', 'template', 'typename', 'virtual', 'override', 'impl',
+                    'let', 'var', 'func', 'mut', 'ref', 'as', 'where', 'async',
+                    'await', 'trait', 'impl', 'enum', 'type', 'interface', 'abstract',
+                    'sealed', 'partial', 'delegate', 'event', 'readonly', 'volatile',
+                    'unsafe', 'fixed', 'extern', 'yield', 'dynamic', 'virtual', 'partial'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?|::|->|\\.\\.{2,})`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `#include\\s*<[^>]+>`,
+                `\\b(${[
+                    'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
+                    'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'nullptr', 'NULL'
+                ].join('|')})\\b`,
+                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*>`,
+                `:\\s*(public|protected|private)\\s+[a-zA-Z_][a-zA-Z0-9_]*`
+            ];
+        case 'c#':
+            return [
+                `\\b(${[
+                    'abstract', 'and', 'as', 'base', 'bool', 'break', 'byte', 'case',
+                    'catch', 'char', 'checked', 'class', 'const', 'continue', 'decimal',
+                    'default', 'delegate', 'do', 'double', 'else', 'enum', 'event',
+                    'explicit', 'extern', 'false', 'finally', 'fixed', 'float', 'for',
+                    'foreach', 'goto', 'if', 'implicit', 'in', 'int', 'interface',
+                    'internal', 'is', 'lock', 'long', 'namespace', 'new', 'null',
+                    'object', 'operator', 'out', 'override', 'params', 'private',
+                    'protected', 'public', 'readonly', 'ref', 'return', 'sbyte',
+                    'sealed', 'short', 'sizeof', 'stackalloc', 'static', 'string',
+                    'struct', 'switch', 'this', 'throw', 'true', 'try', 'typeof',
+                    'uint', 'ulong', 'unchecked', 'unsafe', 'ushort', 'using',
+                    'virtual', 'void', 'volatile', 'while'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `#define\\s+[a-zA-Z_][a-zA-Z0-9_]*`,
+                `#using\\s+["<][^">]+[">]`,
+                `#namespace\\s+[a-zA-Z_][a-zA-Z0-9_.]*`,
+                `\\b(${[
+                    'Console', 'Math', 'String', 'List', 'Dictionary', 'Array', 'Task', 'Exception', 'Convert', 'Environment', 'Guid', 'DateTime', 'TimeSpan', 'Nullable', 'IEnumerable', 'IList', 'ICollection', 'Stream', 'File', 'Directory'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Int32', 'Int64', 'String', 'Boolean', 'Double', 'Decimal', 'Object', 'Void', 'Char', 'Byte', 'Float', 'UInt32', 'UInt64', 'Short', 'UShort', 'Long', 'ULong', 'SByte'
+                ].join('|')})\\b`,
+                `<[a-zA-Z_][a-zA-Z0-9_, ]*>`,
+                `\\b(${[
+                    'System', 'Microsoft', 'Collections', 'Generic', 'Linq', 'Text', 'Tasks'
+                ].join('|')})\\b`,
+                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
+            ];
+        case 'swift':
+            return [
+                `\\b(${[
+                    'import', 'class', 'deinit', 'enum', 'extension', 'func',
+                    'init', 'let', 'protocol', 'struct', 'subscript',
+                    'typealias', 'var', 'break', 'case', 'continue', 'default',
+                    'defer', 'do', 'else', 'fallthrough', 'for', 'guard', 'if',
+                    'in', 'repeat', 'return', 'switch', 'where', 'while', 'as',
+                    'Any', 'catch', 'false', 'is', 'nil', 'rethrows', 'super',
+                    'self', 'Self', 'throw', 'throws', 'true', 'try', 'associatedtype',
+                    'dynamic', 'fileprivate', 'final', 'inout', 'lazy', 'open',
+                    'nonmutating', 'optional', 'override', 'private', 'public',
+                    'required', 'static', 'unowned', 'weak', 'willSet', 'didSet',
+                    'throws', 'async', 'await', 'actor', 'convenience', 'dynamicType'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'print', 'map', 'filter', 'reduce', 'guard', 'guard let', 'guard var', 'let', 'var'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Int', 'String', 'Bool', 'Double', 'Float', 'Array', 'Dictionary', 'Set', 'Optional', 'Any', 'AnyObject', 'Void', 'Never'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'self', 'super'
+                ].join('|')})\\b`,
+                `:\\s*([A-Z][a-zA-Z0-9_]*|[a-z]+)`
+            ];
+        case 'php':
+            return [
+                `\\b(${[
+                    'abstract', 'and', 'array', 'as', 'break', 'callable', 'case',
+                    'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default',
+                    'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare',
+                    'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'extends',
+                    'final', 'finally', 'fn', 'for', 'foreach', 'function', 'global',
+                    'goto', 'if', 'implements', 'include', 'include_once', 'instanceof',
+                    'insteadof', 'interface', 'isset', 'list', 'namespace', 'new',
+                    'or', 'print', 'private', 'protected', 'public', 'require',
+                    'require_once', 'return', 'static', 'switch', 'throw', 'trait',
+                    'try', 'unset', 'use', 'var', 'while', 'xor', 'yield',
+                    'bool', 'int', 'float', 'string', 'void', 'iterable', 'object',
+                    'null', 'true', 'false'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/)|(?:#.*))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `(\\$[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `\\b([A-Z][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'echo', 'print', 'var_dump', 'isset', 'empty', 'unset', 'require', 'include'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'mysqli', 'PDO', 'stdClass', 'Exception', 'DateTime', 'ArrayObject', 'Closure', 'Generator', 'Iterator', 'SplObjectStorage'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'null', 'true', 'false'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    '_GET', '_POST', '_SESSION', '_COOKIE', '_SERVER', '_REQUEST', '_FILES', '_ENV'
+                ].join('|')})\\b`,
+                `\\\\[a-zA-Z_][a-zA-Z0-9_]*`
+            ];
+        case 'sql':
+            return [
+                `\\b(${[
+                    'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE',
+                    'DROP', 'ALTER', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'FULL',
+                    'ON', 'AS', 'INTO', 'VALUES', 'SET', 'AND', 'OR', 'NOT', 'NULL',
+                    'LIKE', 'BETWEEN', 'EXISTS', 'PRIMARY', 'KEY', 'FOREIGN',
+                    'GROUP', 'BY', 'ORDER', 'HAVING', 'LIMIT', 'OFFSET', 'DISTINCT',
+                    'UNION', 'ALL', 'ANY', 'IN', 'EXCEPT', 'INTERSECT', 'CASE',
+                    'WHEN', 'THEN', 'ELSE', 'END', 'CAST', 'CONVERT', 'ISNULL',
+                    'COALESCE', 'TOP', 'IDENTITY', 'ROW_NUMBER', 'OVER', 'PARTITION',
+                    'RANK', 'DENSE_RANK', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP'
+                ].join('|')})\\b`,
+                `((?:'(?:''|[^'])*')|(?:"(?:\\"|[^"])*"))`,
+                `(--[^\\n\\r]*)`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `(=|<>|!=|<|>|<=|>=|\\+|\\-|\\*|\\/|%)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `(\\bDATE\\b|\\bINT\\b|\\bVARCHAR\\b|\\bTEXT\\b|\\bBOOLEAN\\b|\\bDECIMAL\\b|\\bFLOAT\\b|\\bNUMERIC\\b|\\bCHAR\\b|\\bDATETIME\\b|\\bTIMESTAMP\\b)`,
+                `\\b(${[
+                    'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'NOW', 'COALESCE', 'NULLIF', 'DATEADD', 'DATEDIFF', 'GROUP_CONCAT', 'STDEV', 'VAR'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'GETDATE', 'GETUTCDATE', 'DATEPART', 'DATEADD', 'DATEDIFF', 'FORMAT'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL OUTER JOIN', 'CROSS JOIN', 'NATURAL JOIN'
+                ].join('|')})\\b`
+            ];
+        case 'monkey c':
+            return [
+                `\\b(${[
+                    'function', 'end', 'if', 'else', 'elseif', 'return', 'for',
+                    'while', 'do', 'repeat', 'until', 'break', 'continue',
+                    'switch', 'case', 'default', 'import', 'export', 'var', 'const',
+                    'let', 'true', 'false', 'null', 'async', 'await', 'struct',
+                    'enum', 'typedef', 'typedefstruct', 'typedefenum', 'interface',
+                    'implements', 'extends', 'super', 'new', 'delete', 'typeof', 'instanceof'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b([A-Z][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'print', 'map', 'filter', 'reduce', 'guard', 'guard let', 'guard var', 'let', 'var', 'async', 'await'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'String', 'Int', 'Float', 'Bool', 'Array', 'Dictionary', 'Set', 'Option', 'Result', 'Any', 'Self'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'async', 'await'
+                ].join('|')})\\b`,
+                `:\\s*([A-Z][a-zA-Z0-9_]*|[a-z]+)`
+            ];
+        case 'rust':
+            return [
+                `\\b(${[
+                    'as', 'async', 'await', 'break', 'const', 'continue', 'crate',
+                    'dyn', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if',
+                    'impl', 'in', 'let', 'loop', 'match', 'mod', 'move', 'mut',
+                    'pub', 'ref', 'return', 'self', 'static', 'struct', 'super',
+                    'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while',
+                    'yield', 'implements', 'type', 'as', 'from', 'of', 'async',
+                    'await', 'dyn', 'extern', 'crate', 'macro', 'const',
+                    'unsafe', 'trait', 'where', 'type', 'impl', 'for', 'fn'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?|<<=|>>=|&&|\\|\\|)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'println', 'vec', 'String', 'Option', 'Result', 'Some', 'None', 'println!', 'format!', 'print!', 'dbg!'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Vec', 'HashMap', 'HashSet', 'Box', 'Rc', 'Arc', 'RefCell', 'Mutex', 'Option', 'Result'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Option', 'Result'
+                ].join('|')})\\b`,
+                `'[a-zA-Z_][a-zA-Z0-9_]*`
+            ];
+        case 'assembly':
+            return [
+                `\\b(${[
+                    'mov', 'add', 'sub', 'mul', 'div', 'jmp', 'je', 'jne', 'jg', 'jge', 'jl', 'jle',
+                    'cmp', 'call', 'ret', 'push', 'pop', 'lea', 'and', 'or', 'xor', 'not', 'shl',
+                    'shr', 'nop', 'int', 'iret', 'jmp', 'loop', 'jmpf', 'jmpq', 'callf',
+                    'callq', 'retf', 'retq', 'hlt', 'sete', 'setne', 'setg', 'setge', 'setl',
+                    'setle', 'cmove', 'cmovne', 'cmovg', 'cmovge', 'cmovl', 'cmovle'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'esp', 'ebp',
+                    'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rsp', 'rbp',
+                    'ax', 'bx', 'cx', 'dx', 'si', 'di', 'sp', 'bp',
+                    'al', 'bl', 'cl', 'dl', 'ah', 'bh', 'ch', 'dh',
+                    'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15',
+                    'r8d', 'r9d', 'r10d', 'r11d', 'r12d', 'r13d', 'r14d', 'r15d',
+                    'r8w', 'r9w', 'r10w', 'r11w', 'r12w', 'r13w', 'r14w', 'r15w',
+                    'r8b', 'r9b', 'r10b', 'r11b', 'r12b', 'r13b', 'r14b', 'r15b'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    '.data', '.text', '.bss', '.global', '.extern', '.section', '.align', '.byte', '.word', '.long', '.quad', '.ascii', '.asciz', '.org', '.equ', '.macro', '.endm'
+                ].join('|')})\\b`,
+                `(;.*)`,
+                `((0x[0-9a-fA-F]+)|(0b[01]+)|(\\b\\d+\\b))`,
+                `\\b[a-zA-Z_][a-zA-Z0-9_]*:`,
+                `\\[[a-zA-Z0-9_+\-*/]+\]`,
+                `([+\\-*/%&|^~<>]=?|==|!=|<=|>=)`,
+                `"(?:[^"\\\\]|\\\\.)*"`,
+                `\\b[a-zA-Z_][a-zA-Z0-9_]*\\b`
+            ];
+        default:
+            return null;
+    }
+};
+
+export const tokenTypes = {
+    python: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'namespace',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'type-hint',
+        'magic-method'
+    ],
+    javascript: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'regex',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'type',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'jsx-tag',
+        'jsx-attribute',
+        'template-placeholder'
+    ],
+    react: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'regex',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'type',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'tag',
+        'attribute',
+        'jsx-string'
+    ],
+    node: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'regex',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'type',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison'
+    ],
+    express: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'regex',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'type',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison'
+    ],
+    bash: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'boolean',
+        'parameter',
+        'command',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'filepath',
+        'memory-address',
+        'variable-interpolation'
+    ],
+    shell: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'boolean',
+        'parameter',
+        'command',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'filepath',
+        'memory-address',
+        'variable-interpolation'
+    ],
+    c: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'preprocessor',
+        'boolean',
+        'type',
+        'class-name',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'namespace',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison'
+    ],
+    'c++': [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'preprocessor',
+        'boolean',
+        'type',
+        'class-name',
+        'template',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'namespace',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison'
+    ],
+    'c#': [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'preprocessor',
+        'boolean',
+        'type',
+        'class-name',
+        'namespace',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'superglobal',
+        'namespace-use',
+        'class-inheritance',
+        'identifier'
+    ],
+    css: [
+        'selector',
+        'property',
+        'value',
+        'comment',
+        'operator',
+        'function',
+        'variable',
+        'pseudo-class',
+        'pseudo-element',
+        'at-rule',
+        'unit',
+        'decorator',
+        'parameter',
+        'command',
+        'schema',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'hex-color',
+        'rgb-color',
+        'hsl-color',
+        'url-function'
+    ],
+    html: [
+        'tag',
+        'attribute',
+        'string',
+        'comment',
+        'doctype',
+        'operator',
+        'function',
+        'variable',
+        'entity',
+        'boolean',
+        'class-name',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'pseudo-class',
+        'pseudo-element',
+        'at-rule',
+        'unit',
+        'preprocessor',
+        'template',
+        'parameter',
+        'command',
+        'schema',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'jsx-tag',
+        'jsx-attribute',
+        'jsx-string',
+        'event-handler'
+    ],
+    typescript: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'type',
+        'builtin',
+        'boolean',
+        'interface',
+        'enum',
+        'class-name',
+        'namespace',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'jsx-tag',
+        'jsx-attribute',
+        'template-placeholder'
+    ],
+    swift: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'type',
+        'builtin',
+        'boolean',
+        'class-name',
+        'protocol',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'namespace',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'type-annotation',
+        'lifetime'
+    ],
+    php: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'constant',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'superglobal',
+        'namespace-use',
+        'class-inheritance',
+        'identifier'
+    ],
+    sql: [
+        'keyword',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'constant',
+        'datatype',
+        'boolean',
+        'schema',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'decorator',
+        'pseudo-class',
+        'pseudo-element',
+        'at-rule',
+        'unit',
+        'preprocessor',
+        'template',
+        'parameter',
+        'command',
+        'schema',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'aggregate-function',
+        'date-function',
+        'join-type'
+    ],
+    'monkey c': [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'builtin',
+        'boolean',
+        'class-name',
+        'namespace',
+        'interface',
+        'enum',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'class-inheritance',
+        'type-annotation'
+    ],
+    rust: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'type',
+        'builtin',
+        'boolean',
+        'struct',
+        'enum',
+        'trait',
+        'class-name',
+        'interface',
+        'annotation',
+        'method',
+        'namespace',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'lifetime',
+        'macro',
+        'standard-library'
+    ],
+    assembly: [
+        'keyword',
+        'register',
+        'directive',
+        'comment',
+        'number',
+        'operator',
+        'label',
+        'memory-address',
+        'string',
+        'builtin',
+        'instruction',
+        'constant',
+        'filepath'
+    ]
+};
+
+export const tokenize = (codeStr, language) => {
+    const tokenPatterns = getTokenPatterns(language);
+    if (!tokenPatterns) {
+        const allLines = codeStr.split(/\r?\n/);
+        return allLines.map((line, i) => ({
+            value: line,
+            lineNumber: i + 1
+        }));
+    }
+
+    const regex = new RegExp(tokenPatterns.join('|'), 'gi');
+    let match;
+    let lastIndex = 0;
+    const tokens = [];
+    let currentLine = 1;
+
+    while ((match = regex.exec(codeStr)) !== null) {
+        const precedingText = codeStr.slice(lastIndex, match.index);
+        if (precedingText) {
+            const lines = precedingText.split(/\r?\n/);
+            lines.forEach((line, idx) => {
+                if (line) {
+                    tokens.push({ value: line, lineNumber: currentLine });
+                }
+                if (idx < lines.length - 1) {
+                    currentLine += 1;
+                }
+            });
+        }
+
+        let tokenType = null;
+        for (let i = 1; i < match.length; i++) {
+            if (match[i] !== undefined) {
+                const lang = language.toLowerCase();
+                tokenType = tokenTypes[lang] ? tokenTypes[lang][i - 1] || null : null;
+                break;
+            }
+        }
+
+        if (match[0]) {
+            const lines = match[0].split(/\r?\n/);
+            lines.forEach((line, idx) => {
+                if (line) {
+                    tokens.push({
+                        value: line,
+                        type: tokenType,
+                        lineNumber: currentLine
+                    });
+                }
+                if (idx < lines.length - 1) {
+                    currentLine += 1;
+                }
+            });
+        }
+
+        lastIndex = regex.lastIndex;
+    }
+
+    const remainingText = codeStr.slice(lastIndex);
+    if (remainingText) {
+        const lines = remainingText.split(/\r?\n/);
+        lines.forEach((line, idx) => {
+            if (line) {
+                tokens.push({ value: line, lineNumber: currentLine });
+            }
+            if (idx < lines.length - 1) {
+                currentLine += 1;
+            }
+        });
+    }
+
+    return tokens;
+};
+
+export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive = false, activeLineNumber = null) => {
     if (language.toLowerCase() === "unknown") {
         return escapeHtml(codeStr).replace(/\n/g, '<br/>');
     }
 
-    const tokens = tokenize(codeStr, language); 
+    const tokens = tokenize(codeStr, language);
     const lines = codeStr.split(/\r?\n/);
     const highlightedLines = lines.map((line, index) => {
         const lineNumber = index + 1;
@@ -48,16 +1105,15 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
             currentChar += tokenLength;
 
             let tokenHtml = '';
-            if (token.type && token.type !== 'space') { 
-                tokenHtml = `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(token.value)}</span>`;
-            } else { 
+            if (token.type && token.type !== 'space') {
+                tokenHtml = `<span class="token ${token.type}">${escapeHtml(token.value)}</span>`;
+            } else {
                 tokenHtml = `${escapeHtml(token.value)}`;
             }
 
             if (isTokenFullyInMatch(tokenStart, tokenEnd)) {
                 tokenHtml = `<span class="searchHighlight">${tokenHtml}</span>`;
             }
-
             else if (isTokenInMatch(tokenStart, tokenEnd)) {
                 let overlappingRanges = matchRanges.filter(range => tokenStart < range.end && tokenEnd > range.start);
                 overlappingRanges.forEach(range => {
@@ -74,7 +1130,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
 
                     if (beforeMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(beforeMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}">${escapeHtml(beforeMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(beforeMatch)}`;
                         }
@@ -82,14 +1138,14 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
 
                     if (matchedText) {
                         const matchedHtml = token.type && token.type !== 'space'
-                            ? `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(matchedText)}</span>`
+                            ? `<span class="token ${token.type}">${escapeHtml(matchedText)}</span>`
                             : `${escapeHtml(matchedText)}`;
                         newTokenHtml += `<span class="searchHighlight">${matchedHtml}</span>`;
                     }
 
                     if (afterMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(afterMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}">${escapeHtml(afterMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(afterMatch)}`;
                         }
@@ -103,602 +1159,11 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
         });
 
         if (lineNumber === activeLineNumber) {
-            highlightedLine = `<span class="activeLine" style="white-space: pre; overflow-x: auto;">${highlightedLine}</span>`;
+            highlightedLine = `<span class="activeLine">${highlightedLine}</span>`;
         }
 
         return highlightedLine;
     });
 
     return highlightedLines.join('<br/>');
-};
-
-export const escapeHtml = (str) => {
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;");
-};
-
-export const escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-};
-export const tokenize = (codeStr, language) => {
-    const tokenPatterns = getTokenPatterns(language);
-    if (!tokenPatterns) {
-        const allLines = codeStr.split(/\r?\n/);
-        return allLines.map((line, i) => ({
-            value: line,
-            lineNumber: i + 1
-        }));
-    }
-
-    const regex = new RegExp(tokenPatterns.join('|'), 'g');
-    let match;
-    let lastIndex = 0;
-    const tokens = [];
-    let currentLine = 1;
-
-    while ((match = regex.exec(codeStr)) !== null) {
-        const precedingText = codeStr.slice(lastIndex, match.index);
-        if (precedingText) {
-            const lines = precedingText.split(/\r?\n/);
-            lines.forEach((line, idx) => {
-                if (line) {
-                    tokens.push({ value: line, lineNumber: currentLine });
-                }
-                if (idx < lines.length - 1) {
-                    currentLine += 1;
-                }
-            });
-        }
-
-        let tokenType = null;
-        for (let i = 1; i < match.length; i++) {
-            if (match[i] !== undefined) {
-                switch (i) {
-                    case 1:
-                        tokenType = 'string'; 
-                        break;
-                    case 2:
-                    case 3:
-                        tokenType = 'string'; 
-                        break;
-                    case 4:
-                        tokenType = 'comment'; 
-                        break;
-                    case 5:
-                        tokenType = 'keyword'; 
-                        break;
-                    case 6:
-                        tokenType = 'number'; 
-                        break;
-                    case 7:
-                        tokenType = 'operator'; 
-                        break;
-                    case 8:
-                        tokenType = 'identifier'; 
-                        break;
-                    default:
-                        tokenType = null;
-                }
-                break;
-            }
-        }
-
-        if (match[0]) {
-            const lines = match[0].split(/\r?\n/);
-            lines.forEach((line, idx) => {
-                if (line) {
-                    tokens.push({
-                        value: line,
-                        type: tokenType,
-                        lineNumber: currentLine
-                    });
-                }
-                if (idx < lines.length - 1) {
-                    currentLine += 1;
-                }
-            });
-        }
-
-        lastIndex = regex.lastIndex;
-    }
-
-    const remainingText = codeStr.slice(lastIndex);
-    if (remainingText) {
-        const lines = remainingText.split(/\r?\n/);
-        lines.forEach((line, idx) => {
-            if (line) {
-                tokens.push({ value: line, lineNumber: currentLine });
-            }
-            if (idx < lines.length - 1) {
-                currentLine += 1;
-            }
-        });
-    }
-
-    return tokens;
-};
-
-export const tokenTypes = {
-    python: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'decorator',
-        'builtin',
-        'boolean',
-        'class-name'
-    ],
-    javascript: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'regexp',
-        'boolean',
-        'class-name',
-        'namespace',
-        'type'
-    ],
-    react: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'tag',
-        'attribute',
-        'jsx-string',
-        'boolean',
-        'class-name'
-    ],
-    node: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'class-name',
-        'type'
-    ],
-    express: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'class-name',
-        'type'
-    ],
-    bash: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'parameter',
-        'command'
-    ],
-    shell: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'parameter',
-        'command'
-    ],
-    c: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'preprocessor',
-        'boolean',
-        'type',
-        'class-name'
-    ],
-    'c++': [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'preprocessor',
-        'boolean',
-        'type',
-        'class-name',
-        'template'
-    ],
-    'c#': [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'preprocessor',
-        'boolean',
-        'type',
-        'class-name',
-        'namespace'
-    ],
-    css: [
-        'selector',
-        'property',
-        'value',
-        'comment',
-        'operator',
-        'function',
-        'variable',
-        'pseudo-class',
-        'pseudo-element',
-        'at-rule',
-        'unit'
-    ],
-    html: [
-        'tag',
-        'attribute',
-        'string',
-        'comment',
-        'doctype',
-        'operator',
-        'function',
-        'variable',
-        'entity',
-        'boolean',
-        'class-name'
-    ],
-    typescript: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'type',
-        'builtin',
-        'interface',
-        'enum',
-        'boolean',
-        'class-name',
-        'namespace'
-    ],
-    swift: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'type',
-        'builtin',
-        'boolean',
-        'class-name',
-        'protocol'
-    ],
-    php: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'class-name',
-        'namespace',
-        'constant'
-    ],
-    sql: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'constant',
-        'datatype',
-        'boolean',
-        'schema'
-    ],
-    'monkey c': [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'builtin',
-        'boolean',
-        'class-name',
-        'namespace'
-    ],
-    rust: [
-        'keyword',
-        'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'type',
-        'builtin',
-        'boolean',
-        'struct',
-        'enum',
-        'trait',
-        'class-name'
-    ]
-};
-
-export const getTokenPatterns = (language) => {
-    switch (language.toLowerCase()) {
-        case 'python':
-            return [
-                `\\b(${[
-                    'False', 'class', 'finally', 'is', 'return',
-                    'None', 'continue', 'for', 'lambda', 'try',
-                    'True', 'def', 'from', 'nonlocal', 'while',
-                    'and', 'del', 'global', 'not', 'with',
-                    'as', 'elif', 'if', 'or', 'yield',
-                    'assert', 'else', 'import', 'pass',
-                    'break', 'except', 'in', 'raise',
-                    'async', 'await', 'match', 'case'
-                ].join('|')})\\b`,
-               `("""[\\s\\S]*?"""|'''[\\s\\S]*?''')`,
-                `("([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*')`,
-                `(#.*)`,
-                `\\b(${[
-                    'False', 'class', 'finally', 'is', 'return',
-                    'None', 'continue', 'for', 'lambda', 'try',
-                    'True', 'def', 'from', 'nonlocal', 'while',
-                    'and', 'del', 'global', 'not', 'with',
-                    'as', 'elif', 'if', 'or', 'yield',
-                    'assert', 'else', 'import', 'pass',
-                    'break', 'except', 'in', 'raise',
-                    'async', 'await', 'match', 'case'
-                ].join('|')})\\b`,
-                `(\\b\\d+(\\.\\d+)?\\b)`,
-                `([+\\-*/%=&|<>!^~]+)`,
-                // Identifiers
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`
-            ];
-        case 'javascript':
-        case 'react js':
-        case 'node js':
-        case 'express js':
-            return [
-                `\\b(${[
-                    'break', 'case', 'catch', 'class', 'const',
-                    'continue', 'debugger', 'default', 'delete', 'do',
-                    'else', 'export', 'extends', 'finally', 'for',
-                    'function', 'if', 'import', 'in', 'instanceof',
-                    'let', 'new', 'return', 'super', 'switch',
-                    'this', 'throw', 'try', 'typeof', 'var',
-                    'void', 'while', 'with', 'yield', 'await',
-                    'implements', 'interface', 'package',
-                    'private', 'protected', 'public', 'static', 'enum',
-                    'await', 'null', 'true', 'false'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*')|(?:\`(?:[^\\\`\\\\]|\\\\.)*\`))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `(\/(?:\\/(?!\\/)|\*[^*]*\*+(?:[^/*][^*]*\*+)\/))`,
-                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
-            ];
-        case 'bash':
-        case 'shell':
-            return [
-                `\\b(${[
-                    'if', 'then', 'else', 'fi', 'for', 'while', 'do', 'done',
-                    'case', 'esac', 'function', 'in', 'select', 'until', 'declare',
-                    'readonly', 'return', 'continue', 'break', 'export',
-                    'local', 'shift', 'getopts', 'echo', 'printf', 'source',
-                    'alias', 'unalias', 'true', 'false'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `(#.*)`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([;&|<>!(){}[\]])`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\$[a-zA-Z_][a-zA-Z0-9_]*`,
-                `\\$\{?[a-zA-Z_][a-zA-Z0-9_]*\}?`
-            ];
-        case 'c':
-        case 'c++':
-        case 'c#':
-        case 'swift':
-            return [
-                `\\b(${[
-                    'auto', 'break', 'case', 'char', 'const', 'continue', 'default',
-                    'do', 'double', 'else', 'enum', 'extern', 'float', 'for',
-                    'goto', 'if', 'inline', 'int', 'long', 'register', 'restrict',
-                    'return', 'short', 'signed', 'sizeof', 'static', 'struct',
-                    'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile',
-                    'while', 'class', 'public', 'private', 'protected', 'namespace',
-                    'using', 'template', 'typename', 'virtual', 'override', 'impl',
-                    'let', 'var', 'func', 'mut', 'ref', 'as', 'where', 'async',
-                    'await', 'trait', 'impl', 'enum', 'type', 'interface', 'abstract',
-                    'sealed', 'partial', 'delegate', 'event', 'readonly', 'volatile',
-                    'unsafe', 'fixed', 'extern', 'yield', 'dynamic', 'virtual', 'partial'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?|::|->|\.{2,})`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `#include\\s*<[^>]+>`
-            ];
-        case 'css':
-            return [
-                `([.#]?[a-zA-Z_][a-zA-Z0-9_-]*)`,
-                `([a-zA-Z-]+)(?=:)`,
-                `(?<=: )([^;]+)(?=;)`,
-                `(\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(;)`,
-                `([a-zA-Z_][a-zA-Z0-9_-]*)\\(`,
-                `(--[a-zA-Z_][a-zA-Z0-9_-]*)`,
-                `(@[a-zA-Z-]+)`,
-                `(:{2}[a-zA-Z-]+)`
-            ];
-        case 'html':
-            return [
-                `(<\/?[a-zA-Z][a-zA-Z0-9]*\\b)`,
-                `([a-zA-Z-]+)(?==)`,
-                `((?:"[^"]*")|(?:'[^']*'))`,
-                `(<!--[^>]*-->)`,
-                `(<!DOCTYPE[^>]*>)`,
-                `(=)`,
-                `([a-zA-Z_][a-zA-Z0-9_]*)\\(`,
-                `([a-zA-Z_][a-zA-Z0-9_]*)`,
-                `(&[a-zA-Z]+;)`
-            ];
-        case 'typescript':
-            return [
-                `\\b(${[
-                    'abstract', 'any', 'as', 'async', 'await', 'boolean', 'break',
-                    'case', 'catch', 'class', 'const', 'constructor', 'continue',
-                    'debugger', 'declare', 'default', 'delete', 'do', 'else',
-                    'enum', 'export', 'extends', 'false', 'finally', 'for', 'from',
-                    'function', 'if', 'import', 'in', 'instanceof', 'interface',
-                    'is', 'keyof', 'let', 'module', 'namespace', 'never', 'new',
-                    'null', 'number', 'object', 'package', 'private', 'protected',
-                    'public', 'readonly', 'require', 'return', 'string', 'super',
-                    'switch', 'symbol', 'this', 'throw', 'true', 'try', 'type',
-                    'typeof', 'var', 'void', 'while', 'with', 'yield', 'implements',
-                    'type', 'as', 'from', 'of'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*')|(?:\`(?:[^\\\`\\\\]|\\\\.)*\`))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
-            ];
-        case 'php':
-            return [
-                `\\b(${[
-                    'abstract', 'and', 'array', 'as', 'break', 'callable', 'case',
-                    'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default',
-                    'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare',
-                    'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'extends',
-                    'final', 'finally', 'fn', 'for', 'foreach', 'function', 'global',
-                    'goto', 'if', 'implements', 'include', 'include_once', 'instanceof',
-                    'insteadof', 'interface', 'isset', 'list', 'namespace', 'new',
-                    'or', 'print', 'private', 'protected', 'public', 'require',
-                    'require_once', 'return', 'static', 'switch', 'throw', 'trait',
-                    'try', 'unset', 'use', 'var', 'while', 'xor', 'yield',
-                    'bool', 'int', 'float', 'string', 'void', 'iterable', 'object',
-                    'null', 'true', 'false'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/)|(?:#.*))`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `(\\$[a-zA-Z_][a-zA-Z0-9_]*)`,
-                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
-            ];
-        case 'sql':
-            return [
-                `\\b(${[
-                    'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE',
-                    'DROP', 'ALTER', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'FULL',
-                    'ON', 'AS', 'INTO', 'VALUES', 'SET', 'AND', 'OR', 'NOT', 'NULL',
-                    'LIKE', 'BETWEEN', 'EXISTS', 'PRIMARY', 'KEY', 'FOREIGN',
-                    'GROUP', 'BY', 'ORDER', 'HAVING', 'LIMIT', 'OFFSET', 'DISTINCT',
-                    'UNION', 'ALL', 'ANY', 'IN', 'EXCEPT', 'INTERSECT', 'CASE',
-                    'WHEN', 'THEN', 'ELSE', 'END', 'CAST', 'CONVERT', 'ISNULL',
-                    'COALESCE', 'TOP', 'IDENTITY', 'ROW_NUMBER', 'OVER', 'PARTITION',
-                    'BY', 'RANK', 'DENSE_RANK'
-                ].join('|')})\\b`,
-                `(?:'(?:''|[^'])*')`,
-                `(--[^\\n\\r]*)`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `(=|<>|!=|<|>|<=|>=|\\+|\\-|\\*|\\/|%)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `(\\bDATE\\b|\\bINT\\b|\\bVARCHAR\\b|\\bTEXT\\b|\\bBOOLEAN\\b|\\bDECIMAL\\b)`
-            ];
-        case 'monkey c':
-            return [
-                `\\b(${[
-                    'function', 'end', 'if', 'else', 'elseif', 'return', 'for',
-                    'while', 'do', 'repeat', 'until', 'break', 'continue',
-                    'switch', 'case', 'default', 'import', 'export', 'var', 'const',
-                    'let', 'true', 'false', 'null', 'async', 'await', 'struct',
-                    'enum', 'typedef', 'typedefstruct', 'typedefenum'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
-            ];
-        case 'rust':
-            return [
-                `\\b(${[
-                    'as', 'async', 'await', 'break', 'const', 'continue', 'crate',
-                    'dyn', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if',
-                    'impl', 'in', 'let', 'loop', 'match', 'mod', 'move', 'mut',
-                    'pub', 'ref', 'return', 'self', 'static', 'struct', 'super',
-                    'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while',
-                    'yield', 'implements', 'type', 'as', 'from', 'of'
-                ].join('|')})\\b`,
-                `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
-                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
-                `\\b([A-Z][a-zA-Z0-9_]*)\\b`
-            ];
-        default:
-            return null;
-    }
 };

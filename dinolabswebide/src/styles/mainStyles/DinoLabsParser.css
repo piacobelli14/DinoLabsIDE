@@ -1,0 +1,135 @@
+.token {
+    white-space: pre;
+    display: inline;
+    vertical-align: top;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.token.keyword {
+    color: #569CD6;
+    font-weight: bold;
+}
+
+.token.decorator,
+.token.annotation {
+    color: #C586C0;
+}
+
+.token.string {
+    color: #CE9178;
+}
+
+.token.comment {
+    color: #6A9955;
+    font-style: italic;
+}
+
+.token.number {
+    color: #B5CEA8;
+}
+
+.token.operator,
+.token.operator.logical,
+.token.operator.arithmetic,
+.token.operator.assignment,
+.token.operator.comparison {
+    color: #D4D4D4;
+}
+
+.token.function,
+.token.method,
+.token.magic-method {
+    color: #DCDCAA;
+}
+
+.token.variable {
+    color: #9CDCFE;
+}
+
+.token.builtin,
+.token.type,
+.token.type-hint {
+    color: #569CD6;
+}
+
+.token.boolean {
+    color: #D4D4D4;
+}
+
+.token.class-name {
+    color: #4EC9B0;
+}
+
+.token.interface,
+.token.enum,
+.token.struct,
+.token.trait,
+.token.namespace,
+.token.standard-library {
+    color: #A0E1FB;
+}
+
+.token.arrow,
+.token.spread,
+.token.generator {
+    color: #D4D4D4;
+}
+
+.token.nullish,
+.token.optional {
+    color: #569CD6;
+}
+
+.token.jsx-tag {
+    color: #569CD6;
+}
+
+.token.jsx-attribute {
+    color: #9CDCFE;
+}
+
+.token.jsx-string {
+    color: #CE9178;
+}
+
+.token.event-handler {
+    color: #D4D4D4;
+}
+
+.token.filepath,
+.token.memory-address {
+    color: #B5CEA8;
+}
+
+.token.variable-interpolation {
+    color: #9CDCFE;
+}
+
+.token.label {
+    color: #569CD6;
+}
+
+.token.register,
+.token.instruction {
+    color: #D4D4D4;
+}
+
+.token.directive,
+.token.macro,
+.token.lifetime,
+.token.preprocessor {
+    color: #C586C0;
+}
+
+.token.constant {
+    color: #B5CEA8;
+}
+
+.token.builtin {
+    color: #4EC9B0;
+}
+
+.token.standard-library {
+    color: #4EC9B0;
+}

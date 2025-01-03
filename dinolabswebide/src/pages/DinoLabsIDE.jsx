@@ -6,6 +6,7 @@ import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
 import DinoLabsIDESettings from "./DinoLabsAccount/DinoLabsAccountSettings";
 import DinoLabsIDEDebug from "./DinoLabsIDELint/DinoLabsIDELintDebug";
 import "../styles/mainStyles/DinoLabsIDE.css";
+import "../styles/mainStyles/DinoLabsParser.css";
 import "../styles/helperStyles/Tooltip.css";
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
