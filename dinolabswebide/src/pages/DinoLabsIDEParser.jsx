@@ -49,7 +49,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
 
             let tokenHtml = '';
             if (token.type && token.type !== 'space') { 
-                tokenHtml = `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(token.value)}</span>`;
+                tokenHtml = `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(token.value)}</span>`;
             } else { 
                 tokenHtml = `${escapeHtml(token.value)}`;
             }
@@ -74,7 +74,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
 
                     if (beforeMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(beforeMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(beforeMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(beforeMatch)}`;
                         }
@@ -82,14 +82,14 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
 
                     if (matchedText) {
                         const matchedHtml = token.type && token.type !== 'space'
-                            ? `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(matchedText)}</span>`
+                            ? `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(matchedText)}</span>`
                             : `${escapeHtml(matchedText)}`;
                         newTokenHtml += `<span class="searchHighlight">${matchedHtml}</span>`;
                     }
 
                     if (afterMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(afterMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre; overflow-x: auto;">${escapeHtml(afterMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(afterMatch)}`;
                         }
@@ -103,7 +103,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, 
         });
 
         if (lineNumber === activeLineNumber) {
-            highlightedLine = `<span class="activeLine">${highlightedLine}</span>`;
+            highlightedLine = `<span class="activeLine" style="white-space: pre; overflow-x: auto;">${highlightedLine}</span>`;
         }
 
         return highlightedLine;
@@ -497,6 +497,7 @@ export const getTokenPatterns = (language) => {
                 ].join('|')})\\b`,
                 `(\\b\\d+(\\.\\d+)?\\b)`,
                 `([+\\-*/%=&|<>!^~]+)`,
+                // Identifiers
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`
             ];
         case 'javascript':

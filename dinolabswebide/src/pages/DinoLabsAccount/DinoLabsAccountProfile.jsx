@@ -26,7 +26,13 @@ import {
   faBuilding,
   faScroll,
   faCity,
-  faUserTie
+  faUserTie,
+  faGear,
+  faGears,
+  faArrowLeft,
+  faArrowRight,
+  faUpRightFromSquare,
+  faUserGear
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -230,7 +236,54 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                     <div className="dinolabsIDEAccountFunctionalityContainer"> 
                         <div className="dinolabsIDEAccountFunctionalityCellLeading"> 
+                            <div className="dinolabsIDEAccountFunctionalityList">
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        Update My Personal Information 
+                                    </span>
 
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        Update My Team Infomration 
+                                    </span>
+
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        Update My Privacy & Security Preferences 
+                                    </span>
+
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        Edit My Dino Labs IDE Settings
+                                    </span>
+
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        Configure My Keyboard Shortcuts
+                                    </span>
+
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                
+                            </div>
                         </div> 
 
                         <div className="dinolabsIDEAccountFunctionalityCellTrailing"> 

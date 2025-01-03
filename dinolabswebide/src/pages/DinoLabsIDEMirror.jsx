@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useRef, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 
 const DinoLabsIDEMirror = forwardRef(({
@@ -165,11 +167,12 @@ const DinoLabsIDEMirror = forwardRef(({
           style={{
             position: 'absolute',     
             boxSizing: 'border-box',
-            overflow: 'hidden', 
+            overflow: 'auto', 
+            overflowWrap: 'normal',
+            whiteSpace: 'pre',
             pointerEvents: 'none',
             width: '100%',
             height: '100%',
-            whiteSpace: 'pre', 
             lineHeight: `${lineHeight}px`,
           }}
           dangerouslySetInnerHTML={{ __html: highlightedCode }}
@@ -185,7 +188,9 @@ const DinoLabsIDEMirror = forwardRef(({
           style={{ 
             position: 'absolute',
             boxSizing: 'border-box',
-            overflow: 'auto', 
+            overflow: 'auto',
+            overflowWrap: 'normal',
+            whiteSpace: 'pre',
             resize: 'none',
             border: 'none',
             outline: 'none',  
