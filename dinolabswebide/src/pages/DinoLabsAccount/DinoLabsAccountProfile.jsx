@@ -30,10 +30,6 @@ import {
   faScroll,
   faCity,
   faUserTie,
-  faGear,
-  faGears,
-  faArrowLeft,
-  faArrowRight,
   faUpRightFromSquare,
   faUserGear,
   faAddressCard,
@@ -77,21 +73,20 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
     const [selectedState, setSelectedState] = useState("none");
 
-    const [displayEmail, setDisplayEmail] = useState(true); 
-    const [displayPhone, setDisplayPhone] = useState(true);
-    
-    const [displayTeamID, setDisplayTeamID] = useState(true); 
-    const [displayTeamEmail, setDisplayTeamEmail] = useState(true); 
-    const [displayTeamPhone, setDisplayTeamPhone] = useState(true);
-    const [displayTeamAdminStatus, setDisplayTeamAdminStatus] = useState(true); 
-    const [displayTeamRole, setDisplayTeamRole] = useState(true); 
+    const [displayEmail, setDisplayEmail] = useState(false); 
+    const [displayPhone, setDisplayPhone] = useState(false);
+    const [displayTeamID, setDisplayTeamID] = useState(false); 
+    const [displayTeamEmail, setDisplayTeamEmail] = useState(false); 
+    const [displayTeamPhone, setDisplayTeamPhone] = useState(false);
+    const [displayTeamAdminStatus, setDisplayTeamAdminStatus] = useState(false); 
+    const [displayTeamRole, setDisplayTeamRole] = useState(false); 
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 await Promise.all([
-                    fetchUserInfo(userID), 
-                    fetchPersonalUsageData(userID)
+                    fetchUserInfo(userID, organizationID), 
+                    fetchPersonalUsageData(userID, organizationID)
                 ]);
                 setIsLoaded(true);
             } catch (error) {
@@ -126,7 +121,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         }
     }, [organizationID, userID]);
 
-    const fetchUserInfo = async (userID) => {
+    const fetchUserInfo = async (userID, organizationID) => {
         try {
             const token = localStorage.getItem("token");
             const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/user-info", {
@@ -137,6 +132,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                 },
                 body: JSON.stringify({
                     userID,
+                    organizationID
                 }),
             });
 
@@ -161,13 +157,20 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             setOrganizationEmail(data[0].organizationemail);  
             setOrganizationPhone(data[0].organizationphone)
             setOrganizationImage(data[0].organizationimage); 
+            setDisplayEmail(data[0].showpersonalemail);
+            setDisplayPhone(data[0].showpersonalphone)
+            setDisplayTeamID(data[0].showteamid); 
+            setDisplayTeamEmail(data[0].showteamemail); 
+            setDisplayTeamPhone(data[0].showteamphone); 
+            setDisplayTeamAdminStatus(data[0].showteamadminstatus); 
+            setDisplayTeamRole(data[0].showteamrole); 
 
         } catch (error) {
             return; 
         }
     };
 
-    const fetchPersonalUsageData = async (userID) => {
+    const fetchPersonalUsageData = async (userID, organizationID) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -180,7 +183,10 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({ userID }),
+                body: JSON.stringify({ 
+                    userID, 
+                    organizationID
+                }),
             });
     
             if (!response.ok) {
@@ -202,9 +208,36 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             return; 
         }
     };
-    
-    
 
+    const updateShowColumnValue = async (userID, organizationID, showColumn, showColumnValue) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                throw new Error("Token not found in localStorage");
+            }
+    
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-show-values", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ 
+                    userID, 
+                    organizationID, 
+                    showColumn, 
+                    showColumnValue
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data: ${response.statusText}`);
+            }
+        } catch (error) {
+            return; 
+        }
+    };
+    
     return (
         <div className="dinolabsIDESettingsContainer">
             <button className="dinolabsIDESettingsCloseButton" onClick={onClose}>
@@ -416,6 +449,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayEmail} onChange={() => { 
                                                                     setDisplayEmail(!displayEmail); 
+                                                                    updateShowColumnValue(userID, organizationID, "showpersonalemail", !displayEmail); 
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -437,6 +471,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayPhone} onChange={() => { 
                                                                     setDisplayPhone(!displayPhone); 
+                                                                    updateShowColumnValue(userID, organizationID, "showpersonalphone", !displayPhone);  
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -469,6 +504,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayTeamID} onChange={() => { 
                                                                     setDisplayTeamID(!displayTeamID); 
+                                                                    updateShowColumnValue(userID, organizationID, "showteamid", !displayTeamID); 
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -490,6 +526,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayTeamEmail} onChange={() => { 
                                                                     setDisplayTeamEmail(!displayTeamEmail); 
+                                                                    updateShowColumnValue(userID, organizationID, "showteamemail", !displayTeamEmail);
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -511,6 +548,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayTeamPhone} onChange={() => { 
                                                                     setDisplayTeamPhone(!displayTeamPhone); 
+                                                                    updateShowColumnValue(userID, organizationID, "showteamphone", !displayTeamPhone);
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -532,6 +570,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayTeamAdminStatus} onChange={() => { 
                                                                     setDisplayTeamAdminStatus(!displayTeamAdminStatus); 
+                                                                    updateShowColumnValue(userID, organizationID, "showteamadminstatus", !displayTeamAdminStatus);
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -553,6 +592,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <label className="consoleSwitch">
                                                                 <input type="checkbox" checked={displayTeamRole} onChange={() => { 
                                                                     setDisplayTeamRole(!displayTeamRole); 
+                                                                    updateShowColumnValue(userID, organizationID, "showteamrole", !displayTeamRole);
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
                                                             </label>
@@ -575,9 +615,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                             )}
                         </div> 
                     </div>
-
-                    
-
                 </div>  
             )}
 
