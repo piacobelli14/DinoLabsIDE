@@ -237,11 +237,11 @@
       align-items: flex-start;
       overflow: scroll; 
       width: 100%; 
-      background-color: rgba(0,0,0,0.8);
+      background-color: rgba(0,0,0,0.4);
    }
 
    .dinolabsIDEAccountFunctionalityButton {
-      background-color: rgba(0,0,0,0.8);
+      background-color: rgba(0,0,0,0.4);
       width: 100%; 
       display: flex; 
       justify-content: space-between; 

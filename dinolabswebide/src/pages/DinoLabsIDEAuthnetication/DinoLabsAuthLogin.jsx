@@ -121,7 +121,7 @@ const Login = () => {
                     {isEmail && (
                         <button
                             className="loginInputButton"
-                            style={{ backgroundColor: "#290C4C", borderColor: "#290C4C", "margin": 0 }}
+                            style={{ backgroundColor: "#4E3270", "margin": 0 }}
                             onClick={handleLogin}
                         >
                             <label className="loginInputText">Sign In</label>

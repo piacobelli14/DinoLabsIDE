@@ -1,3 +1,4 @@
+
 import { getLineNumber } from "./DinoLabsIDELintUtils";
 
 export function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {

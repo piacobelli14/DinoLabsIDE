@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import "../../styles/mainStyles/AccountStyles/DinoLabsIDEAccount.css";
+import "../../styles/mainStyles/DinoLabsIDEPlots.css";
 import "../../styles/helperStyles/LoadingSpinner.css";
 import useIsTouchDevice from "../../TouchDevice"; 
+import LinePlot from "../../helpers/PlottingHelpers/LineHelper.jsx";
 import useAuth from "../../UseAuth"; 
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
@@ -32,7 +34,14 @@ import {
   faArrowLeft,
   faArrowRight,
   faUpRightFromSquare,
-  faUserGear
+  faUserGear,
+  faAddressCard,
+  faUsers,
+  faLock,
+  faUsersGear,
+  faKeyboard,
+  faPallet,
+  faPalette
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -60,6 +69,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     const [organizationEmail, setOrganizationEmail] = useState(""); 
     const [organizationPhone, setOrganizationPhone] = useState(""); 
     const [organizationImage, setOrganizationImage] = useState(""); 
+    const [personalUsageByDay, setPersonalUsageByDay] = useState([]);
     
 
     const [selectedState, setSelectedState] = useState("none");
@@ -69,6 +79,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             try {
                 await Promise.all([
                     fetchUserInfo(userID), 
+                    fetchPersonalUsageData(userID)
                 ]);
                 setIsLoaded(true);
             } catch (error) {
@@ -143,6 +154,44 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             return; 
         }
     };
+
+    const fetchPersonalUsageData = async (userID) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                throw new Error("Token not found in localStorage");
+            }
+    
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ userID }),
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data: ${response.statusText}`);
+            }
+    
+            const data = await response.json();
+            if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
+                throw new Error("Unexpected data structure from the backend");
+            }
+
+            setPersonalUsageByDay(
+                data.adminSigninInfo.map((item) => ({
+                    day: new Date(item.day), 
+                    count: parseInt(item.usage_count, 0),
+                }))
+            );
+        } catch (error) {
+            return; 
+        }
+    };
+    
+    
 
     return (
         <div className="dinolabsIDESettingsContainer">
@@ -248,7 +297,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                 <button className="dinolabsIDEAccountFunctionalityButton"> 
                                     <span>
-                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        <FontAwesomeIcon icon={faUsersGear}/>
                                         Update My Team Infomration 
                                     </span>
 
@@ -257,7 +306,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                 <button className="dinolabsIDEAccountFunctionalityButton"> 
                                     <span>
-                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        <FontAwesomeIcon icon={faLock}/>
                                         Update My Privacy & Security Preferences 
                                     </span>
 
@@ -266,7 +315,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                 <button className="dinolabsIDEAccountFunctionalityButton"> 
                                     <span>
-                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        <FontAwesomeIcon icon={faCode}/>
                                         Edit My Dino Labs IDE Settings
                                     </span>
 
@@ -275,8 +324,17 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
                                 <button className="dinolabsIDEAccountFunctionalityButton"> 
                                     <span>
-                                        <FontAwesomeIcon icon={faUserGear}/>
+                                        <FontAwesomeIcon icon={faKeyboard}/>
                                         Configure My Keyboard Shortcuts
+                                    </span>
+
+                                    <FontAwesomeIcon icon={faUpRightFromSquare}/>
+                                </button> 
+
+                                <button className="dinolabsIDEAccountFunctionalityButton"> 
+                                    <span>
+                                        <FontAwesomeIcon icon={faPalette}/>
+                                        Change My Editor Theme
                                     </span>
 
                                     <FontAwesomeIcon icon={faUpRightFromSquare}/>
@@ -285,9 +343,13 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                 
                             </div>
                         </div> 
-
+                        
+                    
                         <div className="dinolabsIDEAccountFunctionalityCellTrailing"> 
-                            
+                            <LinePlot
+                                plotType="adminAdministratorSigninsPlot"
+                                data={personalUsageByDay}
+                            />
                         </div> 
                     </div>
 
