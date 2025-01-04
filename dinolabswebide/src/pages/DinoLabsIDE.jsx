@@ -558,20 +558,20 @@ const DinoLabsIDE = () => {
     }, []);
   };
 
-  const renderFiles = (files, parentPath = "") => {
+  const renderFiles = (files, parentPath = "", isRoot = true) => {
     const filteredFiles = searchQuery ? filterFiles(files, searchQuery) : files;
-
+  
     return filteredFiles.map((file) => {
       const directoryKey = file.fullPath || `${parentPath}/${file.name}`;
       if (file.type === "directory") {
         const isOpen = openedDirectories[directoryKey];
         return (
-          <li key={directoryKey}>
+          <React.Fragment key={directoryKey}>
             <div
               onClick={() => toggleDirectory(directoryKey)}
-              className="directoryListItem"
+              className={`directoryListItem ${isRoot ? "rootDirectory" : ""}`}
             >
-              <FontAwesomeIcon icon={isOpen ? faFolderOpen : faFolder} /> 
+              <FontAwesomeIcon icon={isOpen ? faFolderOpen : faFolder} />
               {file.name}
               {unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] && (
                 <Tippy content="Unsaved" theme="tooltip-light">
@@ -580,16 +580,18 @@ const DinoLabsIDE = () => {
               )}
             </div>
             {isOpen && file.files.length > 0 && (
-              <ul className="directoryListNestedFiles">{renderFiles(file.files, directoryKey)}</ul>
+              <ul className={`directoryListNestedFiles ${isRoot ? "" : "nestedList"}`}>
+                {renderFiles(file.files, directoryKey, false)}
+              </ul>
             )}
-          </li>
+          </React.Fragment>
         );
       }
-      
+  
       return (
-        <li 
-          key={file.fullPath || `${parentPath}/${file.name}`} 
-          className={`directoryListItem ${unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] ? "dinolabsIDEFileUnsaved" : ""}`} 
+        <li
+          key={file.fullPath || `${parentPath}/${file.name}`}
+          className={`directoryListItem ${unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] ? "dinolabsIDEFileUnsaved" : ""}`}
           onClick={() => handleFileClick(file, parentPath)}
         >
           {unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] && (
@@ -602,7 +604,7 @@ const DinoLabsIDE = () => {
         </li>
       );
     });
-  };
+  };  
 
   const closeTab = (paneIndex, tabId) => {
     if (unsavedChanges[tabId]) {
