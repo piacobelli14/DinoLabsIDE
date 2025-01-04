@@ -41,7 +41,8 @@ const languageImageMap = {
   C: "c.svg",
   "C++": "c++.svg",
   "C#": "csharp.svg", 
-  "Monkey C": "monkeyc.svg"
+  "Monkey C": "monkeyc.svg", 
+  Markdown: "markdown.svg"
 };
 
 const DinoLabsIDEMarkdown = forwardRef(({

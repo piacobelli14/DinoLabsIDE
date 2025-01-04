@@ -12,37 +12,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import {
   faCode,
-  faFile,
-  faFileAlt,
-  faFileArchive,
-  faFileAudio,
-  faFileCsv,
-  faFileExcel,
-  faFileImage,
-  faFilePdf,
-  faFilePowerpoint,
-  faFileVideo,
-  faFileWord,
-  faFolder,
-  faFolderOpen, 
+  faAngleRight,
+  faAngleDown, 
   faWandMagicSparkles,
   faPlusSquare,
   faMinusSquare,
-  faGear,
   faUserCircle,
   faRetweet,
   faA,
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
   faChevronDown,
-  faChevronRight,
-  faCopy,
-  faExclamationTriangle,
-  faSquare,
-  faList,
-  faArrowDown,
-  faArrowUp,
-  faXmark
+  faChevronRight
 } from "@fortawesome/free-solid-svg-icons";
 
 const highlightResultSnippet = (text, searchTerm, isCaseSensitive) => {
@@ -78,38 +59,16 @@ const extensionToLanguageMap = {
   h: "C++",
   cs: "C#",
   mc: "Monkey C", 
-  mcgen: "Monkey C"
+  mcgen: "Monkey C", 
+  sql: "SQL", 
+  asm: "Assembly", 
+  md: "Markdown", 
+  txt: "Text"
 };
 
 const extensionToIconMap = {
-  txt: faFileAlt,
-  md: faFileAlt,
-  csv: faFileCsv,
-  png: faFileImage,
-  jpg: faFileImage,
-  jpeg: faFileImage,
-  gif: faFileImage,
-  svg: faFileImage,
-  bmp: faFileImage,
-  mp3: faFileAudio,
-  wav: faFileAudio,
-  flac: faFileAudio,
-  mp4: faFileVideo,
-  mkv: faFileVideo,
-  avi: faFileVideo,
-  mov: faFileVideo,
-  zip: faFileArchive,
-  rar: faFileArchive,
-  tar: faFileArchive,
-  gz: faFileArchive,
-  doc: faFileWord,
-  docx: faFileWord,
-  xls: faFileExcel,
-  xlsx: faFileExcel,
-  ppt: faFilePowerpoint,
-  pptx: faFilePowerpoint,
-  pdf: faFilePdf,
-  default: faFile,
+  
+  
 };
 
 const extensionToImageMap = {
@@ -129,24 +88,64 @@ const extensionToImageMap = {
   h: "c++.svg",
   cs: "csharp.svg",
   mc: "monkeyc.svg", 
-  mcgen: "monkeyc.svg"
+  mcgen: "monkeyc.svg", 
+  md: "markdown.svg", 
+  asm: "assembly.svg", 
+  sql: "sql.svg", 
+  pem: "securityExtensions.svg", 
+  txt: "txtExtension.svg", 
+  csv: "csvExtension.svg", 
+  pdf: "pdfExtension.svg",
+  doc: "wordExtension.svg",
+  docx: "wordExtension.svg",
+  xls: "excelExtension.svg",
+  xlsx: "excelExtension.svg",
+  ppt: "powerpointExtension.svg",
+  pptx: "powerpointExtension.svg",
+  png: "imageExtension.svg",
+  jpg: "imageExtension.svg",
+  jpeg: "imageExtension.svg",
+  svg: "imageExtension.svg",
+  bmp: "imageExtension.svg",
+  mp3: "audioExtension.svg",
+  wav: "audioExtension.svg",
+  flac: "audioExtension.svg",
+  gif: "videoExtension.svg",
+  mp4: "videoExtension.svg",
+  mkv: "videoExtension.svg",
+  avi: "videoExtension.svg",
+  mov: "videoExtension.svg",
+  zip: "archiveExtensions.svg",
+  rar: "archiveExtensions.svg",
+  tar: "archiveExtensions.svg",
+  gz: "archiveExtensions.svg",
+
+  git: "githubExtension.svg", 
+
+
+  default: "unknownExtension.svg"
 };
 
 const supportedExtensions = [
   'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml', 
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 
-  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc', 'mcgen'
+  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc', 'mcgen', 'asm', 'sql', 
+  'md', 'txt'
 ];
 
 const getFileIcon = (filename) => {
   const parts = filename.split('.');
-  if (parts.length === 1) return <FontAwesomeIcon icon={extensionToIconMap['default']} />;
-  
-  const extension = parts.pop().toLowerCase();
-  if (extensionToImageMap.hasOwnProperty(extension)) {
-    return <img src={`/language-images/${extensionToImageMap[extension]}`} alt={`${extension} icon`} className="dinolabsIDEFileIcon" />;
-  }
-  return <FontAwesomeIcon icon={extensionToIconMap[extension] || extensionToIconMap['default']} />;
+  const extension = parts.length > 1 ? parts.pop().toLowerCase() : 'default';
+
+  const imageName = extensionToImageMap[extension] || extensionToImageMap['default'];
+
+  return (
+    <img
+      src={`/language-images/${imageName}`}
+      alt={`${extension} icon`}
+      className="dinolabsIDEFileIcon"
+    />
+  );
 };
 
 const DinoLabsIDE = () => {
@@ -571,7 +570,7 @@ const DinoLabsIDE = () => {
               onClick={() => toggleDirectory(directoryKey)}
               className={`directoryListItem ${isRoot ? "rootDirectory" : ""}`}
             >
-              <FontAwesomeIcon icon={isOpen ? faFolderOpen : faFolder} />
+              <FontAwesomeIcon icon={isOpen ? faAngleDown : faAngleRight} />
               {file.name}
               {unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] && (
                 <Tippy content="Unsaved" theme="tooltip-light">
@@ -1356,7 +1355,7 @@ const DinoLabsIDE = () => {
                 <div className="leadingDirectory"> 
                 </div>
                 <button className="leadingDirectoryButton" onClick={handleLoadRepository}>
-                  <FontAwesomeIcon icon={faFolderOpen} />
+                  <FontAwesomeIcon icon={faAngleDown} />
                   Import a Directory
                 </button>
 
@@ -1413,7 +1412,7 @@ const DinoLabsIDE = () => {
                           onClick={() => setIsRootOpen(!isRootOpen)}
                           className="directoryListItem"
                         >
-                          <FontAwesomeIcon icon={isRootOpen ? faFolderOpen : faFolder} /> 
+                          <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} /> 
                           {rootDirectoryName}
                           {unsavedChanges[rootDirectoryName] && (
                             <Tippy content="Unsaved" theme="tooltip-light">
@@ -1713,7 +1712,7 @@ const DinoLabsIDE = () => {
                               </label>
                               <div className="vevktorIDEStartButtonWrapper"> 
                                 <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}> 
-                                  <FontAwesomeIcon icon={faFolderOpen}/>
+                                  <FontAwesomeIcon icon={faAngleDown}/>
                                   Import a Directory
                                 </button>
                                 <button className="dinolabsIDEStartButton" onClick={handleFileLoad}> 
