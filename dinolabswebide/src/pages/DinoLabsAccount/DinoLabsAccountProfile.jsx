@@ -80,6 +80,8 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     const [displayTeamAdminStatus, setDisplayTeamAdminStatus] = useState(false); 
     const [displayTeamRole, setDisplayTeamRole] = useState(false); 
 
+
+
     const defaultKeyBinds = {
         save: 's',
         undo: 'z',
@@ -87,20 +89,31 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         cut: 'x',
         copy: 'c',
         paste: 'v',
-        selectAll: 'a',
         search: 'f',
+        selectAll: 'a',
     };
 
+    const keyBindDisplayNames = {
+        save: "Save File",
+        undo: "Undo Last Action",
+        redo: "Redo Last Action",
+        cut: "Cut",
+        copy: "Copy",
+        paste: "Paste",
+        search: "Search",
+        selectAll: "Select All",
+    };
+    
+
     const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
-    const [isKeyBindsLoaded, setIsKeyBindsLoaded] = useState(false);
+    const [isEditing, setIsEditing] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 await Promise.all([
                     fetchUserInfo(userID, organizationID), 
-                    fetchPersonalUsageData(userID, organizationID),
-                    fetchUserKeyBinds(userID, organizationID) 
+                    fetchPersonalUsageData(userID, organizationID)
                 ]);
                 setIsLoaded(true);
             } catch (error) {
@@ -113,38 +126,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         }
     }, [userID, loading, token]);
 
-    const fetchUserKeyBinds = async (userID, organizationID) => {
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/get-user-keybinds", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    userID,
-                    organizationID
-                }),
-            });
-
-            if (response.status !== 200) {
-                throw new Error(`Internal Server Error`);
-            }
-
-            const data = await response.json();
-            if (data.keyBinds) {
-                setKeyBinds({ ...defaultKeyBinds, ...data.keyBinds });
-            } else {
-                setKeyBinds(defaultKeyBinds);
-            }
-            setIsKeyBindsLoaded(true);
-        } catch (error) {
-            console.error("Error fetching key bindings:", error);
-            setKeyBinds(defaultKeyBinds);
-            setIsKeyBindsLoaded(true);
-        }
-    };
 
     const fetchUserInfo = async (userID, organizationID) => {
         try {
@@ -189,7 +170,11 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             setDisplayTeamPhone(data[0].showteamphone); 
             setDisplayTeamAdminStatus(data[0].showteamadminstatus); 
             setDisplayTeamRole(data[0].showteamrole); 
-
+            if (data[0].userkeybinds) {
+                setKeyBinds({ ...defaultKeyBinds, ...data[0].userkeybinds });
+            } else {
+                setKeyBinds(defaultKeyBinds);
+            }
         } catch (error) {
             console.error("Error fetching user info:", error);
             return; 
@@ -265,6 +250,10 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             return; 
         }
     };
+
+    const getKeyBindDisplayName = (action) => {
+        return keyBindDisplayNames[action] || action;
+    };    
 
     const handleKeyBindChange = (action, newKey) => {
         if (newKey.length !== 1) {
@@ -342,7 +331,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                 Close Profile
             </button>
             
-            {isLoaded && isKeyBindsLoaded && (
+            {isLoaded && (
                 <div className="dinolabsIDEAccountWrapper">
                     <div className="dinolabsIDEAccountInformationContainer"> 
                         <div className="dinolabsIDEPersonalWrapper"> 
@@ -692,31 +681,52 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
 
                                     {selectedState === "shortcutManagement" && (
-                                        <div className="dinolabsIDEShortcutManagement">
-                                            <h3>Configure Your Keyboard Shortcuts</h3>
-                                            <form>
+                                        <>
+                                            <div className="dinolabsIDESettingsButtonWrapper">
                                                 {Object.entries(keyBinds).map(([action, key]) => (
-                                                    <div key={action} className="shortcutRow">
-                                                        <label htmlFor={action} className="shortcutLabel">
-                                                            {action.charAt(0).toUpperCase() + action.slice(1)}:
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id={action}
-                                                            name={action}
-                                                            maxLength="1"
-                                                            value={key}
-                                                            onChange={(e) => handleKeyBindChange(action, e.target.value)}
-                                                            className="shortcutInput"
-                                                            title={`Press a single key for ${action}`}
-                                                        />
-                                                    </div>
+                                                    <button key={action} className="dinolabsIDESettingsButtonLine">
+                                                        <span> 
+                                                            {getKeyBindDisplayName(action)}
+                                                        </span>
+                                                        
+                                                        <span> 
+                                                            <button className="dinolabsIDESettingsKeyIcon"> 
+                                                                ⌘
+                                                            </button>
+                                                            {isEditing === action ? (
+                                                                <select 
+                                                                    className="dinolabsIDESettingsKeyIcon"
+                                                                    value={key}
+                                                                    onChange={(e) => {
+                                                                        handleKeyBindChange(action, e.target.value);
+                                                                        setIsEditing(null);
+                                                                    }}
+                                                                    onBlur={() => setIsEditing(null)}
+                                                                >
+                                                                    {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890').map(letter => (
+                                                                        <option key={letter} value={letter}>
+                                                                            {letter}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            ) : (
+                                                                <button 
+                                                                    className="dinolabsIDESettingsKeyIcon"
+                                                                    onClick={() => setIsEditing(action)}
+                                                                > 
+                                                                    {key}
+                                                                </button>
+                                                            )}
+                                                        </span>
+                                                    </button>
                                                 ))}
-                                            </form>
-                                            <div className="dinolabsIDESettingsFootnoteWrapper">
-                                                Press the desired key for each action and ensure no duplicates exist.
                                             </div>
-                                        </div>
+
+                                            <div className="dinolabsIDESettingsFootnoteWrapper">
+                                                Your keyboard shortcuts should update automatically. If you don't see your changes reflected immediately, please refresh the browser or try signing in again. 
+                                            </div>
+
+                                        </>
                                     )}
 
                                 </div>
