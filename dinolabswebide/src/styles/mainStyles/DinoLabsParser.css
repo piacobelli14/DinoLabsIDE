@@ -70,6 +70,12 @@
     color: #A0E1FB;
 }
 
+.token.token.magic-method { 
+    color: #FF00FF; 
+}
+
+.token.preprocessor { color: #FF00FF; font-weight: bold; }
+
 .token.arrow,
 .token.spread,
 .token.generator {

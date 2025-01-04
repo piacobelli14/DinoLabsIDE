@@ -77,7 +77,7 @@ const extensionToLanguageMap = {
   c: "C",
   cpp: "C++",
   h: "C++",
-  cs: "C#",
+  cs: "C#"
 };
 
 const extensionToIconMap = {
@@ -132,7 +132,7 @@ const extensionToImageMap = {
 const supportedExtensions = [
   'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml', 
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 
-  'cs', 'graphql', 'gq', 'hal', 'hs'
+  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc'
 ];
 
 const getFileIcon = (filename) => {

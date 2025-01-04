@@ -108,6 +108,7 @@ export const getTokenPatterns = (language) => {
             ];
         case 'c':
             return [
+                `(#\\s*(?:include|define|ifndef|ifdef|endif|else|elif|if|pragma|undef|line|error|warning)\\b[^\n]*)`,
                 `\\b(${[
                     'auto', 'break', 'case', 'char', 'const', 'continue', 'default',
                     'do', 'double', 'else', 'enum', 'extern', 'float', 'for',
@@ -124,6 +125,9 @@ export const getTokenPatterns = (language) => {
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `#include\\s*<[^>]+>`,
+                `#ifndef\\s+\w+`,
+                `#define\\s+\w+`,
+                `#endif`,
                 `\\b(${[
                     'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
                     'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
@@ -139,6 +143,7 @@ export const getTokenPatterns = (language) => {
             ];
         case 'c++':
             return [
+                `(#\\s*(?:include|define|ifndef|ifdef|endif|else|elif|if|pragma|undef|line|error|warning)\\b[^\n]*)`,
                 `\\b(${[
                     'auto', 'break', 'case', 'char', 'const', 'continue', 'default',
                     'do', 'double', 'else', 'enum', 'extern', 'float', 'for',
@@ -160,6 +165,9 @@ export const getTokenPatterns = (language) => {
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `#include\\s*<[^>]+>`,
+                `#ifndef\\s+\w+`,
+                `#define\\s+\w+`,
+                `#endif`,
                 `\\b(${[
                     'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
                     'std', 'vector', 'map', 'unordered_map', 'string', 'iostream', 'cin', 'cout'
@@ -175,6 +183,7 @@ export const getTokenPatterns = (language) => {
             ];
         case 'c#':
             return [
+                `(#\\s*(?:include|define|ifndef|ifdef|endif|else|elif|if|pragma|undef|line|error|warning)\\b[^\n]*)`,
                 `\\b(${[
                     'abstract', 'and', 'as', 'base', 'bool', 'break', 'byte', 'case',
                     'catch', 'char', 'checked', 'class', 'const', 'continue', 'decimal',
@@ -631,7 +640,12 @@ export const tokenTypes = {
         'function',
         'variable',
         'preprocessor',
-        'boolean',
+        'preprocessor',
+        'preprocessor',
+        'preprocessor',
+        'builtin',
+        'builtin',
+        'builtin',
         'type',
         'class-name',
         'interface',
@@ -660,7 +674,12 @@ export const tokenTypes = {
         'function',
         'variable',
         'preprocessor',
-        'boolean',
+        'preprocessor',
+        'preprocessor',
+        'preprocessor',
+        'builtin',
+        'builtin',
+        'builtin',
         'type',
         'class-name',
         'template',
@@ -690,7 +709,12 @@ export const tokenTypes = {
         'function',
         'variable',
         'preprocessor',
-        'boolean',
+        'preprocessor',
+        'preprocessor',
+        'preprocessor',
+        'builtin',
+        'builtin',
+        'builtin',
         'type',
         'class-name',
         'namespace',
@@ -846,7 +870,9 @@ export const tokenTypes = {
         'function',
         'variable',
         'builtin',
-        'boolean',
+        'builtin',
+        'builtin',
+        'type',
         'class-name',
         'namespace',
         'constant',
