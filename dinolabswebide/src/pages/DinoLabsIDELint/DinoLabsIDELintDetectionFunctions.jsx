@@ -6,11 +6,77 @@ export function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
     const structureStack = [];
+    let inTemplateString = false;
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let inRegex = false;
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const prevChar = i > 0 ? line[i - 1] : null;
 
-        for (let char of line) {
+            if (inTemplateString) {
+                if (char === '`' && prevChar !== '\\') {
+                    inTemplateString = false;
+                }
+                continue;
+            }
+
+            if (inSingleQuote) {
+                if (char === "'" && prevChar !== '\\') {
+                    inSingleQuote = false;
+                }
+                continue;
+            }
+
+            if (inDoubleQuote) {
+                if (char === '"' && prevChar !== '\\') {
+                    inDoubleQuote = false;
+                }
+                continue;
+            }
+
+            if (inRegex) {
+                if (char === '/' && prevChar !== '\\') {
+                    inRegex = false;
+                }
+                continue;
+            }
+
+            if (char === '`') {
+                inTemplateString = true;
+                continue;
+            }
+
+            if (char === "'" && prevChar !== '\\') {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (char === '"' && prevChar !== '\\') {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (char === '/' && line[i + 1] === '/' && !inRegex) {
+                break;
+            }
+
+            if (char === '/' && line[i + 1] === '*' && !inRegex) {
+                i += 1;
+                while (i < line.length && !(line[i] === '*' && line[i + 1] === '/')) {
+                    i++;
+                }
+                i++;
+                continue;
+            }
+
+            if (char === '/' && (/[a-zA-Z0-9_$]/.test(line[i - 1]) || line[i - 1] === ')')) {
+                inRegex = true;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -27,24 +93,52 @@ export function detectJavaScriptSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^import\s+.+from\s+['"].+['"];?/,
+            /^export\s+/,
+            /^function\s+[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(/,
+            /^{\s*$/,
+            /^}\s*$/,
+            /^if\s*\(.+\)\s*{?$/,
+            /^else\s*{?$/,
+            /^for\s*\(.+\)\s*{?$/,
+            /^while\s*\(.+\)\s*{?$/,
+            /^switch\s*\(.+\)\s*{?$/,
+            /^case\s+.*:/, /^default\s*:/,
+            /^try\s*{?$/,
+            /^catch\s*\(.+\)\s*{?$/,
+            /^finally\s*{?$/,
+            /^class\s+[a-zA-Z_$][a-zA-Z0-9_$]*\s*{?/,
+            /^new\s+[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(/,
+            /^else\s+if\s*\(.+\)\s*{?$/,
+            /^do\s*{?$/,
+            /^while\s*\(.+\)\s*;?$/,
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
-            !trimmed.endsWith("{") &&
-            !trimmed.endsWith("}") &&
-            !trimmed.endsWith(":") &&
-            !trimmed.endsWith(",") &&
+            !inTemplateString &&
+            !inSingleQuote &&
+            !inDoubleQuote &&
+            !inRegex &&
+            !isExempt &&
             trimmed !== "" &&
             !trimmed.startsWith("//") &&
             !trimmed.startsWith("/*") &&
             !trimmed.startsWith("*") &&
             !trimmed.startsWith("*/")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at the end of the statement.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                detectedProblems.push({
+                    type: "Missing Semicolon",
+                    severity: "warning",
+                    message: `Missing semicolon at the end of the statement.`,
+                    line: index + 1,
+                });
+            }
         }
 
         const varMatch = trimmed.match(/(?:const|let|var)\s+([a-zA-Z_$][0-9a-zA-Z_$]*)/);
@@ -122,13 +216,13 @@ export function detectJavaScriptSemanticErrors(codeStr, detectedProblems) {
             returnFound = true;
         }
 
-        const funcMatch = trimmed.match(/function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/);
+        const funcMatch = trimmed.match(/function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/);
         if (funcMatch) {
             const funcName = funcMatch[1];
             declaredFunctions.push({ name: funcName, line: index + 1 });
         }
 
-        const usageMatches = line.match(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g);
+        const usageMatches = line.match(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g);
         if (usageMatches) {
             usageMatches.forEach((funcName) => {
                 usedFunctions.add(funcName);
@@ -164,22 +258,24 @@ export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
     let indentSize = null;
     let indentChar = null;
     let mixedIndent = false;
-    const multiLineOpeners = [":"];
+    const multiLineOpeners = ["(", "[", "{"];
     let inMultiLineString = false;
     const multiLineStringDelim = ["'''", '"""'];
     let multiLineStringStartLine = -1;
     const structureStack = [];
+    let lineContinuation = false;
+    let defStatement = false;
 
     lines.forEach((line, index) => {
         const trimmed = line.trim();
 
         if (inMultiLineString) {
-            if (
-                line.includes(
-                    multiLineStringDelim.find((delim) => line.includes(delim))
-                )
-            ) {
-                inMultiLineString = false;
+            const delim = multiLineStringDelim.find((d) => line.includes(d));
+            if (delim) {
+                const endIndex = line.indexOf(delim, multiLineStringDelim.findIndex(d => d === delim) + delim.length);
+                if (endIndex !== -1) {
+                    inMultiLineString = false;
+                }
             }
             return;
         } else {
@@ -187,24 +283,29 @@ export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
                 trimmed.startsWith(delim)
             );
             if (multiLineDelimFound) {
-                if (
-                    !trimmed.endsWith(multiLineDelimFound) ||
-                    trimmed === multiLineDelimFound
-                ) {
+                const endDelimIndex = line.indexOf(multiLineDelimFound, multiLineDelimFound.length);
+                if (endDelimIndex === -1 || endDelimIndex === multiLineDelimFound.length - 1) {
                     inMultiLineString = true;
                     multiLineStringStartLine = index + 1;
-                    detectedProblems.push({
-                        type: "Syntax Error",
-                        severity: "error",
-                        message: `Unterminated multi-line string literal.`,
-                        line: multiLineStringStartLine,
-                    });
-                    return;
                 }
             }
         }
 
         if (trimmed === "" || trimmed.startsWith("#")) return;
+
+        if (lineContinuation) {
+            if (trimmed.endsWith("\\")) {
+                lineContinuation = true;
+            } else {
+                lineContinuation = false;
+            }
+            return;
+        }
+
+        if (trimmed.endsWith("\\")) {
+            lineContinuation = true;
+            return;
+        }
 
         const match = line.match(/^[ \t]*/);
         const leadingWhitespace = match ? match[0] : "";
@@ -280,13 +381,25 @@ export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
         }
 
         if (multiLineOpeners.includes(trimmed.charAt(trimmed.length - 1))) {
-            structureStack.push(":");
+            structureStack.push(trimmed.charAt(trimmed.length - 1));
+        }
+
+        const defMatch = trimmed.match(/^def\b/);
+        if (defMatch) {
+            defStatement = true;
         }
 
         if (
             /^(if|elif|else|for|while|def|class|try|except|with)\b/.test(trimmed) &&
-            !trimmed.endsWith(":")
+            !trimmed.endsWith(":") &&
+            structureStack.length === 0
         ) {
+            const openParens = (trimmed.match(/\(/g) || []).length;
+            const closeParens = (trimmed.match(/\)/g) || []).length;
+            if (openParens > closeParens) {
+                return;
+            }
+
             detectedProblems.push({
                 type: "Syntax Error",
                 severity: "error",
@@ -313,14 +426,27 @@ export function detectPythonSyntaxErrors(codeStr, detectedProblems) {
         if (currentIndentLevel < expectedIndentLevel && structureStack.length > 0) {
             structureStack.pop();
         }
+
+        if (defStatement && structureStack.length === 0 && trimmed.endsWith(":")) {
+            defStatement = false;
+        }
     });
 
-    structureStack.forEach(() => {
+    if (inMultiLineString) {
         detectedProblems.push({
             type: "Syntax Error",
             severity: "error",
-            message: `Unmatched opening ':'.`,
-            line: null,
+            message: `Unterminated multi-line string literal.`,
+            line: multiLineStringStartLine,
+        });
+    }
+
+    structureStack.forEach((unmatched) => {
+        detectedProblems.push({
+            type: "Syntax Error",
+            severity: "error",
+            message: `Unmatched opening '${unmatched}'.`,
+            line: unmatched.line,
         });
     });
 }
@@ -420,11 +546,40 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
     const structureStack = [];
+    let inSingleLineComment = false;
+    let inMultiLineComment = false;
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        let i = 0;
+        while (i < line.length) {
+            const char = line[i];
+            const nextChar = i < line.length - 1 ? line[i + 1] : null;
 
-        for (let char of line) {
+            if (inSingleLineComment) {
+                break;
+            }
+
+            if (inMultiLineComment) {
+                if (char === '*' && nextChar === '/') {
+                    inMultiLineComment = false;
+                    i += 2;
+                    continue;
+                }
+                i++;
+                continue;
+            }
+
+            if (char === '/' && nextChar === '/') {
+                inSingleLineComment = true;
+                break;
+            }
+
+            if (char === '/' && nextChar === '*') {
+                inMultiLineComment = true;
+                i += 2;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -439,10 +594,42 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
                     });
                 }
             }
+            i++;
         }
 
+        inSingleLineComment = false;
+
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^#include\s+/,
+            /^using\s+/,
+            /^public:/, /^private:/, /^protected:/,
+            /^case\s+.*:/, /^default\s*:/,
+            /^namespace\s+/, /^class\s+/, /^struct\s+/,
+            /^enum\s+/, /^interface\s+/, /^delegate\s+/,
+            /^function\s+/,
+            /^template\s+/,
+            /^typedef\s+/,
+            /^if\s*\(.+\)\s*{?$/,
+            /^else\s*{?$/,
+            /^for\s*\(.+\)\s*{?$/,
+            /^while\s*\(.+\)\s*{?$/,
+            /^switch\s*\(.+\)\s*{?$/,
+            /^do\s*{?$/,
+            /^try\s*{?$/,
+            /^catch\s*\(.+\)\s*{?$/,
+            /^finally\s*{?$/,
+            /^public\s+(class|interface)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*{?/,
+            /^new\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(/,
+            /^else\s+if\s*\(.+\)\s*{?$/,
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
+            !inMultiLineComment &&
+            !isExempt &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":") &&
@@ -453,12 +640,14 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
             !trimmed.startsWith("*") &&
             !trimmed.startsWith("*/")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at the end of the statement.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                detectedProblems.push({
+                    type: "Missing Semicolon",
+                    severity: "warning",
+                    message: `Missing semicolon at the end of the statement.`,
+                    line: index + 1,
+                });
+            }
         }
 
         const varMatch = trimmed.match(/(?:int|float|double|char|bool|string|var|auto)\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
@@ -557,11 +746,53 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "[", "("];
     const multiLineClosers = ["}", "]", ")"];
     const structureStack = [];
+    let inSingleLineComment = false;
+    let inMultiLineComment = false;
+    let inString = false;
+    let stringChar = '';
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        let i = 0;
+        while (i < line.length) {
+            const char = line[i];
+            const nextChar = i < line.length - 1 ? line[i + 1] : null;
 
-        for (let char of line) {
+            if (inMultiLineComment) {
+                if (char === '*' && nextChar === '/') {
+                    inMultiLineComment = false;
+                    i += 2;
+                    continue;
+                }
+                i++;
+                continue;
+            }
+
+            if (inString) {
+                if (char === stringChar && line[i - 1] !== '\\') {
+                    inString = false;
+                }
+                i++;
+                continue;
+            }
+
+            if (char === '/' && nextChar === '/') {
+                inSingleLineComment = true;
+                break;
+            }
+
+            if (char === '/' && nextChar === '*') {
+                inMultiLineComment = true;
+                i += 2;
+                continue;
+            }
+
+            if (char === '"' || char === "'") {
+                inString = true;
+                stringChar = char;
+                i++;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -576,23 +807,59 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
                     });
                 }
             }
+            i++;
         }
 
+        inSingleLineComment = false;
+
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^#include\s+/,
+            /^use\s+/,
+            /^namespace\s+/,
+            /^class\s+/, /^interface\s+/, /^trait\s+/, /^abstract\s+/, /^final\s+/,
+            /^function\s+/,
+            /^extends\s+/, /^implements\s+/,
+            /^const\s+/, /^define\s*\(/,
+            /^echo\s+/, /^print\s+/,
+            /^if\s*\(.+\)\s*{?$/,
+            /^else\s*{?$/,
+            /^for\s*\(.+\)\s*{?$/,
+            /^foreach\s*\(.+\)\s*{?$/,
+            /^while\s*\(.+\)\s*{?$/,
+            /^switch\s*\(.+\)\s*{?$/,
+            /^do\s*{?$/,
+            /^try\s*{?$/,
+            /^catch\s*\(.+\)\s*{?$/,
+            /^finally\s*{?$/,
+            /^case\s+.*:/, /^default\s*:/,
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
+            !inString &&
+            !inMultiLineComment &&
+            !isExempt &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":") &&
+            !trimmed.endsWith(",") &&
             trimmed !== "" &&
             !trimmed.startsWith("//") &&
-            !trimmed.startsWith("#")
+            !trimmed.startsWith("/*") &&
+            !trimmed.startsWith("*") &&
+            !trimmed.startsWith("*/")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at end of SQL statement.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                detectedProblems.push({
+                    type: "Missing Semicolon",
+                    severity: "warning",
+                    message: `Missing semicolon at end of SQL statement.`,
+                    line: index + 1,
+                });
+            }
         }
 
         const varMatch = trimmed.match(/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
@@ -697,11 +964,38 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
     const multiLineClosers = ["}", ")", "]"];
     const structureStack = [];
     const lines = codeStr.split(/\r?\n/);
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const prevChar = i > 0 ? line[i - 1] : null;
 
-        for (let char of line) {
+            if (inSingleQuote) {
+                if (char === "'" && prevChar !== '\\') {
+                    inSingleQuote = false;
+                }
+                continue;
+            }
+
+            if (inDoubleQuote) {
+                if (char === '"' && prevChar !== '\\') {
+                    inDoubleQuote = false;
+                }
+                continue;
+            }
+
+            if (char === "'") {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (char === '"') {
+                inDoubleQuote = true;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -718,60 +1012,54 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
-        const validCommands = new Set([
-            "echo",
-            "cd",
-            "ls",
-            "pwd",
-            "mkdir",
-            "rm",
-            "rmdir",
-            "touch",
-            "cp",
-            "mv",
-            "cat",
-            "grep",
-            "find",
-            "chmod",
-            "chown",
-            "sudo",
-            "apt",
-            "yum",
-            "brew",
-            "ping",
-            "curl",
-            "wget",
-            "alias",
-            "unalias",
-            "if",
-            "then",
-            "fi",
-            "for",
-            "while",
-            "do",
-            "done",
-            "case",
-            "esac",
-            "select",
-            "function",
-            "return",
-            "export",
-            "source",
-            "readonly",
-        ]);
+        const trimmed = line.trim();
 
-        if (trimmed !== "" && !trimmed.startsWith("#")) {
-            const command = trimmed.split(/\s+/)[0];
-            if (!validCommands.has(command)) {
-                const isWithinStructure = structureStack.length > 0;
-                if (!isWithinStructure) {
-                    detectedProblems.push({
-                        type: "Syntax Error",
-                        severity: "error",
-                        message: `Invalid command '${command}'.`,
-                        line: index + 1,
-                    });
-                }
+        const exclusionPatterns = [
+            /^#!/,
+            /^export\s+/,
+            /^alias\s+/,
+            /^function\s+/,
+            /^if\s+/, /^else\s*/, /^elif\s*/, /^fi$/,
+            /^for\s+/, /^while\s*/, /^until\s*/, /^do$/, /^done$/,
+            /^case\s+/, /^esac$/,
+            /^select\s+/, /^until\s*/, /^then$/, /^elif\s*/,
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
+        if (
+            !inSingleQuote &&
+            !inDoubleQuote &&
+            !isExempt &&
+            trimmed !== "" &&
+            !trimmed.startsWith("#") &&
+            !trimmed.startsWith("&&") &&
+            !trimmed.startsWith("||") &&
+            !trimmed.endsWith(";") &&
+            !trimmed.endsWith("{") &&
+            !trimmed.endsWith("}") &&
+            !trimmed.endsWith(":")
+        ) {
+            detectedProblems.push({
+                type: "Missing Semicolon",
+                severity: "warning",
+                message: `Missing semicolon in complex command.`,
+                line: index + 1,
+            });
+        }
+
+        const varMatch = trimmed.match(/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
+        if (varMatch) {
+            const varName = varMatch[1];
+            const regex = new RegExp(`\\$${varName}\\b`, "g");
+            const occurrences = (codeStr.match(regex) || []).length;
+            if (occurrences === 1) {
+                detectedProblems.push({
+                    type: "Unused Variable",
+                    severity: "info",
+                    message: `Variable '$${varName}' is assigned but never used.`,
+                    line: index + 1,
+                });
             }
         }
 
@@ -809,11 +1097,30 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "("];
     const multiLineClosers = ["}", ")"];
     const structureStack = [];
+    let inComment = false;
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        let i = 0;
+        while (i < line.length) {
+            const char = line[i];
+            const nextChar = i < line.length - 1 ? line[i + 1] : null;
 
-        for (let char of line) {
+            if (inComment) {
+                if (char === '*' && nextChar === '/') {
+                    inComment = false;
+                    i += 2;
+                    continue;
+                }
+                i++;
+                continue;
+            }
+
+            if (char === '/' && nextChar === '*') {
+                inComment = true;
+                i += 2;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -828,25 +1135,37 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
                     });
                 }
             }
+            i++;
         }
 
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^@media\s+/, /^@import\s+/, /^@font-face\s+/, /^@keyframes\s+/, /^@supports\s+/, /^@namespace\s+/
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
+            !inComment &&
+            !isExempt &&
             trimmed !== "" &&
             !trimmed.startsWith("/*") &&
             !trimmed.startsWith("*") &&
             !trimmed.startsWith("*/") &&
             !trimmed.startsWith("//") &&
-            !trimmed.endsWith(";") &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at end of declaration.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                detectedProblems.push({
+                    type: "Missing Semicolon",
+                    severity: "warning",
+                    message: `Missing semicolon at end of declaration.`,
+                    line: index + 1,
+                });
+            }
         }
 
         const propertyMatch = trimmed.match(/^([a-zA-Z-]+)\s*:/);
@@ -1359,11 +1678,27 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
     const structureStack = [];
+    let inString = false;
+    let stringChar = '';
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const prevChar = i > 0 ? line[i - 1] : null;
 
-        for (let char of line) {
+            if (inString) {
+                if (char === stringChar && prevChar !== '\\') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (char === '"' || char === "'") {
+                inString = true;
+                stringChar = char;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -1380,15 +1715,27 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^use\s+/,
+            /^fn\s+/,
+            /^struct\s+/, /^enum\s+/, /^trait\s+/, /^impl\s+/, /^mod\s+/, /^pub\s+/, /^const\s+/, /^static\s+/, /^type\s+/,
+            /^pub\s+fn\s+/, /^pub\s+struct\s+/, /^pub\s+enum\s+/, /^pub\s+trait\s+/
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
+            !inString &&
+            !isExempt &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(",") &&
             trimmed !== "" &&
             !trimmed.startsWith("//")
         ) {
-            if (!/^(fn|let|if|else|for|while|match|return)\b/.test(trimmed)) {
+            if (!trimmed.endsWith("}")) {
                 detectedProblems.push({
                     type: "Missing Semicolon",
                     severity: "warning",
@@ -1508,11 +1855,27 @@ export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
     const structureStack = [];
+    let inString = false;
+    let stringChar = '';
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const prevChar = i > 0 ? line[i - 1] : null;
 
-        for (let char of line) {
+            if (inString) {
+                if (char === stringChar && prevChar !== '\\') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (char === '"' || char === "'") {
+                inString = true;
+                stringChar = char;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -1529,23 +1892,37 @@ export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^import\s+/, /^struct\s+/, /^class\s+/, /^enum\s+/, /^protocol\s+/, /^extension\s+/
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
+            !inString &&
+            !isExempt &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":") &&
+            !trimmed.endsWith(",") &&
             trimmed !== "" &&
             !trimmed.startsWith("//")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at the end of the statement.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                if (!trimmed.endsWith("}")) {
+                    detectedProblems.push({
+                        type: "Missing Semicolon",
+                        severity: "warning",
+                        message: `Missing semicolon at the end of the statement.`,
+                        line: index + 1,
+                    });
+                }
+            }
         }
 
-        const varMatch = trimmed.match(/var\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*[:=]/);
+        const varMatch = trimmed.match(/var\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
         if (varMatch) {
             const varName = varMatch[1];
             const regex = new RegExp(`\\b${varName}\\b`, "g");
@@ -1558,6 +1935,15 @@ export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
                     line: index + 1,
                 });
             }
+        }
+
+        if (/switch\s*\(/.test(trimmed)) {
+            detectedProblems.push({
+                type: "Switch Statement",
+                severity: "info",
+                message: `Switch statement detected. Ensure all cases are handled properly.`,
+                line: index + 1,
+            });
         }
     });
 
@@ -1650,11 +2036,27 @@ export function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
     const multiLineOpeners = ["{", "(", "["];
     const multiLineClosers = ["}", ")", "]"];
     const structureStack = [];
+    let inString = false;
+    let stringChar = '';
 
     lines.forEach((line, index) => {
-        const trimmed = line.trim();
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const prevChar = i > 0 ? line[i - 1] : null;
 
-        for (let char of line) {
+            if (inString) {
+                if (char === stringChar && prevChar !== '\\') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (char === '"' || char === "'") {
+                inString = true;
+                stringChar = char;
+                continue;
+            }
+
             if (multiLineOpeners.includes(char)) {
                 structureStack.push({ char, line: index + 1 });
             } else if (multiLineClosers.includes(char)) {
@@ -1671,20 +2073,34 @@ export function detectMonkeyCSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
+        const trimmed = line.trim();
+
+        const exclusionPatterns = [
+            /^import\s+/, /^struct\s+/, /^class\s+/, /^enum\s+/, /^protocol\s+/, /^extension\s+/
+        ];
+
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+
         if (
-            !trimmed.endsWith(";") &&
+            !inString &&
+            !isExempt &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":") &&
+            !trimmed.endsWith(",") &&
             trimmed !== "" &&
             !trimmed.startsWith("//")
         ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at the end of the statement.`,
-                line: index + 1,
-            });
+            if (!trimmed.endsWith(";")) {
+                if (!trimmed.endsWith("}")) {
+                    detectedProblems.push({
+                        type: "Missing Semicolon",
+                        severity: "warning",
+                        message: `Missing semicolon at the end of the statement.`,
+                        line: index + 1,
+                    });
+                }
+            }
         }
 
         const varMatch = trimmed.match(/var\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
