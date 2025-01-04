@@ -68,10 +68,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     const [organizationEmail, setOrganizationEmail] = useState(""); 
     const [organizationPhone, setOrganizationPhone] = useState(""); 
     const [organizationImage, setOrganizationImage] = useState(""); 
-    const [personalUsageByDay, setPersonalUsageByDay] = useState([]);
-
-    const [selectedState, setSelectedState] = useState("none");
-
     const [displayEmail, setDisplayEmail] = useState(false); 
     const [displayPhone, setDisplayPhone] = useState(false);
     const [displayTeamID, setDisplayTeamID] = useState(false); 
@@ -79,9 +75,8 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     const [displayTeamPhone, setDisplayTeamPhone] = useState(false);
     const [displayTeamAdminStatus, setDisplayTeamAdminStatus] = useState(false); 
     const [displayTeamRole, setDisplayTeamRole] = useState(false); 
-
-
-
+    const [personalUsageByDay, setPersonalUsageByDay] = useState([]);
+    const [selectedState, setSelectedState] = useState("none");
     const defaultKeyBinds = {
         save: 's',
         undo: 'z',
@@ -92,7 +87,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         search: 'f',
         selectAll: 'a',
     };
-
     const keyBindDisplayNames = {
         save: "Save File",
         undo: "Undo Last Action",
@@ -103,10 +97,11 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         search: "Search",
         selectAll: "Select All",
     };
-    
-
     const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
-    const [isEditing, setIsEditing] = useState(null);
+    const [isEditingKeyBinds, setIsEditingKeyBinds] = useState(null);
+    const [zoomLevel, setZoomLevel] = useState(1); 
+    const [fontSize, setFontSize] = useState(14);
+    const [colorTheme, setColorTheme] = useState("default"); 
 
     useEffect(() => {
         const fetchData = async () => {
@@ -125,6 +120,28 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             fetchData();
         }
     }, [userID, loading, token]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLoaded(false);
+            setScreenSize(window.innerWidth);
+            setResizeTrigger(prev => !prev);
+
+            setTimeout(() => setIsLoaded(true), 300);
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    useEffect(() => {
+        if (!organizationID || organizationID === userID) {
+            setSelectedState("permissions");
+        } else {
+            setSelectedState("none");
+        }
+    }, [organizationID, userID]);
 
 
     const fetchUserInfo = async (userID, organizationID) => {
@@ -175,6 +192,9 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             } else {
                 setKeyBinds(defaultKeyBinds);
             }
+            setZoomLevel(data[0].userzoomlevel); 
+            setFontSize(data[0].userfontsize); 
+            setColorTheme(data[0].usercolortheme); 
         } catch (error) {
             console.error("Error fetching user info:", error);
             return; 
@@ -257,7 +277,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
 
     const handleKeyBindChange = (action, newKey) => {
         if (newKey.length !== 1) {
-            alert("Please enter a single character for the key bind.");
             return;
         }
 
@@ -273,10 +292,10 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         const updatedKeyBinds = { ...keyBinds, [action]: lowerNewKey };
         setKeyBinds(updatedKeyBinds);
 
-        saveUserKeyBinds(updatedKeyBinds);
+        saveUserKeyBinds(userID, organizationID, updatedKeyBinds);
     };
 
-    const saveUserKeyBinds = async (updatedKeyBinds) => {
+    const saveUserKeyBinds = async (userID, organizationID, updatedKeyBinds) => {
         try {
             const token = localStorage.getItem("token");
             const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-keybinds", {
@@ -295,36 +314,39 @@ const DinoLabsIDEAccount = ({ onClose }) => {
             if (!response.ok) {
                 throw new Error(`Failed to save key binds: ${response.statusText}`);
             }
-
-            alert("Key bindings updated successfully.");
         } catch (error) {
             console.error("Error saving key binds:", error);
             alert("Failed to save key bindings. Please try again.");
         }
     };
 
-    useEffect(() => {
-        const handleResize = () => {
-            setIsLoaded(false);
-            setScreenSize(window.innerWidth);
-            setResizeTrigger(prev => !prev);
-
-            setTimeout(() => setIsLoaded(true), 300);
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    useEffect(() => {
-        if (!organizationID || organizationID === userID) {
-            setSelectedState("permissions");
-        } else {
-            setSelectedState("none");
+    const saveUserPreferences = async (userID, organizationID, fontSize, zoomLevel, colorTheme) => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-preferences", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ 
+                    userID, 
+                    organizationID, 
+                    fontSize, 
+                    zoomLevel, 
+                    colorTheme
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to save preferences");
+            }
+        } catch (error) {
+            console.error("Error saving preferences:", error);
+            alert("Failed to save preferences. Please try again.");
         }
-    }, [organizationID, userID]);
-
+    };
+    
     return (
         <div className="dinolabsIDESettingsContainer">
             <button className="dinolabsIDESettingsCloseButton" onClick={onClose}>
@@ -679,6 +701,56 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                         </>
                                     )}
 
+                                    {selectedState === "settingsManagement" && (
+                                        <>
+                                            <div className="dinolabsIDESettingsButtonWrapper">
+                                                <button className="dinolabsIDESettingsButtonLine">
+                                                    <span>Set Default Font Size</span>
+
+                                                    <span>
+                                                    <input
+                                                        type="number"
+                                                        value={fontSize}
+                                                        min="10"
+                                                        max="30"
+                                                        step="1"
+                                                        onChange={(e) => {
+                                                                let newSize = Number(e.target.value);
+                                                                setFontSize(newSize);
+                                                                saveUserPreferences(userID, organizationID, newSize, zoomLevel, colorTheme);
+                                                            }
+                                                        }
+                                                        className="dinolabsIDESettingsInput"
+                                                    />
+                                                    <label className="dinolabsIDESettingsToggleLabel">{fontSize}px</label>
+                                                    </span>
+                                                </button>
+
+                                                <button className="dinolabsIDESettingsButtonLine">
+                                                    <span>Set Default Zoom Level</span>
+
+                                                    <span>
+                                                    <input
+                                                        type="range"
+                                                        value={zoomLevel}
+                                                        min="0.5"
+                                                        max="3"
+                                                        step="0.1"
+                                                        onChange={(e) => setZoomLevel(Number(e.target.value))} 
+                                                        onMouseUp={(e) => saveUserPreferences(userID, organizationID, fontSize, Number(e.target.value), colorTheme)} 
+                                                        onTouchEnd={(e) => saveUserPreferences(userID, organizationID, fontSize, zoomLevel, colorTheme)} 
+                                                        className="dinolabsIDESettingsSlider"
+                                                    />
+                                                    <label className="dinolabsIDESettingsToggleLabel">{(zoomLevel * 100).toFixed(0)}%</label>
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            <div className="dinolabsIDESettingsFootnoteWrapper">
+                                                Your preference changes should be saved automatically. If you don't see your changes saved automatically, try refreshing the browser or signing in again.
+                                            </div>
+                                        </>
+                                    )}
 
                                     {selectedState === "shortcutManagement" && (
                                         <>
@@ -693,15 +765,15 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             <button className="dinolabsIDESettingsKeyIcon"> 
                                                                 ⌘
                                                             </button>
-                                                            {isEditing === action ? (
+                                                            {isEditingKeyBinds === action ? (
                                                                 <select 
                                                                     className="dinolabsIDESettingsKeyIcon"
                                                                     value={key}
                                                                     onChange={(e) => {
                                                                         handleKeyBindChange(action, e.target.value);
-                                                                        setIsEditing(null);
+                                                                        setIsEditingKeyBinds(null);
                                                                     }}
-                                                                    onBlur={() => setIsEditing(null)}
+                                                                    onBlur={() => setIsEditingKeyBinds(null)}
                                                                 >
                                                                     {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890').map(letter => (
                                                                         <option key={letter} value={letter}>
@@ -712,7 +784,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                             ) : (
                                                                 <button 
                                                                     className="dinolabsIDESettingsKeyIcon"
-                                                                    onClick={() => setIsEditing(action)}
+                                                                    onClick={() => setIsEditingKeyBinds(action)}
                                                                 > 
                                                                     {key}
                                                                 </button>
@@ -729,6 +801,93 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                         </>
                                     )}
 
+                                    {selectedState === "themeManagement" && (
+                                        <>
+                                            <div className="dinolabsIDESettingsButtonWrapper">
+                                                <button
+                                                    className="dinolabsIDESettingsButtonLine"
+                                                    onClick={() => {
+                                                        setColorTheme("default");
+                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "default");
+                                                    }}
+                                                >
+                                                    <span>
+                                                        Default Theme
+                                                        <span className="dinolabsIDESettingsThemeIndicator">
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                        </span>
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={colorTheme === "default"}
+                                                        className="dinolabsIDESettingsCheckbox"
+                                                        onChange={() => {
+                                                            setColorTheme("default");
+                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "default");
+                                                        }}
+                                                    />
+                                                </button>
+
+                                                <button
+                                                    className="dinolabsIDESettingsButtonLine"
+                                                    onClick={() => {
+                                                        setColorTheme("dark");
+                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "dark");
+                                                    }}
+                                                >
+                                                    <span>
+                                                        Dark Theme
+                                                        <span className="dinolabsIDESettingsThemeIndicator">
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                        </span>
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={colorTheme === "dark"}
+                                                        className="dinolabsIDESettingsCheckbox"
+                                                        onChange={() => {
+                                                            setColorTheme("dark");
+                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "dark");
+                                                        }}
+                                                    />
+                                                </button>
+
+                                                <button
+                                                    className="dinolabsIDESettingsButtonLine"
+                                                    onClick={() => {
+                                                        setColorTheme("light");
+                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "light");
+                                                    }}
+                                                >
+                                                    <span>
+                                                        Light Theme
+                                                        <span className="dinolabsIDESettingsThemeIndicator">
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                        </span>
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={colorTheme === "light"}
+                                                        className="dinolabsIDESettingsCheckbox"
+                                                        onChange={() => {
+                                                            setColorTheme("light");
+                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "light");
+                                                        }}
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            <div className="dinolabsIDESettingsFootnoteWrapper">
+                                                Your theme changes should save automatically. If you don't see your changes saved automatically, try refreshing the browser or signing in again.
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div> 

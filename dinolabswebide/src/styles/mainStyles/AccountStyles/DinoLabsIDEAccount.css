@@ -346,7 +346,7 @@
       font-size: 0.8vw; 
       font-weight: 700; 
       color: #c0c0c0; 
-      width: 1.5vw;
+      width: 2.5vw;
       white-space: nowrap;
       overflow: scroll; 
    }
@@ -389,4 +389,64 @@
       border: none; 
       outline: none; 
    }
+
+   .dinolabsIDESettingsInput {
+      padding: 0.4vw 0.8vw; 
+      background-color: #222222;
+      font-size: 0.9vw; 
+      font-weight: 700;
+      color: #c0c0c0; 
+      cursor: text; 
+      border: 0.2vh solid #c0c0c0; 
+      border-radius: 0.2rem; 
+      box-shadow: 0 0 2px rgba(255,255,255,0.6);
+   }
+
+   .dinolabsIDESettingsInput:hover {
+      opacity: 0.6; 
+   }
+
+   .dinolabsIDESettingsSlider {
+      transition: opacity 0.2s;
+      accent-color: #5C2BE2;
+      max-width: 8vw; 
+   }
+
+   .dinolabsIDESettingsSlider::-webkit-slider-thumb {
+      accent-color: #5C2BE2;
+      cursor: pointer; 
+   }
+
+   .dinolabsIDESettingsSlider::-moz-range-thumb {
+      accent-color: #5C2BE2;
+      cursor: pointer; 
+   }
+
+   .dinolabsIDESettingsSlider::-ms-thumb {
+      accent-color: #5C2BE2;
+      cursor: pointer;
+   }
+
+   .dinolabsIDESettingsCheckbox {
+      accent-color: #5C2BE2;
+   }
+
+   .dinolabsIDESettingsThemeIndicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
+  
+  .dinolabsIDESettingsThemeIndicatorDot {
+      width: 0.8vw;
+      height: 0.8vw;
+      border-radius: 50%; 
+      border: 0.2vh solid #ccc; 
+  }
+  
+
+
+   
+
+
 }
