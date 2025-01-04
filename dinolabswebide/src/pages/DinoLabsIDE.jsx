@@ -3,7 +3,6 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
-import DinoLabsIDESettings from "./DinoLabsAccount/DinoLabsAccountSettings";
 import DinoLabsIDEDebug from "./DinoLabsIDELint/DinoLabsIDELintDebug";
 import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/mainStyles/DinoLabsParser.css";
@@ -77,7 +76,9 @@ const extensionToLanguageMap = {
   c: "C",
   cpp: "C++",
   h: "C++",
-  cs: "C#"
+  cs: "C#",
+  mc: "Monkey C", 
+  mcgen: "Monkey C"
 };
 
 const extensionToIconMap = {
@@ -127,12 +128,14 @@ const extensionToImageMap = {
   cpp: "c++.svg",
   h: "c++.svg",
   cs: "csharp.svg",
+  mc: "monkeyc.svg", 
+  mcgen: "monkeyc.svg"
 };
 
 const supportedExtensions = [
   'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml', 
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 
-  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc'
+  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc', 'mcgen'
 ];
 
 const getFileIcon = (filename) => {
@@ -167,7 +170,6 @@ const DinoLabsIDE = () => {
   const panesRef = useRef(panes);
   const editorRefs = useRef({}); 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSettingsOpen, setIsSettigsOpen] = useState(false); 
   const [isAccountOpen, setIsAccountOpen] = useState(false); 
   const [unsavedChanges, setUnsavedChanges] = useState({});
   const [originalContents, setOriginalContents] = useState({});
@@ -1555,15 +1557,6 @@ const DinoLabsIDE = () => {
                       <FontAwesomeIcon icon={faUserCircle}/>
                     </button>
                   </Tippy> 
-
-                  <Tippy content={"Settings"} theme="tooltip-light">
-                    <button
-                      className="leadingDirectoryZoomButton"
-                      onClick={() => setIsSettigsOpen(!isSettingsOpen)}
-                    > 
-                      <FontAwesomeIcon icon={faGear}/>
-                    </button>
-                  </Tippy>
                 </div>
             </div>
           </div>
@@ -1575,7 +1568,7 @@ const DinoLabsIDE = () => {
             style={{ width: `${contentWidth}%` }}
             ref={contentRef} 
           >
-            {(!isSettingsOpen && !isAccountOpen) && (
+            {(!isAccountOpen) && (
               <div className="topIDEControlBarWrapper">
                 {panes.map((pane, paneIndex) => (
                   <React.Fragment key={`pane-wrapper-${paneIndex}`}>
@@ -1649,7 +1642,7 @@ const DinoLabsIDE = () => {
               </div>
             )}
             
-            {(!isSettingsOpen && !isAccountOpen) && (
+            {(!isAccountOpen) && (
               <div
                 className="dinolabsIDEMarkdownWrapper"
                 style={{ 
@@ -1747,7 +1740,7 @@ const DinoLabsIDE = () => {
               </div>
             )}
 
-            {hasOpenFile && (!isSettingsOpen && !isAccountOpen) && (
+            {hasOpenFile && (!isAccountOpen) && (
               <>
                 <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
                 <div
@@ -1765,12 +1758,8 @@ const DinoLabsIDE = () => {
               </>
             )}
 
-            {(!isSettingsOpen && !isAccountOpen) && (
+            {(!isAccountOpen) && (
               <div className="bottomIDEControlBar" />
-            )}
-
-            {isSettingsOpen && (
-              <DinoLabsIDESettings onClose={() => setIsSettigsOpen(false)} />
             )}
 
             {isAccountOpen && (

@@ -1,4 +1,3 @@
-// swift.js
 import { getLineNumber } from "../DinoLabsIDELintUtils";
 
 export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
@@ -51,27 +50,6 @@ export function detectSwiftSyntaxErrors(codeStr, detectedProblems) {
 
         const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
 
-        if (
-            !inString &&
-            !isExempt &&
-            !trimmed.endsWith("{") &&
-            !trimmed.endsWith("}") &&
-            !trimmed.endsWith(":") &&
-            !trimmed.endsWith(",") &&
-            trimmed !== "" &&
-            !trimmed.startsWith("//")
-        ) {
-            if (!trimmed.endsWith(";")) {
-                if (!trimmed.endsWith("}")) {
-                    detectedProblems.push({
-                        type: "Missing Semicolon",
-                        severity: "warning",
-                        message: `Missing semicolon at the end of the statement.`,
-                        line: index + 1,
-                    });
-                }
-            }
-        }
 
         const varMatch = trimmed.match(/var\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
         if (varMatch) {

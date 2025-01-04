@@ -62,15 +62,13 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
             trimmed !== "" &&
             !trimmed.startsWith("//")
         ) {
-            if (!trimmed.endsWith(";")) {
-                if (!trimmed.endsWith("}")) {
-                    detectedProblems.push({
-                        type: "Missing Semicolon",
-                        severity: "warning",
-                        message: `Missing semicolon at end of statement.`,
-                        line: index + 1,
-                    });
-                }
+            if (!trimmed.endsWith("}")) {
+                detectedProblems.push({
+                    type: "Missing Semicolon",
+                    severity: "warning",
+                    message: `Missing semicolon at end of statement.`,
+                    line: index + 1,
+                });
             }
         }
 
