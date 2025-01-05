@@ -45,9 +45,9 @@ const languageImageMap = {
   Rust: "rust.svg", 
   Bash: "bash.svg", 
   Shell: "shell.svg", 
-  XML: "xml.svg", 
+  SQL: "sql.svg",
   Markdown: "markdown.svg",
-  Text: "txtExtension.svg" 
+  Text: "txtExtension.svg" , 
 };
 
 const DinoLabsIDEMarkdown = forwardRef(({
@@ -76,9 +76,12 @@ const DinoLabsIDEMarkdown = forwardRef(({
   fileHandle,
   isGlobalSearchActive,
   lintProblems,
+  keyBinds,
+  colorTheme
 }, ref) => {
   const lineNumberRef = useRef(null);
   const lineNumbersContentRef = useRef(null);
+  const lineHeight = 24; 
   const textareaRef = useRef(null);
   const preRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -93,7 +96,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
   const [currentLanguage, setCurrentLanguage] = useState(detectedLanguage || "Unknown");
   const [visibleStartLine, setVisibleStartLine] = useState(0);
   const [visibleEndLine, setVisibleEndLine] = useState(0);
-  const [lineHeight, setLineHeight] = useState(24); 
   const [containerHeight, setContainerHeight] = useState(400);
   const buffer = 5;
   const [isSearchOpenInternal, setIsSearchOpenInternal] = useState(isSearchOpen || false); 
@@ -211,46 +213,47 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const modifier = isMac ? event.metaKey : event.ctrlKey;
 
     if (modifier) {
-      switch (event.key.toLowerCase()) {
-        case 's': 
+      const key = event.key.toLowerCase();
+      switch (key) {
+        case keyBinds.save: 
           event.preventDefault();
           handleSave();
           break;
-        case 'z':
+        case keyBinds.undo: 
           event.preventDefault();
           handleUndo();
           break;
-        case 'y':
+        case keyBinds.redo: 
           event.preventDefault();
           handleRedo();
           break;
-        case 'x':
+        case keyBinds.cut:
           event.preventDefault();
           handleCut();
           break;
-        case 'c':
+        case keyBinds.copy: 
           event.preventDefault();
           handleCopy();
           break;
-        case 'v':
+        case keyBinds.paste:
           event.preventDefault();
           handlePaste();
           break;
-        case 'a':
+        case keyBinds.selectAll: 
           event.preventDefault();
           if (textareaRef.current) {
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(0, viewCode.length);
           }
           break;
-        case 'f':
+        case keyBinds.search: 
           event.preventDefault();
           openSearch();
           break;
         default:
           break;
       }
-    }
+    }  
 
     if (event.key === "Tab") {
       event.preventDefault();
@@ -979,8 +982,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
     };
   }, [lineHeight, containerHeight, viewCode, collapsedLines]);
 
-  const localSearchDisabled = !!isGlobalSearchActive;
-
   return (
     <div className="codeEditorContainer" style={{ fontFamily: 'monospace', height: '100%', width: '100%' }}>
       
@@ -1297,7 +1298,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
           handleSearch={handleSearch}
           handleReplace={handleReplace}
           handleReplaceAll={handleReplaceAll}
-          lineHeight={lineHeight}
           containerHeight={containerHeight}
           buffer={buffer}
           visibleStartLine={visibleStartLine}
@@ -1326,6 +1326,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
           fileHandle={fileHandle}
           editorId={editorId} 
           ref={mirrorRef}
+          lineHeight={lineHeight}
         />
       ) : (
         <div className="dinolabsIDEUnsupportedWrapper">

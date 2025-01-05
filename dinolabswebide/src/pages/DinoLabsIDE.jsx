@@ -7,6 +7,7 @@ import DinoLabsIDEDebug from "./DinoLabsIDELint/DinoLabsIDELintDebug";
 import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/mainStyles/DinoLabsParser.css";
 import "../styles/helperStyles/Tooltip.css";
+import useAuth from "../UseAuth"; 
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
@@ -119,10 +120,7 @@ const extensionToImageMap = {
   rar: "archiveExtensions.svg",
   tar: "archiveExtensions.svg",
   gz: "archiveExtensions.svg",
-
   git: "githubExtension.svg", 
-
-
   default: "unknownExtension.svg"
 };
 
@@ -149,11 +147,11 @@ const getFileIcon = (filename) => {
 };
 
 const DinoLabsIDE = () => {
+  const { token, userID, organizationID, loading } = useAuth();
   const [directoryWidth, setDirectoryWidth] = useState(20);
   const [contentWidth, setContentWidth] = useState(80);
   const [markdownHeight, setMarkdownHeight] = useState(70);
   const [consoleHeight, setConsoleHeight] = useState(20);
-  const [zoom, setZoom] = useState(1);
   const [isDraggingWidth, setIsDraggingWidth] = useState(false);
   const [isDraggingHeight, setIsDraggingHeight] = useState(false);
   const [isDraggingPane, setIsDraggingPane] = useState(false);
@@ -173,7 +171,6 @@ const DinoLabsIDE = () => {
   const [unsavedChanges, setUnsavedChanges] = useState({});
   const [originalContents, setOriginalContents] = useState({});
   const [modifiedContents, setModifiedContents] = useState({}); 
-
   const [isNavigatorState, setIsNavigatorState] = useState(true);
   const [isSearchState, setIsSearchState] = useState(false); 
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -182,11 +179,73 @@ const DinoLabsIDE = () => {
   const [isGlobalReplace, setIsGlobalReplace] = useState(false);
   const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
   const [lintProblems, setLintProblems] = useState([]);
-
-
   const [collapsedFiles, setCollapsedFiles] = useState({});
-
+  
+  const defaultKeyBinds = {
+    save: 's',
+    undo: 'z',
+    redo: 'y',
+    cut: 'x',
+    copy: 'c',
+    paste: 'v',
+    search: 'f',
+    selectAll: 'a',
+  };
+  const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
+  const [zoomLevel, setZoomLevel] = useState(1); 
+  const [colorTheme, setColorTheme] = useState("default"); 
   const debounceRef = useRef(null);
+
+  useEffect(() => {
+        const fetchData = async () => {
+            try {
+                await Promise.all([
+                    fetchUserInfo (userID, organizationID), 
+                ]);
+                setIsLoaded(true);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        if (!loading && token) {
+            fetchData();
+        }
+  }, [userID, organizationID, loading, token]);
+
+  const fetchUserInfo = async (userID, organizationID) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/user-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userID,
+          organizationID
+        }),
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Internal Server Error`);
+      }
+
+      const data = await response.json();
+
+      if (data[0].userkeybinds) {
+          setKeyBinds({ ...defaultKeyBinds, ...data[0].userkeybinds });
+      } else {
+          setKeyBinds(defaultKeyBinds);
+      }
+      setZoomLevel(data[0].userzoomlevel || 1); 
+      setColorTheme(data[0].usercolortheme || "default");
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      return;
+    }
+  };
 
   useEffect(() => {
     panesRef.current = panes;
@@ -284,6 +343,7 @@ const DinoLabsIDE = () => {
       setRepositoryFiles(files);
       setIsRootOpen(true);
     } catch (error) {
+      console.error("Error loading repository:", error);
       return; 
     }
   };
@@ -371,6 +431,7 @@ const DinoLabsIDE = () => {
       setOriginalContents(prev => ({ ...prev, [fileId]: content }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
+      console.error("Error loading file:", error);
       return; 
     }
   };
@@ -378,7 +439,7 @@ const DinoLabsIDE = () => {
   const handleFileClick = async (file, parentPath) => {
     const fileExtension = file.name.split('.').pop().toLowerCase();
     const isSupported = supportedExtensions.includes(fileExtension);
-    const fileId = file.fullPath; 
+    const fileId = file.fullPath || `${parentPath}/${file.name}`;
     let existingTabPaneIndex = -1;
     let existingTab = null;
     panes.forEach((pane, index) => {
@@ -438,6 +499,7 @@ const DinoLabsIDE = () => {
       setOriginalContents(prev => ({ ...prev, [fileId]: content }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
+      console.error("Error opening file:", error);
       const newTab = {
         id: fileId, 
         name: file.name,
@@ -634,7 +696,7 @@ const DinoLabsIDE = () => {
         }
   
         if (newPanes.length === 1) {
-          setPaneWidths({ pane1: 100 });
+          setPaneWidths({ pane1: 100, pane2: 0 });
         }
       }
   
@@ -697,7 +759,7 @@ const DinoLabsIDE = () => {
         activeTabId: currentTab.id
       };
   
-      setPaneWidths({ pane1: 50, pane2: 50 });
+      setPaneWidths({ pane1: 50, pane2: 50 }); 
       return [...updatedPanes, newPane];
     });
   };
@@ -746,13 +808,13 @@ const DinoLabsIDE = () => {
       }
 
       if (newPanes.length === 1) {
-        setPaneWidths({ pane1: 100 });
+        setPaneWidths({ pane1: 100, pane2: 0 }); 
       }
     }
 
     if (newPanes.length === 0) {
       newPanes.push({ openedTabs: [], activeTabId: null });
-      setPaneWidths({ pane1: 100 });
+      setPaneWidths({ pane1: 100, pane2: 0 });
       newActivePaneIndex = 0;
     }
 
@@ -760,9 +822,9 @@ const DinoLabsIDE = () => {
     setActivePaneIndex(newActivePaneIndex);
   };
 
-  const handleZoomIn = () => setZoom(prevZoom => Math.min(prevZoom + 0.1, 3));
-  const handleZoomOut = () => setZoom(prevZoom => Math.max(prevZoom - 0.1, 0.5));
-  const handleResetZoom = () => setZoom(1);
+  const handleZoomIn = () => setZoomLevel(prevZoom => Math.min(prevZoom + 0.1, 3));
+  const handleZoomOut = () => setZoomLevel(prevZoom => Math.max(prevZoom - 0.1, 0.5));
+  const handleResetZoomLevel = () => setZoomLevel(zoomLevel);
 
   const handleEdit = (paneIndex, tabId, previousState, newState) => {
     const originalContent = originalContents[tabId];
@@ -861,6 +923,7 @@ const DinoLabsIDE = () => {
       setRepositoryFiles(structuredFiles);
       setIsRootOpen(true);
     } catch (error) {
+      console.error("Error cloning GitHub repository:", error);
       return; 
     }
   };
@@ -1343,7 +1406,7 @@ const DinoLabsIDE = () => {
                 </Tippy>
 
                 <Tippy content={"Reset View"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleResetZoom}> 
+                  <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel}> 
                     <FontAwesomeIcon icon={faRetweet}/>
                   </button>
                 </Tippy>
@@ -1648,7 +1711,7 @@ const DinoLabsIDE = () => {
                 className="dinolabsIDEMarkdownWrapper"
                 style={{ 
                   height: hasOpenFile ? `${markdownHeight}%` : '100%', 
-                  zoom: zoom,
+                  zoom: zoomLevel,
                 }}
               >
                 {panes.map((pane, paneIndex) => (
@@ -1698,6 +1761,9 @@ const DinoLabsIDE = () => {
                                 fileHandle={tab.fileHandle}
                                 isGlobalSearchActive={!!globalSearchQuery}
                                 lintProblems={lintProblems}
+                                keyBinds={keyBinds}
+                                zoomLevel={zoomLevel}
+                                colorTheme={colorTheme}
                               />
                             </div>
                           ))
@@ -1764,7 +1830,14 @@ const DinoLabsIDE = () => {
             )}
 
             {isAccountOpen && (
-              <DinoLabsIDEAccount onClose={() => setIsAccountOpen(false)} />
+              <DinoLabsIDEAccount onClose={() => setIsAccountOpen(false)} 
+                keyBinds={keyBinds}
+                setKeyBinds={setKeyBinds}
+                zoomLevel={zoomLevel}
+                setZoomLevel={setZoomLevel}
+                colorTheme={colorTheme}
+                setColorTheme={setColorTheme}
+              />
             )}
           </div>
         </div>

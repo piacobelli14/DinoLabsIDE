@@ -44,7 +44,15 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const DinoLabsIDEAccount = ({ onClose }) => {
+const DinoLabsIDEAccount = ({ 
+    onClose,
+    keyBinds,
+    setKeyBinds,
+    zoomLevel,
+    setZoomLevel,
+    colorTheme,
+    setColorTheme
+}) => {
     const navigate = useNavigate();
     const isTouchDevice = useIsTouchDevice();
     const { token, userID, organizationID, loading } = useAuth();
@@ -77,6 +85,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
     const [displayTeamRole, setDisplayTeamRole] = useState(false); 
     const [personalUsageByDay, setPersonalUsageByDay] = useState([]);
     const [selectedState, setSelectedState] = useState("none");
+    const [isEditingKeyBinds, setIsEditingKeyBinds] = useState(null);
     const defaultKeyBinds = {
         save: 's',
         undo: 'z',
@@ -97,17 +106,12 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         search: "Search",
         selectAll: "Select All",
     };
-    const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
-    const [isEditingKeyBinds, setIsEditingKeyBinds] = useState(null);
-    const [zoomLevel, setZoomLevel] = useState(1); 
-    const [fontSize, setFontSize] = useState(14);
-    const [colorTheme, setColorTheme] = useState("default"); 
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 await Promise.all([
-                    fetchUserInfo(userID, organizationID), 
+                   fetchUserInfo (userID, organizationID), 
                     fetchPersonalUsageData(userID, organizationID)
                 ]);
                 setIsLoaded(true);
@@ -193,7 +197,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                 setKeyBinds(defaultKeyBinds);
             }
             setZoomLevel(data[0].userzoomlevel); 
-            setFontSize(data[0].userfontsize); 
             setColorTheme(data[0].usercolortheme); 
         } catch (error) {
             console.error("Error fetching user info:", error);
@@ -320,7 +323,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
         }
     };
 
-    const saveUserPreferences = async (userID, organizationID, fontSize, zoomLevel, colorTheme) => {
+    const saveUserPreferences = async (userID, organizationID, zoomLevel, colorTheme) => {
         try {
             const token = localStorage.getItem("token");
             const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-preferences", {
@@ -332,7 +335,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                 body: JSON.stringify({ 
                     userID, 
                     organizationID, 
-                    fontSize, 
                     zoomLevel, 
                     colorTheme
                 }),
@@ -705,28 +707,6 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                         <>
                                             <div className="dinolabsIDESettingsButtonWrapper">
                                                 <button className="dinolabsIDESettingsButtonLine">
-                                                    <span>Set Default Font Size</span>
-
-                                                    <span>
-                                                    <input
-                                                        type="number"
-                                                        value={fontSize}
-                                                        min="10"
-                                                        max="30"
-                                                        step="1"
-                                                        onChange={(e) => {
-                                                                let newSize = Number(e.target.value);
-                                                                setFontSize(newSize);
-                                                                saveUserPreferences(userID, organizationID, newSize, zoomLevel, colorTheme);
-                                                            }
-                                                        }
-                                                        className="dinolabsIDESettingsInput"
-                                                    />
-                                                    <label className="dinolabsIDESettingsToggleLabel">{fontSize}px</label>
-                                                    </span>
-                                                </button>
-
-                                                <button className="dinolabsIDESettingsButtonLine">
                                                     <span>Set Default Zoom Level</span>
 
                                                     <span>
@@ -737,8 +717,8 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                         max="3"
                                                         step="0.1"
                                                         onChange={(e) => setZoomLevel(Number(e.target.value))} 
-                                                        onMouseUp={(e) => saveUserPreferences(userID, organizationID, fontSize, Number(e.target.value), colorTheme)} 
-                                                        onTouchEnd={(e) => saveUserPreferences(userID, organizationID, fontSize, zoomLevel, colorTheme)} 
+                                                        onMouseUp={(e) => saveUserPreferences(userID, organizationID, colorTheme)} 
+                                                        onTouchEnd={(e) => saveUserPreferences(userID, organizationID, colorTheme)} 
                                                         className="dinolabsIDESettingsSlider"
                                                     />
                                                     <label className="dinolabsIDESettingsToggleLabel">{(zoomLevel * 100).toFixed(0)}%</label>
@@ -808,7 +788,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                     className="dinolabsIDESettingsButtonLine"
                                                     onClick={() => {
                                                         setColorTheme("default");
-                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "default");
+                                                        saveUserPreferences(userID, organizationID, zoomLevel, "default");
                                                     }}
                                                 >
                                                     <span>
@@ -825,7 +805,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                         className="dinolabsIDESettingsCheckbox"
                                                         onChange={() => {
                                                             setColorTheme("default");
-                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "default");
+                                                            saveUserPreferences(userID, organizationID, zoomLevel, "default");
                                                         }}
                                                     />
                                                 </button>
@@ -834,7 +814,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                     className="dinolabsIDESettingsButtonLine"
                                                     onClick={() => {
                                                         setColorTheme("dark");
-                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "dark");
+                                                        saveUserPreferences(userID, organizationID, zoomLevel, "dark");
                                                     }}
                                                 >
                                                     <span>
@@ -851,7 +831,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                         className="dinolabsIDESettingsCheckbox"
                                                         onChange={() => {
                                                             setColorTheme("dark");
-                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "dark");
+                                                            saveUserPreferences(userID, organizationID, zoomLevel, "dark");
                                                         }}
                                                     />
                                                 </button>
@@ -860,7 +840,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                     className="dinolabsIDESettingsButtonLine"
                                                     onClick={() => {
                                                         setColorTheme("light");
-                                                        saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "light");
+                                                        saveUserPreferences(userID, organizationID, zoomLevel, "light");
                                                     }}
                                                 >
                                                     <span>
@@ -877,7 +857,7 @@ const DinoLabsIDEAccount = ({ onClose }) => {
                                                         className="dinolabsIDESettingsCheckbox"
                                                         onChange={() => {
                                                             setColorTheme("light");
-                                                            saveUserPreferences(userID, organizationID, fontSize, zoomLevel, "light");
+                                                            saveUserPreferences(userID, organizationID, zoomLevel, "light");
                                                         }}
                                                     />
                                                 </button>

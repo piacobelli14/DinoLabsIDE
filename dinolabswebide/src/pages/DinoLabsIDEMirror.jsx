@@ -18,7 +18,6 @@ const DinoLabsIDEMirror = forwardRef(({
   handleSearch,
   handleReplace,
   handleReplaceAll,
-  lineHeight,
   containerHeight,
   buffer,
   visibleStartLine,
@@ -40,6 +39,7 @@ const DinoLabsIDEMirror = forwardRef(({
   isSupported,
   forceOpen,
   onForceOpen,
+  lineHeight
 }, ref) => {
   const cursorPositionRef = useRef(null);
 
