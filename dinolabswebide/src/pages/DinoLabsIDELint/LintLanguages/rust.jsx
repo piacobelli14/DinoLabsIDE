@@ -7,11 +7,19 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
     const structureStack = [];
     let inString = false;
     let stringChar = '';
+    let isInMultiLineStatement = false;
 
     lines.forEach((line, index) => {
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const prevChar = i > 0 ? line[i - 1] : null;
+        let trimmedLine = line.trim();
+
+        const commentIndex = trimmedLine.indexOf("//");
+        if (commentIndex !== -1) {
+            trimmedLine = trimmedLine.substring(0, commentIndex).trim();
+        }
+
+        for (let i = 0; i < trimmedLine.length; i++) {
+            const char = trimmedLine[i];
+            const prevChar = i > 0 ? trimmedLine[i - 1] : null;
 
             if (inString) {
                 if (char === stringChar && prevChar !== '\\') {
@@ -42,7 +50,12 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
-        const trimmed = line.trim();
+        const endsWithOperator = /[+\-*/%&|^<>]=?$/.test(trimmedLine);
+        if (endsWithOperator) {
+            isInMultiLineStatement = true;
+        } else if (trimmedLine.endsWith(";")) {
+            isInMultiLineStatement = false;
+        }
 
         const exclusionPatterns = [
             /^use\s+/,
@@ -51,18 +64,18 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
             /^pub\s+fn\s+/, /^pub\s+struct\s+/, /^pub\s+enum\s+/, /^pub\s+trait\s+/
         ];
 
-        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmedLine));
 
         if (
             !inString &&
             !isExempt &&
-            !trimmed.endsWith("{") &&
-            !trimmed.endsWith("}") &&
-            !trimmed.endsWith(",") &&
-            trimmed !== "" &&
-            !trimmed.startsWith("//")
+            !trimmedLine.endsWith("{") &&
+            !trimmedLine.endsWith("}") &&
+            !trimmedLine.endsWith(",") &&
+            trimmedLine !== "" &&
+            !isInMultiLineStatement
         ) {
-            if (!trimmed.endsWith("}")) {
+            if (!trimmedLine.endsWith(";")) {
                 detectedProblems.push({
                     type: "Missing Semicolon",
                     severity: "warning",
@@ -72,7 +85,7 @@ export function detectRustSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
-        const varMatch = trimmed.match(/let\s+(mut\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/);
+        const varMatch = trimmedLine.match(/let\s+(mut\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/);
         if (varMatch) {
             const varName = varMatch[2];
             const regex = new RegExp(`\\b${varName}\\b`, "g");

@@ -66,7 +66,8 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":")
         ) {
-            if (!trimmed.endsWith(";")) {
+            const lineWithoutComments = trimmed.split('/*')[0].split('//')[0].trim();
+            if (!lineWithoutComments.endsWith(";")) {
                 detectedProblems.push({
                     type: "Missing Semicolon",
                     severity: "warning",
@@ -133,7 +134,6 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
                 "font-family",
                 "font-style",
                 "font-variant",
-                "font-weight",
                 "list-style",
                 "list-style-type",
                 "list-style-position",
@@ -150,7 +150,6 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
                 "background-position-y",
                 "background-repeat-x",
                 "background-repeat-y",
-                "background-repeat",
                 "flex-direction",
                 "flex-wrap",
                 "flex-flow",
@@ -158,10 +157,8 @@ export function detectCSSSyntaxErrors(codeStr, detectedProblems) {
                 "flex-shrink",
                 "flex-basis",
                 "align-content",
-                "align-items",
                 "align-self",
                 "justify-items",
-                "justify-content",
                 "justify-self",
                 "order",
             ]);
@@ -244,7 +241,6 @@ export function detectCSSSemanticErrors(codeStr, detectedProblems) {
         "font-family",
         "font-style",
         "font-variant",
-        "font-weight",
         "list-style",
         "list-style-type",
         "list-style-position",
@@ -261,7 +257,6 @@ export function detectCSSSemanticErrors(codeStr, detectedProblems) {
         "background-position-y",
         "background-repeat-x",
         "background-repeat-y",
-        "background-repeat",
         "flex-direction",
         "flex-wrap",
         "flex-flow",
@@ -269,10 +264,8 @@ export function detectCSSSemanticErrors(codeStr, detectedProblems) {
         "flex-shrink",
         "flex-basis",
         "align-content",
-        "align-items",
         "align-self",
         "justify-items",
-        "justify-content",
         "justify-self",
         "order",
     ]);

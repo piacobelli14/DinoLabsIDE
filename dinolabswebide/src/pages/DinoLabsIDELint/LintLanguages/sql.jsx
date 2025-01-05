@@ -1,34 +1,84 @@
 import { getLineNumber } from "../DinoLabsIDELintUtils";
 
+/**
+* @param {string} codeStr 
+* @param {Array} detectedProblems
+*/
 export function detectSQLSyntaxErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
-    lines.forEach((line, index) => {
-        const trimmed = line.trim().toUpperCase();
-        if (
-            trimmed === "" ||
-            trimmed.startsWith("--") ||
-            trimmed.startsWith("/*") ||
-            trimmed.startsWith("*") ||
-            trimmed.startsWith("*/")
-        )
-            return;
+    let inMultiLineComment = false;
+    let statementBuffer = '';
+    let statementStartLine = 0;
 
-        if (
-            !trimmed.endsWith(";") &&
-            !trimmed.endsWith("{") &&
-            !trimmed.endsWith("}") &&
-            !trimmed.endsWith(":")
-        ) {
-            detectedProblems.push({
-                type: "Missing Semicolon",
-                severity: "warning",
-                message: `Missing semicolon at end of SQL statement.`,
-                line: index + 1,
-            });
+    lines.forEach((line, index) => {
+        let currentLine = line;
+        let lineNumber = index + 1;
+
+        if (inMultiLineComment) {
+            const endCommentIndex = currentLine.indexOf("*/");
+            if (endCommentIndex !== -1) {
+                currentLine = currentLine.substring(endCommentIndex + 2);
+                inMultiLineComment = false;
+            } else {
+                return;
+            }
+        }
+
+        while (currentLine.length > 0) {
+            const startCommentIndex = currentLine.indexOf("/*");
+            const singleCommentIndex = currentLine.indexOf("--");
+
+            if (startCommentIndex !== -1 && (singleCommentIndex === -1 || startCommentIndex < singleCommentIndex)) {
+                const endCommentIndex = currentLine.indexOf("*/", startCommentIndex + 2);
+                if (endCommentIndex !== -1) {
+                    currentLine = currentLine.substring(0, startCommentIndex) + " " + currentLine.substring(endCommentIndex + 2);
+                } else {
+                    currentLine = currentLine.substring(0, startCommentIndex);
+                    inMultiLineComment = true;
+                    break;
+                }
+            } else if (singleCommentIndex !== -1) {
+                currentLine = currentLine.substring(0, singleCommentIndex);
+                break;
+            } else {
+                break;
+            }
+        }
+
+        const trimmed = currentLine.trim();
+
+        if (trimmed === "") {
+            return;
+        }
+
+        if (!inMultiLineComment) {
+            if (!statementBuffer) {
+                statementStartLine = lineNumber;
+            }
+
+            statementBuffer += trimmed + ' ';
+
+            if (trimmed.endsWith(";")) {
+                statementBuffer = '';
+            }
         }
     });
+
+    if (statementBuffer && !statementBuffer.trim().endsWith(";")) {
+        const lastLineIndex = lines.length - 1;
+        detectedProblems.push({
+            type: "Missing Semicolon",
+            severity: "warning",
+            message: `Missing semicolon at end of SQL statement.`,
+            line: lastLineIndex + 1,
+        });
+    }
 }
 
+/**
+* @param {string} codeStr 
+* @param {Array} detectedProblems 
+*/
 export function detectSQLSemanticErrors(codeStr, detectedProblems) {
     const lines = codeStr.split(/\r?\n/);
     const tableNames = [];
@@ -101,29 +151,25 @@ export function detectSQLSemanticErrors(codeStr, detectedProblems) {
         });
     });
 
-    const foreignKeyRegex = /FOREIGN\s+KEY\s*\(([^)]+)\)\s+REFERENCES\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]+)\)/i;
-    const foreignKeys = codeStr.match(foreignKeyRegex);
-    if (foreignKeys) {
-        foreignKeys.forEach((fk) => {
-            detectedProblems.push({
-                type: "Foreign Key Constraint",
-                severity: "info",
-                message: `Foreign key constraint detected: '${fk}'. Ensure it aligns with database design.`,
-                line: getLineNumber(codeStr, codeStr.indexOf(fk)),
-            });
+    const foreignKeyRegex = /FOREIGN\s+KEY\s*\(([^)]+)\)\s+REFERENCES\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]+)\)/gi;
+    let foreignKeys;
+    while ((foreignKeys = foreignKeyRegex.exec(codeStr)) !== null) {
+        detectedProblems.push({
+            type: "Foreign Key Constraint",
+            severity: "info",
+            message: `Foreign key constraint detected: '${foreignKeys[0]}'. Ensure it aligns with database design.`,
+            line: getLineNumber(codeStr, foreignKeys.index),
         });
     }
 
-    const indexRegex = /CREATE\s+INDEX\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+ON\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]+)\)/i;
-    const indexes = codeStr.match(indexRegex);
-    if (indexes) {
-        indexes.forEach((indexDef) => {
-            detectedProblems.push({
-                type: "Index Definition",
-                severity: "info",
-                message: `Index defined: '${indexDef}'. Ensure it improves query performance.`,
-                line: getLineNumber(codeStr, codeStr.indexOf(indexDef)),
-            });
+    const indexRegex = /CREATE\s+INDEX\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+ON\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]+)\)/gi;
+    let indexes;
+    while ((indexes = indexRegex.exec(codeStr)) !== null) {
+        detectedProblems.push({
+            type: "Index Definition",
+            severity: "info",
+            message: `Index defined: '${indexes[0]}'. Ensure it improves query performance.`,
+            line: getLineNumber(codeStr, indexes.index),
         });
     }
 }

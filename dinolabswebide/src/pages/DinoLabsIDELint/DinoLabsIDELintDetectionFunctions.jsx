@@ -1,20 +1,26 @@
+import { detectTypeScriptSyntaxErrors, detectTypeScriptSemanticErrors } from "./LintLanguages/typescript.jsx";
 import { detectJavaScriptSyntaxErrors, detectJavaScriptSemanticErrors } from "./LintLanguages/javascript.jsx";
 import { detectPythonSyntaxErrors, detectPythonSemanticErrors } from "./LintLanguages/python.jsx";
 import { detectCSyntaxErrors, detectCSemanticErrors } from "./LintLanguages//c.jsx";
 import { detectCSyntaxErrors as detectCppSyntaxErrors, detectCSemanticErrors as detectCppSemanticErrors } from "./LintLanguages/c++.jsx";
 import { detectCSyntaxErrors as detectCSharpSyntaxErrors, detectCSemanticErrors as detectCSharpSemanticErrors } from "./LintLanguages/c#.jsx";
 import { detectPHPSyntaxErrors, detectPHPSemanticErrors } from "./LintLanguages/php.jsx";
-import { detectBashSyntaxErrors } from "./LintLanguages/bash.jsx";
-import { detectBashSyntaxErrors as detectShellSyntaxErrors } from "./LintLanguages/shell.jsx";
+import { detectBashSyntaxErrors, detectBashSemanticErrors } from "./LintLanguages/bash.jsx";
+import { detectShellSyntaxErrors, detectShellSemanticErrors } from "./LintLanguages/shell.jsx";
 import { detectCSSSyntaxErrors, detectCSSSemanticErrors } from "./LintLanguages/css.jsx";
 import { detectHTMLSyntaxErrors, detectHTMLSemanticErrors } from "./LintLanguages/html.jsx";
 import { detectSQLSyntaxErrors, detectSQLSemanticErrors } from "./LintLanguages/sql.jsx";
 import { detectRustSyntaxErrors, detectRustSemanticErrors } from "./LintLanguages/rust.jsx";
 import { detectSwiftSyntaxErrors, detectSwiftSemanticErrors } from "./LintLanguages/swift.jsx";
 import { detectMonkeyCSyntaxErrors, detectMonkeyCSemanticErrors } from "./LintLanguages/monkey-c.jsx";
-import { detectAssemblySyntaxErrors, detectAssemblySemanticErrors, detectAssemblyBestPractices } from "./LintLanguages/assembly.jsx";
+import { detectAssemblySyntaxErrors, detectAssemblySemanticErrors } from "./LintLanguages/assembly.jsx";
+import { detectXMLSyntaxErrors, detectXMLSemanticErrors } from "./LintLanguages/xml.jsx";
 
 export const detectionFunctions = {
+    typescript: {
+        syntax: detectTypeScriptSyntaxErrors,
+        semantic: detectTypeScriptSemanticErrors,
+    },
     javascript: {
         syntax: detectJavaScriptSyntaxErrors,
         semantic: detectJavaScriptSemanticErrors,
@@ -41,11 +47,11 @@ export const detectionFunctions = {
     },
     bash: {
         syntax: detectBashSyntaxErrors,
-        semantic: () => { },
+        semantic: detectBashSemanticErrors,
     },
     shell: {
         syntax: detectShellSyntaxErrors,
-        semantic: () => { },
+        semantic: detectShellSemanticErrors,
     },
     css: {
         syntax: detectCSSSyntaxErrors,
@@ -74,6 +80,5 @@ export const detectionFunctions = {
     assembly: {
         syntax: detectAssemblySyntaxErrors,
         semantic: detectAssemblySemanticErrors,
-        bestPractice: detectAssemblyBestPractices,
     },
 };

@@ -7,9 +7,11 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
     const structureStack = [];
     let inSingleLineComment = false;
     let inMultiLineComment = false;
+    let openNestingLevel = 0; 
 
     lines.forEach((line, index) => {
         let i = 0;
+        let lineWithoutComments = '';
         while (i < line.length) {
             const char = line[i];
             const nextChar = i < line.length - 1 ? line[i + 1] : null;
@@ -39,28 +41,24 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
                 continue;
             }
 
-            if (multiLineOpeners.includes(char)) {
-                structureStack.push({ char, line: index + 1 });
-            } else if (multiLineClosers.includes(char)) {
-                const last = structureStack.pop();
-                const expected = multiLineOpeners[multiLineClosers.indexOf(char)];
-                if (last && last.char !== expected) {
-                    detectedProblems.push({
-                        type: "Syntax Error",
-                        severity: "error",
-                        message: `Mismatched '${last.char}' and '${char}'.`,
-                        line: last.line,
-                    });
-                }
-            }
+            lineWithoutComments += char;
             i++;
         }
 
         inSingleLineComment = false;
 
-        const trimmed = line.trim();
+        for (let char of lineWithoutComments) {
+            if (multiLineOpeners.includes(char)) {
+                openNestingLevel++;
+            } else if (multiLineClosers.includes(char)) {
+                openNestingLevel = Math.max(openNestingLevel - 1, 0);
+            }
+        }
+
+        const trimmed = lineWithoutComments.trim();
 
         const exclusionPatterns = [
+            /^#/, 
             /^#include\s+/,
             /^using\s+/,
             /^public:/, /^private:/, /^protected:/,
@@ -82,22 +80,29 @@ export function detectCSyntaxErrors(codeStr, detectedProblems) {
             /^public\s+(class|interface)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*{?/,
             /^new\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(/,
             /^else\s+if\s*\(.+\)\s*{?$/,
+            /^return\b.*$/, 
+            /^#pragma\s+once\b/, 
+            /^#define\b/,
+            /^#ifndef\b/,
+            /^#endif\b/,
+            /^#if\b/,
+            /^#else\b/,
+            /^#elif\b/,
         ];
 
         const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+        const isLabelOrInitializer = trimmed.endsWith(":");
 
         if (
+            openNestingLevel === 0 &&
             !inMultiLineComment &&
             !isExempt &&
+            !isLabelOrInitializer &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
             !trimmed.endsWith(":") &&
             !trimmed.endsWith(",") &&
-            trimmed !== "" &&
-            !trimmed.startsWith("//") &&
-            !trimmed.startsWith("/*") &&
-            !trimmed.startsWith("*") &&
-            !trimmed.startsWith("*/")
+            trimmed !== ""
         ) {
             if (!trimmed.endsWith(";")) {
                 detectedProblems.push({

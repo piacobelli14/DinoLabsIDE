@@ -97,20 +97,3 @@ export function detectAssemblySemanticErrors(codeStr, detectedProblems) {
         }
     });
 }
-
-export function detectAssemblyBestPractices(codeStr, detectedProblems) {
-    const lines = codeStr.split(/\r?\n/);
-    const commentRegex = /^;/;
-    lines.forEach((line, index) => {
-        const trimmed = line.trim();
-        if (commentRegex.test(trimmed)) return;
-        if (trimmed.startsWith("MOV AX, 0")) {
-            detectedProblems.push({
-                type: "Best Practice",
-                severity: "info",
-                message: `Initializing AX to 0 directly.`,
-                line: index + 1,
-            });
-        }
-    });
-}

@@ -1,6 +1,6 @@
 import { getLineNumber } from "../DinoLabsIDELintUtils";
 
-export function detectBashSyntaxErrors(codeStr, detectedProblems) {
+export function detectShellSyntaxErrors(codeStr, detectedProblems) {
     const quoteTypes = ["'", '"'];
     quoteTypes.forEach((quote) => {
         const matches = codeStr.split(quote).length - 1;
@@ -76,7 +76,7 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
             /^if\s+/, /^else\s*/, /^elif\s*/, /^fi$/,
             /^for\s+/, /^while\s*/, /^until\s*/, /^do$/, /^done$/,
             /^case\s+/, /^esac$/,
-            /^select\s+/, /^until\s*/, /^then$/, /^elif\s*/,
+            /^select\s+/, /^then$/, /^elif\s*/,
         ];
 
         const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
@@ -89,6 +89,7 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
             !trimmed.startsWith("#") &&
             !trimmed.startsWith("&&") &&
             !trimmed.startsWith("||") &&
+            (trimmed.includes("&&") || trimmed.includes("||") || trimmed.includes(";")) &&
             !trimmed.endsWith(";") &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
@@ -143,5 +144,38 @@ export function detectBashSyntaxErrors(codeStr, detectedProblems) {
             message: `Unmatched opening '${unmatched.char}'.`,
             line: unmatched.line,
         });
+    });
+}
+
+export function detectShellSemanticErrors(codeStr, detectedProblems) {
+    const lines = codeStr.split(/\r?\n/);
+    const declaredVariables = [];
+    const usedVariables = new Set();
+
+    lines.forEach((line, index) => {
+        const varMatch = line.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
+        if (varMatch) {
+            const varName = varMatch[1];
+            declaredVariables.push({ name: varName, line: index + 1 });
+        }
+
+        const usageMatches = line.match(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g);
+        if (usageMatches) {
+            usageMatches.forEach((varUsage) => {
+                const varName = varUsage.replace('$', '');
+                usedVariables.add(varName);
+            });
+        }
+    });
+
+    declaredVariables.forEach((varObj) => {
+        if (!usedVariables.has(varObj.name)) {
+            detectedProblems.push({
+                type: "Unused Variable",
+                severity: "info",
+                message: `Variable '$${varObj.name}' is declared but never used.`,
+                line: varObj.line,
+            });
+        }
     });
 }

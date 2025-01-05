@@ -9,12 +9,34 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
     let inMultiLineComment = false;
     let inString = false;
     let stringChar = '';
+    let isInMultiLineStatement = false;
 
     lines.forEach((line, index) => {
+        let trimmedLine = line.trim();
+
+        if (/^<\?php$/.test(trimmedLine) || /^<\?>$/.test(trimmedLine)) {
+            return;
+        }
+
+        const singleCommentIndex = trimmedLine.indexOf("//");
+        if (singleCommentIndex !== -1) {
+            trimmedLine = trimmedLine.substring(0, singleCommentIndex).trim();
+        }
+
+        const hashCommentIndex = trimmedLine.indexOf("#");
+        if (hashCommentIndex !== -1) {
+            trimmedLine = trimmedLine.substring(0, hashCommentIndex).trim();
+        }
+
+        const multiCommentIndex = trimmedLine.indexOf("*/");
+        if (multiCommentIndex !== -1) {
+            trimmedLine = trimmedLine.substring(0, multiCommentIndex + 2).trim();
+        }
+
         let i = 0;
-        while (i < line.length) {
-            const char = line[i];
-            const nextChar = i < line.length - 1 ? line[i + 1] : null;
+        while (i < trimmedLine.length) {
+            const char = trimmedLine[i];
+            const nextChar = i < trimmedLine.length - 1 ? trimmedLine[i + 1] : null;
 
             if (inMultiLineComment) {
                 if (char === '*' && nextChar === '/') {
@@ -27,16 +49,11 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
             }
 
             if (inString) {
-                if (char === stringChar && line[i - 1] !== '\\') {
+                if (char === stringChar && trimmedLine[i - 1] !== '\\') {
                     inString = false;
                 }
                 i++;
                 continue;
-            }
-
-            if (char === '/' && nextChar === '/') {
-                inSingleLineComment = true;
-                break;
             }
 
             if (char === '/' && nextChar === '*') {
@@ -69,9 +86,12 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
             i++;
         }
 
-        inSingleLineComment = false;
-
-        const trimmed = line.trim();
+        const endsWithOperator = /[+\-*/%&|^<>]=?$/.test(trimmedLine);
+        if (endsWithOperator) {
+            isInMultiLineStatement = true;
+        } else if (trimmedLine.endsWith(";")) {
+            isInMultiLineStatement = false;
+        }
 
         const exclusionPatterns = [
             /^#include\s+/,
@@ -95,33 +115,30 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
             /^case\s+.*:/, /^default\s*:/,
         ];
 
-        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmed));
+        const isExempt = exclusionPatterns.some((pattern) => pattern.test(trimmedLine));
 
         if (
             !inString &&
             !inMultiLineComment &&
             !isExempt &&
-            !trimmed.endsWith("{") &&
-            !trimmed.endsWith("}") &&
-            !trimmed.endsWith(":") &&
-            !trimmed.endsWith(",") &&
-            trimmed !== "" &&
-            !trimmed.startsWith("//") &&
-            !trimmed.startsWith("/*") &&
-            !trimmed.startsWith("*") &&
-            !trimmed.startsWith("*/")
+            !trimmedLine.endsWith("{") &&
+            !trimmedLine.endsWith("}") &&
+            !trimmedLine.endsWith(":") &&
+            !trimmedLine.endsWith(",") &&
+            trimmedLine !== "" &&
+            !isInMultiLineStatement
         ) {
-            if (!trimmed.endsWith(";")) {
+            if (!trimmedLine.endsWith(";")) {
                 detectedProblems.push({
                     type: "Missing Semicolon",
                     severity: "warning",
-                    message: `Missing semicolon at end of SQL statement.`,
+                    message: `Missing semicolon at end of statement.`,
                     line: index + 1,
                 });
             }
         }
 
-        const varMatch = trimmed.match(/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
+        const varMatch = trimmedLine.match(/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
         if (varMatch) {
             const varName = varMatch[1];
             const regex = new RegExp(`\\$${varName}\\b`, "g");
@@ -136,7 +153,7 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
             }
         }
 
-        if (/mysql_connect\(/.test(trimmed)) {
+        if (/mysql_connect\(/.test(trimmedLine)) {
             detectedProblems.push({
                 type: "Deprecated Function",
                 severity: "warning",
@@ -145,7 +162,7 @@ export function detectPHPSyntaxErrors(codeStr, detectedProblems) {
             });
         }
 
-        if (/var\s+/.test(trimmed)) {
+        if (/var\s+/.test(trimmedLine)) {
             detectedProblems.push({
                 type: "Deprecated Syntax",
                 severity: "warning",

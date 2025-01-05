@@ -40,9 +40,6 @@ function escapeRegExp(str) {
 }
 
 const extensionToLanguageMap = {
-  txt: "Text",
-  md: "Markdown",
-  csv: "CSV",
   js: "JavaScript",
   jsx: "JavaScript",
   ts: "TypeScript",
@@ -58,17 +55,16 @@ const extensionToLanguageMap = {
   cpp: "C++",
   h: "C++",
   cs: "C#",
+  rs: "Rust", 
+  bash: "Bash", 
+  sh: "Shell", 
+  zsh: "Shell", 
   mc: "Monkey C", 
   mcgen: "Monkey C", 
   sql: "SQL", 
   asm: "Assembly", 
   md: "Markdown", 
   txt: "Text"
-};
-
-const extensionToIconMap = {
-  
-  
 };
 
 const extensionToImageMap = {
@@ -87,6 +83,10 @@ const extensionToImageMap = {
   cpp: "c++.svg",
   h: "c++.svg",
   cs: "csharp.svg",
+  rs: "rust.svg", 
+  bash: "bash.svg", 
+  sh: "shell.svg", 
+  zsh: "shell.svg", 
   mc: "monkeyc.svg", 
   mcgen: "monkeyc.svg", 
   md: "markdown.svg", 
@@ -127,9 +127,9 @@ const extensionToImageMap = {
 };
 
 const supportedExtensions = [
-  'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml', 
-  'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 
-  'cs', 'graphql', 'gq', 'hal', 'hs', 'mc', 'mcgen', 'asm', 'sql', 
+  'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 
+  'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
+  'mc', 'mcgen', 'asm', 'sql', 'xml', 'json', 
   'md', 'txt'
 ];
 

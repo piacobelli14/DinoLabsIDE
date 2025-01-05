@@ -1,3 +1,7 @@
+/**
+ * @param {string} str 
+ * @returns {string} 
+*/
 export const escapeHtml = (str) => {
     return str.replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
@@ -6,10 +10,18 @@ export const escapeHtml = (str) => {
               .replace(/'/g, "&#039;");
 };
 
+/**
+ * @param {string} string 
+ * @returns {string}
+*/
 export const escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
+/**
+ * @param {string} language 
+ * @returns {Array<string>} 
+*/
 export const getTokenPatterns = (language) => {
     switch (language.toLowerCase()) {
         case 'python':
@@ -29,7 +41,7 @@ export const getTokenPatterns = (language) => {
                 `("([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*')`,
                 `(#.*)`,
                 `(\\b\\d+(\\.\\d+)?\\b)`,
-                `([+\\-*/%=&|<>!^~]+)`,
+                `([+\\-*/%=&|<>!^~()\\[\\]{}]+)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `\\b(${[
@@ -45,6 +57,40 @@ export const getTokenPatterns = (language) => {
                     'List', 'Dict', 'Tuple', 'Optional', 'Union', 'Any', 'Callable', 'Iterable', 'Iterator', 'Generator', 'TypeVar', 'Generic', 'Protocol'
                 ].join('|')})\\b`,
                 `__([a-zA-Z_]+)__`
+            ];
+        case 'typescript':
+            return [
+                `\\b(${[
+                    'break', 'case', 'catch', 'class', 'const',
+                    'continue', 'debugger', 'default', 'delete', 'do',
+                    'else', 'export', 'extends', 'finally', 'for',
+                    'function', 'if', 'import', 'in', 'instanceof',
+                    'let', 'new', 'return', 'super', 'switch',
+                    'this', 'throw', 'try', 'typeof', 'var',
+                    'void', 'while', 'with', 'yield', 'await',
+                    'implements', 'interface', 'package',
+                    'private', 'protected', 'public', 'static', 'enum',
+                    'null', 'true', 'false', 'as', 'async', 'await',
+                    'declare', 'from', 'get', 'module', 'of', 'set', 'type'
+                ].join('|')})\\b`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
+                `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
+                `(\\b\\d+(?:\\.\\d+)?\\b)`,
+                `([==!=<>]=|[-+*/%&|^~<>()\\[\\]{}]=?)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
+                `\\b(${[
+                    'console', 'window', 'document', 'require', 'module', 'exports', 'React', 'useState', 'useEffect', 'props', 'state'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Array', 'String', 'Number', 'Boolean', 'Object', 'Function', 'Date', 'RegExp', 'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'ReadonlyArray', 'Symbol', 'BigInt'
+                ].join('|')})\\b`,
+                `\\b(${[
+                    'Array', 'String', 'Number', 'Boolean', 'Object', 'Function', 'Date', 'RegExp', 'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'ReadonlyArray', 'Symbol', 'BigInt'
+                ].join('|')})\\b`,
+                `</?[A-Z][A-Za-z0-9]+\\b`,
+                `\\$\{[^}]+\}`
             ];
         case 'javascript':
         case 'react':
@@ -68,7 +114,7 @@ export const getTokenPatterns = (language) => {
                 `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
                 `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
                 `(\/(?:\\\/|[^\/\n])+\/[gimsuy]*)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?|===|!==|>>>=|<<=|>>=)`,
+                `([==!=<>]=|[-+*/%&|^~<>()\\[\\]{}]=?|===|!==|>>>=|<<=|>>=)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `\\b(${[
@@ -92,18 +138,18 @@ export const getTokenPatterns = (language) => {
                     'mkdir', 'rmdir', 'touch', 'rm', 'cp', 'mv', 'chmod', 'chown',
                     'declare', 'typeset', 'readonly', 'let'
                 ].join('|')})\\b`,
-                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
-                `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
-                `(#.*)`,
-                `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([;&|<>!(){}\\[\\]])`,
-                `\\$[a-zA-Z_][a-zA-Z0-9_]*`,
-                `\\$\{?[a-zA-Z_][a-zA-Z0-9_]*\}?`,
                 `\\b(${[
                     'echo', 'printf', 'cd', 'pwd', 'ls', 'grep', 'awk', 'sed',
                     'mkdir', 'rmdir', 'touch', 'rm', 'cp', 'mv', 'chmod', 'chown',
                     'declare', 'typeset', 'readonly', 'let'
                 ].join('|')})\\b`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)`,
+                `(\\$\\[a-zA-Z_][a-zA-Z0-9_]*\\|\\$[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')`,
+                `(#.*)`,
+                `\\b(\\d+(?:\\.\\d+)?)\\b`,
+                `([;&|<>!+\\-*/%=()\\[\\]{}]+)`,
                 `(/(?:[a-zA-Z0-9_.-]+/)*[a-zA-Z0-9_.-]+)`
             ];
         case 'c':
@@ -121,12 +167,12 @@ export const getTokenPatterns = (language) => {
                 `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
                 `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
                 `(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `([==!=<>]=|[-+*/%&|^~<>()\\[\\]{}]=?|->|\\.|,)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `#include\\s*<[^>]+>`,
-                `#ifndef\\s+\w+`,
-                `#define\\s+\w+`,
+                `#ifndef\\s+\\w+`,
+                `#define\\s+\\w+`,
                 `#endif`,
                 `\\b(${[
                     'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
@@ -138,7 +184,7 @@ export const getTokenPatterns = (language) => {
                 `\\b(${[
                     'nullptr', 'NULL'
                 ].join('|')})\\b`,
-                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*>`,
+                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9]*\\s*>`,
                 `:\\s*(public|protected|private)\\s+[a-zA-Z_][a-zA-Z0-9_]*`
             ];
         case 'c++':
@@ -165,8 +211,8 @@ export const getTokenPatterns = (language) => {
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `#include\\s*<[^>]+>`,
-                `#ifndef\\s+\w+`,
-                `#define\\s+\w+`,
+                `#ifndef\\s+\\w+`,
+                `#define\\s+\\w+`,
                 `#endif`,
                 `\\b(${[
                     'printf', 'scanf', 'cout', 'cin', 'std', 'this', 'super', 'self', 'new', 'delete', 'nullptr',
@@ -178,7 +224,7 @@ export const getTokenPatterns = (language) => {
                 `\\b(${[
                     'nullptr', 'NULL'
                 ].join('|')})\\b`,
-                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*>`,
+                `<\\s*typename\\s+[a-zA-Z_][a-zA-Z0-9]*\\s*>`,
                 `:\\s*(public|protected|private)\\s+[a-zA-Z_][a-zA-Z0-9_]*`
             ];
         case 'c#':
@@ -239,7 +285,7 @@ export const getTokenPatterns = (language) => {
                 `((?:"(?:[^"\\\\]|\\\\.)*")|(?:'(?:[^'\\\\]|\\\\.)*'))`,
                 `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
                 `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `([==!=<>]=|[-+*/%&|^~<>()\\[\\]{}]=?|\\.|\?|:)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `\\b(${[
@@ -273,7 +319,7 @@ export const getTokenPatterns = (language) => {
                 `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
                 `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/)|(?:#.*))`,
                 `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `([==!=<>]=|[-+*/%&|^~<>()\\[\\]{}]=?|->|\\.|\\.\\.|::)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `(\\$[a-zA-Z_][a-zA-Z0-9_]*)`,
@@ -294,7 +340,7 @@ export const getTokenPatterns = (language) => {
             ];
         case 'sql':
             return [
-                `\\b(${[
+               `\\b(${[
                     'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE',
                     'DROP', 'ALTER', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'FULL',
                     'ON', 'AS', 'INTO', 'VALUES', 'SET', 'AND', 'OR', 'NOT', 'NULL',
@@ -308,7 +354,7 @@ export const getTokenPatterns = (language) => {
                 `((?:'(?:''|[^'])*')|(?:"(?:\\"|[^"])*"))`,
                 `(--[^\\n\\r]*)`,
                 `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `(=|<>|!=|<|>|<=|>=|\\+|\\-|\\*|\\/|%)`,
+                `(=|<>|!=|<|>|<=|>=|\\+|\\-|\\*|\\/|%|\\(|\\)|\\[|\\]|\\{|\\})`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `(\\bDATE\\b|\\bINT\\b|\\bVARCHAR\\b|\\bTEXT\\b|\\bBOOLEAN\\b|\\bDECIMAL\\b|\\bFLOAT\\b|\\bNUMERIC\\b|\\bCHAR\\b|\\bDATETIME\\b|\\bTIMESTAMP\\b)`,
@@ -336,7 +382,7 @@ export const getTokenPatterns = (language) => {
                 `((?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'))`,
                 `((?:\\/\\/.*)|(?:\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)\\/))`,
                 `(\\b\\d+(?:\\.\\d+)?\\b)`,
-                `([==!=<>]=|[-+*/%&|^~<>]=?)`,
+                `([==!=<>]=|[-+*/%&|^~<>]=?|\\(|\\)|\\[|\\]|\\{|\\})`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `\\b([A-Z][a-zA-Z0-9_]*)\\b`,
@@ -411,6 +457,57 @@ export const getTokenPatterns = (language) => {
                 `"(?:[^"\\\\]|\\\\.)*"`,
                 `\\b[a-zA-Z_][a-zA-Z0-9_]*\\b`
             ];
+        case 'html':
+            return [
+                `(<!--[\\s\\S]*?-->)`,
+                `(<!DOCTYPE[^>]*>)`,
+                `(<\/?[A-Za-z][A-Za-z0-9]*\\b[^>]*>)`,
+                `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
+                `("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')`,
+                `(&[a-zA-Z0-9]+;|&#[0-9]+;|&#x[a-fA-F0-9]+;)`,
+                `([^<>&]+)`
+            ];
+        case 'css':
+            return [
+                `(@media\\s*\\([^)]*\\))`,
+                `(@(?:media|keyframes|supports)[^{]*\\{[^}]*\\})`,
+                `(@[a-zA-Z-]+[^;]*;)`,
+                `(/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/)`,
+                `([.#]?[a-zA-Z0-9_-]+(?:\\[[^\\]]*\\]|:{1,2}[a-zA-Z-]+(?:\\([^)]*\\))?)*\\s*(?=\\{))`,
+                `((?:[a-zA-Z-]+\\s*:\\s*[^;\\}]+;))`,
+                `(#[a-fA-F0-9]{3,8})`,
+                `([a-zA-Z-]+\\([^)]*\\))`,
+                `(\\b\\d+(?:\\.\\d+)?(?:px|em|rem|vh|vw|%)\\b)`,
+                `(-(?:webkit|moz|ms|o)-[a-zA-Z-]+)`,
+                `(!important\\b)`,
+                `\\.([A-Za-z0-9_-]+)`,
+                `#([A-Za-z0-9_-]+)`,
+                `@\\w+`,
+                `\\b([A-Za-z-]+):`,
+                `:\\s*[^;]+;`,
+                `;(?!\\})`,
+                `\\b([A-Za-z-]+)\\b`,
+                `"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'`
+            ];
+        case 'xml':
+            return [
+                `(<!--[\\s\\S]*?-->)`,
+                `(<\\?[^>]+\\?>)`,
+                `(<\/?[A-Za-z_:][A-Za-z0-9_.:-]*\\b[^>]*>)`,
+                `(@[a-zA-Z_:][a-zA-Z0-9_.:-]*)`,
+                `("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')`,
+                `(&[a-zA-Z0-9]+;|&#[0-9]+;|&#x[a-fA-F0-9]+;)`,
+                `([^<>&]+)`
+            ];
+        case 'json':
+            return [
+                `("([^"\\\\]|\\\\.)*")\\s*:`, 
+                `("([^"\\\\]|\\\\.)*")`, 
+                `(\\b\\d+(\\.\\d+)?\\b)`, 
+                `\\b(true|false)\\b`,
+                `\\bnull\\b`,
+                `([\\{\\}\\[\\]:,])` 
+            ];
         default:
             return null;
     }
@@ -447,6 +544,39 @@ export const tokenTypes = {
         'operator.comparison',
         'type-hint',
         'magic-method'
+    ],
+    typescript: [
+        'keyword',
+        'decorator',
+        'string',
+        'comment',
+        'number',
+        'operator',
+        'function',
+        'variable',
+        'type',
+        'builtin',
+        'boolean',
+        'interface',
+        'enum',
+        'class-name',
+        'namespace',
+        'struct',
+        'trait',
+        'annotation',
+        'method',
+        'arrow',
+        'spread',
+        'nullish',
+        'optional',
+        'generator',
+        'operator.logical',
+        'operator.arithmetic',
+        'operator.assignment',
+        'operator.comparison',
+        'jsx-tag',
+        'jsx-attribute',
+        'template-placeholder'
     ],
     javascript: [
         'keyword',
@@ -631,6 +761,7 @@ export const tokenTypes = {
         'variable-interpolation'
     ],
     c: [
+        'preprocessor',
         'keyword',
         'decorator',
         'string',
@@ -665,6 +796,7 @@ export const tokenTypes = {
         'operator.comparison'
     ],
     'c++': [
+        'preprocessor',
         'keyword',
         'decorator',
         'string',
@@ -700,6 +832,7 @@ export const tokenTypes = {
         'operator.comparison'
     ],
     'c#': [
+        'preprocessor',
         'keyword',
         'decorator',
         'string',
@@ -738,95 +871,37 @@ export const tokenTypes = {
         'identifier'
     ],
     css: [
+        'media-query',
+        'at-rule',
+        'comment',
         'selector',
         'property',
         'value',
-        'comment',
-        'operator',
-        'function',
-        'variable',
-        'pseudo-class',
-        'pseudo-element',
-        'at-rule',
-        'unit',
-        'decorator',
-        'parameter',
-        'command',
-        'schema',
-        'operator.logical',
-        'operator.arithmetic',
-        'operator.assignment',
-        'operator.comparison',
         'hex-color',
-        'rgb-color',
-        'hsl-color',
-        'url-function'
+        'function',
+        'unit',
+        'vendor-prefix',
+        'important',
+        'class',
+        'id',
+        'at-rule',
+        'property-name',
+        'property-value',
+        'semicolon',
+        'keyword',
+        'string',
+        'parentheses',
+        'min-width',
+        'pixel-value'
     ],
     html: [
-        'tag',
-        'attribute',
-        'string',
         'comment',
         'doctype',
-        'operator',
-        'function',
-        'variable',
-        'entity',
-        'boolean',
-        'class-name',
-        'interface',
-        'enum',
-        'struct',
-        'trait',
-        'pseudo-class',
-        'pseudo-element',
-        'at-rule',
-        'unit',
-        'preprocessor',
-        'template',
-        'parameter',
-        'command',
-        'schema',
-        'operator.logical',
-        'operator.arithmetic',
-        'operator.assignment',
-        'operator.comparison',
-        'jsx-tag',
-        'jsx-attribute',
-        'jsx-string',
-        'event-handler'
-    ],
-    typescript: [
-        'keyword',
+        'tag',
         'decorator',
         'string',
-        'comment',
-        'number',
-        'operator',
-        'function',
-        'variable',
-        'type',
-        'builtin',
-        'boolean',
-        'interface',
-        'enum',
-        'class-name',
-        'namespace',
-        'struct',
-        'trait',
-        'annotation',
-        'method',
-        'arrow',
-        'spread',
-        'nullish',
-        'optional',
-        'operator.logical',
-        'operator.arithmetic',
-        'operator.assignment',
-        'operator.comparison',
-        'jsx-tag',
-        'jsx-attribute',
-        'template-placeholder'
+        'entity',
+        'text'
     ],
     swift: [
         'keyword',
@@ -1005,9 +1080,32 @@ export const tokenTypes = {
         'instruction',
         'constant',
         'filepath'
+    ],
+    xml: [
+        'comment',
+        'doctype',
+        'tag',
+        'processing-instruction',
+        'attribute',
+        'entity',
+        'text'
+    ],
+    json: [
+        'key',
+        'string',
+        'number',
+        'boolean',
+        'null',
+        'punctuation'
     ]
 };
 
+/**
+ * 
+ * @param {string} codeStr 
+ * @param {string} language 
+ * @returns {Array<Object>} 
+*/
 export const tokenize = (codeStr, language) => {
     const tokenPatterns = getTokenPatterns(language);
     if (!tokenPatterns) {
@@ -1082,6 +1180,14 @@ export const tokenize = (codeStr, language) => {
     return tokens;
 };
 
+/**
+ * @param {string} codeStr 
+ * @param {string} language 
+ * @param {string} searchTerm 
+ * @param {boolean} isCaseSensitive 
+ * @param {number|null} activeLineNumber 
+ * @returns {string} 
+*/
 export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive = false, activeLineNumber = null) => {
     if (language.toLowerCase() === "unknown") {
         return escapeHtml(codeStr).replace(/\n/g, '<br/>');
@@ -1132,7 +1238,14 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
 
             let tokenHtml = '';
             if (token.type && token.type !== 'space') {
-                tokenHtml = `<span class="token ${token.type}">${escapeHtml(token.value)}</span>`;
+                let classPrefix = 'token';
+                if (language.toLowerCase() === 'css') {
+                    classPrefix = 'css-token';
+                } else if (language.toLowerCase() === 'html' || language.toLowerCase() === 'xml') {
+                    classPrefix = 'html-token';
+                }
+
+                tokenHtml = `<span class="${classPrefix} ${token.type}">${escapeHtml(token.value)}</span>`;
             } else {
                 tokenHtml = `${escapeHtml(token.value)}`;
             }
@@ -1156,7 +1269,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
 
                     if (beforeMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}">${escapeHtml(beforeMatch)}</span>`;
+                            newTokenHtml += `<span class="${classPrefix} ${token.type}">${escapeHtml(beforeMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(beforeMatch)}`;
                         }
@@ -1164,14 +1277,14 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
 
                     if (matchedText) {
                         const matchedHtml = token.type && token.type !== 'space'
-                            ? `<span class="token ${token.type}">${escapeHtml(matchedText)}</span>`
+                            ? `<span class="${classPrefix} ${token.type}">${escapeHtml(matchedText)}</span>`
                             : `${escapeHtml(matchedText)}`;
                         newTokenHtml += `<span class="searchHighlight">${matchedHtml}</span>`;
                     }
 
                     if (afterMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="token ${token.type}">${escapeHtml(afterMatch)}</span>`;
+                            newTokenHtml += `<span class="${classPrefix} ${token.type}">${escapeHtml(afterMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(afterMatch)}`;
                         }
