@@ -706,7 +706,6 @@
     padding-left: 0.4vw;
     padding-top: 0.2vw;
     padding-bottom: 0.2vw;
-    padding-right: 1vw;
     overflow: scroll;
   }
 
@@ -1036,14 +1035,108 @@
   }
 
   .dinolabsIDEGetStartedStack {
-    width: 60%;
-    height: 80%;
-    margin-left: 10%;
+    width: 90%;
+    height: 90%;
+    margin-left: 5%;
+    margin-right: 5%; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
   }
+
+  .dinolabsIDEGetStartedFlex {
+    width: 100%; 
+    height: 48%; 
+    margin-bottom: 2%; 
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dinolabsIDEGetStartedWrapper {
+    width: 49%; 
+    height: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start;
+    align-items: flex-start;
+    box-sizing: border-box;
+    background-color: #131313;
+    box-shadow: 0 0 12px black; 
+    border-radius: 0.2rem;
+    padding: 2vw; 
+  }
+
+
+  
+.dinolabsIDEUsageLanguagesContainer {
+  width: 100%; 
+  height: 100%;
+  display: flex; 
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.dinolabsIDEUsageLanguageList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%; 
+  overflow: scroll;
+}
+
+.dinolabsIDELanguageItem {
+  padding: 0; 
+  margin: 0; 
+  width: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center;
+  align-items: flex-start;
+  margin-bottom: 1vw; ;
+}
+
+.dinolabsIDELanguageLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2vw;
+  font-weight: 700; 
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.4vw;
+  display: flex; 
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1vw;
+  width: 100%; 
+}
+
+.dinolabsIDELanguageLabel span {
+  font-size: 0.9vw; 
+  font-weight: 500; 
+}
+
+.dinolabsIDELanguageBar {
+  height: 6px;
+  border-radius: 0.2rem;
+  transition: width 0.3s ease;
+  width: 100%; 
+}
+
+
+  
+
+
+
+
+
+
+
 
   .dinolabsIDETitle {
     font-size: 2vw;
@@ -1064,7 +1157,7 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    margin-top: 3vw;
+    margin-top: 2vw;
     margin-left: 0.4vw;
   }
 

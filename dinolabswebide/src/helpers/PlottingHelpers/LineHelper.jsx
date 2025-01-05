@@ -116,6 +116,17 @@ const ManagerLinePlot = ({
   let seriesName2, seriesData2, seriesColor2;
 
   switch (plotType) {
+    case "getStartedPageUsagePlot":
+      title = "Personal Usage";
+      subtitle = "Edits Saved In Last 30 Days";
+      classname = "getStartedLinePlot";
+      seriesName1 = `Edits Saved`;
+      seriesName2 = ""; 
+      seriesData1 = data && data.length ? data.map(item => item.count) : Array(30).fill(0);
+      seriesData2 = totalData && totalData.length ? totalData.map(item => item.value) : []; 
+      seriesColor1 = "#9b59b6";
+      seriesColor2 = "#3498db";
+      break;
     case "adminAdministratorSigninsPlot":
       title = "Personal Usage";
       subtitle = "Edits Saved In Last 30 Days";
@@ -234,17 +245,17 @@ const ManagerLinePlot = ({
             <div style="font-weight: bold; font-size: 1.2vw; color: rgba(255,255,255,0.9);">Date: ${date}</div>
             <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.6); width: 100%; margin: 1vw 0;">
         `;
-
-        params.forEach(param => {
+  
+        params.forEach((param) => {
           const num = parseFloat(param.data);
           const formattedValue = !isNaN(num) ? num.toFixed(2) : param.data;
           tooltipContent += `
             <div style="color: ${param.color};">${param.seriesName}: <b style="color: white;">${formattedValue}</b></div>
           `;
         });
-
+  
         tooltipContent += `</div>`;
-
+  
         return tooltipContent;
       },
       backgroundColor: "rgba(255,255,255,0.0)",
@@ -262,7 +273,7 @@ const ManagerLinePlot = ({
         formatter: (value, index) => {
           const lastIndex = formattedLabels.length - 1;
           const secondLastIndex = lastIndex - 1;
-
+  
           if (
             index === 0 ||
             index === lastIndex ||
@@ -282,14 +293,15 @@ const ManagerLinePlot = ({
       axisLine: {
         lineStyle: {
           color: "rgba(255, 255, 255, 0.2)",
-          width: gridLineWidth
-        }
+          width: plotType === "getStartedPageUsagePlot" ? 0 : gridLineWidth,
+        },
       },
     },
     yAxis: {
       type: "value",
       axisLabel: { show: false },
       splitLine: {
+        show: plotType !== "getStartedPageUsagePlot",
         lineStyle: {
           color: "rgba(255, 255, 255, 0.2)",
           width: gridLineWidth,
@@ -299,18 +311,32 @@ const ManagerLinePlot = ({
       axisLine: {
         lineStyle: {
           color: "rgba(255, 255, 255, 0.2)",
-          width: gridLineWidth
-        }
+          width: plotType === "getStartedPageUsagePlot" ? 0 : gridLineWidth,
+        },
       },
     },
     series: series,
-    grid: grid,
+    grid: {
+      ...grid,
+      left: plotType !== "getStartedPageUsagePlot" ? "" : 0,
+      right: plotType !== "getStartedPageUsagePlot" ? "" : 0 
+    }
   };
+  
 
   return (
     <div className={classname} style={style}>
-      <label className="demoPlotTitle">{title}</label>
-      <label className="demoPlotSubTitle">{subtitle}</label>
+      {plotType !== "getStartedPageUsagePlot" ? (
+        <>
+          <label className="demoPlotTitle">{title}</label>
+          <label className="demoPlotSubTitle">{subtitle}</label>
+        </>
+      ) : (
+        <span className="getStartedStack">
+          <label className="demoPlotTitleSupplement">{title}</label>
+          <label className="demoPlotSubTitleSupplement">{subtitle}</label>
+        </span>
+      )}
       <ReactEcharts
         option={option}
         style={{

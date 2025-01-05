@@ -17,6 +17,23 @@
         text-align: center;
         opacity: 0.8; 
     }
+
+    .demoPlotTitleSupplement {
+        font-size: 1.4vw;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.7);
+        width: 100%; 
+        text-align: left; 
+        margin-top: 1vw; 
+        text-shadow: 0 0 1.5px grey; 
+    }
+
+    .demoPlotSubTitleSupplement {
+        font-size: 0.9vw;
+        font-weight: 500;
+        color: #c0c0c0;
+        margin-top: 0.2vw;
+    }
 }
 
 @media (min-width: 700px) and (max-width: 1299px) {
@@ -31,5 +48,25 @@
         position: relative; 
         background: linear-gradient(to top, rgba(0,0,0,0.4), rgba(0,0,0,0.4));
         overflow: visible;
+    }
+
+    .getStartedLinePlot {
+        background-color: rgba(255,255,255,0.0);
+        height: 50%; 
+        width: 100%; 
+        background-color:#131313;
+        box-sizing: border-box;
+        padding: 0.5vw 2vw; 
+        border-radius: 0.2rem; 
+        box-shadow: 0 0 8px black; 
+    }
+
+    .getStartedStack {
+        display: flex; 
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        width: 100%; 
+        text-align: left;
     }
 }

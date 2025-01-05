@@ -8,6 +8,7 @@ import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/mainStyles/DinoLabsParser.css";
 import "../styles/helperStyles/Tooltip.css";
 import useAuth from "../UseAuth"; 
+import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
@@ -148,6 +149,7 @@ const getFileIcon = (filename) => {
 
 const DinoLabsIDE = () => {
   const { token, userID, organizationID, loading } = useAuth();
+  const debounceRef = useRef(null);
   const [directoryWidth, setDirectoryWidth] = useState(20);
   const [contentWidth, setContentWidth] = useState(80);
   const [markdownHeight, setMarkdownHeight] = useState(70);
@@ -180,7 +182,6 @@ const DinoLabsIDE = () => {
   const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
   const [lintProblems, setLintProblems] = useState([]);
   const [collapsedFiles, setCollapsedFiles] = useState({});
-  
   const defaultKeyBinds = {
     save: 's',
     undo: 'z',
@@ -194,13 +195,16 @@ const DinoLabsIDE = () => {
   const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
   const [zoomLevel, setZoomLevel] = useState(1); 
   const [colorTheme, setColorTheme] = useState("default"); 
-  const debounceRef = useRef(null);
+  const [personalUsageByDay, setPersonalUsageByDay] = useState([]); 
+  const [usageLanguages, setUsageLanguages] = useState([]);
+  
 
   useEffect(() => {
         const fetchData = async () => {
             try {
                 await Promise.all([
                     fetchUserInfo (userID, organizationID), 
+                    fetchPersonalUsageData(userID, organizationID)
                 ]);
                 setIsLoaded(true);
             } catch (error) {
@@ -244,6 +248,59 @@ const DinoLabsIDE = () => {
     } catch (error) {
       console.error("Error fetching user info:", error);
       return;
+    }
+  };
+
+  const fetchPersonalUsageData = async (userID, organizationID) => {
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            throw new Error("Token not found in localStorage");
+        }
+
+        const response = await fetch("http://172.20.10.2:3000/usage-info", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ 
+                userID, 
+                organizationID
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Unpack and handle `personalUsageInfo`
+        if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
+            throw new Error("Unexpected data structure from the backend");
+        }
+
+        setPersonalUsageByDay(
+            data.personalUsageInfo.map((item) => ({
+                day: new Date(item.day), 
+                count: parseInt(item.usage_count, 10), // Use radix 10 for parsing
+            }))
+        );
+
+        if (!data.usageLanguages || !Array.isArray(data.usageLanguages)) {
+            throw new Error("Unexpected usageLanguages data structure from the backend");
+        }
+
+        setUsageLanguages(
+            data.usageLanguages.map((item) => ({
+                language: item.language,
+                count: parseInt(item.language_count, 10), // Use radix 10 for parsing
+            }))
+        );
+
+    } catch (error) {
+        console.error("Error fetching personal usage data:", error);
     }
   };
 
@@ -1769,28 +1826,100 @@ const DinoLabsIDE = () => {
                           ))
                         ) : (
                           <div className="dinolabsIDENoFileSelectedWrapper">
+
                             <div className="dinolabsIDEGetStartedStack">
-                              <label className="dinolabsIDETitle"> 
-                                Dino Labs Web Developer
-                              </label>
-                              <label className="dinolabsIDESubtitle"> 
-                                Version 1.0.0 (Beta)
-                              </label>
-                              <div className="vevktorIDEStartButtonWrapper"> 
-                                <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}> 
-                                  <FontAwesomeIcon icon={faAngleDown}/>
-                                  Import a Directory
-                                </button>
-                                <button className="dinolabsIDEStartButton" onClick={handleFileLoad}> 
-                                  <FontAwesomeIcon icon={faCode}/>
-                                  Open a File
-                                </button>
-                                <button className="dinolabsIDEStartButton" onClick={handleCloneGithubRepository}> 
-                                  <FontAwesomeIcon icon={faGithub}/>
-                                  Clone a GitHub Repository
-                                </button>
+                              <div className="dinolabsIDEGetStartedFlex">
+                                <div className="dinolabsIDEGetStartedWrapper">
+                                  <label className="dinolabsIDETitle"> 
+                                    Dino Labs Web Developer
+                                  </label>
+                                  <label className="dinolabsIDESubtitle"> 
+                                    Version 1.0.0 (Beta)
+                                  </label>
+                                  <div className="vevktorIDEStartButtonWrapper"> 
+                                    <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}> 
+                                      <FontAwesomeIcon icon={faAngleDown}/>
+                                      Import a Directory
+                                    </button>
+                                    <button className="dinolabsIDEStartButton" onClick={handleFileLoad}> 
+                                      <FontAwesomeIcon icon={faCode}/>
+                                      Open a File
+                                    </button>
+                                    <button className="dinolabsIDEStartButton" onClick={handleCloneGithubRepository}> 
+                                      <FontAwesomeIcon icon={faGithub}/>
+                                      Clone a GitHub Repository
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="dinolabsIDEGetStartedWrapper">
+                                    <div className="dinolabsIDEUsageLanguagesContainer">
+                                        {usageLanguages.length === 0 ? (
+                                            <p>No data available.</p>
+                                        ) : (
+                                            
+                                            <ul className="dinolabsIDEUsageLanguageList">
+                                                {usageLanguages.slice(0, 5).map((language) => {
+                                                    const percentage = (language.count / usageLanguages.reduce((acc, lang) => acc + lang.count, 0)) * 100;
+                                                    const languageColors = {
+                                                      Javascript: "#f1c40f",  // Bright Yellow
+                                                      Typescript: "#3178c6",  // Light Blue
+                                                      HTML: "#e34c26",        // Orange-Red
+                                                      CSS: "#2965f1",         // Bright Blue
+                                                      JSON: "#8e44ad",        // Purple
+                                                      XML: "#1abc9c",         // Teal
+                                                      Python: "#3572a5",      // Deep Blue
+                                                      PHP: "#8993be",         // Light Purple
+                                                      Swift: "#ffac45",       // Orange
+                                                      C: "#a8b9cc",           // Light Gray-Blue
+                                                      "C++": "#f34b7d",       // Pinkish Red
+                                                      "C#": "#178600",        // Green
+                                                      Rust: "#dea584",        // Tan/Orange
+                                                      Bash: "#4eaa25",        // Green
+                                                      Shell: "#89e051",       // Light Green
+                                                      "Monkey C": "#f45b69",  // Coral
+                                                      SQL: "#c5b7db",         // Lavender
+                                                      Assembly: "#5d9ca3",    // Light Blue-Green
+                                                      default: "#95a5a6",     // Neutral Gray (for unknown languages)
+                                                    };
+                                                    const color = languageColors[language.language] || languageColors.default;
+
+                                                    return (
+                                                      <li key={language.language} className="dinolabsIDELanguageItem">
+                                                          <div className="dinolabsIDELanguageLabel">
+                                                              {language.language}
+                                                              <span>{percentage.toFixed(1)}%</span>
+                                                          </div>
+
+                                                          <div
+                                                              className="dinolabsIDELanguageBar"
+                                                              style={{
+                                                                  width: `${percentage}%`, // Dynamically adjust width
+                                                                  backgroundColor: color, // Use language-specific color
+                                                              }}
+                                                          ></div>
+                                                      </li>
+                                                  );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+
+
+
+
+
                               </div>
+
+                              <LinePlot
+                                    plotType="getStartedPageUsagePlot"
+                                    data={personalUsageByDay}
+                                />
                             </div>
+
+
+
                           </div>
                         )}
                       </div>
