@@ -258,7 +258,7 @@ const DinoLabsIDE = () => {
             throw new Error("Token not found in localStorage");
         }
 
-        const response = await fetch("http://172.20.10.2:3000/usage-info", {
+        const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -1855,9 +1855,9 @@ const DinoLabsIDE = () => {
                                 <div className="dinolabsIDEGetStartedWrapper">
                                     <div className="dinolabsIDEUsageLanguagesContainer">
                                         {usageLanguages.length === 0 ? (
-                                            <p>No data available.</p>
+                                            <p className="dinolabsIDELanguageUsageUnavailable">No data available.</p>
                                         ) : (
-                                            
+
                                             <ul className="dinolabsIDEUsageLanguageList">
                                                 {usageLanguages.slice(0, 5).map((language) => {
                                                     const percentage = (language.count / usageLanguages.reduce((acc, lang) => acc + lang.count, 0)) * 100;
@@ -1894,8 +1894,8 @@ const DinoLabsIDE = () => {
                                                           <div
                                                               className="dinolabsIDELanguageBar"
                                                               style={{
-                                                                  width: `${percentage}%`, // Dynamically adjust width
-                                                                  backgroundColor: color, // Use language-specific color
+                                                                  width: `${percentage}%`, 
+                                                                  backgroundColor: color, 
                                                               }}
                                                           ></div>
                                                       </li>

@@ -211,7 +211,7 @@ const DinoLabsIDEAccount = ({
                 throw new Error("Token not found in localStorage");
             }
     
-            const response = await fetch("http://172.20.10.2:3000/usage-info", {
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
