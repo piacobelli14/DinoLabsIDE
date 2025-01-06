@@ -271,9 +271,10 @@ const DinoLabsIDEMarkdown = forwardRef(({
       setViewCode(updatedViewCode);
       setFullCode(mapViewToFullCode(updatedViewCode, fullCode, collapsedLines));
       setLineNumberMappings(generateViewCode(updatedViewCode, collapsedLines).lineNumberMappings);
-      if (!isSettingContentRef.current) {
-        onEdit(paneIndex, tabId, { fullCode, collapsedLines: new Set(collapsedLines) }, { fullCode: mapViewToFullCode(updatedViewCode, fullCode, collapsedLines), collapsedLines: new Set(collapsedLines) });
-      }
+      setCollapsedLines(new Set());
+      setSearchPositions([]);
+      setCurrentSearchIndex(-1);
+      setActiveLineNumber(null);
 
       setTimeout(() => {
         event.target.selectionStart = event.target.selectionEnd =
@@ -484,6 +485,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
         setCurrentSearchIndex(-1);
         setActiveLineNumber(null);
         updateVisibleLines();
+
         onEdit(paneIndex, tabId, previousState, { fullCode: mapViewToFullCode(updatedViewCode, fullCode, collapsedLines), collapsedLines: new Set(collapsedLines) });
       }).catch(() => {
         setCopySuccess("Failed to paste!");
@@ -730,7 +732,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                                 )}
                               </span>
 
-                              
+
 
                               {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
                                   <span

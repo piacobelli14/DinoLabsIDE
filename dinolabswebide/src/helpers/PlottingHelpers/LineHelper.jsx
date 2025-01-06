@@ -318,8 +318,8 @@ const ManagerLinePlot = ({
     series: series,
     grid: {
       ...grid,
-      left: plotType !== "getStartedPageUsagePlot" ? "" : 0,
-      right: plotType !== "getStartedPageUsagePlot" ? "" : 0 
+      left: plotType !== "getStartedPageUsagePlot" ? grid.left : 0,
+      right: plotType !== "getStartedPageUsagePlot" ? grid.right : 0 
     }
   };
   

@@ -37,12 +37,12 @@ export const getTokenPatterns = (language) => {
                     'async', 'await', 'match', 'case'
                 ].join('|')})\\b`,
                 `(@[a-zA-Z_][a-zA-Z0-9_]*)`,
-                `("""[\\s\\S]*?"""|'''[\\s\\S]*?''')`,
                 `("([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*')`,
-                `(#.*)`,
+                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?=\\()`,
                 `(\\b\\d+(\\.\\d+)?\\b)`,
                 `([+\\-*/%=&|<>!^~()\\[\\]{}]+)`,
-                `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(?=\\()`,
+                `("""[\\s\\S]*?"""|'''[\\s\\S]*?''')`,
+                `(#.*)`,
                 `\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b`,
                 `\\b(${[
                     'print', 'len', 'range', 'open', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple', 'super', 'self'
@@ -1191,12 +1191,12 @@ export const tokenize = (codeStr, language) => {
  * @param {number|null} activeLineNumber 
  * @returns {string} 
 */
-export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive = false, activeLineNumber = null) => {
+export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive, activeLineNumber = null) => {
     if (language.toLowerCase() === "unknown") {
         return escapeHtml(codeStr).replace(/\n/g, '<br/>');
     }
 
-    const tokens = tokenize(codeStr, language);
+    const tokens = tokenize(codeStr, language); 
     const lines = codeStr.split(/\r?\n/);
     const highlightedLines = lines.map((line, index) => {
         const lineNumber = index + 1;
@@ -1240,22 +1240,16 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
             currentChar += tokenLength;
 
             let tokenHtml = '';
-            if (token.type && token.type !== 'space') {
-                let classPrefix = 'token';
-                if (language.toLowerCase() === 'css') {
-                    classPrefix = 'css-token';
-                } else if (language.toLowerCase() === 'html' || language.toLowerCase() === 'xml') {
-                    classPrefix = 'html-token';
-                }
-
-                tokenHtml = `<span class="${classPrefix} ${token.type}">${escapeHtml(token.value)}</span>`;
-            } else {
+            if (token.type && token.type !== 'space') { 
+                tokenHtml = `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(token.value)}</span>`;
+            } else { 
                 tokenHtml = `${escapeHtml(token.value)}`;
             }
 
             if (isTokenFullyInMatch(tokenStart, tokenEnd)) {
                 tokenHtml = `<span class="searchHighlight">${tokenHtml}</span>`;
             }
+
             else if (isTokenInMatch(tokenStart, tokenEnd)) {
                 let overlappingRanges = matchRanges.filter(range => tokenStart < range.end && tokenEnd > range.start);
                 overlappingRanges.forEach(range => {
@@ -1272,7 +1266,7 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
 
                     if (beforeMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="${classPrefix} ${token.type}">${escapeHtml(beforeMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(beforeMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(beforeMatch)}`;
                         }
@@ -1280,14 +1274,14 @@ export const syntaxHighlight = (codeStr, language, searchTerm, isCaseSensitive =
 
                     if (matchedText) {
                         const matchedHtml = token.type && token.type !== 'space'
-                            ? `<span class="${classPrefix} ${token.type}">${escapeHtml(matchedText)}</span>`
+                            ? `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(matchedText)}</span>`
                             : `${escapeHtml(matchedText)}`;
                         newTokenHtml += `<span class="searchHighlight">${matchedHtml}</span>`;
                     }
 
                     if (afterMatch) {
                         if (token.type && token.type !== 'space') {
-                            newTokenHtml += `<span class="${classPrefix} ${token.type}">${escapeHtml(afterMatch)}</span>`;
+                            newTokenHtml += `<span class="token ${token.type}" style="font-family: monospace; white-space: pre;">${escapeHtml(afterMatch)}</span>`;
                         } else {
                             newTokenHtml += `${escapeHtml(afterMatch)}`;
                         }

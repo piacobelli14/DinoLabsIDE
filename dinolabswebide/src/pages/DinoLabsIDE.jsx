@@ -5,7 +5,8 @@ import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
 import DinoLabsIDEDebug from "./DinoLabsIDELint/DinoLabsIDELintDebug";
 import "../styles/mainStyles/DinoLabsIDE.css";
-import "../styles/mainStyles/DinoLabsParser.css";
+import "../styles/mainStyles/MirrorThemes/DefaultTheme.css";
+
 import "../styles/helperStyles/Tooltip.css";
 import useAuth from "../UseAuth"; 
 import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
