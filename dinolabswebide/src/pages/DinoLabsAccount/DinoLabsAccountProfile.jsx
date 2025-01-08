@@ -790,9 +790,9 @@ const DinoLabsIDEAccount = ({
                                                     <span>
                                                         Default Theme
                                                         <span className="dinolabsIDESettingsThemeIndicator">
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#C586C0" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#CE9178" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#B5CEA8" }}/>
                                                         </span>
                                                     </span>
                                                     <input
@@ -812,9 +812,9 @@ const DinoLabsIDEAccount = ({
                                                     <span>
                                                         Dark Theme
                                                         <span className="dinolabsIDESettingsThemeIndicator">
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#a76fa0" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#a35955" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#8b9a75" }}/>
                                                         </span>
                                                     </span>
                                                     <input
@@ -834,9 +834,9 @@ const DinoLabsIDEAccount = ({
                                                     <span>
                                                         Light Theme
                                                         <span className="dinolabsIDESettingsThemeIndicator">
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#569CD6" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#4EC9B0" }}/>
-                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#9CDCFE" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#7B68EE" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#FFA07A" }}/>
+                                                            <span className="dinolabsIDESettingsThemeIndicatorDot" style={{ backgroundColor: "#98FB98" }}/>
                                                         </span>
                                                     </span>
                                                     <input

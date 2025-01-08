@@ -6,236 +6,236 @@
     font-family: monospace;
 }
 .dark-token.keyword {
-    color: #C586C0;
+    color: #a76fa0;
     font-weight: bold;
 }
 .dark-token.decorator,
 .dark-token.annotation {
-    color: #C586C0;
+    color: #a76fa0;
 }
 .dark-token.string {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.comment {
-    color: #6A9955;
+    color: #557a40;
     font-style: italic;
 }
 .dark-token.number {
-    color: #B5CEA8;
+    color: #8b9a75;
 }
 .dark-token.operator,
 .dark-token.operator.logical,
 .dark-token.operator.arithmetic,
 .dark-token.operator.assignment,
 .dark-token.operator.comparison {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.datatype {
-    color: #4EC9B0;
+    color: #3b9b8b;
 }
 .dark-token.hex-color {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.punctuation {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.template {
-    color: #d4d4d4;
+    color: #a9a9a9;
 }
 .dark-token.function,
 .dark-token.method,
 .dark-token.magic-method {
-    color: #DCDCAA;
+    color: #b5ad8a;
 }
 .dark-token.variable {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.type,
 .dark-token.type-hint {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.template-placeholder {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.regex {
-    color: #d16969;
+    color: #9c4d4d;
 }
 .dark-token.boolean {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.class-name {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.parameter {
-    color: #9cdcfe;
+    color: #6a9dc2;
 }
 .dark-token.command {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.superglobal {
-    color: #9cdcfe;
+    color: #6a9dc2;
 }
 .dark-token.namespace-use {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.class-inheritance {
-    color: #d4d4d4;
+    color: #a9a9a9;
 }
 .dark-token.identifier {
-    color: #dcdcaa;
+    color: #b5ad8a;
 }
 .dark-token.protocol {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.interface {
-    color: #A0E1FB;
+    color: #7faacc;
 }
 .dark-token.type-annotation {
-    color: #b5cea8;
+    color: #8b9a75;
 }
 .dark-token.schema {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.pseudo-class {
-    color: #d4d4d4;
+    color: #a9a9a9;
 }
 .dark-token.pseudo-element {
-    color: #d4d4d4;
+    color: #a9a9a9;
 }
 .dark-token.aggregate-function {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.date-function {
-    color: #b5cea8;
+    color: #8b9a75;
 }
 .dark-token.join-type {
-    color: #d4d4d4;
+    color: #a9a9a9;
 }
 .dark-token.lifetime {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.enum,
 .dark-token.struct,
 .dark-token.trait,
 .dark-token.namespace {
-    color: #A0E1FB;
+    color: #7faacc;
 }
 .dark-token.token.magic-method {
-    color: #FF00FF;
+    color: #990099;
 }
 .dark-token.preprocessor {
-    color: #FF00FF;
+    color: #990099;
     font-weight: bold;
 }
 .dark-token.arrow,
 .dark-token.spread,
 .dark-token.generator {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.nullish,
 .dark-token.optional {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.jsx-tag {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.jsx-attribute,
 .dark-token.key {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.jsx-string {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.event-handler {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.filepath,
 .dark-token.memory-address {
-    color: #B5CEA8;
+    color: #8b9a75;
 }
 .dark-token.variable-interpolation {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.label {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.register,
 .dark-token.instruction {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.directive,
 .dark-token.macro {
-    color: #C586C0;
+    color: #a66fa0;
 }
 .dark-token.constant {
-    color: #B5CEA8;
+    color: #8b9a75;
 }
 .dark-token.builtin {
-    color: #4EC9B0;
+    color: #3b9b8b;
 }
 .dark-token.standard-library {
-    color: #4EC9B0;
+    color: #3b9b8b;
 }
 .searchHighlight {
-    background-color: #ffd54f;
-    color: #000;
+    background-color: #cc9e3f;
+    color: #fff;
 }
 .dark-token.property {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.value {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.selector {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.at-rule {
-    color: #FF00FF;
+    color: #990099;
 }
 .dark-token.unit {
-    color: #B5CEA8;
+    color: #8b9a75;
 }
 .dark-token.vendor-prefix {
-    color: #C586C0;
+    color: #a66fa0;
 }
 .dark-token.important {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.class {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.id {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.property-name {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.property-value {
-    color: #CE9178;
+    color: #a35955;
 }
 .dark-token.semicolon {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.tag {
-    color: #569CD6;
+    color: #4177a3;
     font-weight: bold;
 }
 .dark-token.attribute {
-    color: #9CDCFE;
+    color: #6a9dc2;
 }
 .dark-token.entity {
-    color: #B5CEA8;
+    color: #8b9a75;
 }
 .dark-token.text {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }
 .dark-token.doctype,
 .dark-token.doctype-declaration {
-    color: #569CD6;
+    color: #4177a3;
 }
 .dark-token.processing-instruction {
-    color: #c586c0;
+    color: #a66fa0;
 }
 .dark-token.operator {
-    color: #D4D4D4;
+    color: #a9a9a9;
 }

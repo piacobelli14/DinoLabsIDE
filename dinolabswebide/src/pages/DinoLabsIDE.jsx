@@ -179,8 +179,8 @@ const DinoLabsIDE = () => {
   const debounceRef = useRef(null);
   const [directoryWidth, setDirectoryWidth] = useState(20);
   const [contentWidth, setContentWidth] = useState(80);
-  const [markdownHeight, setMarkdownHeight] = useState(70);
-  const [consoleHeight, setConsoleHeight] = useState(20);
+  const [markdownHeight, setMarkdownHeight] = useState(90);
+  const [consoleHeight, setConsoleHeight] = useState(0);
   const [isDraggingWidth, setIsDraggingWidth] = useState(false);
   const [isDraggingHeight, setIsDraggingHeight] = useState(false);
   const [isDraggingPane, setIsDraggingPane] = useState(false);
@@ -2054,7 +2054,7 @@ const DinoLabsIDE = () => {
                       setIsAccountOpen(!isAccountOpen);
                     }}
                   >
-                    <FontAwesomeIcon icon={faUserCircle}/>
+                    <FontAwesomeIcon icon={faUserCircle} style={{"color": isAccountOpen ? "#AD6ADD" : ""}}/>
                   </button>
                 </Tippy>
               </div>
