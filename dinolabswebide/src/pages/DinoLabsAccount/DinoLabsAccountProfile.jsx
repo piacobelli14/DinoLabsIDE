@@ -786,10 +786,6 @@ const DinoLabsIDEAccount = ({
                                             <div className="dinolabsIDESettingsButtonWrapper">
                                                 <button
                                                     className="dinolabsIDESettingsButtonLine"
-                                                    onClick={() => {
-                                                        setColorTheme("default");
-                                                        saveUserPreferences(userID, organizationID, zoomLevel, "default");
-                                                    }}
                                                 >
                                                     <span>
                                                         Default Theme
@@ -812,10 +808,6 @@ const DinoLabsIDEAccount = ({
 
                                                 <button
                                                     className="dinolabsIDESettingsButtonLine"
-                                                    onClick={() => {
-                                                        setColorTheme("dark");
-                                                        saveUserPreferences(userID, organizationID, zoomLevel, "dark");
-                                                    }}
                                                 >
                                                     <span>
                                                         Dark Theme
@@ -838,10 +830,6 @@ const DinoLabsIDEAccount = ({
 
                                                 <button
                                                     className="dinolabsIDESettingsButtonLine"
-                                                    onClick={() => {
-                                                        setColorTheme("light");
-                                                        saveUserPreferences(userID, organizationID, zoomLevel, "light");
-                                                    }}
                                                 >
                                                     <span>
                                                         Light Theme

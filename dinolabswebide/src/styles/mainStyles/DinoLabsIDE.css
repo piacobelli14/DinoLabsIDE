@@ -158,6 +158,8 @@
     display: flex; 
     flex-direction: column;
     border: none; 
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   .dinolabsIDEMarkdownPaneFlex {
@@ -555,7 +557,8 @@
   }
 
   .leadingDirectoryFiles, 
-  .leadingDirectoryGlobalSearchResults {
+  .leadingDirectoryGlobalSearchResults, 
+  .leadingDirectoryFilesSupplement {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -571,8 +574,17 @@
     padding: 0.4vw 0 1vw 0; ; 
   }
 
+  .leadingDirectoryFilesSupplement {
+    height: 60%; 
+    padding: 0; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+  }
+
   .leadingDirectoryGlobalSearchResults {
     height: 50%; 
+    padding: 0.4vw 0 1vw 0; ; 
   }
 
   .leadingDirectoryGlobalSearchResultsGrouped {
@@ -664,7 +676,7 @@
     border-right: none;
     border-left: none;
     list-style: none;
-    padding: 0.2vw 0.6vw;
+    padding: 0vw 0.6vw;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
@@ -683,7 +695,7 @@
   .nestedDirectoryFileStack {
     list-style: none;
     padding-left: 1.2vw;
-    padding-top: 0.2vw;
+    padding-top: 0vw;
     margin: 0;
     width: 100%;
     overflow: scroll;
@@ -691,6 +703,7 @@
     position: relative;
   }
 
+  .directoryListItemRoot, 
   .directoryListItem {
     font-size: 0.8vw;
     font-weight: 500;
@@ -709,16 +722,36 @@
     overflow: scroll;
   }
 
+  .directoryListItemRoot {
+    position: sticky;
+    top: 0;
+    background: inherit; 
+    z-index: 2;  
+    background-color: black; 
+    padding-top: 0.6vw; 
+    padding-bottom: 0.6vw; 
+  }
+
   .leadingDirectoryFileStackContent>.directoryListItem::before {
     display: none;
   }
 
-  .directoryListItem svg {
+  .leadingDirectoryFileStackContent>.directoryListItemRoot::before {
+    display: none;
+  }
+
+
+  .directoryListItem svg, 
+  .directoryListItemRoot svg {
     font-size: 0.8vw;
     margin-right: 0.6vw;
   }
 
   .directoryListItem:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .directoryListItemRoot:hover {
     background-color: rgba(255, 255, 255, 0.2);
   }
 
@@ -1029,9 +1062,13 @@
   .dinolabsIDENoFileSelectedWrapper {
     width: 100%;
     height: 100%;
+    min-height: 100%;
+    max-height: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    overflow-y: hidden; 
+    box-sizing: border-box;
   }
 
   .dinolabsIDEGetStartedStack {
@@ -1040,31 +1077,57 @@
     margin-left: 5%;
     margin-right: 5%; 
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    overflow: hidden;;
   }
 
   .dinolabsIDEGetStartedFlex {
-    width: 100%; 
-    height: 48%; 
-    margin-bottom: 2%; 
+    width: 59%; 
+    height: 100%; 
     display: flex; 
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
   }
 
-  .dinolabsIDEGetStartedWrapper {
-    width: 49%; 
-    height: 100%; 
+  .dinolabsIDEGetStartedWrapperInfo {
+    width: 100%; 
+    height: 49%; 
     display: flex; 
     flex-direction: column; 
     justify-content: flex-start;
     align-items: flex-start;
     box-sizing: border-box;
     background-color: #131313;
-    box-shadow: 0 0 12px black; 
-    border-radius: 0.2rem;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.05); 
+    border-radius: 0.4rem;
+    padding: 2vw; 
+  }
+
+  .dinolabsIDELanguageDisplayFlex {
+    width: 39%; 
+    height: 100%;
+    display: flex; 
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box; 
+  }
+
+  .dinolabsIDEGetStartedWrapperLanguages  { 
+    width: 100%; 
+    height: 49%; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start;
+    align-items: flex-start;
+    box-sizing: border-box;
+    background-color: #131313;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.05); 
+    border-radius: 0.4rem;
     padding: 2vw; 
   }
 
@@ -1072,8 +1135,19 @@
     width: 100%; 
     height: 100%;
     display: flex; 
+    flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
+  }
+
+  .dinolabsIDETopLanguagesLabel {
+    font-size: 1.2vw; 
+      font-weight: 900;
+      color: #f5f5f5; 
+      width: 100%; 
+      text-align: center; 
+      margin-top: 1vw; 
+      text-shadow: 0 0 1.5px grey; 
   }
 
   .dinolabsIDEUsageLanguageList {
@@ -1085,6 +1159,7 @@
     justify-content: flex-start;
     align-items: flex-start;
     width: 100%; 
+    height: 100%;
     overflow: scroll;
   }
 
@@ -1127,9 +1202,11 @@
   }
 
   .dinolabsIDELanguageUsageUnavailable {
-    font-size: 0.9vw; 
-    font-weight: 500; 
+    font-size: 1.2vw; 
+    font-weight: 700; 
     color: rgba(255, 255, 255, 0.7);
+    width: 100%; 
+    text-align: center;
   }
 
   .dinolabsIDETitle {
@@ -1284,7 +1361,44 @@
 }
 
 @media (min-width: 700px) and (max-width: 1299px) {
-  
+  .dinolabsIDEContextMenu {
+    position: absolute; 
+    z-index: 4; 
+    background-color: rgba(0,0,0,0.9); 
+    border: 0.2vh solid rgba(255,255,255,0.2); 
+    border-radius: 0.2rem; 
+    box-shadow: 0 0 4px rgba(255,255,255,0.2);
+    list-style: none; 
+    padding: 1vw 1vw; 
+    margin: 0;
+  }
+
+  .dinolabsIDEContextMenuItem {
+    padding: 0.6vw 1vw;
+    cursor: pointer; 
+    white-space: nowrap;
+    font-size: 0.9vw; 
+    font-weight: 600;
+    color: #c0c0c0;  
+    border-bottom: 0.1vh solid rgba(255,255,255,0.4);
+  }
+
+  .dinolabsIDEContextMenuItem:hover {
+    background-color: rgba(255,255,255,0.2);
+  }
+
+  .dinolabsIDEaveStatusIndicator {
+    position: absolute; 
+    bottom: 1vw; 
+    right: 1vw; 
+    background-color: #333; 
+    color: #f5f5f5; 
+    font-size: 0.8vw; 
+    font-weight: 600; 
+    padding: 0.2vw 1vw ; 
+    border-radius: 0.2rem; 
+    box-shadow: 0 0 8px black;
+  }
 }
 
 

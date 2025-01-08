@@ -3,14 +3,17 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
-import DinoLabsIDEDebug from "./DinoLabsIDELint/DinoLabsIDELintDebug";
 import "../styles/mainStyles/DinoLabsIDE.css";
-import "../styles/mainStyles/MirrorThemes/DefaultTheme.css";
-
+import "../styles/mainStyles/MirrorThemes/DefaultTheme.css"; 
+import "../styles/mainStyles/MirrorThemes/DarkTheme.css"; 
+import "../styles/mainStyles/MirrorThemes/LightTheme.css"; 
 import "../styles/helperStyles/Tooltip.css";
+import "../styles/helperStyles/LoadingSpinner.css";
 import useAuth from "../UseAuth"; 
 import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
+import DoughnutPlot from "../helpers/PlottingHelpers/DoughnutHelper.jsx";
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
+import { FixedSizeList as List } from 'react-window';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import {
@@ -94,7 +97,7 @@ const extensionToImageMap = {
   mcgen: "monkeyc.svg", 
   md: "markdown.svg", 
   asm: "assembly.svg", 
-  sql: "sql.svg", 
+  sql: "sql.svg",
   pem: "securityExtensions.svg", 
   txt: "txtExtension.svg", 
   csv: "csvExtension.svg", 
@@ -123,7 +126,13 @@ const extensionToImageMap = {
   tar: "archiveExtensions.svg",
   gz: "archiveExtensions.svg",
   git: "githubExtension.svg", 
-  default: "unknownExtension.svg"
+  default: "unknownExtension.svg",
+  cache: "cacheExtensions.svg",
+  tmp: "cacheExtensions.svg",
+  temp: "cacheExtensions.svg",
+  bak: "cacheExtensions.svg",
+  dockerfile: "dockerExtension.svg",
+  git: "githubExtension.svg"
 };
 
 const supportedExtensions = [
@@ -134,8 +143,17 @@ const supportedExtensions = [
 ];
 
 const getFileIcon = (filename) => {
-  const parts = filename.split('.');
-  const extension = parts.length > 1 ? parts.pop().toLowerCase() : 'default';
+  let extension;
+  const lowerFilename = filename.toLowerCase();
+
+  if (lowerFilename === "dockerfile") {
+    extension = "dockerfile";
+  } else if (lowerFilename.startsWith('.git')) {
+    extension = "git"
+  } else {
+    const parts = filename.split('.');
+    extension = parts.length > 1 ? parts.pop().toLowerCase() : 'default';
+  }
 
   const imageName = extensionToImageMap[extension] || extensionToImageMap['default'];
 
@@ -146,6 +164,14 @@ const getFileIcon = (filename) => {
       className="dinolabsIDEFileIcon"
     />
   );
+};
+
+
+const prefixPath = (rootDirectoryName, path) => {
+  if (path.startsWith(rootDirectoryName)) {
+    return path;
+  }
+  return `${rootDirectoryName}/${path}`;
 };
 
 const DinoLabsIDE = () => {
@@ -162,11 +188,10 @@ const DinoLabsIDE = () => {
   const [repositoryFiles, setRepositoryFiles] = useState([]);
   const [openedDirectories, setOpenedDirectories] = useState({});
   const [rootDirectoryName, setRootDirectoryName] = useState("");
+  const [rootDirectoryHandle, setRootDirectoryHandle] = useState(null); 
   const [isRootOpen, setIsRootOpen] = useState(false);
   const [panes, setPanes] = useState([{ openedTabs: [], activeTabId: null }]);
   const [activePaneIndex, setActivePaneIndex] = useState(0);
-  const directoryRef = useRef(null); 
-  const contentRef = useRef(null);  
   const panesRef = useRef(panes);
   const editorRefs = useRef({}); 
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,13 +200,14 @@ const DinoLabsIDE = () => {
   const [originalContents, setOriginalContents] = useState({});
   const [modifiedContents, setModifiedContents] = useState({}); 
   const [isNavigatorState, setIsNavigatorState] = useState(true);
+  const [isNavigatorLoading, setIsNavigatorLoading] = useState(false);
   const [isSearchState, setIsSearchState] = useState(false); 
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalReplaceTerm, setGlobalReplaceTerm] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [isGlobalReplace, setIsGlobalReplace] = useState(false);
   const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
-  const [lintProblems, setLintProblems] = useState([]);
+  const [isPlotRendered, setIsPlotRendered] = useState(false); 
   const [collapsedFiles, setCollapsedFiles] = useState({});
   const defaultKeyBinds = {
     save: 's',
@@ -198,24 +224,120 @@ const DinoLabsIDE = () => {
   const [colorTheme, setColorTheme] = useState("default"); 
   const [personalUsageByDay, setPersonalUsageByDay] = useState([]); 
   const [usageLanguages, setUsageLanguages] = useState([]);
-  
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [contextMenuTarget, setContextMenuTarget] = useState(null);
+  const contextMenuRef = useRef(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [flattenedDirectoryList, setFlattenedDirectoryList] = useState([]);
+  const [flattenedSearchList, setFlattenedSearchList] = useState([]);
+  const [dragOverId, setDragOverId] = useState(null); 
+
+  const flattenTree = (files, parentPath, level = 0, isParentVisible = true, output = []) => {
+    files.forEach((item) => {
+      const directoryKey = prefixPath(rootDirectoryName, item.fullPath || `${parentPath}/${item.name}`);
+      const isDir = item.type === "directory";
+      const isOpen = openedDirectories[directoryKey] || false;
+      const isVisible = isParentVisible && (isRootOpen || parentPath === rootDirectoryName);
+
+      output.push({
+        id: directoryKey,
+        name: item.name,
+        type: item.type,
+        fullPath: directoryKey,
+        level: level,
+        isVisible: isVisible,
+        isOpen: isDir ? isOpen : false,
+        handle: item.handle 
+      });
+
+      if (isDir && isOpen && item.files && item.files.length > 0) {
+        flattenTree(item.files, directoryKey, level + 1, isVisible && isOpen, output);
+      }
+    });
+    return output;
+  };
 
   useEffect(() => {
-        const fetchData = async () => {
-            try {
-                await Promise.all([
-                    fetchUserInfo (userID, organizationID), 
-                    fetchPersonalUsageData(userID, organizationID)
-                ]);
-                setIsLoaded(true);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
+    if (!rootDirectoryName) {
+      setFlattenedDirectoryList([]);
+      return;
+    }
 
-        if (!loading && token) {
-            fetchData();
+    const filterFiles = (files, query) => {
+      return files.reduce((acc, file) => {
+        if (file.type === 'file' && file.name.toLowerCase().includes(query.toLowerCase())) {
+          acc.push(file);
+        } else if (file.type === 'directory') {
+          const filteredSubFiles = filterFiles(file.files, query);
+          if (filteredSubFiles.length > 0 || file.name.toLowerCase().includes(query.toLowerCase())) {
+            acc.push({ ...file, files: filteredSubFiles });
+          }
         }
+        return acc;
+      }, []);
+    };
+    const filtered = searchQuery 
+      ? filterFiles(repositoryFiles, searchQuery)
+      : repositoryFiles;
+    const flatList = flattenTree(filtered, rootDirectoryName, 0, true, []);
+    setFlattenedDirectoryList(flatList);
+  }, [repositoryFiles, openedDirectories, isRootOpen, rootDirectoryName, searchQuery]);
+
+  const flattenSearchResults = (resultsByFile, collapsedMap) => {
+    const output = [];
+    Object.entries(resultsByFile).forEach(([filePath, results]) => {
+      output.push({
+        type: 'fileHeader',
+        filePath,
+        isCollapsed: collapsedMap[filePath] || false
+      });
+      if (!collapsedMap[filePath]) {
+        results.forEach((res) => {
+          output.push({
+            type: 'lineMatch',
+            filePath,
+            lineNumber: res.lineNumber,
+            lineContent: res.lineContent
+          });
+        });
+      }
+    });
+    return output;
+  };
+
+  useEffect(() => {
+    if (globalSearchResults.length === 0) {
+      setFlattenedSearchList([]);
+      return;
+    }
+    const resultsByFile = globalSearchResults.reduce((acc, result) => {
+      if (!acc[result.filePath]) {
+        acc[result.filePath] = [];
+      }
+      acc[result.filePath].push(result);
+      return acc;
+    }, {});
+    const newList = flattenSearchResults(resultsByFile, collapsedFiles);
+    setFlattenedSearchList(newList);
+  }, [globalSearchResults, collapsedFiles]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await Promise.all([
+          fetchUserInfo(userID, organizationID), 
+          fetchPersonalUsageData(userID, organizationID)
+        ]);
+        setIsLoaded(true);
+      } catch (error) {
+        return; 
+      }
+    };
+
+    if (!loading && token) {
+      fetchData();
+    }
   }, [userID, organizationID, loading, token]);
 
   const fetchUserInfo = async (userID, organizationID) => {
@@ -227,10 +349,7 @@ const DinoLabsIDE = () => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          userID,
-          organizationID
-        }),
+        body: JSON.stringify({ userID, organizationID }),
       });
 
       if (response.status !== 200) {
@@ -238,76 +357,74 @@ const DinoLabsIDE = () => {
       }
 
       const data = await response.json();
-
       if (data[0].userkeybinds) {
-          setKeyBinds({ ...defaultKeyBinds, ...data[0].userkeybinds });
+        setKeyBinds({ ...defaultKeyBinds, ...data[0].userkeybinds });
       } else {
-          setKeyBinds(defaultKeyBinds);
+        setKeyBinds(defaultKeyBinds);
       }
       setZoomLevel(data[0].userzoomlevel || 1); 
       setColorTheme(data[0].usercolortheme || "default");
     } catch (error) {
-      console.error("Error fetching user info:", error);
       return;
     }
   };
 
   const fetchPersonalUsageData = async (userID, organizationID) => {
+    setIsPlotRendered(false); 
+
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            throw new Error("Token not found in localStorage");
-        }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token not found in localStorage");
+      }
 
-        const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({ 
-                userID, 
-                organizationID
-            }),
-        });
+      const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userID, organizationID }),
+      });
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.statusText}`);
-        }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      } 
 
-        const data = await response.json();
+      const data = await response.json();
+      if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
+        throw new Error("Unexpected data structure from the backend");
+      } else {
+        setIsPlotRendered(true); 
+      }
+      setPersonalUsageByDay(
+        data.personalUsageInfo.map((item) => ({
+          day: new Date(item.day),
+          count: parseInt(item.usage_count, 10),
+        }))
+      );
 
-        // Unpack and handle `personalUsageInfo`
-        if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
-            throw new Error("Unexpected data structure from the backend");
-        }
-
-        setPersonalUsageByDay(
-            data.personalUsageInfo.map((item) => ({
-                day: new Date(item.day), 
-                count: parseInt(item.usage_count, 10), // Use radix 10 for parsing
-            }))
-        );
-
-        if (!data.usageLanguages || !Array.isArray(data.usageLanguages)) {
-            throw new Error("Unexpected usageLanguages data structure from the backend");
-        }
-
-        setUsageLanguages(
-            data.usageLanguages.map((item) => ({
-                language: item.language,
-                count: parseInt(item.language_count, 10), // Use radix 10 for parsing
-            }))
-        );
+      if (!data.usageLanguages || !Array.isArray(data.usageLanguages)) {
+        throw new Error("Unexpected usageLanguages data structure from the backend");
+      }
+      setUsageLanguages(
+        data.usageLanguages.map((item) => ({
+          language: item.language,
+          count: parseInt(item.language_count, 10),
+        }))
+      );
 
     } catch (error) {
-        console.error("Error fetching personal usage data:", error);
+      return; 
     }
   };
 
   useEffect(() => {
     panesRef.current = panes;
   }, [panes]);
+
+  const directoryRef = useRef(null); 
+  const contentRef = useRef(null);
 
   useEffect(() => {
     const dir = directoryRef.current;
@@ -393,30 +510,10 @@ const DinoLabsIDE = () => {
   };
   const handleMouseUpPane = () => setIsDraggingPane(false);
 
-  const handleLoadRepository = async () => {
-    try {
-      const directoryHandle = await window.showDirectoryPicker();
-      setRootDirectoryName(directoryHandle.name);
-      const files = await loadAllDirectoryContents(directoryHandle); 
-      setRepositoryFiles(files);
-      setIsRootOpen(true);
-    } catch (error) {
-      console.error("Error loading repository:", error);
-      return; 
-    }
-  };
-
-  const toggleDirectory = (directoryKey) => {
-    setOpenedDirectories((prev) => ({
-      ...prev,
-      [directoryKey]: !prev[directoryKey],
-    }));
-  };
-
-  const loadAllDirectoryContents = async (directoryHandle, parentPath = "") => {
+  const loadAllDirectoryContents = async (directoryHandle, parentPath) => {
     const files = [];
     for await (const entry of directoryHandle.values()) {
-      const fullPath = parentPath ? `${parentPath}/${entry.name}` : entry.name;
+      const fullPath = prefixPath(rootDirectoryName, `${parentPath}/${entry.name}`);
       if (entry.kind === "file") {
         files.push({ name: entry.name, type: "file", handle: entry, fullPath });
       } else if (entry.kind === "directory") {
@@ -427,10 +524,46 @@ const DinoLabsIDE = () => {
     return files;
   };
 
+  const handleLoadRepository = async () => {
+    try {
+      setIsNavigatorLoading(true);
+      const directoryHandle = await window.showDirectoryPicker();
+      const rootName = directoryHandle.name;
+      setRootDirectoryHandle(directoryHandle);
+      setRootDirectoryName(rootName);
+      const files = await loadAllDirectoryContents(directoryHandle, rootName); 
+      setRepositoryFiles(files);
+      setIsRootOpen(true);
+      setIsNavigatorLoading(false);
+    } catch (error) {
+      setIsNavigatorLoading(false);  
+      return; 
+    }
+  };
+
+  const getDirectoryHandleByPath = async (path) => {
+    const fullPath = prefixPath(rootDirectoryName, path);
+    if (!rootDirectoryHandle) return null;
+    if (fullPath === rootDirectoryName || fullPath === `${rootDirectoryName}/`) return rootDirectoryHandle;
+
+    const parts = fullPath.replace(`${rootDirectoryName}/`, '').split('/').filter(part => part);
+    let currentHandle = rootDirectoryHandle;
+
+    for (const part of parts) {
+      try {
+        currentHandle = await currentHandle.getDirectoryHandle(part, { create: false });
+      } catch (error) {
+        return null;
+      }
+    }
+
+    return currentHandle;
+  };
+
   const handleFileLoad = async () => {
     try {
       const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
-      const fileId = fileHandle.name;
+      const fileId = prefixPath(rootDirectoryName, fileHandle.name);
 
       let content;
       if (modifiedContents[fileId]) {
@@ -489,7 +622,6 @@ const DinoLabsIDE = () => {
       setOriginalContents(prev => ({ ...prev, [fileId]: content }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
-      console.error("Error loading file:", error);
       return; 
     }
   };
@@ -497,7 +629,7 @@ const DinoLabsIDE = () => {
   const handleFileClick = async (file, parentPath) => {
     const fileExtension = file.name.split('.').pop().toLowerCase();
     const isSupported = supportedExtensions.includes(fileExtension);
-    const fileId = file.fullPath || `${parentPath}/${file.name}`;
+    const fileId = prefixPath(rootDirectoryName, file.fullPath || `${parentPath}/${file.name}`);
     let existingTabPaneIndex = -1;
     let existingTab = null;
     panes.forEach((pane, index) => {
@@ -522,7 +654,8 @@ const DinoLabsIDE = () => {
       let content;
       if (modifiedContents[fileId]) {
         content = modifiedContents[fileId];
-      } else if (file.handle) {
+      } 
+      else if (file.handle) {
         const fileData = await file.handle.getFile();
         content = await fileData.text();
       } else {
@@ -557,7 +690,6 @@ const DinoLabsIDE = () => {
       setOriginalContents(prev => ({ ...prev, [fileId]: content }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
-      console.error("Error opening file:", error);
       const newTab = {
         id: fileId, 
         name: file.name,
@@ -584,6 +716,13 @@ const DinoLabsIDE = () => {
 
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     }
+  };
+
+  const toggleDirectory = (directoryKey) => {
+    setOpenedDirectories(prev => ({
+      ...prev,
+      [directoryKey]: !prev[directoryKey],
+    }));
   };
 
   const handleForceOpenTab = (paneIndex, tabId) => {
@@ -662,68 +801,6 @@ const DinoLabsIDE = () => {
       return newPanes;
     });
   };
-
-  const filterFiles = (files, query) => {
-    return files.reduce((acc, file) => {
-      if (file.type === 'file' && file.name.toLowerCase().includes(query.toLowerCase())) {
-        acc.push(file);
-      } else if (file.type === 'directory') {
-        const filteredSubFiles = filterFiles(file.files, query);
-        if (filteredSubFiles.length > 0 || file.name.toLowerCase().includes(query.toLowerCase())) {
-          acc.push({ ...file, files: filteredSubFiles });
-        }
-      }
-      return acc;
-    }, []);
-  };
-
-  const renderFiles = (files, parentPath = "", isRoot = true) => {
-    const filteredFiles = searchQuery ? filterFiles(files, searchQuery) : files;
-  
-    return filteredFiles.map((file) => {
-      const directoryKey = file.fullPath || `${parentPath}/${file.name}`;
-      if (file.type === "directory") {
-        const isOpen = openedDirectories[directoryKey];
-        return (
-          <React.Fragment key={directoryKey}>
-            <div
-              onClick={() => toggleDirectory(directoryKey)}
-              className={`directoryListItem ${isRoot ? "rootDirectory" : ""}`}
-            >
-              <FontAwesomeIcon icon={isOpen ? faAngleDown : faAngleRight} />
-              {file.name}
-              {unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] && (
-                <Tippy content="Unsaved" theme="tooltip-light">
-                  <span className="dinolabsIDEFileUnsavedDot" />
-                </Tippy>
-              )}
-            </div>
-            {isOpen && file.files.length > 0 && (
-              <ul className={`directoryListNestedFiles ${isRoot ? "" : "nestedList"}`}>
-                {renderFiles(file.files, directoryKey, false)}
-              </ul>
-            )}
-          </React.Fragment>
-        );
-      }
-  
-      return (
-        <li
-          key={file.fullPath || `${parentPath}/${file.name}`}
-          className={`directoryListItem ${unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] ? "dinolabsIDEFileUnsaved" : ""}`}
-          onClick={() => handleFileClick(file, parentPath)}
-        >
-          {unsavedChanges[file.fullPath || `${parentPath}/${file.name}`] && (
-            <Tippy content="Unsaved" theme="tooltip-light">
-              <span className="dinolabsIDEFileUnsavedDot" />
-            </Tippy>
-          )}
-          {getFileIcon(file.name)}
-          {file.name}
-        </li>
-      );
-    });
-  };  
 
   const closeTab = (paneIndex, tabId) => {
     if (unsavedChanges[tabId]) {
@@ -883,7 +960,6 @@ const DinoLabsIDE = () => {
   const handleZoomIn = () => setZoomLevel(prevZoom => Math.min(prevZoom + 0.1, 3));
   const handleZoomOut = () => setZoomLevel(prevZoom => Math.max(prevZoom - 0.1, 0.5));
   const handleResetZoomLevel = () => setZoomLevel(zoomLevel);
-
   const handleEdit = (paneIndex, tabId, previousState, newState) => {
     const originalContent = originalContents[tabId];
     if (newState.fullCode === originalContent) {
@@ -937,18 +1013,18 @@ const DinoLabsIDE = () => {
       data.tree.forEach(item => {
         const parts = item.path.split('/');
         let current = filesMap;
-        let fullPath = '';
+        let fullPath = prefixPath(rootDirectoryName, `${owner}/${repo}`);
         parts.forEach((part, index) => {
           fullPath += `/${part}`;
           if (index === parts.length - 1) {
             if (item.type === 'tree') {
-              current[part] = { name: part, type: 'directory', files: [], fullPath };
+              current[part] = { name: part, type: 'directory', files: [], handle: null, fullPath };
             } else if (item.type === 'blob') {
               current[part] = { name: part, type: 'file', handle: null, fullPath };
             }
           } else {
             if (!current[part]) {
-              current[part] = { name: part, type: 'directory', files: [], fullPath };
+              current[part] = { name: part, type: 'directory', files: [], handle: null, fullPath };
             }
             current = current[part].files;
           }
@@ -962,13 +1038,14 @@ const DinoLabsIDE = () => {
               name: item.name,
               type: 'directory',
               files: convertMapToArray(item.files),
+              handle: item.handle,
               fullPath: item.fullPath
             };
           } else {
             return {
               name: item.name,
               type: 'file',
-              handle: null,
+              handle: item.handle,
               fullPath: item.fullPath
             };
           }
@@ -976,12 +1053,11 @@ const DinoLabsIDE = () => {
       };
 
       const structuredFiles = convertMapToArray(filesMap);
-
-      setRootDirectoryName(`${owner}/${repo}`);
+      const rootName = prefixPath(rootDirectoryName, `${owner}/${repo}`);
+      setRootDirectoryName(rootName);
       setRepositoryFiles(structuredFiles);
       setIsRootOpen(true);
     } catch (error) {
-      console.error("Error cloning GitHub repository:", error);
       return; 
     }
   };
@@ -995,7 +1071,7 @@ const DinoLabsIDE = () => {
       return updated;
     });
   };
-  
+
   const hasOpenFile = panes.some(pane => pane.openedTabs.length > 0);
 
   const performGlobalSearch = async () => {
@@ -1033,7 +1109,7 @@ const DinoLabsIDE = () => {
               if (isCaseSensitiveSearch) {
                 if (line.includes(globalSearchQuery)) {
                   results.push({
-                    filePath: file.fullPath,
+                    filePath: prefixPath(rootDirectoryName, file.fullPath),
                     lineNumber: index + 1,
                     lineContent: line
                   });
@@ -1041,7 +1117,7 @@ const DinoLabsIDE = () => {
               } else {
                 if (line.toLowerCase().includes(globalSearchQuery.toLowerCase())) {
                   results.push({
-                    filePath: file.fullPath,
+                    filePath: prefixPath(rootDirectoryName, file.fullPath),
                     lineNumber: index + 1,
                     lineContent: line
                   });
@@ -1094,7 +1170,6 @@ const DinoLabsIDE = () => {
             }
 
             let matchCount = 0;
-
             if (isCaseSensitiveSearch) {
               matchCount = (content.match(new RegExp(escapeRegExp(globalSearchQuery), 'g')) || []).length;
             } else {
@@ -1121,7 +1196,6 @@ const DinoLabsIDE = () => {
     }
 
     const confirmReplace = window.confirm(`Are you sure you want to replace ${totalMatches} ${totalMatches === 1 ? 'occurrence' : 'occurrences'} of "${globalSearchQuery}" across ${filesWithMatches} ${filesWithMatches === 1 ? 'file' : 'files'}?`);
-
     if (!confirmReplace) {
       return;
     }
@@ -1165,22 +1239,12 @@ const DinoLabsIDE = () => {
                   const writable = await file.handle.createWritable();
                   await writable.write(newContent);
                   await writable.close();
-
-                  setUnsavedChanges(prev => ({
-                    ...prev,
-                    [file.fullPath]: false
-                  }));
+                  setUnsavedChanges(prev => ({ ...prev, [file.fullPath]: false }));
                 } catch (writeError) {
-                  setUnsavedChanges(prev => ({
-                    ...prev,
-                    [file.fullPath]: true
-                  }));
+                  setUnsavedChanges(prev => ({ ...prev, [file.fullPath]: true }));
                 }
               } else {
-                setUnsavedChanges(prev => ({
-                  ...prev,
-                  [file.fullPath]: true
-                }));
+                setUnsavedChanges(prev => ({ ...prev, [file.fullPath]: true }));
               }
             }
           } catch (error) {
@@ -1202,18 +1266,12 @@ const DinoLabsIDE = () => {
     setPanes(prevPanes => {
       const newPanes = prevPanes.map(pane => {
         const updatedTabs = pane.openedTabs.map(tab => {
-          if (updatedFiles[tab.id]) {
-            return {
-              ...tab,
-              content: updatedFiles[tab.id]
-            };
+          if (updatedFiles[prefixPath(rootDirectoryName, tab.id)]) {
+            return { ...tab, content: updatedFiles[prefixPath(rootDirectoryName, tab.id)] };
           }
           return tab;
         });
-        return {
-          ...pane,
-          openedTabs: updatedTabs
-        };
+        return { ...pane, openedTabs: updatedTabs };
       });
       return newPanes;
     });
@@ -1222,9 +1280,10 @@ const DinoLabsIDE = () => {
   };
 
   const toggleCollapse = (filePath) => {
+    const prefixedPath = prefixPath(rootDirectoryName, filePath);
     setCollapsedFiles(prev => ({
       ...prev,
-      [filePath]: !prev[filePath]
+      [prefixedPath]: !prev[prefixedPath]
     }));
   };
 
@@ -1244,11 +1303,12 @@ const DinoLabsIDE = () => {
   }, [globalSearchQuery, isCaseSensitiveSearch]);
 
   const handleSearchSuggestionClick = async (filePath, lineNumber) => {
+    const prefixedFilePath = prefixPath(rootDirectoryName, filePath);
     let targetPaneIndex = -1;
     let targetTab = null;
 
     panes.forEach((pane, paneIndex) => {
-      const tab = pane.openedTabs.find(tab => tab.id === filePath);
+      const tab = pane.openedTabs.find(tab => tab.id === prefixedFilePath);
       if (tab) {
         targetPaneIndex = paneIndex;
         targetTab = tab;
@@ -1260,16 +1320,12 @@ const DinoLabsIDE = () => {
         const newPanes = [...prevPanes];
         const thePane = newPanes[targetPaneIndex];
         thePane.openedTabs = thePane.openedTabs.map(t => {
-          if (t.id === filePath) {
-            return {
-              ...t,
-              searchTerm: globalSearchQuery,
-              isSearchOpen: false
-            };
+          if (t.id === prefixedFilePath) {
+            return { ...t, searchTerm: globalSearchQuery, isSearchOpen: false };
           }
           return t;
         });
-        thePane.activeTabId = filePath;
+        thePane.activeTabId = targetTab.id;
         return newPanes;
       });
 
@@ -1283,36 +1339,34 @@ const DinoLabsIDE = () => {
       const handleOpenAndJump = async () => {
         try {
           let content = '';
-          let fileHandle = await getFileHandleByPath(repositoryFiles, filePath);
+          let fileHandle = await getFileHandleByPath(repositoryFiles, prefixedFilePath);
 
           if (!fileHandle) {
             try {
               const [pickedFile] = await window.showOpenFilePicker({
                 multiple: false,
-                suggestedName: filePath.split('/').pop(),
+                suggestedName: prefixedFilePath.split('/').pop(),
               });
               if (pickedFile) {
                 fileHandle = pickedFile;
               }
             } catch (err) {
-              console.error("No valid file handle selected.");
               return;
             }
           }
 
           if (!fileHandle) {
-            console.error("No valid file handle. Cannot open.");
             return;
           }
 
           const fileData = await fileHandle.getFile();
           content = await fileData.text();
 
-          const parts = filePath.split('.');
+          const parts = prefixedFilePath.split('.');
           const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
           const language = extensionToLanguageMap[extension] || "Unknown";
 
-          const newTabId = filePath; 
+          const newTabId = prefixedFilePath; 
           let existingPaneIndex = -1;
           let existingTab = null;
           panes.forEach((pane, index) => {
@@ -1330,11 +1384,7 @@ const DinoLabsIDE = () => {
               const thePane = newPanes[existingPaneIndex];
               thePane.openedTabs = thePane.openedTabs.map(t => {
                 if (t.id === newTabId) {
-                  return {
-                    ...t,
-                    searchTerm: globalSearchQuery,
-                    isSearchOpen: false
-                  };
+                  return { ...t, searchTerm: globalSearchQuery, isSearchOpen: false };
                 }
                 return t;
               });
@@ -1350,7 +1400,7 @@ const DinoLabsIDE = () => {
 
           const newTab = {
             id: newTabId, 
-            name: filePath.split('/').pop(),
+            name: prefixedFilePath.split('/').pop(),
             content: content,
             language: language,
             forceOpen: false, 
@@ -1361,7 +1411,7 @@ const DinoLabsIDE = () => {
             isSearchOpen: false, 
             isReplaceOpen: false,
             fileHandle: fileHandle, 
-            fullPath: filePath
+            fullPath: prefixedFilePath
           };
 
           setPanes(prevPanes => {
@@ -1382,7 +1432,7 @@ const DinoLabsIDE = () => {
           }, 100);
 
         } catch (error) {
-          console.error("Error opening file:", error);
+          return; 
         }
       };
 
@@ -1391,8 +1441,9 @@ const DinoLabsIDE = () => {
   };
 
   const getFileHandleByPath = async (files, filePath) => {
+    const prefixedPath = prefixPath(rootDirectoryName, filePath);
     for (const file of files) {
-      if (file.type === 'file' && file.fullPath === filePath) {
+      if (file.type === 'file' && file.fullPath === prefixedPath) {
         return file.handle;
       } else if (file.type === 'directory') {
         const handle = await getFileHandleByPath(file.files, filePath);
@@ -1402,24 +1453,362 @@ const DinoLabsIDE = () => {
     return null;
   };
 
-  const handleProblemClick = (filePath, lineNumber) => {
-    if (filePath) {
-      handleSearchSuggestionClick(filePath, lineNumber);
-    } else {
-      const activePane = panes[activePaneIndex];
-      const activeTab = activePane.openedTabs.find(tab => tab.id === activePane.activeTabId);
-      if (activeTab) {
-        const editorRef = editorRefs.current[activePaneIndex][activeTab.id];
-        if (editorRef && editorRef.current && typeof editorRef.current.jumpToLine === 'function') {
-          editorRef.current.jumpToLine(lineNumber);
-        }
+  const reloadDirectory = async () => {
+    if (!rootDirectoryHandle) return;
+    const newFiles = await loadAllDirectoryContents(rootDirectoryHandle, rootDirectoryName);
+    setRepositoryFiles(newFiles);
+  };
+
+  const createNewFile = async () => {
+    if (!contextMenuTarget) return;
+    const { type: itemType, path } = contextMenuTarget;
+    const fileName = prompt(`Enter the name of your new file.: `);
+    if (!fileName) return;
+
+    const dirHandle = await getDirectoryHandleByPath(path);
+    if (!dirHandle) {
+      return;
+    }
+
+    let fileExists = false;
+    for await (const entry of dirHandle.values()) {
+      if (entry.name.toLowerCase() === fileName.toLowerCase()) {
+        fileExists = true;
+        break;
       }
+    }
+
+    if (fileExists) {
+      alert(`A file or folder named "${fileName}" already exists in this directory.`);
+      return;
+    }
+
+    try {
+      await dirHandle.getFileHandle(fileName, { create: true });
+      await reloadDirectory(); 
+    } catch (error) {
+      return;
+    }
+    setContextMenuVisible(false);
+  };
+
+  const createNewFolder = async () => {
+    if (!contextMenuTarget) return;
+    const { type: itemType, path } = contextMenuTarget;
+    const folderName = prompt("Enter the name of your new folder:");
+    if (!folderName) return;
+
+    const dirHandle = await getDirectoryHandleByPath(path);
+    if (!dirHandle) {
+      return;
+    }
+
+    let folderExists = false;
+    for await (const entry of dirHandle.values()) {
+      if (entry.name.toLowerCase() === folderName.toLowerCase()) {
+        folderExists = true;
+        break;
+      }
+    }
+
+    if (folderExists) {
+      alert(`A file or folder named "${folderName}" already exists in this directory.`);
+      return;
+    }
+
+    try {
+      await dirHandle.getDirectoryHandle(folderName, { create: true });
+      await reloadDirectory();
+    } catch (error) {
+      return;
+    }
+    setContextMenuVisible(false);
+  };
+
+  const deleteItem = async () => {
+    if (!contextMenuTarget) return;
+    const { type: itemType, path } = contextMenuTarget;
+
+    const splitted = path.split('/');
+    const itemName = splitted.pop();
+    const parentPath = splitted.join('/'); 
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the ${itemType} "${itemName}"?`
+    );
+    if (!confirmDelete) return;
+  
+    const dirHandle = await getDirectoryHandleByPath(parentPath);
+    if (!dirHandle) {
+      return;
+    }
+  
+    try {
+      await dirHandle.removeEntry(itemName, { recursive: itemType === 'directory' });
+      await reloadDirectory();
+    } catch (error) {
+      return; 
+    }
+    setContextMenuVisible(false);
+  };
+  
+
+  const handleContextMenu = (e, target) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!rootDirectoryName) {
+      return;
+    }
+
+    let xPos = e.clientX;
+    let yPos = e.clientY;
+
+    setContextMenuVisible(true);
+    setContextMenuPosition({ x: xPos, y: yPos });
+    setContextMenuTarget(target);
+  };
+
+  const copyRelativePathToClipboard = () => {
+    if (contextMenuTarget) {
+      const { path } = contextMenuTarget;
+      const pathWithSlash = path.endsWith('/') ? path : path + '/';
+
+      navigator.clipboard.writeText(pathWithSlash)
+        .then(() => {
+          setContextMenuVisible(false);
+        })
+        .catch(err => {
+          return; 
+        });
     }
   };
 
-  const handleProblemsDetected = (problems) => {
-      setLintProblems(problems);
+  useEffect(() => {
+    if (contextMenuVisible && contextMenuRef.current) {
+      const menu = contextMenuRef.current;
+      const { innerWidth, innerHeight } = window;
+      const { x, y } = contextMenuPosition;
+      const menuRect = menu.getBoundingClientRect();
+      let newX = x;
+      let newY = y;
+      const margin = 10; 
+
+      if (x + menuRect.width > innerWidth) {
+        newX = innerWidth - menuRect.width - margin;
+      }
+
+      if (y + menuRect.height > innerHeight) {
+        newY = innerHeight - menuRect.height - margin;
+      }
+
+      newX = Math.max(newX, margin);
+      newY = Math.max(newY, margin);
+
+      if (newX !== x || newY !== y) {
+        setContextMenuPosition({ x: newX, y: newY });
+      }
+    }
+  }, [contextMenuVisible, contextMenuPosition]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenuVisible(false);
+      }
+    };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && contextMenuVisible) {
+        setContextMenuVisible(false);
+      }
+    };
+
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [contextMenuVisible]);
+
+  const handleItemDragStart = (e, item) => {
+    e.dataTransfer.setData("application/my-app", JSON.stringify({ path: item.fullPath, type: item.type }));
   };
+
+  const handleItemDrop = async (e, targetDirItem) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData("application/my-app");
+    if (!data) return;
+    const { path: sourcePath, type: sourceType } = JSON.parse(data);
+    
+    const targetDirHandle = await getDirectoryHandleByPath(targetDirItem.fullPath);
+    if (!targetDirHandle) return;
+    
+    if (sourcePath.startsWith(targetDirItem.fullPath)) {
+      alert("Cannot move a directory into itself or its subdirectory.");
+      return;
+    }
+    
+    let exists = false;
+    for await (const entry of targetDirHandle.values()) {
+      if (entry.name.toLowerCase() === sourcePath.split('/').pop().toLowerCase()) {
+        exists = true;
+        break;
+      }
+    }
+    if (exists) {
+      alert("Target directory already contains an item with the same name.");
+      return;
+    }
+    
+    if (sourceType === "file") {
+      const sourceFileHandle = await getFileHandleByPath(repositoryFiles, sourcePath);
+      if (!sourceFileHandle) return;
+      const sourceFile = await sourceFileHandle.getFile();
+      const destFileHandle = await targetDirHandle.getFileHandle(sourceFile.name, { create: true });
+      const writable = await destFileHandle.createWritable();
+      await writable.write(sourceFile);
+      await writable.close();
+      const parentPath = sourcePath.split('/').slice(0, -1).join('/');
+      const parentDir = await getDirectoryHandleByPath(parentPath);
+      await parentDir.removeEntry(sourceFile.name);
+    } else if (sourceType === "directory") {
+      const sourceDirHandle = await getDirectoryHandleByPath(sourcePath);
+      if (!sourceDirHandle) return;
+      const newDirHandle = await targetDirHandle.getDirectoryHandle(sourceDirHandle.name, { create: true });
+      async function copyDirectory(srcDir, destDir) {
+        for await (const entry of srcDir.values()) {
+          if (entry.kind === "file") {
+            const file = await entry.getFile();
+            const destFileHandle = await destDir.getFileHandle(entry.name, { create: true });
+            const writable = await destFileHandle.createWritable();
+            await writable.write(file);
+            await writable.close();
+          } else if (entry.kind === "directory") {
+            const newSubDir = await destDir.getDirectoryHandle(entry.name, { create: true });
+            const subSrcDir = await srcDir.getDirectoryHandle(entry.name);
+            await copyDirectory(subSrcDir, newSubDir);
+          }
+        }
+      }
+      await copyDirectory(sourceDirHandle, newDirHandle);
+      const parentPath = sourcePath.split('/').slice(0, -1).join('/');
+      const parentDir = await getDirectoryHandleByPath(parentPath);
+      await parentDir.removeEntry(sourceDirHandle.name, { recursive: true });
+    }
+    
+    await reloadDirectory();
+  };
+
+  const renderNavigatorRow = ({ index, style, data }) => {
+    const item = data[index];
+
+    if (!item.isVisible) {
+      return <div style={{ ...style, display: 'none' }} />;
+    }
+
+    if (item.type === 'directory') {
+      return (
+        <div
+          style={{ 
+            ...style, 
+            background: dragOverId === item.id ? 'rgba(255,255,255,0.2)' : undefined 
+          }}
+          className={`directoryListItem${item.level === 0 ? " rootDirectory" : ""}`}
+          draggable={true}
+          onDragStart={(e) => handleItemDragStart(e, item)}
+          onDragOver={(e) => e.preventDefault()}
+          onDragEnter={(e) => setDragOverId(item.id)}
+          onDragLeave={(e) => setDragOverId(null)}
+          onDrop={(e) => { setDragOverId(null); handleItemDrop(e, item); }}
+          onClick={() => toggleDirectory(item.id)}
+          onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: item.id })}
+        >
+          <span style={{ marginLeft: `${item.level * 1.2}em` }}>
+            <FontAwesomeIcon icon={item.isOpen ? faAngleDown : faAngleRight} /> 
+            {' '}
+            {item.name}
+            {unsavedChanges[item.id] && (
+              <Tippy content="Unsaved" theme="tooltip-light">
+                <span className="dinolabsIDEFileUnsavedDot" />
+              </Tippy>
+            )}
+          </span>
+        </div>
+      );
+    } else {
+      return (
+        <div
+          style={style}
+          className={`directoryListItem ${unsavedChanges[item.id] ? "dinolabsIDEFileUnsaved" : ""}`}
+          draggable={true}
+          onDragStart={(e) => handleItemDragStart(e, item)}
+          onClick={() => {
+            const parts = item.id.split('/');
+            const parentPath = parts.slice(0, -1).join('/');
+            handleFileClick({ 
+              name: item.name, 
+              type: 'file', 
+              handle: item.handle, 
+              fullPath: item.fullPath 
+            }, parentPath);
+          }}
+          onContextMenu={(e) => handleContextMenu(e, { type: 'file', path: item.id })}
+        >
+          <span style={{ marginLeft: `${item.level * 1.2}em` }}>
+            {unsavedChanges[item.id] && (
+              <Tippy content="Unsaved" theme="tooltip-light">
+                <span className="dinolabsIDEFileUnsavedDot" />
+              </Tippy>
+            )}
+            {getFileIcon(item.name)}
+            {item.name}
+          </span>
+        </div>
+      );
+    }
+  };
+
+  const renderSearchRow = ({ index, style, data }) => {
+    const item = data[index];
+    if (item.type === 'fileHeader') {
+      const isCollapsed = item.isCollapsed;
+      return (
+        <div
+          style={style}
+          className="leadingDirectoryGlobalSearchResultFileHeader"
+          onClick={() => toggleCollapse(item.filePath)}
+          role="button"
+          tabIndex={0}
+          onKeyPress={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              toggleCollapse(item.filePath);
+            }
+          }}
+        >
+          <FontAwesomeIcon
+            icon={isCollapsed ? faChevronRight : faChevronDown}
+            className="leadingDirectoryGlobalSearchChevron"
+          />
+          <strong>{item.filePath}</strong>
+        </div>
+      );
+    } else {
+      return (
+        <li
+          style={{ ...style, listStyle: 'none' }}
+          className="leadingDirectoryGlobalSearchResultItem"
+          onClick={() => handleSearchSuggestionClick(item.filePath, item.lineNumber)}
+          dangerouslySetInnerHTML={{
+            __html: `<strong>Line ${item.lineNumber}:</strong> ` +
+              highlightResultSnippet(item.lineContent, globalSearchQuery, isCaseSensitiveSearch)
+          }}
+        />
+      );
+    }
+  };
+
 
   return (
     <div
@@ -1440,31 +1829,32 @@ const DinoLabsIDE = () => {
         handleMouseUpPane(); 
       }}
     >
-      <DinoLabsNav activePage={"dinolabside"}/> 
+      <DinoLabsNav activePage={"dinolabside"}/>
 
       <div className="dinolabsIDEHeaderContainer">
         <div className="dinolabsIDEControlFlex">
-          <div 
-            className="leadingIDEDirectoryStack" 
+          <div
+            className="leadingIDEDirectoryStack"
             style={{ width: `${directoryWidth}%` }}
-            ref={directoryRef} 
+            ref={directoryRef}
+            onContextMenu={(e) => handleContextMenu(e, { type: 'navigator', path: rootDirectoryName })}
           >
             <div className="leadingDirectoryTopBar">
-              <div className="leadingDirectoryZoomButtonFlex" style={{"borderRight": "0.2vh solid rgba(255,255,255,0.1)"}}> 
+              <div className="leadingDirectoryZoomButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
                 <Tippy content={"Zoom In"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleZoomIn}> 
+                  <button className="leadingDirectoryZoomButton" onClick={handleZoomIn}>
                     <FontAwesomeIcon icon={faPlusSquare}/>
                   </button>
                 </Tippy>
               
                 <Tippy content={"Zoom Out"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleZoomOut}> 
+                  <button className="leadingDirectoryZoomButton" onClick={handleZoomOut}>
                     <FontAwesomeIcon icon={faMinusSquare}/>
                   </button>
                 </Tippy>
 
                 <Tippy content={"Reset View"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel}> 
+                  <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel}>
                     <FontAwesomeIcon icon={faRetweet}/>
                   </button>
                 </Tippy>
@@ -1473,7 +1863,7 @@ const DinoLabsIDE = () => {
 
             <div className="leadingDirectoryStack">
               <div className="leadingdDirectoryOperationsWrapper">
-                <div className="leadingDirectory"> 
+                <div className="leadingDirectory">
                 </div>
                 <button className="leadingDirectoryButton" onClick={handleLoadRepository}>
                   <FontAwesomeIcon icon={faAngleDown} />
@@ -1492,28 +1882,30 @@ const DinoLabsIDE = () => {
               </div>
 
               <div className="leadingDirectoryTabsWrapper">
-                <button className="leadingDirectoryTabButton"
+                <button
+                  className="leadingDirectoryTabButton"
                   style={{ backgroundColor: isNavigatorState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
                   onClick={() => {
                     setIsSearchState(!isSearchState);
                     setIsNavigatorState(!isNavigatorState);
                   }}
-                > 
+                >
                   Navigator
                 </button>
-                <button className="leadingDirectoryTabButton"
+                <button
+                  className="leadingDirectoryTabButton"
                   style={{ backgroundColor: isSearchState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
                   onClick={() => {
                     setIsSearchState(!isSearchState);
                     setIsNavigatorState(!isNavigatorState);
                   }}
-                > 
+                >
                   Search
                 </button>
               </div>
-              
+
               {isNavigatorState && (
-                <div className="leadingDirectorySearchWrapper"> 
+                <div className="leadingDirectorySearchWrapper">
                   <input
                     type="text"
                     className="directorySearchInput"
@@ -1525,34 +1917,55 @@ const DinoLabsIDE = () => {
               )}
 
               {isNavigatorState && (
-                <div className="leadingDirectoryFiles">
-                  {rootDirectoryName && (
-                    <ul className="leadingDirectoryFileStack">
-                      <li className="leadingDirectoryFileStackContent">
-                        <div
-                          onClick={() => setIsRootOpen(!isRootOpen)}
-                          className="directoryListItem"
-                        >
-                          <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} /> 
-                          {rootDirectoryName}
-                          {unsavedChanges[rootDirectoryName] && (
-                            <Tippy content="Unsaved" theme="tooltip-light">
-                              <span className="dinolabsIDEFileUnsavedDot" />
-                            </Tippy>
-                          )}
-                        </div>
-                        {isRootOpen && (
-                          <ul className="nestedDirectoryFileStack">{renderFiles(repositoryFiles)}</ul>
-                        )}
-                      </li>
-                    </ul>
-                  )}
-                </div>
+                isNavigatorLoading ? (
+                  <div className="leadingDirectoryFilesSupplement" style={{ textAlign: 'center', fontSize: '1.2rem'}}>
+                    <div className="loading-circle"/>
+                  </div>
+                ) : (
+                  <div className="leadingDirectoryFiles">
+                    {
+                      rootDirectoryName && (
+                        <ul className="leadingDirectoryFileStack">
+                          <li className="leadingDirectoryFileStackContent">
+                            <div
+                              onClick={() => setIsRootOpen(!isRootOpen)}
+                              onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: rootDirectoryName })}
+                              className="directoryListItemRoot"
+                            >
+                              <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
+                              {rootDirectoryName}
+                              {unsavedChanges[rootDirectoryName] && (
+                                <Tippy content="Unsaved" theme="tooltip-light">
+                                  <span className="dinolabsIDEFileUnsavedDot" />
+                                </Tippy>
+                              )}
+                            </div>
+
+                            {isRootOpen && flattenedDirectoryList.length > 0 && (
+                              <div className="nestedDirectoryFileStack" style={{ height: "70vh", width: "100%" }}>
+                                <List
+                                  height={window.innerHeight * 0.65}
+                                  itemCount={flattenedDirectoryList.length}
+                                  itemSize={18}
+                                  width={"100%"}
+                                  itemData={flattenedDirectoryList}
+                                  className="nestedDirectoryFileStack"
+                                >
+                                  {renderNavigatorRow}
+                                </List>
+                              </div>
+                            )}
+                          </li>
+                        </ul>
+                      )
+                    }
+                  </div>
+                )
               )}
 
               {isSearchState && (
                 <div className="leadingDirectoryGlobalSearchWrapper">
-                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-end" }}> 
+                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-end" }}>
                     <input
                       type="text"
                       className="leadingDirectoryGlobalSearchInput"
@@ -1561,14 +1974,14 @@ const DinoLabsIDE = () => {
                       onChange={(e) => setGlobalSearchQuery(e.target.value)}
                     />
 
-                    <div className="leadingDirectoryGlobalSearchTrailingButtons"> 
+                    <div className="leadingDirectoryGlobalSearchTrailingButtons">
                       <Tippy content={"Case Sensitive"} theme="tooltip-light">
                         <button
-                          type="button" 
+                          type="button"
                           className="leadingDirectoryGlobalSearchButton"
-                          onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)} 
+                          onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)}
                           title="Toggle Case Sensitivity"
-                          onMouseDown={(e) => e.preventDefault()} 
+                          onMouseDown={(e) => e.preventDefault()}
                         >
                           <FontAwesomeIcon icon={faA} style={{ color: isCaseSensitiveSearch ? "#AD6ADD" : "" }}/>
                         </button>
@@ -1585,7 +1998,7 @@ const DinoLabsIDE = () => {
                     </div>
                   </div>
 
-                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-start" }}> 
+                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-start" }}>
                     <input
                       type="text"
                       className="leadingDirectoryGlobalSearchInput"
@@ -1595,7 +2008,7 @@ const DinoLabsIDE = () => {
                       disabled={!isGlobalReplace}
                     />
 
-                    <div className="leadingDirectoryGlobalSearchTrailingButtons"> 
+                    <div className="leadingDirectoryGlobalSearchTrailingButtons">
                       <Tippy content={"Replace Across Files"} theme="tooltip-light">
                         <button
                           className="leadingDirectoryGlobalSearchButton"
@@ -1612,55 +2025,20 @@ const DinoLabsIDE = () => {
                   </div>
                 </div>
               )}
-              
+
               {isSearchState && (
                 <div className="leadingDirectoryGlobalSearchResults">
-                  {globalSearchResults.length > 0 && (
-                    <div className="leadingDirectoryGlobalSearchResultsGrouped">
-                      {Object.entries(
-                        globalSearchResults.reduce((acc, result) => {
-                          if (!acc[result.filePath]) {
-                            acc[result.filePath] = [];
-                          }
-                          acc[result.filePath].push(result);
-                          return acc;
-                        }, {})
-                      ).map(([filePath, results]) => (
-                        <div key={filePath} className="leadingDirectoryGlobalFileGroup">
-                          <div 
-                            className="leadingDirectoryGlobalSearchResultFileHeader" 
-                            onClick={() => toggleCollapse(filePath)}
-                            role="button"
-                            aria-expanded={!collapsedFiles[filePath]}
-                            tabIndex={0}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                toggleCollapse(filePath);
-                              }
-                            }}
-                          >
-                            <FontAwesomeIcon 
-                              icon={collapsedFiles[filePath] ? faChevronRight : faChevronDown} 
-                              className="leadingDirectoryGlobalSearchChevron"
-                            />
-                            <strong>{filePath}</strong>
-                          </div>
-                          {!collapsedFiles[filePath] && (
-                            <ul className="leadingDirectoryGlobalSearchResultNestedGroup">
-                              {results.map((res, idx) => (
-                                <li 
-                                  key={idx}
-                                  className="leadingDirectoryGlobalSearchResultItem"
-                                  onClick={() => handleSearchSuggestionClick(res.filePath, res.lineNumber)}
-                                  dangerouslySetInnerHTML={{
-                                    __html: `<strong>Line ${res.lineNumber}:</strong> ${highlightResultSnippet(res.lineContent, globalSearchQuery, isCaseSensitiveSearch)}`
-                                  }}
-                                />
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
+                  {flattenedSearchList.length > 0 && (
+                    <div className="leadingDirectoryGlobalSearchResultsGrouped" style={{ height: "60vh", width: "100%" }}>
+                      <List
+                        height={window.innerHeight * 0.55}
+                        itemCount={flattenedSearchList.length}
+                        itemSize={18}
+                        width={"100%"}
+                        itemData={flattenedSearchList}
+                      >
+                        {renderSearchRow}
+                      </List>
                     </div>
                   )}
                 </div>
@@ -1668,41 +2046,41 @@ const DinoLabsIDE = () => {
             </div>
 
             <div className="leadingDirectoryBottomBar">
-                <div className="leadingDirectorySettingsButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}> 
-                  <Tippy content={"Account"} theme="tooltip-light">
-                    <button
-                      className="leadingDirectoryZoomButton"
-                      onClick={() => {
-                        setIsAccountOpen(!isAccountOpen);
-                      }}
-                    > 
-                      <FontAwesomeIcon icon={faUserCircle}/>
-                    </button>
-                  </Tippy> 
-                </div>
+              <div className="leadingDirectorySettingsButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
+                <Tippy content={"Account"} theme="tooltip-light">
+                  <button
+                    className="leadingDirectoryZoomButton"
+                    onClick={() => {
+                      setIsAccountOpen(!isAccountOpen);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserCircle}/>
+                  </button>
+                </Tippy>
+              </div>
             </div>
           </div>
 
           <div className="resizableWidthDivider" onMouseDown={handleMouseDownWidth} />
 
-          <div 
-            className="dinolabsIDEControlStack" 
+          <div
+            className="dinolabsIDEControlStack"
             style={{ width: `${contentWidth}%` }}
-            ref={contentRef} 
+            ref={contentRef}
           >
             {(!isAccountOpen) && (
               <div className="topIDEControlBarWrapper">
                 {panes.map((pane, paneIndex) => (
                   <React.Fragment key={`pane-wrapper-${paneIndex}`}>
                     {(panes.length > 1 && paneIndex === 1) && (
-                      <div className="resizablePaneDivider"/> 
+                      <div className="resizablePaneDivider"/>
                     )}
 
                     <div
                       className="topIDEControlBar"
-                      style={{ 
-                        height: "100%", 
-                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : '100%',
+                      style={{
+                        height: "100%",
+                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
                       }}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => handleDrop(e, paneIndex)}
@@ -1731,7 +2109,7 @@ const DinoLabsIDE = () => {
                               onClick={() => switchTab(paneIndex, tab.id)}
                               draggable={true}
                               onDragStart={(e) => handleDragStart(e, paneIndex, tab.id)}
-                              style={{ width: "fit-content" }} 
+                              style={{ width: "fit-content" }}
                             >
                               {unsavedChanges[tab.id] && (
                                 <Tippy content="Unsaved" theme="tooltip-light">
@@ -1763,12 +2141,12 @@ const DinoLabsIDE = () => {
                 ))}
               </div>
             )}
-            
+
             {(!isAccountOpen) && (
               <div
                 className="dinolabsIDEMarkdownWrapper"
-                style={{ 
-                  height: hasOpenFile ? `${markdownHeight}%` : '100%', 
+                style={{
+                  height: hasOpenFile ? `${markdownHeight}%` : "100%",
                   zoom: zoomLevel,
                 }}
               >
@@ -1777,8 +2155,8 @@ const DinoLabsIDE = () => {
                     <div
                       key={paneIndex}
                       className="dinolabsIDEMarkdownPaneWrapper"
-                      style={{ 
-                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : '100%',
+                      style={{
+                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
                       }}
                       onClick={() => setActivePaneIndex(paneIndex)}
                     >
@@ -1789,7 +2167,7 @@ const DinoLabsIDE = () => {
                               key={tab.id}
                               className="dinolabsIDEMarkdownPane"
                               style={{
-                                display: pane.activeTabId === tab.id ? 'block' : 'none',
+                                display: pane.activeTabId === tab.id ? "block" : "none",
                               }}
                             >
                               <DinoLabsIDEMarkdown
@@ -1806,7 +2184,7 @@ const DinoLabsIDE = () => {
                                 currentSearchIndex={tab.currentSearchIndex}
                                 setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
                                 onSplit={splitTab}
-                                disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1} 
+                                disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
                                 paneIndex={paneIndex}
                                 tabId={tab.id}
                                 isSearchOpen={tab.isSearchOpen}
@@ -1818,7 +2196,6 @@ const DinoLabsIDE = () => {
                                 onSave={handleSave}
                                 fileHandle={tab.fileHandle}
                                 isGlobalSearchActive={!!globalSearchQuery}
-                                lintProblems={lintProblems}
                                 keyBinds={keyBinds}
                                 zoomLevel={zoomLevel}
                                 colorTheme={colorTheme}
@@ -1827,100 +2204,118 @@ const DinoLabsIDE = () => {
                           ))
                         ) : (
                           <div className="dinolabsIDENoFileSelectedWrapper">
-
                             <div className="dinolabsIDEGetStartedStack">
                               <div className="dinolabsIDEGetStartedFlex">
-                                <div className="dinolabsIDEGetStartedWrapper">
-                                  <label className="dinolabsIDETitle"> 
+                                <div className="dinolabsIDEGetStartedWrapperInfo">
+                                  <label className="dinolabsIDETitle">
                                     Dino Labs Web Developer
                                   </label>
-                                  <label className="dinolabsIDESubtitle"> 
+                                  <label className="dinolabsIDESubtitle">
                                     Version 1.0.0 (Beta)
                                   </label>
-                                  <div className="vevktorIDEStartButtonWrapper"> 
-                                    <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}> 
+                                  <div className="vevktorIDEStartButtonWrapper">
+                                    <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}>
                                       <FontAwesomeIcon icon={faAngleDown}/>
                                       Import a Directory
                                     </button>
-                                    <button className="dinolabsIDEStartButton" onClick={handleFileLoad}> 
-                                      <FontAwesomeIcon icon={faCode}/>
-                                      Open a File
-                                    </button>
-                                    <button className="dinolabsIDEStartButton" onClick={handleCloneGithubRepository}> 
+                                    <button className="dinolabsIDEStartButton" onClick={handleCloneGithubRepository}>
                                       <FontAwesomeIcon icon={faGithub}/>
                                       Clone a GitHub Repository
                                     </button>
                                   </div>
                                 </div>
 
-                                <div className="dinolabsIDEGetStartedWrapper">
-                                    <div className="dinolabsIDEUsageLanguagesContainer">
-                                        {usageLanguages.length === 0 ? (
-                                            <p className="dinolabsIDELanguageUsageUnavailable">No data available.</p>
-                                        ) : (
-
-                                            <ul className="dinolabsIDEUsageLanguageList">
-                                                {usageLanguages.slice(0, 5).map((language) => {
-                                                    const percentage = (language.count / usageLanguages.reduce((acc, lang) => acc + lang.count, 0)) * 100;
-                                                    const languageColors = {
-                                                      Javascript: "#f1c40f",  // Bright Yellow
-                                                      Typescript: "#3178c6",  // Light Blue
-                                                      HTML: "#e34c26",        // Orange-Red
-                                                      CSS: "#2965f1",         // Bright Blue
-                                                      JSON: "#8e44ad",        // Purple
-                                                      XML: "#1abc9c",         // Teal
-                                                      Python: "#3572a5",      // Deep Blue
-                                                      PHP: "#8993be",         // Light Purple
-                                                      Swift: "#ffac45",       // Orange
-                                                      C: "#a8b9cc",           // Light Gray-Blue
-                                                      "C++": "#f34b7d",       // Pinkish Red
-                                                      "C#": "#178600",        // Green
-                                                      Rust: "#dea584",        // Tan/Orange
-                                                      Bash: "#4eaa25",        // Green
-                                                      Shell: "#89e051",       // Light Green
-                                                      "Monkey C": "#f45b69",  // Coral
-                                                      SQL: "#c5b7db",         // Lavender
-                                                      Assembly: "#5d9ca3",    // Light Blue-Green
-                                                      default: "#95a5a6",     // Neutral Gray (for unknown languages)
-                                                    };
-                                                    const color = languageColors[language.language] || languageColors.default;
-
-                                                    return (
-                                                      <li key={language.language} className="dinolabsIDELanguageItem">
-                                                          <div className="dinolabsIDELanguageLabel">
-                                                              {language.language}
-                                                              <span>{percentage.toFixed(1)}%</span>
-                                                          </div>
-
-                                                          <div
-                                                              className="dinolabsIDELanguageBar"
-                                                              style={{
-                                                                  width: `${percentage}%`, 
-                                                                  backgroundColor: color, 
-                                                              }}
-                                                          ></div>
-                                                      </li>
-                                                  );
-                                                })}
-                                            </ul>
-                                        )}
-                                    </div>
+                                {isPlotRendered ? (
+                                  <LinePlot plotType="getStartedPageUsagePlot" data={personalUsageByDay} />
+                                ) : (
+                                  <div className="getStartedLinePlot" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
+                                    <div className="loading-circle"/>
+                                  </div>
+                                )}
                                 </div>
 
+                              <div className="dinolabsIDELanguageDisplayFlex"> 
+                                
+                                {isPlotRendered ? (
+                                  <div className="dinolabsIDEGetStartedWrapperLanguages">
+                                    <div className="dinolabsIDEUsageLanguagesContainer">
+                                      {usageLanguages.length === 0 ? (
+                                        <p className="dinolabsIDELanguageUsageUnavailable">No usage data available.</p>
+                                      ) : (
+                                        
+                                        <ul className="dinolabsIDEUsageLanguageList">
+                                          {usageLanguages.slice(0, 5).map((language) => {
+                                            const total = usageLanguages.reduce((acc, lang) => acc + lang.count, 0);
+                                            const percentage = (language.count / total) * 100;
+                                            const languageColors = {
+                                              Javascript: "#EB710E",
+                                              Typescript: "#3178c6",
+                                              HTML: "#e34c26",
+                                              CSS: "#9FB7EF",
+                                              JSON: "#8e44ad",
+                                              XML: "#1abc9c",
+                                              Python: "#3572a5",
+                                              PHP: "#8993be",
+                                              Swift: "#ffac45",
+                                              C: "#a8b9cc",
+                                              "C++": "#f34b7d",
+                                              "C#": "#178600",
+                                              Rust: "#dea584",
+                                              Bash: "#4eaa25",
+                                              Shell: "#89e051",
+                                              "Monkey C": "#f45b69",
+                                              SQL: "#c5b7db",
+                                              Assembly: "#5d9ca3",
+                                              default: "#95a5a6"
+                                            };
+                                            const color = languageColors[language.language] || languageColors.default;
 
+                                            return (
+                                              <li key={language.language} className="dinolabsIDELanguageItem">
+                                                <div className="dinolabsIDELanguageLabel">
+                                                  {language.language}
+                                                  <span>{percentage.toFixed(1)}%</span>
+                                                </div>
+                                                <div
+                                                  className="dinolabsIDELanguageBar"
+                                                  style={{
+                                                    width: `${percentage}%`,
+                                                    backgroundColor: color,
+                                                  }}
+                                                ></div>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                        
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="dinolabsIDEGetStartedWrapperLanguages" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
+                                    <div className="loading-circle"/>
+                                  </div>
+                                )}
 
+                                {isPlotRendered ? (  
+                                <div className="dinolabsIDEGetStartedWrapperLanguages">
+                                    <DoughnutPlot
+                                        cellType="languageUsage"
+                                        data={{usageLanguages}}
+                                        fontSizeMultiplier={1.7}
+                                    />
+                                </div>
+                                ) : (
+                                  <div className="dinolabsIDEGetStartedWrapperLanguages" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
+                                     <div className="loading-circle"/>
+                                  </div>
+                                )}
 
 
                               </div>
 
-                              <LinePlot
-                                    plotType="getStartedPageUsagePlot"
-                                    data={personalUsageByDay}
-                                />
+                             
                             </div>
-
-
-
                           </div>
                         )}
                       </div>
@@ -1940,17 +2335,8 @@ const DinoLabsIDE = () => {
             {hasOpenFile && (!isAccountOpen) && (
               <>
                 <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
-                <div
-                  className="dinolabsIDEConsoleWrapper"
-                  style={{ height: `${consoleHeight}%` }}
-                >
-                  <DinoLabsIDEDebug 
-                      code={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).content}
-                      language={panes[activePaneIndex].openedTabs.find(tab => tab.id === panes[activePaneIndex].activeTabId).language}
-                      onProblemClick={handleProblemClick}
-                      onProblemsDetected={handleProblemsDetected} 
-                  />
-
+                <div className="dinolabsIDEConsoleWrapper" style={{ height: `${consoleHeight}%` }}>
+                  
                 </div>
               </>
             )}
@@ -1960,7 +2346,8 @@ const DinoLabsIDE = () => {
             )}
 
             {isAccountOpen && (
-              <DinoLabsIDEAccount onClose={() => setIsAccountOpen(false)} 
+              <DinoLabsIDEAccount
+                onClose={() => setIsAccountOpen(false)}
                 keyBinds={keyBinds}
                 setKeyBinds={setKeyBinds}
                 zoomLevel={zoomLevel}
@@ -1972,8 +2359,48 @@ const DinoLabsIDE = () => {
           </div>
         </div>
       </div>
+
+      {contextMenuVisible && (
+        <ul
+          className="dinolabsIDEContextMenu"
+          ref={contextMenuRef} 
+          style={{
+            top: contextMenuPosition.y,
+            left: contextMenuPosition.x,
+          }}
+        >
+          <li
+            className="dinolabsIDEContextMenuItem"
+            onClick={createNewFile}
+          >
+            Add File
+          </li>
+          <li
+            className="dinolabsIDEContextMenuItem"
+            onClick={createNewFolder}
+          >
+            Add Folder
+          </li>
+          {(contextMenuTarget?.type === 'file' || contextMenuTarget?.type === 'directory') && (
+            <li
+              className="dinolabsIDEContextMenuItem"
+              onClick={deleteItem}
+            >
+              Delete
+            </li>
+          )}
+          <li
+            className="dinolabsIDEContextMenuItem"
+            style={{"border-bottom": "none"}}
+            onClick={copyRelativePathToClipboard}
+          >
+            Copy Relative Path
+          </li>
+        </ul>
+      )}
     </div>
   );
 };
 
 export default DinoLabsIDE;
+

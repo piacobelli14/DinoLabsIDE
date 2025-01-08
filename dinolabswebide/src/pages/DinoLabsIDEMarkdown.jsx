@@ -18,19 +18,11 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
 import { syntaxHighlight, escapeRegExp } from "./DinoLabsIDEParser";
-
-const undoStackMap = {};
-const redoStackMap = {};
-
-let editorIdCounter = 0;
-const generateEditorId = () => {
-  editorIdCounter += 1;
-  return `dinolabs-editor-${editorIdCounter}`;
-};
+import useAuth from "../UseAuth"; 
 
 const languageImageMap = {
-  JavaScript: "javascript.svg",
-  TypeScript: "typescript.svg",
+  Javascript: "javascript.svg",
+  Typescript: "typescript.svg",
   HTML: "html.svg",
   CSS: "css.svg",
   JSON: "json.svg",
@@ -50,7 +42,16 @@ const languageImageMap = {
   Text: "txtExtension.svg" , 
 };
 
-const DinoLabsIDEMarkdown = forwardRef(({
+const undoStackMap = {};
+const redoStackMap = {};
+let editorIdCounter = 0;
+const generateEditorId = () => {
+  editorIdCounter += 1;
+  return `dinolabs-editor-${editorIdCounter}`;
+};
+
+
+const DinoLabsIDEMarkdown = forwardRef(({  
   fileContent,
   detectedLanguage,
   forceOpen,
@@ -75,10 +76,10 @@ const DinoLabsIDEMarkdown = forwardRef(({
   onSave,     
   fileHandle,
   isGlobalSearchActive,
-  lintProblems,
   keyBinds,
   colorTheme
 }, ref) => {
+  const { token, userID, organizationID, loading } = useAuth();
   const lineNumberRef = useRef(null);
   const lineNumbersContentRef = useRef(null);
   const lineHeight = 24; 
@@ -112,9 +113,29 @@ const DinoLabsIDEMarkdown = forwardRef(({
   if (!redoStackMap[tabId]) {
     redoStackMap[tabId] = [];
   }
-
+  
   const mirrorRef = useRef(null);
   const [activeLineNumber, setActiveLineNumber] = useState(null);
+
+  useEffect(() => {
+    const themeLinkId = "mirror-theme-css";
+    let link = document.getElementById(themeLinkId);
+    if (!link) {
+      link = document.createElement("link");
+      link.id = themeLinkId;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+    let themeFile;
+    if (colorTheme === "DarkTheme") {
+      themeFile = "DarkTheme.css";
+    } else if (colorTheme === "LightTheme") {
+      themeFile = "LightTheme.css";
+    } else {
+      themeFile = "DefaultTheme.css";
+    }
+    link.href = `../styles/mainStyles/MirrorThemes/${themeFile}`;
+  }, [colorTheme]);
 
   useImperativeHandle(ref, () => ({
     setContent: (newContent) => {
@@ -155,7 +176,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
   useEffect(() => {
     if (isSettingContentRef.current) {
       if (searchTerm) {
-        handleSearch(fullCode);
+        performSearch(fullCode);
       }
       isSettingContentRef.current = false;
       return;
@@ -183,7 +204,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     }
 
     debounceTimer.current = setTimeout(() => {
-      handleSearch();
+      performSearch();
     }, 300);
 
     return () => {
@@ -217,7 +238,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
       switch (key) {
         case keyBinds.save: 
           event.preventDefault();
-          handleSave();
+          saveFile();
           break;
         case keyBinds.undo: 
           event.preventDefault();
@@ -484,6 +505,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
         setSearchPositions([]);
         setCurrentSearchIndex(-1);
         setActiveLineNumber(null);
+
         updateVisibleLines();
 
         onEdit(paneIndex, tabId, previousState, { fullCode: mapViewToFullCode(updatedViewCode, fullCode, collapsedLines), collapsedLines: new Set(collapsedLines) });
@@ -613,7 +635,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     setVisibleEndLine(newVisibleEndLine);
   };
 
-  const handleScrollSync = () => {
+  const updateScrollSync = () => {
     if (textareaRef.current && lineNumberRef.current && preRef.current) {
       const scrollTop = textareaRef.current.scrollTop;
       lineNumberRef.current.scrollTop = scrollTop;
@@ -702,14 +724,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
                           );
                       }
 
-                      const problemsForLine = lintProblems.filter(problem => problem.line === lineNumber);
-                      let dotColor = null;
-                      if (problemsForLine.some(problem => problem.severity === 'error')) {
-                          dotColor = '#E54B4B'; 
-                      } else if (problemsForLine.some(problem => problem.severity === 'warning')) {
-                          dotColor = '#EFDE2A'; 
-                      }
-
                       return (
                           <div
                               key={`line-${lineNumber}-${actualIndex}-${editorId}`}
@@ -721,18 +735,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                           >
                               <span className="numberText">
                                   {lineNumber}
-
-                                  {dotColor && (
-                                    <span 
-                                        className="lineProblemDot" 
-                                        style={{
-                                            backgroundColor: dotColor,
-                                        }}
-                                    />
-                                )}
                               </span>
-
-
 
                               {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
                                   <span
@@ -751,10 +754,9 @@ const DinoLabsIDEMarkdown = forwardRef(({
       );
   };
 
-
   const isSupported = currentLanguage !== "Unknown";
 
-  const handleSearch = (codeToSearch = fullCode) => {
+  const performSearch = (codeToSearch = fullCode) => {
     if (!searchTerm) {
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
@@ -798,22 +800,22 @@ const DinoLabsIDEMarkdown = forwardRef(({
     }
   };
 
-  const handleNextSearch = () => {
+  const perfomNextSearch = () => {
     if (searchPositions.length === 0) return;
     const nextIndex = (currentSearchIndex + 1) % searchPositions.length;
     setCurrentSearchIndex(nextIndex);
   };
 
-  const handlePrevSearch = () => {
+  const performPreviousSearch = () => {
     if (searchPositions.length === 0) return;
     const prevIndex = (currentSearchIndex - 1 + searchPositions.length) % searchPositions.length;
     setCurrentSearchIndex(prevIndex);
   };
 
-  const handleEnterSearch = (e) => {
+  const clickEnterSearch = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleNextSearch();
+      perfomNextSearch();
     }
   };
 
@@ -852,7 +854,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     }
   };
 
-  const handleReplace = () => {
+  const performReplace = () => {
     if (currentSearchIndex === -1 || searchPositions.length === 0) return;
     const currentMatch = searchPositions[currentSearchIndex];
     const lineNumber = currentMatch.lineNumber;
@@ -891,10 +893,10 @@ const DinoLabsIDEMarkdown = forwardRef(({
       searchInputRef.current.focus();
     }
 
-    handleSearch(newFullCode);
+    performSearch(newFullCode);
   };
 
-  const handleReplaceAll = () => {
+  const performReplaceAll = () => {
     if (searchPositions.length === 0) return;
 
     const regex = isCaseSensitiveSearch
@@ -920,10 +922,10 @@ const DinoLabsIDEMarkdown = forwardRef(({
       searchInputRef.current.focus();
     }
 
-    handleSearch(newFullCode);
+    performSearch(newFullCode);
   };
 
-  const handleCopyToClipboard = async () => {
+  const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(fullCode);
       setCopySuccess("Code copied to clipboard!");
@@ -934,23 +936,49 @@ const DinoLabsIDEMarkdown = forwardRef(({
     }
   };
 
-  const handleSave = async () => {
+  const saveFile = async () => {
     if (!fileHandle) {
+      setSaveStatus("No file handle available.");
       setTimeout(() => setSaveStatus(""), 3000);
       return;
     }
 
     try {
+      setSaveStatus("Saving...");
+      
       const writable = await fileHandle.createWritable();
       await writable.write(fullCode);
       await writable.close();
+
+      const response = await fetch('https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/save-file-edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          organizationID,
+          userID,
+          language: currentLanguage,
+          script_name: fileHandle.name || "unknown_script_name",
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const result = await response.json();
 
       if (onSave) {
         onSave(paneIndex, tabId, fullCode);
       }
 
+      setSaveStatus("Save successful!");
       setTimeout(() => setSaveStatus(""), 3000);
     } catch (error) {
+      setSaveStatus("Save failed!");
       setTimeout(() => setSaveStatus(""), 3000);
     }
   };
@@ -970,13 +998,13 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
     if (lineNumberRef.current) {
       lineNumberRef.current.addEventListener('scroll', handleScrollEvent);
-      textareaRef.current.addEventListener('scroll', handleScrollSync);
+      textareaRef.current.addEventListener('scroll', updateScrollSync);
     }
 
     return () => {
       if (lineNumberRef.current) {
         lineNumberRef.current.removeEventListener('scroll', handleScrollEvent);
-        textareaRef.current.removeEventListener('scroll', handleScrollSync);
+        textareaRef.current.removeEventListener('scroll', updateScrollSync);
       }
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -1138,7 +1166,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
               <button
                 type="button"
                 className="codeEditorSearchButton"
-                onClick={handleCopyToClipboard}
+                onClick={copyToClipboard}
                 title="Copy Code to Clipboard"
                 onMouseDown={(e) => e.preventDefault()}
                 disabled={isGlobalSearchActive}
@@ -1174,7 +1202,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleEnterSearch}
+              onKeyDown={clickEnterSearch}
               ref={searchInputRef}
               className="codeEditorSearchBox"
               style={{ fontFamily: "monospace" }}
@@ -1204,7 +1232,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                 <button
                   type="button"
                   className="codeEditorSearchOperationsButton"
-                  onClick={handleNextSearch}
+                  onClick={perfomNextSearch}
                   title="Next Search Result"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={isGlobalSearchActive}
@@ -1217,7 +1245,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                 <button
                   type="button"
                   className="codeEditorSearchOperationsButton"
-                  onClick={handlePrevSearch}
+                  onClick={performPreviousSearch}
                   title="Previous Search Result"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={isGlobalSearchActive}
@@ -1246,7 +1274,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                 <button
                   type="button"
                   className="codeEditorSearchOperationsButton"
-                  onClick={handleReplace}
+                  onClick={performReplace}
                   title="Replace Current Match"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={isGlobalSearchActive}
@@ -1259,7 +1287,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
                 <button
                   type="button"
                   className="codeEditorSearchOperationsButton"
-                  onClick={handleReplaceAll}
+                  onClick={performReplaceAll}
                   title="Replace All Matches"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={isGlobalSearchActive}
@@ -1297,26 +1325,26 @@ const DinoLabsIDEMarkdown = forwardRef(({
           setSearchPositions={setSearchPositions}
           currentSearchIndex={currentSearchIndex}
           setCurrentSearchIndex={setCurrentSearchIndex}
-          handleSearch={handleSearch}
-          handleReplace={handleReplace}
-          handleReplaceAll={handleReplaceAll}
+          performSearch={performSearch}
+          performReplace={performReplace}
+          performReplaceAll={performReplaceAll}
           containerHeight={containerHeight}
           buffer={buffer}
           visibleStartLine={visibleStartLine}
           visibleEndLine={visibleEndLine}
           updateVisibleLines={updateVisibleLines}
           renderLineNumbers={renderLineNumbers}
-          handleScroll={handleScrollSync}
+          handleScroll={updateScrollSync}
           handleKeyDown={handleKeyDown}
           handleInput={handleInput}
           preRef={preRef}
           textareaRef={textareaRef}
           lineNumberRef={lineNumberRef}
-          highlightedCode={syntaxHighlight(viewCode, currentLanguage.toLowerCase(), searchTerm, isCaseSensitiveSearch, activeLineNumber)}
+          highlightedCode={syntaxHighlight(viewCode, currentLanguage.toLowerCase(), searchTerm, isCaseSensitiveSearch, activeLineNumber, 'dark')}
           displayLines={{ displayedLines: viewCode, lineNumberMappings: lineNumberMappings }}
           mapping={lineNumberMappings}
           getMaxDigits={getMaxDigits}
-          handleCopyToClipboard={handleCopyToClipboard}
+          copyToClipboard={copyToClipboard}
           copySuccess={copySuccess}
           isSupported={isSupported}
           forceOpen={forceOpen}
@@ -1339,6 +1367,12 @@ const DinoLabsIDEMarkdown = forwardRef(({
           <button className="dinolabsIDETryToOpenButton" onClick={onForceOpen}>
             Try to open anyway.
           </button>
+        </div>
+      )}
+      
+      {saveStatus && (
+        <div className="dinolabsIDEaveStatusIndicator">
+          {saveStatus}
         </div>
       )}
     </div>
