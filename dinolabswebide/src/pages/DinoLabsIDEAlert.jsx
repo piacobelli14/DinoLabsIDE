@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import "../styles/mainStyles/DinoLabsIDEAlert.css";
 
-function CustomDialog({ 
+function DinoLabsIDEAlert({ 
   visible, 
   title = '', 
   message = '', 
@@ -40,10 +40,20 @@ function CustomDialog({
     onCancel && onCancel();
   };
 
+  const areAllInputsFilled = () => {
+    return inputs.every(input => {
+      if (input.type === 'checkbox') {
+        return true;
+      }
+      const value = values[input.name];
+      return value !== undefined && value.toString().trim() !== '';
+    });
+  };
+
   return (
     <div className="dinolabsIDEAlertOverlay">
       <div className="dinolabsIDEAlert">
-        <img className="dinolabsAlertImage" src="./DinoLabsLogo-White.png"/>
+        <img className="dinolabsAlertImage" src="./DinoLabsLogo-White.png" alt="Logo"/>
         {title && <label className="dinolabsAlertHeader">{title}</label>}
         <label className="dinolabsAlertSubHeader">{message}</label>
         {inputs.length > 0 && inputs.map((input) => (
@@ -57,12 +67,34 @@ function CustomDialog({
               onChange={handleChange}
               {...(input.attributes || {})}
             />
-
           </label>
         ))}
         <div className="dinolabsIDEAlertButtonsFlex">
-          <button className="dinolabsIDEAlertButtons" style={{"background-color": "#AD6ADD"}} onClick={handleConfirm}>OK</button>
-          {showCancel && <button className="dinolabsIDEAlertButtons" style={{"background-color": "#D8D8D8", "color": "#191919"}} onClick={handleCancel}>Cancel</button>}
+          <button
+            className="dinolabsIDEAlertButtons"
+            style={{ backgroundColor: "#AD6ADD" }}
+            onClick={handleConfirm}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" && 
+                inputs.length > 0 && 
+                areAllInputsFilled()
+              ) {
+                handleConfirm();
+              }
+            }}
+          >
+            OK
+          </button>
+          {showCancel && (
+            <button
+              className="dinolabsIDEAlertButtons"
+              style={{ backgroundColor: "#D8D8D8", color: "#191919" }}
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -90,7 +122,7 @@ export function showDialog({ title, message, inputs = [], showCancel = false }) 
     };
 
     ReactDOM.render(
-      <CustomDialog
+      <DinoLabsIDEAlert
         visible={true}
         title={title}
         message={message}

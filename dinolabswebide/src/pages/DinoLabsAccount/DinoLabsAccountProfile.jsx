@@ -4,6 +4,7 @@ import "../../styles/mainStyles/AccountStyles/DinoLabsIDEAccount.css";
 import "../../styles/helperStyles/ConsoleToggleSwitch.css";
 import "../../styles/mainStyles/DinoLabsIDEPlots.css";
 import "../../styles/helperStyles/LoadingSpinner.css";
+import { showDialog } from "../DinoLabsIDEAlert.jsx"; 
 import useIsTouchDevice from "../../TouchDevice"; 
 import LinePlot from "../../helpers/PlottingHelpers/LineHelper.jsx";
 import useAuth from "../../UseAuth"; 
@@ -278,7 +279,7 @@ const DinoLabsIDEAccount = ({
         return keyBindDisplayNames[action] || action;
     };    
 
-    const handleKeyBindChange = (action, newKey) => {
+    const handleKeyBindChange = async (action, newKey) => {
         if (newKey.length !== 1) {
             return;
         }
@@ -287,8 +288,12 @@ const DinoLabsIDEAccount = ({
 
         for (const [actionName, key] of Object.entries(keyBinds)) {
             if (key === lowerNewKey && actionName !== action) {
-                alert(`Key "${newKey}" is already assigned to "${actionName}". Please choose a different key.`);
-                return;
+            await showDialog({
+                title: 'System Alert',
+                message: `Key "${newKey}" is already assigned to "${actionName}". Please choose a different key.`,
+                showCancel: false
+            });
+            return;
             }
         }
 
@@ -298,28 +303,34 @@ const DinoLabsIDEAccount = ({
         saveUserKeyBinds(userID, organizationID, updatedKeyBinds);
     };
 
+
+
     const saveUserKeyBinds = async (userID, organizationID, updatedKeyBinds) => {
         try {
             const token = localStorage.getItem("token");
             const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-keybinds", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    userID,
-                    organizationID,
-                    keyBinds: updatedKeyBinds
-                }),
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                userID,
+                organizationID,
+                keyBinds: updatedKeyBinds
+            }),
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to save key binds: ${response.statusText}`);
+            throw new Error(`Failed to save key binds: ${response.statusText}`);
             }
         } catch (error) {
             console.error("Error saving key binds:", error);
-            alert("Failed to save key bindings. Please try again.");
+            await showDialog({
+            title: "System Alert",
+            message: "Failed to save key bindings. Please try again.",
+            showCancel: false
+            });
         }
     };
 
@@ -327,25 +338,29 @@ const DinoLabsIDEAccount = ({
         try {
             const token = localStorage.getItem("token");
             const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-preferences", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ 
-                    userID, 
-                    organizationID, 
-                    zoomLevel, 
-                    colorTheme
-                }),
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ 
+                userID, 
+                organizationID, 
+                zoomLevel, 
+                colorTheme
+            }),
             });
-    
+
             if (!response.ok) {
-                throw new Error("Failed to save preferences");
+            throw new Error("Failed to save preferences");
             }
         } catch (error) {
             console.error("Error saving preferences:", error);
-            alert("Failed to save preferences. Please try again.");
+            await showDialog({
+            title: "System Alert",
+            message: "Failed to save preferences. Please try again.",
+            showCancel: false
+            });
         }
     };
     

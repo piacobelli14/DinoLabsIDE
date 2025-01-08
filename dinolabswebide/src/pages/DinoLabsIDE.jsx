@@ -804,12 +804,15 @@ const DinoLabsIDE = () => {
     });
   };
 
-  const closeTab = (paneIndex, tabId) => {
+  const closeTab = async (paneIndex, tabId) => {
     if (unsavedChanges[tabId]) {
-      const confirmClose = window.confirm(
-        "You have unsaved changes in this file. Are you sure you want to close it?"
-      );
-      if (!confirmClose) {
+      const alertResult = await showDialog({
+        title: 'System Alert',
+        message: 'You have unsaved changes in this file. Are you sure you want to close it?',
+        showCancel: true
+      });
+  
+      if (alertResult === null) {
         return;
       }
     }
@@ -1205,8 +1208,18 @@ const DinoLabsIDE = () => {
       return;
     }
 
-    const confirmReplace = window.confirm(`Are you sure you want to replace ${totalMatches} ${totalMatches === 1 ? 'occurrence' : 'occurrences'} of "${globalSearchQuery}" across ${filesWithMatches} ${filesWithMatches === 1 ? 'file' : 'files'}?`);
-    if (!confirmReplace) {
+    const confirmationMessage = `Are you sure you want to replace ${totalMatches} ${
+      totalMatches === 1 ? 'occurrence' : 'occurrences'
+    } of "${globalSearchQuery}" across ${filesWithMatches} ${
+      filesWithMatches === 1 ? 'file' : 'files'
+    }?`;
+
+    const alertResult = await showDialog({
+      title: 'System Alert',
+      message: confirmationMessage,
+      showCancel: true
+    });
+    if (alertResult === null) {
       return;
     }
 
@@ -1288,6 +1301,7 @@ const DinoLabsIDE = () => {
 
     performGlobalSearch();
   };
+
 
   const toggleCollapse = (filePath) => {
     const prefixedPath = prefixPath(rootDirectoryName, filePath);
@@ -1472,7 +1486,13 @@ const DinoLabsIDE = () => {
   const createNewFile = async () => {
     if (!contextMenuTarget) return;
     const { type: itemType, path } = contextMenuTarget;
-    const fileName = prompt(`Enter the name of your new file.: `);
+    const alertResult = await showDialog({
+      title: 'Create New File',
+      message: 'Enter the name of your new file:',
+      inputs: [{ name: 'fileName', type: 'text', label: '', defaultValue: '' }],
+      showCancel: true
+    });
+    const fileName = alertResult && alertResult.fileName;
     if (!fileName) return;
 
     const dirHandle = await getDirectoryHandleByPath(path);
@@ -1489,7 +1509,12 @@ const DinoLabsIDE = () => {
     }
 
     if (fileExists) {
-      alert(`A file or folder named "${fileName}" already exists in this directory.`);
+      const alertResult = await showDialog({
+        title: 'System Alert',
+        message: `A file named "${fileName}" already exists in this directory.`,
+        inputs: [],
+        showCancel: false
+      });
       return;
     }
 
@@ -1505,7 +1530,13 @@ const DinoLabsIDE = () => {
   const createNewFolder = async () => {
     if (!contextMenuTarget) return;
     const { type: itemType, path } = contextMenuTarget;
-    const folderName = prompt("Enter the name of your new folder:");
+    const alertResult = await showDialog({
+      title: 'Create New Directory',
+      message: 'Enter the name of your new directory:',
+      inputs: [{ name: 'folderName', type: 'text', label: '', defaultValue: '' }],
+      showCancel: true
+    });
+    const folderName = alertResult && alertResult.folderName;
     if (!folderName) return;
 
     const dirHandle = await getDirectoryHandleByPath(path);
@@ -1522,7 +1553,12 @@ const DinoLabsIDE = () => {
     }
 
     if (folderExists) {
-      alert(`A file or folder named "${folderName}" already exists in this directory.`);
+      const alertResult = await showDialog({
+        title: 'System Alert',
+        message: `A folder named "${folderName}" already exists in this directory.`,
+        inputs: [],
+        showCancel: false
+      });
       return;
     }
 
@@ -1541,27 +1577,31 @@ const DinoLabsIDE = () => {
 
     const splitted = path.split('/');
     const itemName = splitted.pop();
-    const parentPath = splitted.join('/'); 
+    const parentPath = splitted.join('/');
 
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete the ${itemType} "${itemName}"?`
-    );
-    if (!confirmDelete) return;
-  
+    const confirmationMessage = `Are you sure you want to delete the ${itemType} "${itemName}"?`;
+    const alertResult = await showDialog({
+      title: 'Confirm Delete',
+      message: confirmationMessage,
+      showCancel: true
+    });
+    if (alertResult === null) return;
+
     const dirHandle = await getDirectoryHandleByPath(parentPath);
     if (!dirHandle) {
       return;
     }
-  
+
     try {
       await dirHandle.removeEntry(itemName, { recursive: itemType === 'directory' });
       await reloadDirectory();
     } catch (error) {
-      return; 
+      return;
     }
+
     setContextMenuVisible(false);
   };
-  
+
 
   const handleContextMenu = (e, target) => {
     e.preventDefault();
@@ -1655,10 +1695,15 @@ const DinoLabsIDE = () => {
     const targetDirHandle = await getDirectoryHandleByPath(targetDirItem.fullPath);
     if (!targetDirHandle) return;
     
-    if (sourcePath.startsWith(targetDirItem.fullPath)) {
-      alert("Cannot move a directory into itself or its subdirectory.");
+    if (sourceType === "directory" && sourcePath.startsWith(targetDirItem.fullPath)) {
+      const alertResult = await showDialog({
+        title: 'System Alert',
+        message: "Cannot move a directory into itself or its subdirectory.",
+        inputs: [],
+        showCancel: false
+      });
       return;
-    }
+    }    
     
     let exists = false;
     for await (const entry of targetDirHandle.values()) {
@@ -1668,7 +1713,12 @@ const DinoLabsIDE = () => {
       }
     }
     if (exists) {
-      alert("Target directory already contains an item with the same name.");
+      const alertResult = await showDialog({
+        title: 'System Alert',
+        message: "Target directory already contains an item with the same name.",
+        inputs: [],
+        showCancel: false
+      });
       return;
     }
     
@@ -2252,7 +2302,6 @@ const DinoLabsIDE = () => {
                                       {usageLanguages.length === 0 ? (
                                         <p className="dinolabsIDELanguageUsageUnavailable">No usage data available.</p>
                                       ) : (
-                                        
                                         <ul className="dinolabsIDEUsageLanguageList">
                                           {usageLanguages.slice(0, 5).map((language) => {
                                             const total = usageLanguages.reduce((acc, lang) => acc + lang.count, 0);
