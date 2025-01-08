@@ -3,6 +3,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
+import { showDialog } from "./DinoLabsIDEAlert.jsx"; 
 import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/mainStyles/MirrorThemes/DefaultTheme.css"; 
 import "../styles/mainStyles/MirrorThemes/DarkTheme.css"; 
@@ -125,7 +126,6 @@ const extensionToImageMap = {
   rar: "archiveExtensions.svg",
   tar: "archiveExtensions.svg",
   gz: "archiveExtensions.svg",
-  git: "githubExtension.svg", 
   default: "unknownExtension.svg",
   cache: "cacheExtensions.svg",
   tmp: "cacheExtensions.svg",
@@ -232,6 +232,8 @@ const DinoLabsIDE = () => {
   const [flattenedDirectoryList, setFlattenedDirectoryList] = useState([]);
   const [flattenedSearchList, setFlattenedSearchList] = useState([]);
   const [dragOverId, setDragOverId] = useState(null); 
+
+  
 
   const flattenTree = (files, parentPath, level = 0, isParentVisible = true, output = []) => {
     files.forEach((item) => {
@@ -985,7 +987,13 @@ const DinoLabsIDE = () => {
   };
 
   const handleCloneGithubRepository = async () => {
-    const repoUrl = prompt("Enter the GitHub repository URL to clone:");
+    const alertResult = await showDialog({
+      title: 'Clone Repository',
+      message: 'Enter the GitHub repository URL to clone:',
+      inputs: [{ name: 'repoUrl', type: 'text', label: '', defaultValue: '' }],
+      showCancel: true
+    });
+    const repoUrl = alertResult && alertResult.repoUrl;
     if (!repoUrl) return;
 
     const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)(\.git)?$/);
@@ -1058,9 +1066,11 @@ const DinoLabsIDE = () => {
       setRepositoryFiles(structuredFiles);
       setIsRootOpen(true);
     } catch (error) {
+      console.error(error);
       return; 
     }
   };
+
 
   const handleSave = (paneIndex, tabId, newFullCode) => {
     setOriginalContents(prev => ({ ...prev, [tabId]: newFullCode }));
