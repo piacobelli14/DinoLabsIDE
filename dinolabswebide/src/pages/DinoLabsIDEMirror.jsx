@@ -38,13 +38,14 @@ const DinoLabsIDEMirror = forwardRef(({
   isSupported,
   forceOpen,
   onForceOpen,
-  lineHeight
+  lineHeight,
+  fontSize
 }, ref) => {
   const cursorPositionRef = useRef(null);
 
   useEffect(() => {
     updateVisibleLines();
-  }, [lineHeight, containerHeight, viewCode, collapsedLines]);
+  }, [lineHeight, fontSize, containerHeight, viewCode, collapsedLines]);
 
   const handleInputWithCursor = (e) => {
     const textarea = textareaRef.current;
@@ -76,7 +77,7 @@ const DinoLabsIDEMirror = forwardRef(({
 
       for (let i = 0; i < viewLines.length; i++) {
         const line = viewLines[i];
-        const lineLength = line.length + 1; 
+        const lineLength = line.length + 1;
 
         if (selectionStart < cumulativeLength + lineLength) {
           startLine = i;
@@ -89,7 +90,7 @@ const DinoLabsIDEMirror = forwardRef(({
 
       for (let i = 0; i < viewLines.length; i++) {
         const line = viewLines[i];
-        const lineLength = line.length + 1; 
+        const lineLength = line.length + 1;
 
         if (selectionEnd <= cumulativeLength + lineLength) {
           endLine = i;
@@ -147,32 +148,34 @@ const DinoLabsIDEMirror = forwardRef(({
       <div
         className="lineNumberMargin"
         ref={lineNumberRef}
-        style={{ 
+        style={{
           lineHeight: `${lineHeight}px`,
+          fontSize: `${fontSize}px`
         }}
         onWheel={(e) => {
           if (textareaRef.current) {
             textareaRef.current.scrollTop += e.deltaY;
-            e.preventDefault(); 
+            e.preventDefault();
           }
         }}
       >
         {renderLineNumbers(mapping)}
       </div>
-      <div className="codeEditorWrapper" style={{ lineHeight: `${lineHeight}px`, position: 'relative' }}>
-        <pre 
-          aria-hidden="true" 
+      <div className="codeEditorWrapper" style={{ lineHeight: `${lineHeight}px`, fontSize: `${fontSize}px`, position: 'relative' }}>
+        <pre
+          aria-hidden="true"
           ref={preRef}
           style={{
-            position: 'absolute',     
+            position: 'absolute',
             boxSizing: 'border-box',
-            overflow: 'auto', 
+            overflow: 'auto',
             overflowWrap: 'normal',
             whiteSpace: 'pre',
             pointerEvents: 'none',
             width: '100%',
             height: '100%',
             lineHeight: `${lineHeight}px`,
+            fontSize: `${fontSize}px`
           }}
           dangerouslySetInnerHTML={{ __html: highlightedCode }}
         />
@@ -184,7 +187,7 @@ const DinoLabsIDEMirror = forwardRef(({
           onKeyDown={handleKeyDown}
           onScroll={handleScroll}
           spellCheck={false}
-          style={{ 
+          style={{
             position: 'absolute',
             boxSizing: 'border-box',
             overflow: 'auto',
@@ -192,15 +195,16 @@ const DinoLabsIDEMirror = forwardRef(({
             whiteSpace: 'pre',
             resize: 'none',
             border: 'none',
-            outline: 'none',  
+            outline: 'none',
             lineHeight: `${lineHeight}px`,
+            fontSize: `${fontSize}px`,
             background: 'transparent',
-            color: 'transparent', 
+            color: 'transparent',
             caretColor: 'white',
             width: '100%',
             height: '100%',
           }}
-          wrap="off" 
+          wrap="off"
           aria-label="Code Editor"
           role="textbox"
         />

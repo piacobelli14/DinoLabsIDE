@@ -18,7 +18,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
 import { syntaxHighlight, escapeRegExp } from "./DinoLabsIDEParser";
-import useAuth from "../UseAuth"; 
+import useAuth from "../UseAuth";
 
 const languageImageMap = {
   Javascript: "javascript.svg",
@@ -32,14 +32,14 @@ const languageImageMap = {
   Swift: "swift.svg",
   C: "c.svg",
   "C++": "c++.svg",
-  "C#": "csharp.svg", 
+  "C#": "csharp.svg",
   "Monkey C": "monkeyc.svg",
-  Rust: "rust.svg", 
-  Bash: "bash.svg", 
-  Shell: "shell.svg", 
+  Rust: "rust.svg",
+  Bash: "bash.svg",
+  Shell: "shell.svg",
   SQL: "sql.svg",
   Markdown: "markdown.svg",
-  Text: "txtExtension.svg" , 
+  Text: "txtExtension.svg",
 };
 
 const undoStackMap = {};
@@ -51,7 +51,7 @@ const generateEditorId = () => {
 };
 
 
-const DinoLabsIDEMarkdown = forwardRef(({  
+const DinoLabsIDEMarkdown = forwardRef(({
   fileContent,
   detectedLanguage,
   forceOpen,
@@ -67,29 +67,29 @@ const DinoLabsIDEMarkdown = forwardRef(({
   onSplit,
   disableSplit,
   paneIndex,
-  tabId, 
-  isSearchOpen, 
-  isReplaceOpen, 
-  setTabSearchOpen, 
+  tabId,
+  isSearchOpen,
+  isReplaceOpen,
+  setTabSearchOpen,
   setTabReplaceOpen,
   onEdit,
-  onSave,     
+  onSave,
   fileHandle,
   isGlobalSearchActive,
   keyBinds,
   colorTheme
 }, ref) => {
   const { token, userID, organizationID, loading } = useAuth();
+
   const lineNumberRef = useRef(null);
   const lineNumbersContentRef = useRef(null);
-  const lineHeight = 24; 
   const textareaRef = useRef(null);
   const preRef = useRef(null);
   const searchInputRef = useRef(null);
   const debounceTimer = useRef(null);
   const scrollLeftRef = useRef(0);
   const savedScrollTopRef = useRef(0);
-  const isSettingContentRef = useRef(false); 
+  const isSettingContentRef = useRef(false);
   const editorId = useRef(generateEditorId()).current;
   const [fullCode, setFullCode] = useState("");
   const [viewCode, setViewCode] = useState("");
@@ -99,13 +99,53 @@ const DinoLabsIDEMarkdown = forwardRef(({
   const [visibleEndLine, setVisibleEndLine] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
   const buffer = 5;
-  const [isSearchOpenInternal, setIsSearchOpenInternal] = useState(isSearchOpen || false); 
-  const [isReplaceOpenInternal, setIsReplaceOpenInternal] = useState(isReplaceOpen || false); 
+  const [isSearchOpenInternal, setIsSearchOpenInternal] = useState(isSearchOpen || false);
+  const [isReplaceOpenInternal, setIsReplaceOpenInternal] = useState(isReplaceOpen || false);
   const [copySuccess, setCopySuccess] = useState("");
-  const [saveStatus, setSaveStatus] = useState(""); 
+  const [saveStatus, setSaveStatus] = useState("");
   const [lineNumberMappings, setLineNumberMappings] = useState([]);
-  const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
+  const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true);
+  const [lineHeight, setLineHeight] = useState(24);
+  const [fontSize, setFontSize] = useState(13);
   const getMaxDigits = (number) => { return String(number).length; };
+
+  const [screenSize, setScreenSize] = useState(window.innerWidth);
+  const getVirtualizedItemHeight = (size) => {
+    if (size < 499) {
+      return { lineHeight: 18, fontSize: 12 };
+    } else if (size >= 500 && size <= 699) {
+      return { lineHeight: 20, fontSize: 12 };
+    } else if (size >= 700 && size <= 1299) {
+      return { lineHeight: 24, fontSize: 13 };
+    } else if (size >= 1300 && size <= 1699) {
+      return { lineHeight: 28, fontSize: 15 };
+    } else if (size >= 1700 && size <= 2199) {
+      return { lineHeight: 35, fontSize: 18 };
+    } else if (size >= 2200 && size <= 2599) {
+      return { lineHeight: 45, fontSize: 22 };
+    } else if (size >= 2600 && size <= 3899) {
+      return { lineHeight: 70, fontSize: 30 };
+    } else if (size >= 3900 && size <= 5299) {
+      return { lineHeight: 80, fontSize: 35 };
+    } else {
+      return { lineHeight: 18, fontSize: 12 };
+    }
+  };
+
+
+  useEffect(() => {
+    const handleResize = () => setScreenSize(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    let updatedSpecs = getVirtualizedItemHeight(screenSize);
+    setLineHeight(updatedSpecs.lineHeight);
+    setFontSize(updatedSpecs.fontSize);
+  }, [screenSize]);
+
+
 
   if (!undoStackMap[tabId]) {
     undoStackMap[tabId] = [];
@@ -113,7 +153,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
   if (!redoStackMap[tabId]) {
     redoStackMap[tabId] = [];
   }
-  
+
   const mirrorRef = useRef(null);
   const [activeLineNumber, setActiveLineNumber] = useState(null);
 
@@ -139,7 +179,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
   useImperativeHandle(ref, () => ({
     setContent: (newContent) => {
-      const previousState = { fullCode, collapsedLines: new Set(collapsedLines) }; 
+      const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
       undoStackMap[tabId].push(previousState);
       redoStackMap[tabId] = [];
       isSettingContentRef.current = true;
@@ -150,7 +190,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
       setCollapsedLines(new Set());
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
-      setActiveLineNumber(null); 
+      setActiveLineNumber(null);
       updateVisibleLines();
 
       if (textareaRef.current) {
@@ -184,7 +224,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
     const trimmedContent = (fileContent || "").replace(/[\n\r]+$/, "");
     setFullCode(trimmedContent);
-    
+
     const { displayedLines, lineNumberMappings } = generateViewCode(trimmedContent, collapsedLines);
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
@@ -236,15 +276,15 @@ const DinoLabsIDEMarkdown = forwardRef(({
     if (modifier) {
       const key = event.key.toLowerCase();
       switch (key) {
-        case keyBinds.save: 
+        case keyBinds.save:
           event.preventDefault();
           saveFile();
           break;
-        case keyBinds.undo: 
+        case keyBinds.undo:
           event.preventDefault();
           handleUndo();
           break;
-        case keyBinds.redo: 
+        case keyBinds.redo:
           event.preventDefault();
           handleRedo();
           break;
@@ -252,7 +292,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
           event.preventDefault();
           handleCut();
           break;
-        case keyBinds.copy: 
+        case keyBinds.copy:
           event.preventDefault();
           handleCopy();
           break;
@@ -260,21 +300,21 @@ const DinoLabsIDEMarkdown = forwardRef(({
           event.preventDefault();
           handlePaste();
           break;
-        case keyBinds.selectAll: 
+        case keyBinds.selectAll:
           event.preventDefault();
           if (textareaRef.current) {
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(0, viewCode.length);
           }
           break;
-        case keyBinds.search: 
+        case keyBinds.search:
           event.preventDefault();
           openSearch();
           break;
         default:
           break;
       }
-    }  
+    }
 
     if (event.key === "Tab") {
       event.preventDefault();
@@ -311,7 +351,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
       const updatedViewCode = event.target.value;
       const updatedViewLines = updatedViewCode.split(/\r?\n/);
       const originalViewLines = viewCode.split(/\r?\n/);
-      const newViewLines = [...updatedViewLines]; 
+      const newViewLines = [...updatedViewLines];
 
       let isValid = true;
 
@@ -354,18 +394,18 @@ const DinoLabsIDEMarkdown = forwardRef(({
     isSettingContentRef.current = true;
     setFullCode(previousState.fullCode);
     setCollapsedLines(new Set(previousState.collapsedLines));
-    
+
     const { displayedLines, lineNumberMappings } = generateViewCode(previousState.fullCode, previousState.collapsedLines);
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
     setActiveLineNumber(null);
-    
+
     updateVisibleLines();
-    
+
     onEdit(
       paneIndex,
       tabId,
-      { fullCode, collapsedLines: new Set(collapsedLines) }, 
+      { fullCode, collapsedLines: new Set(collapsedLines) },
       { fullCode: previousState.fullCode, collapsedLines: new Set(previousState.collapsedLines) }
     );
   };
@@ -377,18 +417,18 @@ const DinoLabsIDEMarkdown = forwardRef(({
     isSettingContentRef.current = true;
     setFullCode(nextState.fullCode);
     setCollapsedLines(new Set(nextState.collapsedLines));
-    
+
     const { displayedLines, lineNumberMappings } = generateViewCode(nextState.fullCode, nextState.collapsedLines);
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
     setActiveLineNumber(null);
     updateVisibleLines();
-    
+
     onEdit(
       paneIndex,
       tabId,
-      { fullCode, collapsedLines: new Set(collapsedLines) }, 
-      { fullCode: nextState.fullCode, collapsedLines: new Set(nextState.collapsedLines) } 
+      { fullCode, collapsedLines: new Set(collapsedLines) },
+      { fullCode: nextState.fullCode, collapsedLines: new Set(nextState.collapsedLines) }
     );
   };
 
@@ -400,8 +440,8 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
       if (selectedText) {
         const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
-        undoStackMap[tabId].push(previousState); 
-        redoStackMap[tabId] = []; 
+        undoStackMap[tabId].push(previousState);
+        redoStackMap[tabId] = [];
 
         const updatedViewCode =
           viewCode.substring(0, selectionStart) +
@@ -437,7 +477,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
     let currentLength = 0;
     for (let i = 0; i < viewLines.length; i++) {
-      const lineLength = viewLines[i].length + 1; 
+      const lineLength = viewLines[i].length + 1;
       if (selectionStart < currentLength + lineLength) {
         startLine = i;
         break;
@@ -491,7 +531,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
         const { selectionStart, selectionEnd } = textarea;
 
         const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
-        undoStackMap[tabId].push(previousState); 
+        undoStackMap[tabId].push(previousState);
         redoStackMap[tabId] = [];
 
         const updatedViewCode =
@@ -555,7 +595,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
           const startLineNumber = blockLines[0] + 1;
           const endLineNumber = blockLines[blockLines.length - 1] + 1;
           const currentIndent = getIndentLevel(parentLine);
-          const ellipsisIndent = ' '.repeat(currentIndent + 4); 
+          const ellipsisIndent = ' '.repeat(currentIndent + 4);
 
           displayedLines.push(ellipsisIndent + '...');
           lineNumberMappings.push(
@@ -574,12 +614,12 @@ const DinoLabsIDEMarkdown = forwardRef(({
     while (displayedLines.length > 0) {
       const lastLine = displayedLines[displayedLines.length - 1].trim();
       const lastMapping = lineNumberMappings[lineNumberMappings.length - 1];
-      
+
       if ((lastLine === '...' || lastLine === '') && !React.isValidElement(lastMapping)) {
         displayedLines.pop();
         lineNumberMappings.pop();
       } else {
-        break; 
+        break;
       }
     }
 
@@ -591,7 +631,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const fullLines = currentFullCode.split(/\r?\n/);
     const newFullLines = [];
     let fullIndex = 0;
-  
+
     for (let viewIndex = 0; viewIndex < viewLines.length; viewIndex++) {
       const viewLine = viewLines[viewIndex];
 
@@ -624,12 +664,17 @@ const DinoLabsIDEMarkdown = forwardRef(({
   const updateVisibleLines = () => {
     if (!lineNumberRef.current) return;
 
+    const containerHeight = lineNumberRef.current.clientHeight;
+
     const scrollTop = lineNumberRef.current.scrollTop;
     const startLine = Math.floor(scrollTop / lineHeight) - buffer;
     const visibleLineCount = Math.ceil(containerHeight / lineHeight) + 2 * buffer;
 
     const newVisibleStartLine = Math.max(0, startLine);
-    const newVisibleEndLine = Math.min(newVisibleStartLine + visibleLineCount, viewCode.split(/\r?\n/).length);
+    const newVisibleEndLine = Math.min(
+      newVisibleStartLine + visibleLineCount,
+      viewCode.split(/\r?\n/).length
+    );
 
     setVisibleStartLine(newVisibleStartLine);
     setVisibleEndLine(newVisibleEndLine);
@@ -648,7 +693,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
   const hasCollapsibleBlock = (lines, lineIndex) => {
     if (lineIndex >= lines.length - 1) return false;
     const currentLine = lines[lineIndex];
-    if (currentLine.trim() === "") return false; 
+    if (currentLine.trim() === "") return false;
     const currentIndent = getIndentLevel(currentLine);
 
     for (let i = lineIndex + 1; i < lines.length; i++) {
@@ -673,85 +718,85 @@ const DinoLabsIDEMarkdown = forwardRef(({
       newCollapsedLines.add(startLineIndex);
     }
 
-    undoStackMap[tabId].push({ fullCode, collapsedLines: new Set(collapsedLines) }); 
+    undoStackMap[tabId].push({ fullCode, collapsedLines: new Set(collapsedLines) });
     redoStackMap[tabId] = [];
     setCollapsedLines(newCollapsedLines);
     setActiveLineNumber(null);
     const { displayedLines, lineNumberMappings } = generateViewCode(fullCode, newCollapsedLines);
-    
+
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
     updateVisibleLines();
   };
 
   const renderLineNumbers = (lineNumberMappings) => {
-      const totalLines = lineNumberMappings.length;
-      const totalHeight = totalLines * lineHeight;
+    const totalLines = lineNumberMappings.length;
+    const totalHeight = totalLines * lineHeight;
 
-      const startLine = visibleStartLine;
-      const endLine = Math.min(visibleEndLine, totalLines);
+    const startLine = visibleStartLine;
+    const endLine = Math.min(visibleEndLine, totalLines);
 
-      const visibleLines = lineNumberMappings.slice(startLine, endLine);
+    const visibleLines = lineNumberMappings.slice(startLine, endLine);
 
-      return (
-          <div style={{ height: totalHeight, position: 'relative', width: '100%' }}>
-              <div style={{ height: startLine * lineHeight }}></div>
+    return (
+      <div style={{ height: totalHeight, position: 'relative', width: '100%' }}>
+        <div style={{ height: startLine * lineHeight }}></div>
+        <div
+          ref={lineNumbersContentRef}
+          className="lineNumberContainer"
+          style={{ position: 'relative' }}
+        >
+          {visibleLines.map((lineNumber, index) => {
+            const actualIndex = startLine + index;
+            const isRange = React.isValidElement(lineNumber) && typeof lineNumber.props.children === 'object';
+
+            if (isRange) {
+              const content = lineNumber;
+              return (
+                <div
+                  key={`range-${actualIndex}-${editorId}`}
+                  className="lineNumber collapsedIndicator"
+                  style={{
+                    height: `${lineHeight}px`,
+                  }}
+                >
+                  <Tippy content={`Collapsed block from line ${content.props['data-start-line']} to line ${content.props['data-end-line']}`} theme="tooltip-light">
+                    <span className="ellipsisCaret">
+                      {content}
+                    </span>
+                  </Tippy>
+                </div>
+              );
+            }
+
+            return (
               <div
-                  ref={lineNumbersContentRef}
-                  className="lineNumberContainer"
-                  style={{ position: 'relative' }}
+                key={`line-${lineNumber}-${actualIndex}-${editorId}`}
+                className={`lineNumber ${lineNumber === activeLineNumber ? 'activeLineNumber' : ''}`}
+                style={{
+                  height: `${lineHeight}px`,
+                  lineHeight: `${lineHeight}px`,
+                }}
               >
-                  {visibleLines.map((lineNumber, index) => {
-                      const actualIndex = startLine + index;
-                      const isRange = React.isValidElement(lineNumber) && typeof lineNumber.props.children === 'object';
+                <span className="numberText">
+                  {lineNumber}
+                </span>
 
-                      if (isRange) {
-                          const content = lineNumber; 
-                          return (
-                              <div
-                                  key={`range-${actualIndex}-${editorId}`}
-                                  className="lineNumber collapsedIndicator"
-                                  style={{
-                                      height: `${lineHeight}px`,
-                                  }}
-                              >
-                                  <Tippy content={`Collapsed block from line ${content.props['data-start-line']} to line ${content.props['data-end-line']}`} theme="tooltip-light">
-                                      <span className="ellipsisCaret">
-                                          {content}
-                                      </span>
-                                  </Tippy>
-                              </div>
-                          );
-                      }
-
-                      return (
-                          <div
-                              key={`line-${lineNumber}-${actualIndex}-${editorId}`}
-                              className={`lineNumber ${lineNumber === activeLineNumber ? 'activeLineNumber' : ''}`}
-                              style={{
-                                  height: `${lineHeight}px`,
-                                  lineHeight: `${lineHeight}px`,
-                              }}
-                          >
-                              <span className="numberText">
-                                  {lineNumber}
-                              </span>
-
-                              {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
-                                  <span
-                                      className={`lineCaret ${collapsedLines.has(lineNumber - 1) ? "collapsed" : "expanded"}`}
-                                      onClick={() => toggleCollapse(lineNumber - 1)}
-                                  >
-                                      {collapsedLines.has(lineNumber - 1) ? "▶" : "▼"}
-                                  </span>
-                              )}
-                          </div>
-                      );
-                  })}
+                {!isRange && hasCollapsibleBlock(fullCode.split(/\r?\n/), lineNumber - 1) && (
+                  <span
+                    className={`lineCaret ${collapsedLines.has(lineNumber - 1) ? "collapsed" : "expanded"}`}
+                    onClick={() => toggleCollapse(lineNumber - 1)}
+                  >
+                    {collapsedLines.has(lineNumber - 1) ? "▶" : "▼"}
+                  </span>
+                )}
               </div>
-              <div style={{ height: (totalLines - endLine) * lineHeight }}></div>
-          </div>
-      );
+            );
+          })}
+        </div>
+        <div style={{ height: (totalLines - endLine) * lineHeight }}></div>
+      </div>
+    );
   };
 
   const isSupported = currentLanguage !== "Unknown";
@@ -870,7 +915,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const newFullCode = lines.join('\n');
 
     const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
-    undoStackMap[tabId].push(previousState); 
+    undoStackMap[tabId].push(previousState);
     redoStackMap[tabId] = [];
     setFullCode(newFullCode);
     setViewCode(generateViewCode(newFullCode, collapsedLines).displayedLines.join('\n'));
@@ -905,8 +950,8 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const replacement = replaceTerm !== undefined ? replaceTerm : "";
     const newFullCode = fullCode.replace(regex, replacement);
     const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
-    undoStackMap[tabId].push(previousState); 
-    redoStackMap[tabId] = []; 
+    undoStackMap[tabId].push(previousState);
+    redoStackMap[tabId] = [];
 
     setFullCode(newFullCode);
     setViewCode(generateViewCode(newFullCode, collapsedLines).displayedLines.join('\n'));
@@ -945,7 +990,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
     try {
       setSaveStatus("Saving...");
-      
+
       const writable = await fileHandle.createWritable();
       await writable.write(fullCode);
       await writable.close();
@@ -1014,7 +1059,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
 
   return (
     <div className="codeEditorContainer" style={{ fontFamily: 'monospace', height: '100%', width: '100%' }}>
-      
+
       <div className="codeEditorLanguageIndicator">
         <div
           className={
@@ -1154,12 +1199,12 @@ const DinoLabsIDEMarkdown = forwardRef(({
                 copySuccess === "Code copied to clipboard!"
                   ? "Copied to Clipboard!"
                   : copySuccess === "Cut to clipboard!"
-                  ? "Cut to Clipboard!"
-                  : copySuccess === "Failed to copy!"
-                  ? "Failed to copy!"
-                  : copySuccess === "Failed to paste!"
-                  ? "Failed to paste!"
-                  : "Copy to Clipboard"
+                    ? "Cut to Clipboard!"
+                    : copySuccess === "Failed to copy!"
+                      ? "Failed to copy!"
+                      : copySuccess === "Failed to paste!"
+                        ? "Failed to paste!"
+                        : "Copy to Clipboard"
               }
               theme="tooltip-light"
             >
@@ -1351,12 +1396,13 @@ const DinoLabsIDEMarkdown = forwardRef(({
           onForceOpen={onForceOpen}
           paneIndex={paneIndex}
           tabId={tabId}
-          onEdit={onEdit} 
-          onSave={onSave} 
+          onEdit={onEdit}
+          onSave={onSave}
           fileHandle={fileHandle}
-          editorId={editorId} 
+          editorId={editorId}
           ref={mirrorRef}
           lineHeight={lineHeight}
+          fontSize={fontSize}
         />
       ) : (
         <div className="dinolabsIDEUnsupportedWrapper">
@@ -1369,7 +1415,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
           </button>
         </div>
       )}
-      
+
       {saveStatus && (
         <div className="dinolabsIDEaveStatusIndicator">
           {saveStatus}
@@ -1398,7 +1444,7 @@ const getBlockLines = (codeStr, lineIndex) => {
     if (currentIndent > startIndent) {
       blockLines.push(i);
     } else {
-      break; 
+      break;
     }
   }
 

@@ -5,11 +5,10 @@ import useAuth from "../../UseAuth.jsx";
 const ManagerLinePlot = ({
   plotType,
   data,
-  totalData, 
-  organizationName, 
+  totalData,
+  organizationName,
   style
 }) => {
-  const { token, userID, organizationID, loading } = useAuth();
   const [screenSize, setScreenSize] = useState(window.innerWidth);
 
   const getResponsiveOptions = (size) => {
@@ -121,9 +120,9 @@ const ManagerLinePlot = ({
       subtitle = "Edits Saved In Last 30 Days";
       classname = "getStartedLinePlot";
       seriesName1 = `Edits Saved`;
-      seriesName2 = ""; 
+      seriesName2 = "";
       seriesData1 = data && data.length ? data.map(item => item.count) : Array(30).fill(0);
-      seriesData2 = totalData && totalData.length ? totalData.map(item => item.value) : []; 
+      seriesData2 = totalData && totalData.length ? totalData.map(item => item.value) : [];
       seriesColor1 = "#9b59b6";
       seriesColor2 = "#3498db";
       break;
@@ -132,9 +131,9 @@ const ManagerLinePlot = ({
       subtitle = "Edits Saved In Last 30 Days";
       classname = "personalUsagePlotContainer";
       seriesName1 = `Edits Saved`;
-      seriesName2 = ""; 
+      seriesName2 = "";
       seriesData1 = data && data.length ? data.map(item => item.count) : Array(30).fill(0);
-      seriesData2 = totalData && totalData.length ? totalData.map(item => item.value) : []; 
+      seriesData2 = totalData && totalData.length ? totalData.map(item => item.value) : [];
       seriesColor1 = "#9b59b6";
       seriesColor2 = "#3498db";
       break;
@@ -241,11 +240,11 @@ const ManagerLinePlot = ({
           year: "numeric",
         });
         let tooltipContent = `
-          <div class="tooltipWrapper" style="color: white; padding: 0; background-color: rgba(24,24,24,0.95); padding: 1vw; border: 2px solid #222222; border-radius: 0.4rem;">
+          <div class="tooltipWrapper" style="color: white; padding: 0; background-color: rgba(24,24,24,0.95); padding: 1vw; border: 2px solid #222222; border-radius: 0.4vw;">
             <div style="font-weight: bold; font-size: 1.2vw; color: rgba(255,255,255,0.9);">Date: ${date}</div>
             <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.6); width: 100%; margin: 1vw 0;">
         `;
-  
+
         params.forEach((param) => {
           const num = parseFloat(param.data);
           const formattedValue = !isNaN(num) ? num.toFixed(2) : param.data;
@@ -253,9 +252,9 @@ const ManagerLinePlot = ({
             <div style="color: ${param.color};">${param.seriesName}: <b style="color: white;">${formattedValue}</b></div>
           `;
         });
-  
+
         tooltipContent += `</div>`;
-  
+
         return tooltipContent;
       },
       backgroundColor: "rgba(255,255,255,0.0)",
@@ -273,7 +272,7 @@ const ManagerLinePlot = ({
         formatter: (value, index) => {
           const lastIndex = formattedLabels.length - 1;
           const secondLastIndex = lastIndex - 1;
-  
+
           if (
             index === 0 ||
             index === lastIndex ||
@@ -318,12 +317,12 @@ const ManagerLinePlot = ({
     series: series,
     grid: {
       ...grid,
-      left: plotType !== "getStartedPageUsagePlot" ? grid.left : 2,
-      right: plotType !== "getStartedPageUsagePlot" ? grid.right : 2,
-      top: plotType !=="getStartedPageUsagePlot" ? grid.top : 10
+      left: plotType !== "getStartedPageUsagePlot" ? grid.left : 12,
+      right: plotType !== "getStartedPageUsagePlot" ? grid.right : 12,
+      top: plotType !== "getStartedPageUsagePlot" ? grid.top : 0
     }
   };
-  
+
 
   return (
     <div className={classname} style={style}>

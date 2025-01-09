@@ -1,87 +1,87 @@
-@media (min-width: 700px) and (max-width: 1299px) {
-    .dinolabsIDESettingsContainer {
-       width: 100% !important; 
-       height: 100% !important; 
-       position: relative; 
-    } 
-   
+@media (min-width: 700px) and (max-width: 5399px) {
+   .dinolabsIDESettingsContainer {
+      width: 100% !important;
+      height: 100% !important;
+      position: relative;
+   }
+
    .dinolabsIDESettingsCloseButton {
-      position: absolute; 
-      top: 1vw; 
-      right: 2vw; 
-      font-size: 0.8vw; 
-      font-weight: 700; 
-      color: #c0c0c0; 
-      background-color: rgba(255,255,255,0.1);
-      padding: 0.6vw 1vw; 
-      display: flex; 
+      position: absolute;
+      top: 1vw;
+      right: 2vw;
+      font-size: 0.8vw;
+      font-weight: 700;
+      color: #c0c0c0;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 0.6vw 1vw;
+      display: flex;
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
-      gap: 0.6vw; 
-      outline: none; 
-      border: none; 
-      border-radius: 0.2rem;
-      box-shadow: 0 0 8px black; 
+      gap: 0.6vw;
+      outline: none;
+      border: none;
+      border-radius: 0.4vw;
+      box-shadow: 0 0 8px black;
       cursor: pointer;
-      transition: transform 0.3s ease, opacity 0.3s ease; 
-      z-index: 2; 
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 2;
    }
 
    .dinolabsIDESettingsCloseButton:hover {
       transform: scale(1.1);
-      border: none; 
-      outline: none; 
+      border: none;
+      outline: none;
       background-color: #E54B4B;
    }
 
    .dinolabsIDESettingsCloseButton:focus {
-      border: none; 
-      outline: none; 
-   }       
+      border: none;
+      outline: none;
+   }
 }
 
-@media (min-width: 700px) and (max-width: 1299px) {
+@media (min-width: 700px) and (max-width: 5399px) {
    .dinolabsIDEAccountWrapper {
-      width: 100%; 
-      height: 100%; 
+      width: 100%;
+      height: 100%;
       position: relative;
-      display: flex; 
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: space-between;
-      overflow: scroll; 
+      overflow: scroll;
    }
 
    .dinolabsIDEAccountInformationContainer {
-      display: flex; 
+      display: flex;
       justify-content: flex-start;
       align-items: center;
       width: 100%;
-      height: 45%; 
-      min-height: 12vw; 
+      height: 45%;
+      min-height: 12vw;
       box-sizing: border-box;
-      background-color: rgba(0,0,0,0.2);
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      background-color: rgba(0, 0, 0, 0.2);
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
    }
 
    .dinolabsIDEAccountFunctionalityContainer {
-      display: flex; 
+      display: flex;
       justify-content: flex-start;
       align-items: center;
       width: 100%;
-      height: 60%; 
+      height: 60%;
       box-sizing: border-box;
-      background-color: rgba(0,0,0,0.2);
+      background-color: rgba(0, 0, 0, 0.2);
    }
 
    .dinolabsIDEAccountImage {
       max-height: 12vw;
       min-height: 12vw;
-      min-width: 12vw; 
+      min-width: 12vw;
       max-width: 12vw;
-      border: 0.2vh solid darkgray; 
-      border-radius: 0.2rem; 
+      border: 0.2vh solid darkgray;
+      border-radius: 0.4vw;
       box-shadow: 0 0 4px grey;
       margin-right: 1.5vw;
    }
@@ -89,97 +89,97 @@
    .dinolabsAccountOrganizationImage {
       max-height: 8vw;
       min-height: 8vw;
-      min-width: 8vw; 
+      min-width: 8vw;
       max-width: 8vw;
-      border: 0.2vh solid darkgray; 
-      border-radius: 0.2rem; 
+      border: 0.2vh solid darkgray;
+      border-radius: 0.4vw;
       box-shadow: 0 0 4px grey;
       margin-right: 1vw;
       background-color: white;
    }
 
    .dinolabsIDEAccountNameStack {
-      display: flex; 
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: flex-start;
-      height: 12vw; 
+      height: 12vw;
    }
 
    .dinolabsIDEAccountName {
-      font-size: 2vw; 
+      font-size: 2vw;
       font-weight: 700;
-      color: rgba(255,255,255,0.8); 
+      color: rgba(255, 255, 255, 0.8);
    }
 
-   .dinolabsIDEAccountSubName, 
+   .dinolabsIDEAccountSubName,
    .dinolabsIDEAccountOrganizationSubName {
-      font-size: 1vw; 
+      font-size: 1vw;
       font-weight: 500;
-      color: rgba(255,255,255,0.7); 
-      opacity: 0.9; 
-      display: flex; 
+      color: rgba(255, 255, 255, 0.7);
+      opacity: 0.9;
+      display: flex;
       justify-content: flex-start;
       align-items: center;
    }
-   
+
    .dinolabsIDEAccountSubName {
       padding: 0.2vw;
    }
 
    .dinolabsIDEAccountSubName svg {
-      margin-right: 1vw; 
+      margin-right: 1vw;
    }
 
    .dinolabsIDEAccountSubName span {
       font-size: 0.9vw;
-      margin-left: 0.4vw; 
+      margin-left: 0.4vw;
    }
-   
+
    .dinolabsIDEAccountOrganizationSubName {
-      gap: 0.6vw; 
+      gap: 0.6vw;
       padding: 0.2vw;
    }
 
    .dinolabsIDEAccountOrganizationSubName strong {
-      font-size: 1.1vw; 
-      font-weight: 800; 
+      font-size: 1.1vw;
+      font-weight: 800;
    }
 
    .dinolabsIDEAccountOrganizationSubName span {
-      font-size: 0.9vw; 
-      font-weight: 500; 
+      font-size: 0.9vw;
+      font-weight: 500;
    }
 
    .dinolabsAccountOrganizationHeader {
-      height: 7vw; 
-      font-size: 1vw; 
+      height: 7vw;
+      font-size: 1vw;
       font-weight: 600;
-      color: rgba(255,255,255,0.7); 
-      display: flex; 
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: flex-start;
    }
 
-   .dinolabsIDEOrganizationWrapper, 
+   .dinolabsIDEOrganizationWrapper,
    .dinolabsIDEPersonalWrapper {
-      display: flex; 
+      display: flex;
       box-sizing: border-box;
-      overflow: scroll; 
+      overflow: scroll;
       width: 50%;
-      height: 100%;  
-      padding: 2vw; 
+      height: 100%;
+      padding: 2vw;
    }
 
    .dinolabsIDEAccountFunctionalityCellLeading {
-      border-right: 0.2vh solid rgba(255,255,255,0.2);
+      border-right: 0.2vh solid rgba(255, 255, 255, 0.2);
    }
 
    .dinolabsIDEPersonalWrapper {
       justify-content: flex-start;
       align-items: center;
-      border-right: 0.2vh solid rgba(255,255,255,0.2);
+      border-right: 0.2vh solid rgba(255, 255, 255, 0.2);
    }
 
    .dinolabsIDEOrganizationWrapper {
@@ -192,261 +192,237 @@
       display: flex;
       justify-content: flex-start;
       align-items: flex-start;
-      width: 90%; 
-      margin-bottom: 0.6vw; 
+      width: 90%;
+      margin-bottom: 0.6vw;
    }
 
    .dinolasIDEAccountOrganizationSupplement {
-      font-size: 0.9vw; 
-      font-weight: 400; 
-      color: rgba(255,255,255,0.7); 
-      margin-top: 0.6vw;  
+      font-size: 0.9vw;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 0.6vw;
       display: flex;
-      justify-content: flex-start; 
+      justify-content: flex-start;
       align-items: center;
-      gap: 0.6vw; 
-      width: 90%; 
+      gap: 0.6vw;
+      width: 90%;
       text-align: left;
-      padding: 0 0.2vw; 
+      padding: 0 0.2vw;
    }
 
    .dinolasIDEAccountOrganizationSupplement strong {
-      font-style: italic; 
+      font-style: italic;
    }
 }
 
-@media (min-width: 700px) and (max-width: 1299px) {
-   .dinolabsIDEAccountFunctionalityCellLeading, 
+@media (min-width: 700px) and (max-width: 5399px) {
+
+   .dinolabsIDEAccountFunctionalityCellLeading,
    .dinolabsIDEAccountFunctionalityCellTrailing {
-      display: flex; 
+      display: flex;
       flex-direction: column;
       box-sizing: border-box;
-      overflow: scroll; 
+      overflow: scroll;
       width: 50%;
-      height: 100%;  
-      background-color: rgba(rgba(255,255,255,0.0));
+      height: 100%;
+      background-color: rgba(rgba(255, 255, 255, 0.0));
       position: relative;
    }
 
    .dinolabsIDEAccountFunctionalityList {
-      display: flex; 
+      display: flex;
       flex-direction: column;
-      justify-content: flex-start; 
+      justify-content: flex-start;
       align-items: flex-start;
-      overflow: scroll; 
-      width: 100%; 
-      height: 100%; 
+      overflow: scroll;
+      width: 100%;
+      height: 100%;
       position: relative;
-      background-color: rgba(0,0,0,0.4);
+      background-color: rgba(0, 0, 0, 0.4);
    }
 
    .dinolabsIDEAccountFunctionalityButton {
-      background-color: rgba(0,0,0,0.4);
-      width: 100%; 
-      display: flex; 
-      justify-content: space-between; 
+      background-color: rgba(0, 0, 0, 0.4);
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
       box-sizing: border-box;
-      font-size: 0.9vw; 
-      font-weight: 800; 
-      color: #c0c0c0; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      font-size: 0.9vw;
+      font-weight: 800;
+      color: #c0c0c0;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
       border-radius: 0;
-      outline: none; 
-      padding: 1vw; 
-      font-style: italic; 
-      cursor: pointer ; 
+      outline: none;
+      padding: 1vw;
+      font-style: italic;
+      cursor: pointer;
    }
 
    .dinolabsIDEAccountFunctionalityButton span {
-      display: flex; 
+      display: flex;
       justify-content: center;
       align-items: center;
       gap: 0.8vw;
    }
 
    .dinolabsIDEAccountFunctionalityButton:hover {
-      opacity: 0.4; 
-      outline: none; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      opacity: 0.4;
+      outline: none;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
    }
 
    .dinolabsIDEAccountFunctionalityButton:focus {
-      outline: none; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      outline: none;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
    }
 }
 
-@media (min-width: 700px) and (max-width: 1299px) {
+@media (min-width: 700px) and (max-width: 5399px) {
    .dinolabsIDESettingsOperationsWrapper {
-      display: flex; 
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: center;
-      width: 100%; 
-      height: 100%; 
-      background-color: rgba(0,0,0,0.4);
-      position: relative; 
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      position: relative;
    }
 
    .dinolabsIDESettingsButtonWrapper {
-      width: 100%; 
-      height: 100%; 
-      display: flex; 
+      width: 100%;
+      height: 100%;
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: center;
-      overflow: scroll; 
+      overflow: scroll;
    }
 
    .dinolabsIDESettingsButtonLine {
-      background-color: rgba(0,0,0,0.4);
-      width: 100%; 
-      display: flex; 
-      justify-content: space-between; 
+      background-color: rgba(0, 0, 0, 0.4);
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
       box-sizing: border-box;
-      font-size: 0.9vw; 
-      font-weight: 800; 
-      color: #c0c0c0; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      font-size: 0.9vw;
+      font-weight: 800;
+      color: #c0c0c0;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
       border-radius: 0;
-      outline: none; 
-      padding: 1vw; 
-      font-style: italic; 
-      cursor: text; 
+      outline: none;
+      padding: 1vw;
+      font-style: italic;
+      cursor: text;
    }
 
    .dinolabsIDESettingsButtonLine:hover {
-      outline: none; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      outline: none;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
 
    }
 
    .dinolabsIDESettingsButtonLine:focus {
-      outline: none; 
-      border: none; 
-      border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+      outline: none;
+      border: none;
+      border-bottom: 0.2vh solid rgba(255, 255, 255, 0.2);
 
    }
 
    .dinolabsIDESettingsButtonLine span {
-      display: flex; 
+      display: flex;
       justify-content: center;
       align-items: center;
       gap: 0.8vw;
    }
 
    .dinolabsIDESettingsToggleLabel {
-      font-size: 0.8vw; 
-      font-weight: 700; 
-      color: #c0c0c0; 
+      font-size: 0.8vw;
+      font-weight: 700;
+      color: #c0c0c0;
       width: 2.5vw;
       white-space: nowrap;
-      overflow: scroll; 
+      overflow: scroll;
    }
 
    .dinolabsIDESettingsFootnoteWrapper {
-      position: sticky; 
-      z-index: 2; 
-      bottom: 0; 
+      position: sticky;
+      z-index: 2;
+      bottom: 0;
       right: 0;
-      left: 0; 
-      width: 100%; 
+      left: 0;
+      width: 100%;
       background-color: black;
-      border-top: 0.2vh solid rgba(255,255,255,0.2); 
-      padding: 1vw; 
-      font-size: 0.7vw; 
-      font-weight: 500; 
-      color: #c0c0c0; 
+      border-top: 0.2vh solid rgba(255, 255, 255, 0.2);
+      padding: 1vw;
+      font-size: 0.7vw;
+      font-weight: 500;
+      color: #c0c0c0;
    }
 
    .dinolabsIDESettingsKeyIcon {
-      padding: 0.4vw 0.8vw; 
-      background-color: rgba(255,255,255,0.1); 
-      font-size: 0.8vw; 
+      padding: 0.4vw 0.8vw;
+      background-color: rgba(255, 255, 255, 0.1);
+      font-size: 0.8vw;
       font-weight: 600;
-      color: #c0c0c0; 
-      border: none; 
-      border-radius: 0.2rem; 
-      outline: none; 
-      box-shadow: 0 0 2px rgba(255,255,255,0.6);
-      cursor: pointer; 
-   }
-
-   .dinolabsIDESettingsKeyIcon:hover {
-      opacity: 0.6; 
-      border: none; 
-      outline: none; 
-   }
-
-   .dinolabsIDESettingsKeyIcon:focus {
-      border: none; 
-      outline: none; 
-   }
-
-   .dinolabsIDESettingsInput {
-      padding: 0.4vw 0.8vw; 
-      background-color: #222222;
-      font-size: 0.9vw; 
-      font-weight: 700;
-      color: #c0c0c0; 
-      cursor: text; 
-      border: 0.2vh solid #c0c0c0; 
-      border-radius: 0.2rem; 
-      box-shadow: 0 0 2px rgba(255,255,255,0.6);
-   }
-
-   .dinolabsIDESettingsInput:hover {
-      opacity: 0.6; 
-   }
-
-   .dinolabsIDESettingsSlider {
-      transition: opacity 0.2s;
-      accent-color: #5C2BE2;
-      max-width: 8vw; 
-   }
-
-   .dinolabsIDESettingsSlider::-webkit-slider-thumb {
-      accent-color: #5C2BE2;
-      cursor: pointer; 
-   }
-
-   .dinolabsIDESettingsSlider::-moz-range-thumb {
-      accent-color: #5C2BE2;
-      cursor: pointer; 
-   }
-
-   .dinolabsIDESettingsSlider::-ms-thumb {
-      accent-color: #5C2BE2;
+      color: #c0c0c0;
+      border: none;
+      border-radius: 0.4vw;
+      outline: none;
+      box-shadow: 0 0 2px rgba(255, 255, 255, 0.6);
       cursor: pointer;
    }
 
-   .dinolabsIDESettingsCheckbox {
-      accent-color: #5C2BE2;
+   .dinolabsIDESettingsKeyIcon:hover {
+      opacity: 0.6;
+      border: none;
+      outline: none;
+   }
+
+   .dinolabsIDESettingsKeyIcon:focus {
+      border: none;
+      outline: none;
+   }
+
+   .dinolabsIDESettingsInput {
+      padding: 0.4vw 0.8vw;
+      background-color: #222222;
+      font-size: 0.9vw;
+      font-weight: 700;
+      color: #c0c0c0;
+      cursor: text;
+      border: 0.2vh solid #c0c0c0;
+      border-radius: 0.4vw;
+      box-shadow: 0 0 2px rgba(255, 255, 255, 0.6);
+   }
+
+   .dinolabsIDESettingsInput:hover {
+      opacity: 0.6;
    }
 
    .dinolabsIDESettingsThemeIndicator {
       display: flex;
       justify-content: center;
       align-items: center;
-  }
-  
-  .dinolabsIDESettingsThemeIndicatorDot {
+   }
+
+   .dinolabsIDESettingsThemeIndicatorDot {
       width: 0.8vw;
       height: 0.8vw;
-      border-radius: 50%; 
-      border: 0.2vh solid #ccc; 
-  }
-  
+      border-radius: 50%;
+      border: 0.2vh solid #ccc;
+   }
 
 
-   
+
+
 
 
 }

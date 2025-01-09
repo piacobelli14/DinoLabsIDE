@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useRef } from "react"; 
+import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
-import { showDialog } from "./DinoLabsIDEAlert.jsx"; 
+import { showDialog } from "./DinoLabsIDEAlert.jsx";
 import "../styles/mainStyles/DinoLabsIDE.css";
-import "../styles/mainStyles/MirrorThemes/DefaultTheme.css"; 
-import "../styles/mainStyles/MirrorThemes/DarkTheme.css"; 
-import "../styles/mainStyles/MirrorThemes/LightTheme.css"; 
+import "../styles/mainStyles/DinoLabsIDEUnavailable.css";
+import "../styles/mainStyles/MirrorThemes/DefaultTheme.css";
+import "../styles/mainStyles/MirrorThemes/DarkTheme.css";
+import "../styles/mainStyles/MirrorThemes/LightTheme.css";
 import "../styles/helperStyles/Tooltip.css";
 import "../styles/helperStyles/LoadingSpinner.css";
-import useAuth from "../UseAuth"; 
+import useAuth from "../UseAuth";
 import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
 import DoughnutPlot from "../helpers/PlottingHelpers/DoughnutHelper.jsx";
 import DinoLabsNav from "../helpers/DinoLabsNav.jsx";
 import { FixedSizeList as List } from 'react-window';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import {
   faCode,
   faAngleRight,
-  faAngleDown, 
+  faAngleDown,
   faWandMagicSparkles,
   faPlusSquare,
   faMinusSquare,
@@ -30,7 +30,8 @@ import {
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
   faChevronDown,
-  faChevronRight
+  faChevronRight,
+  faFolderOpen
 } from "@fortawesome/free-solid-svg-icons";
 
 const highlightResultSnippet = (text, searchTerm, isCaseSensitive) => {
@@ -62,15 +63,15 @@ const extensionToLanguageMap = {
   cpp: "C++",
   h: "C++",
   cs: "C#",
-  rs: "Rust", 
-  bash: "Bash", 
-  sh: "Shell", 
-  zsh: "Shell", 
-  mc: "Monkey C", 
-  mcgen: "Monkey C", 
-  sql: "SQL", 
-  asm: "Assembly", 
-  md: "Markdown", 
+  rs: "Rust",
+  bash: "Bash",
+  sh: "Shell",
+  zsh: "Shell",
+  mc: "Monkey C",
+  mcgen: "Monkey C",
+  sql: "SQL",
+  asm: "Assembly",
+  md: "Markdown",
   txt: "Text"
 };
 
@@ -90,18 +91,18 @@ const extensionToImageMap = {
   cpp: "c++.svg",
   h: "c++.svg",
   cs: "csharp.svg",
-  rs: "rust.svg", 
-  bash: "bash.svg", 
-  sh: "shell.svg", 
-  zsh: "shell.svg", 
-  mc: "monkeyc.svg", 
-  mcgen: "monkeyc.svg", 
-  md: "markdown.svg", 
-  asm: "assembly.svg", 
+  rs: "rust.svg",
+  bash: "bash.svg",
+  sh: "shell.svg",
+  zsh: "shell.svg",
+  mc: "monkeyc.svg",
+  mcgen: "monkeyc.svg",
+  md: "markdown.svg",
+  asm: "assembly.svg",
   sql: "sql.svg",
-  pem: "securityExtensions.svg", 
-  txt: "txtExtension.svg", 
-  csv: "csvExtension.svg", 
+  pem: "securityExtensions.svg",
+  txt: "txtExtension.svg",
+  csv: "csvExtension.svg",
   pdf: "pdfExtension.svg",
   doc: "wordExtension.svg",
   docx: "wordExtension.svg",
@@ -136,11 +137,17 @@ const extensionToImageMap = {
 };
 
 const supportedExtensions = [
-  'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 
+  'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
-  'mc', 'mcgen', 'asm', 'sql', 'xml', 'json', 
+  'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
   'md', 'txt'
 ];
+
+const mediaExtensions = {
+  image: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp'],
+  video: ['mp4', 'mkv', 'avi', 'mov'],
+  audio: ['mp3', 'wav', 'flac']
+};
 
 const getFileIcon = (filename) => {
   let extension;
@@ -176,6 +183,9 @@ const prefixPath = (rootDirectoryName, path) => {
 
 const DinoLabsIDE = () => {
   const { token, userID, organizationID, loading } = useAuth();
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [screenSize, setScreenSize] = useState(window.innerWidth);
+  const [resizeTrigger, setResizeTrigger] = useState(false);
   const debounceRef = useRef(null);
   const [directoryWidth, setDirectoryWidth] = useState(20);
   const [contentWidth, setContentWidth] = useState(80);
@@ -184,30 +194,30 @@ const DinoLabsIDE = () => {
   const [isDraggingWidth, setIsDraggingWidth] = useState(false);
   const [isDraggingHeight, setIsDraggingHeight] = useState(false);
   const [isDraggingPane, setIsDraggingPane] = useState(false);
-  const [paneWidths, setPaneWidths] = useState({ pane1: 50, pane2: 50 }); 
+  const [paneWidths, setPaneWidths] = useState({ pane1: 50, pane2: 50 });
   const [repositoryFiles, setRepositoryFiles] = useState([]);
   const [openedDirectories, setOpenedDirectories] = useState({});
   const [rootDirectoryName, setRootDirectoryName] = useState("");
-  const [rootDirectoryHandle, setRootDirectoryHandle] = useState(null); 
+  const [rootDirectoryHandle, setRootDirectoryHandle] = useState(null);
   const [isRootOpen, setIsRootOpen] = useState(false);
   const [panes, setPanes] = useState([{ openedTabs: [], activeTabId: null }]);
   const [activePaneIndex, setActivePaneIndex] = useState(0);
   const panesRef = useRef(panes);
-  const editorRefs = useRef({}); 
+  const editorRefs = useRef({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAccountOpen, setIsAccountOpen] = useState(false); 
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [unsavedChanges, setUnsavedChanges] = useState({});
   const [originalContents, setOriginalContents] = useState({});
-  const [modifiedContents, setModifiedContents] = useState({}); 
+  const [modifiedContents, setModifiedContents] = useState({});
   const [isNavigatorState, setIsNavigatorState] = useState(true);
   const [isNavigatorLoading, setIsNavigatorLoading] = useState(false);
-  const [isSearchState, setIsSearchState] = useState(false); 
+  const [isSearchState, setIsSearchState] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalReplaceTerm, setGlobalReplaceTerm] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [isGlobalReplace, setIsGlobalReplace] = useState(false);
-  const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true); 
-  const [isPlotRendered, setIsPlotRendered] = useState(false); 
+  const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true);
+  const [isPlotRendered, setIsPlotRendered] = useState(false);
   const [collapsedFiles, setCollapsedFiles] = useState({});
   const defaultKeyBinds = {
     save: 's',
@@ -220,20 +230,60 @@ const DinoLabsIDE = () => {
     selectAll: 'a',
   };
   const [keyBinds, setKeyBinds] = useState(defaultKeyBinds);
-  const [zoomLevel, setZoomLevel] = useState(1); 
-  const [colorTheme, setColorTheme] = useState("default"); 
-  const [personalUsageByDay, setPersonalUsageByDay] = useState([]); 
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [colorTheme, setColorTheme] = useState("default");
+  const [personalUsageByDay, setPersonalUsageByDay] = useState([]);
   const [usageLanguages, setUsageLanguages] = useState([]);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuTarget, setContextMenuTarget] = useState(null);
   const contextMenuRef = useRef(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [flattenedDirectoryList, setFlattenedDirectoryList] = useState([]);
   const [flattenedSearchList, setFlattenedSearchList] = useState([]);
-  const [dragOverId, setDragOverId] = useState(null); 
+  const [dragOverId, setDragOverId] = useState(null);
 
-  
+  const getVirtualizedItemHeight = (size) => {
+    if (size < 499) {
+      return 18;
+    } else if (size >= 500 && size <= 699) {
+      return 18;
+    } else if (size >= 700 && size <= 1299) {
+      return 20;
+    } else if (size >= 1300 && size <= 1499) {
+      return 24;
+    } else if (size >= 1500 && size <= 2199) {
+      return 30;
+    } else if (size >= 2200 && size <= 2599) {
+      return 40;
+    } else if (size >= 2600 && size <= 3899) {
+      return 65;
+    } else if (size >= 3900 && size <= 5299) {
+      return 75;
+    } else {
+      return 18;
+    }
+  };
+
+  useEffect(() => {
+    const handleResize = () => setScreenSize(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLoaded(false);
+      setScreenSize(window.innerWidth);
+      setResizeTrigger(prev => !prev);
+
+      setTimeout(() => setIsLoaded(true), 300);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
 
   const flattenTree = (files, parentPath, level = 0, isParentVisible = true, output = []) => {
     files.forEach((item) => {
@@ -250,7 +300,7 @@ const DinoLabsIDE = () => {
         level: level,
         isVisible: isVisible,
         isOpen: isDir ? isOpen : false,
-        handle: item.handle 
+        handle: item.handle
       });
 
       if (isDir && isOpen && item.files && item.files.length > 0) {
@@ -279,7 +329,7 @@ const DinoLabsIDE = () => {
         return acc;
       }, []);
     };
-    const filtered = searchQuery 
+    const filtered = searchQuery
       ? filterFiles(repositoryFiles, searchQuery)
       : repositoryFiles;
     const flatList = flattenTree(filtered, rootDirectoryName, 0, true, []);
@@ -328,12 +378,12 @@ const DinoLabsIDE = () => {
     const fetchData = async () => {
       try {
         await Promise.all([
-          fetchUserInfo(userID, organizationID), 
+          fetchUserInfo(userID, organizationID),
           fetchPersonalUsageData(userID, organizationID)
         ]);
         setIsLoaded(true);
       } catch (error) {
-        return; 
+        return;
       }
     };
 
@@ -364,7 +414,7 @@ const DinoLabsIDE = () => {
       } else {
         setKeyBinds(defaultKeyBinds);
       }
-      setZoomLevel(data[0].userzoomlevel || 1); 
+      setZoomLevel(data[0].userzoomlevel || 1);
       setColorTheme(data[0].usercolortheme || "default");
     } catch (error) {
       return;
@@ -372,7 +422,7 @@ const DinoLabsIDE = () => {
   };
 
   const fetchPersonalUsageData = async (userID, organizationID) => {
-    setIsPlotRendered(false); 
+    setIsPlotRendered(false);
 
     try {
       const token = localStorage.getItem("token");
@@ -391,13 +441,13 @@ const DinoLabsIDE = () => {
 
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
-      } 
+      }
 
       const data = await response.json();
       if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
         throw new Error("Unexpected data structure from the backend");
       } else {
-        setIsPlotRendered(true); 
+        setIsPlotRendered(true);
       }
       setPersonalUsageByDay(
         data.personalUsageInfo.map((item) => ({
@@ -417,7 +467,7 @@ const DinoLabsIDE = () => {
       );
 
     } catch (error) {
-      return; 
+      return;
     }
   };
 
@@ -425,17 +475,17 @@ const DinoLabsIDE = () => {
     panesRef.current = panes;
   }, [panes]);
 
-  const directoryRef = useRef(null); 
+  const directoryRef = useRef(null);
   const contentRef = useRef(null);
 
   useEffect(() => {
     const dir = directoryRef.current;
     const cont = contentRef.current;
     if (!dir || !cont) return;
-    
+
     let isSyncingDir = false;
     let isSyncingCont = false;
-    
+
     const onDirScroll = () => {
       if (isSyncingDir) {
         isSyncingDir = false;
@@ -444,7 +494,7 @@ const DinoLabsIDE = () => {
       isSyncingCont = true;
       cont.scrollTop = dir.scrollTop;
     };
-    
+
     const onContScroll = () => {
       if (isSyncingCont) {
         isSyncingCont = false;
@@ -453,10 +503,10 @@ const DinoLabsIDE = () => {
       isSyncingDir = true;
       dir.scrollTop = cont.scrollTop;
     };
-    
+
     dir.addEventListener('scroll', onDirScroll);
     cont.addEventListener('scroll', onContScroll);
-    
+
     return () => {
       dir.removeEventListener('scroll', onDirScroll);
       cont.removeEventListener('scroll', onContScroll);
@@ -533,13 +583,13 @@ const DinoLabsIDE = () => {
       const rootName = directoryHandle.name;
       setRootDirectoryHandle(directoryHandle);
       setRootDirectoryName(rootName);
-      const files = await loadAllDirectoryContents(directoryHandle, rootName); 
+      const files = await loadAllDirectoryContents(directoryHandle, rootName);
       setRepositoryFiles(files);
       setIsRootOpen(true);
       setIsNavigatorLoading(false);
     } catch (error) {
-      setIsNavigatorLoading(false);  
-      return; 
+      setIsNavigatorLoading(false);
+      return;
     }
   };
 
@@ -562,7 +612,7 @@ const DinoLabsIDE = () => {
     return currentHandle;
   };
 
-  const handleFileLoad = async () => {
+  const handleLoadFile = async () => {
     try {
       const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
       const fileId = prefixPath(rootDirectoryName, fileHandle.name);
@@ -600,18 +650,18 @@ const DinoLabsIDE = () => {
       }
 
       const newTab = {
-        id: fileId, 
+        id: fileId,
         name: fileHandle.name,
         content: content,
         language: language,
-        forceOpen: false, 
+        forceOpen: false,
         searchTerm: "",
         replaceTerm: "",
         searchPositions: [],
         currentSearchIndex: -1,
-        isSearchOpen: false, 
+        isSearchOpen: false,
         isReplaceOpen: false,
-        fileHandle: fileHandle 
+        fileHandle: fileHandle
       };
 
       setPanes(prevPanes => {
@@ -624,12 +674,22 @@ const DinoLabsIDE = () => {
       setOriginalContents(prev => ({ ...prev, [fileId]: content }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
-      return; 
+      return;
     }
   };
 
   const handleFileClick = async (file, parentPath) => {
     const fileExtension = file.name.split('.').pop().toLowerCase();
+    let mediaType = null;
+    for (const type in mediaExtensions) {
+      if (mediaExtensions[type].includes(fileExtension)) {
+        mediaType = type;
+        break;
+      }
+    }
+
+
+
     const isSupported = supportedExtensions.includes(fileExtension);
     const fileId = prefixPath(rootDirectoryName, file.fullPath || `${parentPath}/${file.name}`);
     let existingTabPaneIndex = -1;
@@ -656,7 +716,7 @@ const DinoLabsIDE = () => {
       let content;
       if (modifiedContents[fileId]) {
         content = modifiedContents[fileId];
-      } 
+      }
       else if (file.handle) {
         const fileData = await file.handle.getFile();
         content = await fileData.text();
@@ -668,18 +728,18 @@ const DinoLabsIDE = () => {
 
       const language = extensionToLanguageMap[fileExtension] || "Unknown";
       const newTab = {
-        id: fileId, 
+        id: fileId,
         name: file.name,
         content: content,
         language: isSupported ? language : "Unknown",
-        forceOpen: false, 
+        forceOpen: false,
         searchTerm: "",
         replaceTerm: "",
         searchPositions: [],
         currentSearchIndex: -1,
-        isSearchOpen: false, 
+        isSearchOpen: false,
         isReplaceOpen: false,
-        fileHandle: file.handle 
+        fileHandle: file.handle
       };
 
       setPanes(prevPanes => {
@@ -693,7 +753,7 @@ const DinoLabsIDE = () => {
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
       const newTab = {
-        id: fileId, 
+        id: fileId,
         name: file.name,
         content: isSupported
           ? "Error reading file content."
@@ -704,9 +764,9 @@ const DinoLabsIDE = () => {
         replaceTerm: "",
         searchPositions: [],
         currentSearchIndex: -1,
-        isSearchOpen: false, 
+        isSearchOpen: false,
         isReplaceOpen: false,
-        fileHandle: null 
+        fileHandle: null
       };
 
       setPanes(prevPanes => {
@@ -811,12 +871,12 @@ const DinoLabsIDE = () => {
         message: 'You have unsaved changes in this file. Are you sure you want to close it?',
         showCancel: true
       });
-  
+
       if (alertResult === null) {
         return;
       }
     }
-  
+
     setPanes(prevPanes => {
       let newPanes = [...prevPanes];
       const pane = newPanes[paneIndex];
@@ -824,40 +884,40 @@ const DinoLabsIDE = () => {
       if (pane.activeTabId === tabId) {
         pane.activeTabId = pane.openedTabs.length > 0 ? pane.openedTabs[0].id : null;
       }
-  
+
       if (pane.openedTabs.length === 0) {
         newPanes.splice(paneIndex, 1);
         if (activePaneIndex >= paneIndex && activePaneIndex > 0) {
           setActivePaneIndex(activePaneIndex - 1);
         }
-  
+
         if (newPanes.length === 0) {
           newPanes = [{ openedTabs: [], activeTabId: null }];
         }
-  
+
         if (newPanes.length === 1) {
           setPaneWidths({ pane1: 100, pane2: 0 });
         }
       }
-  
+
       setUnsavedChanges(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-  
+
       setOriginalContents(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-  
-      setModifiedContents(prev => { 
+
+      setModifiedContents(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-  
+
       return newPanes;
     });
   };
@@ -876,7 +936,7 @@ const DinoLabsIDE = () => {
       if (prevPanes.length >= 2) {
         return prevPanes;
       }
-  
+
       const currentPane = prevPanes[activePaneIndex];
       const currentTabId = currentPane.activeTabId;
       const currentTabIndex = currentPane.openedTabs.findIndex(tab => tab.id === currentTabId);
@@ -884,13 +944,13 @@ const DinoLabsIDE = () => {
       if (!currentTab) {
         return prevPanes;
       }
-  
+
       const updatedPanes = [...prevPanes];
       updatedPanes[activePaneIndex].openedTabs.splice(currentTabIndex, 1);
       if (updatedPanes[activePaneIndex].activeTabId === currentTabId) {
         updatedPanes[activePaneIndex].activeTabId = updatedPanes[activePaneIndex].openedTabs.length > 0 ? updatedPanes[activePaneIndex].openedTabs[0].id : null;
       }
-  
+
       const newPane = {
         openedTabs: [{
           ...currentTab,
@@ -898,8 +958,8 @@ const DinoLabsIDE = () => {
         }],
         activeTabId: currentTab.id
       };
-  
-      setPaneWidths({ pane1: 50, pane2: 50 }); 
+
+      setPaneWidths({ pane1: 50, pane2: 50 });
       return [...updatedPanes, newPane];
     });
   };
@@ -912,7 +972,7 @@ const DinoLabsIDE = () => {
     e.preventDefault();
     const data = JSON.parse(e.dataTransfer.getData('text/plain'));
     const { sourcePaneIndex, tabId } = data;
-    if (sourcePaneIndex === targetPaneIndex) return; 
+    if (sourcePaneIndex === targetPaneIndex) return;
     moveTabBetweenPanes(sourcePaneIndex, targetPaneIndex, tabId);
   };
 
@@ -921,7 +981,7 @@ const DinoLabsIDE = () => {
     const newPanes = [...currentPanes];
     const sourcePane = newPanes[sourcePaneIndex];
     const targetPane = newPanes[targetPaneIndex];
-    
+
     const tabToMove = sourcePane.openedTabs.find(tab => tab.id === tabId);
     if (!tabToMove) return;
 
@@ -948,7 +1008,7 @@ const DinoLabsIDE = () => {
       }
 
       if (newPanes.length === 1) {
-        setPaneWidths({ pane1: 100, pane2: 0 }); 
+        setPaneWidths({ pane1: 100, pane2: 0 });
       }
     }
 
@@ -972,7 +1032,7 @@ const DinoLabsIDE = () => {
     } else {
       setUnsavedChanges(prev => ({ ...prev, [tabId]: true }));
     }
-  
+
     setPanes(prevPanes => {
       const newPanes = [...prevPanes];
       const pane = newPanes[paneIndex];
@@ -988,92 +1048,6 @@ const DinoLabsIDE = () => {
 
     setModifiedContents(prev => ({ ...prev, [tabId]: newState.fullCode }));
   };
-
-  const handleCloneGithubRepository = async () => {
-    const alertResult = await showDialog({
-      title: 'Clone Repository',
-      message: 'Enter the GitHub repository URL to clone:',
-      inputs: [{ name: 'repoUrl', type: 'text', label: '', defaultValue: '' }],
-      showCancel: true
-    });
-    const repoUrl = alertResult && alertResult.repoUrl;
-    if (!repoUrl) return;
-
-    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)(\.git)?$/);
-    if (!match) return;
-
-    const owner = match[1];
-    const repo = match[2].replace(/\.git$/, "");
-
-    try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Repository not found or private.");
-        } else {
-          throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-        }
-      }
-
-      const data = await response.json();
-      if (!data.tree) {
-        throw new Error("Invalid repository structure.");
-      }
-
-      const filesMap = {};
-      data.tree.forEach(item => {
-        const parts = item.path.split('/');
-        let current = filesMap;
-        let fullPath = prefixPath(rootDirectoryName, `${owner}/${repo}`);
-        parts.forEach((part, index) => {
-          fullPath += `/${part}`;
-          if (index === parts.length - 1) {
-            if (item.type === 'tree') {
-              current[part] = { name: part, type: 'directory', files: [], handle: null, fullPath };
-            } else if (item.type === 'blob') {
-              current[part] = { name: part, type: 'file', handle: null, fullPath };
-            }
-          } else {
-            if (!current[part]) {
-              current[part] = { name: part, type: 'directory', files: [], handle: null, fullPath };
-            }
-            current = current[part].files;
-          }
-        });
-      });
-
-      const convertMapToArray = (map) => {
-        return Object.values(map).map(item => {
-          if (item.type === 'directory') {
-            return {
-              name: item.name,
-              type: 'directory',
-              files: convertMapToArray(item.files),
-              handle: item.handle,
-              fullPath: item.fullPath
-            };
-          } else {
-            return {
-              name: item.name,
-              type: 'file',
-              handle: item.handle,
-              fullPath: item.fullPath
-            };
-          }
-        });
-      };
-
-      const structuredFiles = convertMapToArray(filesMap);
-      const rootName = prefixPath(rootDirectoryName, `${owner}/${repo}`);
-      setRootDirectoryName(rootName);
-      setRepositoryFiles(structuredFiles);
-      setIsRootOpen(true);
-    } catch (error) {
-      console.error(error);
-      return; 
-    }
-  };
-
 
   const handleSave = (paneIndex, tabId, newFullCode) => {
     setOriginalContents(prev => ({ ...prev, [tabId]: newFullCode }));
@@ -1094,7 +1068,7 @@ const DinoLabsIDE = () => {
       setPanes(prevPanes => prevPanes.map(pane => {
         const newTabs = pane.openedTabs.map(tab => ({
           ...tab,
-          searchTerm: "" 
+          searchTerm: ""
         }));
         return { ...pane, openedTabs: newTabs };
       }));
@@ -1153,7 +1127,7 @@ const DinoLabsIDE = () => {
       return prevPanes.map(pane => {
         const newTabs = pane.openedTabs.map(tab => ({
           ...tab,
-          searchTerm: globalSearchQuery 
+          searchTerm: globalSearchQuery
         }));
         return { ...pane, openedTabs: newTabs };
       });
@@ -1208,11 +1182,9 @@ const DinoLabsIDE = () => {
       return;
     }
 
-    const confirmationMessage = `Are you sure you want to replace ${totalMatches} ${
-      totalMatches === 1 ? 'occurrence' : 'occurrences'
-    } of "${globalSearchQuery}" across ${filesWithMatches} ${
-      filesWithMatches === 1 ? 'file' : 'files'
-    }?`;
+    const confirmationMessage = `Are you sure you want to replace ${totalMatches} ${totalMatches === 1 ? 'occurrence' : 'occurrences'
+      } of "${globalSearchQuery}" across ${filesWithMatches} ${filesWithMatches === 1 ? 'file' : 'files'
+      }?`;
 
     const alertResult = await showDialog({
       title: 'System Alert',
@@ -1390,7 +1362,7 @@ const DinoLabsIDE = () => {
           const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
           const language = extensionToLanguageMap[extension] || "Unknown";
 
-          const newTabId = prefixedFilePath; 
+          const newTabId = prefixedFilePath;
           let existingPaneIndex = -1;
           let existingTab = null;
           panes.forEach((pane, index) => {
@@ -1423,18 +1395,18 @@ const DinoLabsIDE = () => {
           }
 
           const newTab = {
-            id: newTabId, 
+            id: newTabId,
             name: prefixedFilePath.split('/').pop(),
             content: content,
             language: language,
-            forceOpen: false, 
+            forceOpen: false,
             searchTerm: globalSearchQuery,
             replaceTerm: "",
             searchPositions: [],
             currentSearchIndex: -1,
-            isSearchOpen: false, 
+            isSearchOpen: false,
             isReplaceOpen: false,
-            fileHandle: fileHandle, 
+            fileHandle: fileHandle,
             fullPath: prefixedFilePath
           };
 
@@ -1456,7 +1428,7 @@ const DinoLabsIDE = () => {
           }, 100);
 
         } catch (error) {
-          return; 
+          return;
         }
       };
 
@@ -1520,7 +1492,7 @@ const DinoLabsIDE = () => {
 
     try {
       await dirHandle.getFileHandle(fileName, { create: true });
-      await reloadDirectory(); 
+      await reloadDirectory();
     } catch (error) {
       return;
     }
@@ -1629,7 +1601,7 @@ const DinoLabsIDE = () => {
           setContextMenuVisible(false);
         })
         .catch(err => {
-          return; 
+          return;
         });
     }
   };
@@ -1642,7 +1614,7 @@ const DinoLabsIDE = () => {
       const menuRect = menu.getBoundingClientRect();
       let newX = x;
       let newY = y;
-      const margin = 10; 
+      const margin = 10;
 
       if (x + menuRect.width > innerWidth) {
         newX = innerWidth - menuRect.width - margin;
@@ -1691,10 +1663,10 @@ const DinoLabsIDE = () => {
     const data = e.dataTransfer.getData("application/my-app");
     if (!data) return;
     const { path: sourcePath, type: sourceType } = JSON.parse(data);
-    
+
     const targetDirHandle = await getDirectoryHandleByPath(targetDirItem.fullPath);
     if (!targetDirHandle) return;
-    
+
     if (sourceType === "directory" && sourcePath.startsWith(targetDirItem.fullPath)) {
       const alertResult = await showDialog({
         title: 'System Alert',
@@ -1703,8 +1675,8 @@ const DinoLabsIDE = () => {
         showCancel: false
       });
       return;
-    }    
-    
+    }
+
     let exists = false;
     for await (const entry of targetDirHandle.values()) {
       if (entry.name.toLowerCase() === sourcePath.split('/').pop().toLowerCase()) {
@@ -1721,7 +1693,7 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-    
+
     if (sourceType === "file") {
       const sourceFileHandle = await getFileHandleByPath(repositoryFiles, sourcePath);
       if (!sourceFileHandle) return;
@@ -1757,7 +1729,7 @@ const DinoLabsIDE = () => {
       const parentDir = await getDirectoryHandleByPath(parentPath);
       await parentDir.removeEntry(sourceDirHandle.name, { recursive: true });
     }
-    
+
     await reloadDirectory();
   };
 
@@ -1771,9 +1743,9 @@ const DinoLabsIDE = () => {
     if (item.type === 'directory') {
       return (
         <div
-          style={{ 
-            ...style, 
-            background: dragOverId === item.id ? 'rgba(255,255,255,0.2)' : undefined 
+          style={{
+            ...style,
+            background: dragOverId === item.id ? 'rgba(255,255,255,0.2)' : undefined
           }}
           className={`directoryListItem${item.level === 0 ? " rootDirectory" : ""}`}
           draggable={true}
@@ -1786,7 +1758,7 @@ const DinoLabsIDE = () => {
           onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: item.id })}
         >
           <span style={{ marginLeft: `${item.level * 1.2}em` }}>
-            <FontAwesomeIcon icon={item.isOpen ? faAngleDown : faAngleRight} /> 
+            <FontAwesomeIcon icon={item.isOpen ? faAngleDown : faAngleRight} />
             {' '}
             {item.name}
             {unsavedChanges[item.id] && (
@@ -1807,11 +1779,11 @@ const DinoLabsIDE = () => {
           onClick={() => {
             const parts = item.id.split('/');
             const parentPath = parts.slice(0, -1).join('/');
-            handleFileClick({ 
-              name: item.name, 
-              type: 'file', 
-              handle: item.handle, 
-              fullPath: item.fullPath 
+            handleFileClick({
+              name: item.name,
+              type: 'file',
+              handle: item.handle,
+              fullPath: item.fullPath
             }, parentPath);
           }}
           onContextMenu={(e) => handleContextMenu(e, { type: 'file', path: item.id })}
@@ -1876,553 +1848,579 @@ const DinoLabsIDE = () => {
       onMouseMove={(e) => {
         handleMouseMoveWidth(e);
         if (hasOpenFile) handleMouseMoveHeight(e);
-        handleMouseMovePane(e); 
+        handleMouseMovePane(e);
       }}
       onMouseUp={() => {
         handleMouseUpWidth();
         handleMouseUpHeight();
-        handleMouseUpPane(); 
+        handleMouseUpPane();
       }}
       onMouseLeave={() => {
         handleMouseUpWidth();
         handleMouseUpHeight();
-        handleMouseUpPane(); 
+        handleMouseUpPane();
       }}
     >
-      <DinoLabsNav activePage={"dinolabside"}/>
+      <DinoLabsNav activePage={"dinolabside"} />
 
-      <div className="dinolabsIDEHeaderContainer">
-        <div className="dinolabsIDEControlFlex">
-          <div
-            className="leadingIDEDirectoryStack"
-            style={{ width: `${directoryWidth}%` }}
-            ref={directoryRef}
-            onContextMenu={(e) => handleContextMenu(e, { type: 'navigator', path: rootDirectoryName })}
-          >
-            <div className="leadingDirectoryTopBar">
-              <div className="leadingDirectoryZoomButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
-                <Tippy content={"Zoom In"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleZoomIn}>
-                    <FontAwesomeIcon icon={faPlusSquare}/>
-                  </button>
-                </Tippy>
-              
-                <Tippy content={"Zoom Out"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleZoomOut}>
-                    <FontAwesomeIcon icon={faMinusSquare}/>
-                  </button>
-                </Tippy>
+      {(screenSize >= 700 && screenSize <= 5399) && isLoaded ? (
 
-                <Tippy content={"Reset View"} theme="tooltip-light" placement="bottom">
-                  <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel}>
-                    <FontAwesomeIcon icon={faRetweet}/>
-                  </button>
-                </Tippy>
-              </div>
-            </div>
+        <div className="dinolabsIDEHeaderContainer" style={{ "height": "100%" }}>
+          <div className="dinolabsIDEControlFlex">
+            <div
+              className="leadingIDEDirectoryStack"
+              style={{ width: `${directoryWidth}%` }}
+              ref={directoryRef}
+              onContextMenu={(e) => handleContextMenu(e, { type: 'navigator', path: rootDirectoryName })}
+            >
+              <div className="leadingDirectoryTopBar">
+                <div className="leadingDirectoryZoomButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
+                  <Tippy content={"Zoom In"} theme="tooltip-light" placement="bottom">
+                    <button className="leadingDirectoryZoomButton" onClick={handleZoomIn} disabled={!rootDirectoryName}>
+                      <FontAwesomeIcon icon={faPlusSquare} />
+                    </button>
+                  </Tippy>
 
-            <div className="leadingDirectoryStack">
-              <div className="leadingdDirectoryOperationsWrapper">
-                <div className="leadingDirectory">
+                  <Tippy content={"Zoom Out"} theme="tooltip-light" placement="bottom">
+                    <button className="leadingDirectoryZoomButton" onClick={handleZoomOut} disabled={!rootDirectoryName}>
+                      <FontAwesomeIcon icon={faMinusSquare} />
+                    </button>
+                  </Tippy>
+
+                  <Tippy content={"Reset View"} theme="tooltip-light" placement="bottom">
+                    <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel} disabled={!rootDirectoryName}>
+                      <FontAwesomeIcon icon={faRetweet} />
+                    </button>
+                  </Tippy>
                 </div>
-                <button className="leadingDirectoryButton" onClick={handleLoadRepository}>
-                  <FontAwesomeIcon icon={faAngleDown} />
-                  Import a Directory
-                </button>
-
-                <button className="leadingDirectoryButton" onClick={handleFileLoad}>
-                  <FontAwesomeIcon icon={faCode} />
-                  Import a File
-                </button>
-
-                <button className="leadingDirectoryButton" onClick={handleCloneGithubRepository}>
-                  <FontAwesomeIcon icon={faGithub} />
-                  Clone a GitHub Repository
-                </button>
               </div>
 
-              <div className="leadingDirectoryTabsWrapper">
-                <button
-                  className="leadingDirectoryTabButton"
-                  style={{ backgroundColor: isNavigatorState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
-                  onClick={() => {
-                    setIsSearchState(!isSearchState);
-                    setIsNavigatorState(!isNavigatorState);
-                  }}
-                >
-                  Navigator
-                </button>
-                <button
-                  className="leadingDirectoryTabButton"
-                  style={{ backgroundColor: isSearchState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
-                  onClick={() => {
-                    setIsSearchState(!isSearchState);
-                    setIsNavigatorState(!isNavigatorState);
-                  }}
-                >
-                  Search
-                </button>
-              </div>
+              <div className="leadingDirectoryStack">
+                <div className="leadingdDirectoryOperationsWrapper">
+                  <div className="leadingDirectory">
+                  </div>
+                  <button className="leadingDirectoryButton" onClick={handleLoadRepository}>
+                    <FontAwesomeIcon icon={faFolderOpen} />
+                    Import a Directory
+                  </button>
 
-              {isNavigatorState && (
-                <div className="leadingDirectorySearchWrapper">
-                  <input
-                    type="text"
-                    className="directorySearchInput"
-                    placeholder="🔎   Search the directory..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                  <button className="leadingDirectoryButton" onClick={handleLoadFile}>
+                    <FontAwesomeIcon icon={faCode} />
+                    Import a File
+                  </button>
                 </div>
-              )}
 
-              {isNavigatorState && (
-                isNavigatorLoading ? (
-                  <div className="leadingDirectoryFilesSupplement" style={{ textAlign: 'center', fontSize: '1.2rem'}}>
-                    <div className="loading-circle"/>
-                  </div>
-                ) : (
-                  <div className="leadingDirectoryFiles">
-                    {
-                      rootDirectoryName && (
-                        <ul className="leadingDirectoryFileStack">
-                          <li className="leadingDirectoryFileStackContent">
-                            <div
-                              onClick={() => setIsRootOpen(!isRootOpen)}
-                              onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: rootDirectoryName })}
-                              className="directoryListItemRoot"
-                            >
-                              <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
-                              {rootDirectoryName}
-                              {unsavedChanges[rootDirectoryName] && (
-                                <Tippy content="Unsaved" theme="tooltip-light">
-                                  <span className="dinolabsIDEFileUnsavedDot" />
-                                </Tippy>
-                              )}
-                            </div>
-
-                            {isRootOpen && flattenedDirectoryList.length > 0 && (
-                              <div className="nestedDirectoryFileStack" style={{ height: "70vh", width: "100%" }}>
-                                <List
-                                  height={window.innerHeight * 0.65}
-                                  itemCount={flattenedDirectoryList.length}
-                                  itemSize={18}
-                                  width={"100%"}
-                                  itemData={flattenedDirectoryList}
-                                  className="nestedDirectoryFileStack"
-                                >
-                                  {renderNavigatorRow}
-                                </List>
-                              </div>
-                            )}
-                          </li>
-                        </ul>
-                      )
-                    }
-                  </div>
-                )
-              )}
-
-              {isSearchState && (
-                <div className="leadingDirectoryGlobalSearchWrapper">
-                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-end" }}>
-                    <input
-                      type="text"
-                      className="leadingDirectoryGlobalSearchInput"
-                      placeholder="Search across all files..."
-                      value={globalSearchQuery}
-                      onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                    />
-
-                    <div className="leadingDirectoryGlobalSearchTrailingButtons">
-                      <Tippy content={"Case Sensitive"} theme="tooltip-light">
-                        <button
-                          type="button"
-                          className="leadingDirectoryGlobalSearchButton"
-                          onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)}
-                          title="Toggle Case Sensitivity"
-                          onMouseDown={(e) => e.preventDefault()}
-                        >
-                          <FontAwesomeIcon icon={faA} style={{ color: isCaseSensitiveSearch ? "#AD6ADD" : "" }}/>
-                        </button>
-                      </Tippy>
-
-                      <Tippy content={"Search Files"} theme="tooltip-light">
-                        <button
-                          className="leadingDirectoryGlobalSearchButton"
-                          onClick={performGlobalSearch}
-                        >
-                          <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        </button>
-                      </Tippy>
-                    </div>
-                  </div>
-
-                  <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-start" }}>
-                    <input
-                      type="text"
-                      className="leadingDirectoryGlobalSearchInput"
-                      placeholder="Replace with..."
-                      value={globalReplaceTerm}
-                      onChange={(e) => setGlobalReplaceTerm(e.target.value)}
-                      disabled={!isGlobalReplace}
-                    />
-
-                    <div className="leadingDirectoryGlobalSearchTrailingButtons">
-                      <Tippy content={"Replace Across Files"} theme="tooltip-light">
-                        <button
-                          className="leadingDirectoryGlobalSearchButton"
-                          onClick={() => {
-                            setIsGlobalReplace(true);
-                            performGlobalReplace();
-                          }}
-                          disabled={!globalSearchQuery}
-                        >
-                          <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-                        </button>
-                      </Tippy>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isSearchState && (
-                <div className="leadingDirectoryGlobalSearchResults">
-                  {flattenedSearchList.length > 0 && (
-                    <div className="leadingDirectoryGlobalSearchResultsGrouped" style={{ height: "60vh", width: "100%" }}>
-                      <List
-                        height={window.innerHeight * 0.55}
-                        itemCount={flattenedSearchList.length}
-                        itemSize={18}
-                        width={"100%"}
-                        itemData={flattenedSearchList}
-                      >
-                        {renderSearchRow}
-                      </List>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="leadingDirectoryBottomBar">
-              <div className="leadingDirectorySettingsButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
-                <Tippy content={"Account"} theme="tooltip-light">
+                <div className="leadingDirectoryTabsWrapper">
                   <button
-                    className="leadingDirectoryZoomButton"
+                    className="leadingDirectoryTabButton"
+                    style={{ backgroundColor: isNavigatorState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
                     onClick={() => {
-                      setIsAccountOpen(!isAccountOpen);
+                      setIsSearchState(!isSearchState);
+                      setIsNavigatorState(!isNavigatorState);
                     }}
                   >
-                    <FontAwesomeIcon icon={faUserCircle} style={{"color": isAccountOpen ? "#AD6ADD" : ""}}/>
+                    Navigator
                   </button>
-                </Tippy>
-              </div>
-            </div>
-          </div>
+                  <button
+                    className="leadingDirectoryTabButton"
+                    style={{ backgroundColor: isSearchState ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.0)" }}
+                    onClick={() => {
+                      setIsSearchState(!isSearchState);
+                      setIsNavigatorState(!isNavigatorState);
+                    }}
+                  >
+                    Search
+                  </button>
+                </div>
 
-          <div className="resizableWidthDivider" onMouseDown={handleMouseDownWidth} />
+                {isNavigatorState && (
+                  <div className="leadingDirectorySearchWrapper">
+                    <input
+                      type="text"
+                      className="directorySearchInput"
+                      placeholder="🔎   Search the directory..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                )}
 
-          <div
-            className="dinolabsIDEControlStack"
-            style={{ width: `${contentWidth}%` }}
-            ref={contentRef}
-          >
-            {(!isAccountOpen) && (
-              <div className="topIDEControlBarWrapper">
-                {panes.map((pane, paneIndex) => (
-                  <React.Fragment key={`pane-wrapper-${paneIndex}`}>
-                    {(panes.length > 1 && paneIndex === 1) && (
-                      <div className="resizablePaneDivider"/>
-                    )}
-
-                    <div
-                      className="topIDEControlBar"
-                      style={{
-                        height: "100%",
-                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleDrop(e, paneIndex)}
-                    >
-                      {pane.openedTabs.length > 0 ? (
-                        pane.openedTabs.map((tab) => {
-                          if (!editorRefs.current[paneIndex]) {
-                            editorRefs.current[paneIndex] = {};
-                          }
-                          if (!editorRefs.current[paneIndex][tab.id]) {
-                            editorRefs.current[paneIndex][tab.id] = React.createRef();
-                          }
-
-                          return (
-                            <div
-                              key={tab.id}
-                              className={`dinolabsIDETabItem ${
-                                pane.activeTabId === tab.id && unsavedChanges[tab.id]
-                                  ? "activeUnsavedTab"
-                                  : pane.activeTabId === tab.id
-                                  ? "activeTab"
-                                  : unsavedChanges[tab.id]
-                                  ? "unsavedTab"
-                                  : ""
-                              }`}
-                              onClick={() => switchTab(paneIndex, tab.id)}
-                              draggable={true}
-                              onDragStart={(e) => handleDragStart(e, paneIndex, tab.id)}
-                              style={{ width: "fit-content" }}
-                            >
-                              {unsavedChanges[tab.id] && (
-                                <Tippy content="Unsaved" theme="tooltip-light">
-                                  <span className="dinolabsIDEFileUnsavedDot" />
-                                </Tippy>
-                              )}
-                              {getFileIcon(tab.name)}
-                              {tab.name}
-                              <span
-                                className="dinolabsIDECloseTab"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  closeTab(paneIndex, tab.id);
-                                }}
-                              >
-                                ×
-                              </span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="dinolabsIDETabItem activeTab">
-                          <FontAwesomeIcon icon={faWandMagicSparkles}/>
-                          Get Started
-                        </div>
-                      )}
+                {isNavigatorState && (
+                  isNavigatorLoading ? (
+                    <div className="leadingDirectoryFilesSupplement" style={{ textAlign: 'center' }}>
+                      <div className="loading-circle" />
                     </div>
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-
-            {(!isAccountOpen) && (
-              <div
-                className="dinolabsIDEMarkdownWrapper"
-                style={{
-                  height: hasOpenFile ? `${markdownHeight}%` : "100%",
-                  zoom: zoomLevel,
-                }}
-              >
-                {panes.map((pane, paneIndex) => (
-                  <React.Fragment key={`pane-${paneIndex}`}>
-                    <div
-                      key={paneIndex}
-                      className="dinolabsIDEMarkdownPaneWrapper"
-                      style={{
-                        width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
-                      }}
-                      onClick={() => setActivePaneIndex(paneIndex)}
-                    >
-                      <div className="dinolabsIDEMarkdownPaneFlex">
-                        {pane.openedTabs.length > 0 ? (
-                          pane.openedTabs.map(tab => (
-                            <div
-                              key={tab.id}
-                              className="dinolabsIDEMarkdownPane"
-                              style={{
-                                display: pane.activeTabId === tab.id ? "block" : "none",
-                              }}
-                            >
-                              <DinoLabsIDEMarkdown
-                                fileContent={tab.content}
-                                detectedLanguage={tab.language}
-                                forceOpen={tab.forceOpen}
-                                onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
-                                searchTerm={tab.searchTerm}
-                                setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
-                                replaceTerm={tab.replaceTerm}
-                                setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
-                                searchPositions={tab.searchPositions}
-                                setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
-                                currentSearchIndex={tab.currentSearchIndex}
-                                setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
-                                onSplit={splitTab}
-                                disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
-                                paneIndex={paneIndex}
-                                tabId={tab.id}
-                                isSearchOpen={tab.isSearchOpen}
-                                isReplaceOpen={tab.isReplaceOpen}
-                                setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
-                                setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
-                                ref={editorRefs.current[paneIndex][tab.id]}
-                                onEdit={handleEdit}
-                                onSave={handleSave}
-                                fileHandle={tab.fileHandle}
-                                isGlobalSearchActive={!!globalSearchQuery}
-                                keyBinds={keyBinds}
-                                zoomLevel={zoomLevel}
-                                colorTheme={colorTheme}
-                              />
-                            </div>
-                          ))
-                        ) : (
-                          <div className="dinolabsIDENoFileSelectedWrapper">
-                            <div className="dinolabsIDEGetStartedStack">
-                              <div className="dinolabsIDEGetStartedFlex">
-                                <div className="dinolabsIDEGetStartedWrapperInfo">
-                                  <label className="dinolabsIDETitle">
-                                    Dino Labs Web Developer
-                                  </label>
-                                  <label className="dinolabsIDESubtitle">
-                                    Version 1.0.0 (Beta)
-                                  </label>
-                                  <div className="vevktorIDEStartButtonWrapper">
-                                    <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}>
-                                      <FontAwesomeIcon icon={faAngleDown}/>
-                                      Import a Directory
-                                    </button>
-                                    <button className="dinolabsIDEStartButton" onClick={handleCloneGithubRepository}>
-                                      <FontAwesomeIcon icon={faGithub}/>
-                                      Clone a GitHub Repository
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {isPlotRendered ? (
-                                  <LinePlot plotType="getStartedPageUsagePlot" data={personalUsageByDay} />
-                                ) : (
-                                  <div className="getStartedLinePlot" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
-                                    <div className="loading-circle"/>
-                                  </div>
+                  ) : (
+                    <div className="leadingDirectoryFiles">
+                      {
+                        rootDirectoryName && (
+                          <ul className="leadingDirectoryFileStack">
+                            <li className="leadingDirectoryFileStackContent">
+                              <div
+                                onClick={() => setIsRootOpen(!isRootOpen)}
+                                onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: rootDirectoryName })}
+                                className="directoryListItemRoot"
+                              >
+                                <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
+                                {rootDirectoryName}
+                                {unsavedChanges[rootDirectoryName] && (
+                                  <Tippy content="Unsaved" theme="tooltip-light">
+                                    <span className="dinolabsIDEFileUnsavedDot" />
+                                  </Tippy>
                                 )}
-                                </div>
-
-                              <div className="dinolabsIDELanguageDisplayFlex"> 
-                                
-                                {isPlotRendered ? (
-                                  <div className="dinolabsIDEGetStartedWrapperLanguages">
-                                    <div className="dinolabsIDEUsageLanguagesContainer">
-                                      {usageLanguages.length === 0 ? (
-                                        <p className="dinolabsIDELanguageUsageUnavailable">No usage data available.</p>
-                                      ) : (
-                                        <ul className="dinolabsIDEUsageLanguageList">
-                                          {usageLanguages.slice(0, 5).map((language) => {
-                                            const total = usageLanguages.reduce((acc, lang) => acc + lang.count, 0);
-                                            const percentage = (language.count / total) * 100;
-                                            const languageColors = {
-                                              Javascript: "#EB710E",
-                                              Typescript: "#3178c6",
-                                              HTML: "#e34c26",
-                                              CSS: "#9FB7EF",
-                                              JSON: "#8e44ad",
-                                              XML: "#1abc9c",
-                                              Python: "#3572a5",
-                                              PHP: "#8993be",
-                                              Swift: "#ffac45",
-                                              C: "#a8b9cc",
-                                              "C++": "#f34b7d",
-                                              "C#": "#178600",
-                                              Rust: "#dea584",
-                                              Bash: "#4eaa25",
-                                              Shell: "#89e051",
-                                              "Monkey C": "#f45b69",
-                                              SQL: "#c5b7db",
-                                              Assembly: "#5d9ca3",
-                                              default: "#95a5a6"
-                                            };
-                                            const color = languageColors[language.language] || languageColors.default;
-
-                                            return (
-                                              <li key={language.language} className="dinolabsIDELanguageItem">
-                                                <div className="dinolabsIDELanguageLabel">
-                                                  {language.language}
-                                                  <span>{percentage.toFixed(1)}%</span>
-                                                </div>
-                                                <div
-                                                  className="dinolabsIDELanguageBar"
-                                                  style={{
-                                                    width: `${percentage}%`,
-                                                    backgroundColor: color,
-                                                  }}
-                                                ></div>
-                                              </li>
-                                            );
-                                          })}
-                                        </ul>
-                                        
-                                      )}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="dinolabsIDEGetStartedWrapperLanguages" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
-                                    <div className="loading-circle"/>
-                                  </div>
-                                )}
-
-                                {isPlotRendered ? (  
-                                <div className="dinolabsIDEGetStartedWrapperLanguages">
-                                    <DoughnutPlot
-                                        cellType="languageUsage"
-                                        data={{usageLanguages}}
-                                        fontSizeMultiplier={1.7}
-                                    />
-                                </div>
-                                ) : (
-                                  <div className="dinolabsIDEGetStartedWrapperLanguages" style={{"display": "flex", "justify-content": "center", "align-items": "center"}}>
-                                     <div className="loading-circle"/>
-                                  </div>
-                                )}
-
-
                               </div>
 
-                             
-                            </div>
-                          </div>
-                        )}
+                              {isRootOpen && flattenedDirectoryList.length > 0 && (
+                                <div className="nestedDirectoryFileStack" style={{ height: "70vh", width: "100%" }}>
+                                  <List
+                                    height={window.innerHeight * 0.65}
+                                    itemCount={flattenedDirectoryList.length}
+                                    itemSize={getVirtualizedItemHeight(screenSize)}
+                                    width={"100%"}
+                                    itemData={flattenedDirectoryList}
+                                    className="nestedDirectoryFileStack"
+                                  >
+                                    {renderNavigatorRow}
+                                  </List>
+                                </div>
+                              )}
+                            </li>
+                          </ul>
+                        )
+                      }
+                    </div>
+                  )
+                )}
+
+                {isSearchState && (
+                  <div className="leadingDirectoryGlobalSearchWrapper">
+                    <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-end" }}>
+                      <input
+                        type="text"
+                        className="leadingDirectoryGlobalSearchInput"
+                        placeholder="Search across all files..."
+                        value={globalSearchQuery}
+                        onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                      />
+
+                      <div className="leadingDirectoryGlobalSearchTrailingButtons">
+                        <Tippy content={"Case Sensitive"} theme="tooltip-light">
+                          <button
+                            type="button"
+                            className="leadingDirectoryGlobalSearchButton"
+                            onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)}
+                            title="Toggle Case Sensitivity"
+                            onMouseDown={(e) => e.preventDefault()}
+                          >
+                            <FontAwesomeIcon icon={faA} style={{ color: isCaseSensitiveSearch ? "#AD6ADD" : "" }} />
+                          </button>
+                        </Tippy>
+
+                        <Tippy content={"Search Files"} theme="tooltip-light">
+                          <button
+                            className="leadingDirectoryGlobalSearchButton"
+                            onClick={performGlobalSearch}
+                          >
+                            <FontAwesomeIcon icon={faMagnifyingGlass} />
+                          </button>
+                        </Tippy>
                       </div>
                     </div>
 
-                    {paneIndex < panes.length - 1 && (
-                      <div 
-                        className="resizablePaneDivider"
-                        onMouseDown={handleMouseDownPane}
+                    <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-start" }}>
+                      <input
+                        type="text"
+                        className="leadingDirectoryGlobalSearchInput"
+                        placeholder="Replace with..."
+                        value={globalReplaceTerm}
+                        onChange={(e) => setGlobalReplaceTerm(e.target.value)}
+                        disabled={!isGlobalReplace}
                       />
+
+                      <div className="leadingDirectoryGlobalSearchTrailingButtons">
+                        <Tippy content={"Replace Across Files"} theme="tooltip-light">
+                          <button
+                            className="leadingDirectoryGlobalSearchButton"
+                            onClick={() => {
+                              setIsGlobalReplace(true);
+                              performGlobalReplace();
+                            }}
+                            disabled={!globalSearchQuery}
+                          >
+                            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+                          </button>
+                        </Tippy>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isSearchState && (
+                  <div className="leadingDirectoryGlobalSearchResults">
+                    {flattenedSearchList.length > 0 && (
+                      <div className="leadingDirectoryGlobalSearchResultsGrouped" style={{ height: "60vh", width: "100%" }}>
+                        <List
+                          height={window.innerHeight * 0.55}
+                          itemCount={flattenedSearchList.length}
+                          itemSize={getVirtualizedItemHeight(screenSize)}
+                          width={"100%"}
+                          itemData={flattenedSearchList}
+                        >
+                          {renderSearchRow}
+                        </List>
+                      </div>
                     )}
-                  </React.Fragment>
-                ))}
+                  </div>
+                )}
               </div>
-            )}
 
-            {hasOpenFile && (!isAccountOpen) && (
-              <>
-                <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
-                <div className="dinolabsIDEConsoleWrapper" style={{ height: `${consoleHeight}%` }}>
-                  
+              <div className="leadingDirectoryBottomBar">
+                <div className="leadingDirectorySettingsButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
+                  <Tippy content={"Account"} theme="tooltip-light">
+                    <button
+                      className="leadingDirectoryZoomButton"
+                      onClick={() => {
+                        setIsAccountOpen(!isAccountOpen);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faUserCircle} style={{ "color": isAccountOpen ? "#AD6ADD" : "" }} />
+                    </button>
+                  </Tippy>
                 </div>
-              </>
-            )}
+              </div>
+            </div>
 
-            {(!isAccountOpen) && (
-              <div className="bottomIDEControlBar" />
-            )}
+            <div className="resizableWidthDivider" onMouseDown={handleMouseDownWidth} />
 
-            {isAccountOpen && (
-              <DinoLabsIDEAccount
-                onClose={() => setIsAccountOpen(false)}
-                keyBinds={keyBinds}
-                setKeyBinds={setKeyBinds}
-                zoomLevel={zoomLevel}
-                setZoomLevel={setZoomLevel}
-                colorTheme={colorTheme}
-                setColorTheme={setColorTheme}
-              />
-            )}
+            <div
+              className="dinolabsIDEControlStack"
+              style={{ width: `${contentWidth}%` }}
+              ref={contentRef}
+            >
+              {(!isAccountOpen) && (
+                <div className="topIDEControlBarWrapper">
+                  {panes.map((pane, paneIndex) => (
+                    <React.Fragment key={`pane-wrapper-${paneIndex}`}>
+                      {(panes.length > 1 && paneIndex === 1) && (
+                        <div className="resizablePaneDivider" />
+                      )}
+
+                      <div
+                        className="topIDEControlBar"
+                        style={{
+                          height: "100%",
+                          width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
+                        }}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, paneIndex)}
+                      >
+                        {pane.openedTabs.length > 0 ? (
+                          pane.openedTabs.map((tab) => {
+                            if (!editorRefs.current[paneIndex]) {
+                              editorRefs.current[paneIndex] = {};
+                            }
+                            if (!editorRefs.current[paneIndex][tab.id]) {
+                              editorRefs.current[paneIndex][tab.id] = React.createRef();
+                            }
+
+                            return (
+                              <div
+                                key={tab.id}
+                                className={`dinolabsIDETabItem ${pane.activeTabId === tab.id && unsavedChanges[tab.id]
+                                    ? "activeUnsavedTab"
+                                    : pane.activeTabId === tab.id
+                                      ? "activeTab"
+                                      : unsavedChanges[tab.id]
+                                        ? "unsavedTab"
+                                        : ""
+                                  }`}
+                                onClick={() => switchTab(paneIndex, tab.id)}
+                                draggable={true}
+                                onDragStart={(e) => handleDragStart(e, paneIndex, tab.id)}
+                                style={{ width: "fit-content" }}
+                              >
+                                {unsavedChanges[tab.id] && (
+                                  <Tippy content="Unsaved" theme="tooltip-light">
+                                    <span className="dinolabsIDEFileUnsavedDot" />
+                                  </Tippy>
+                                )}
+                                {getFileIcon(tab.name)}
+                                {tab.name}
+                                <span
+                                  className="dinolabsIDECloseTab"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    closeTab(paneIndex, tab.id);
+                                  }}
+                                >
+                                  ×
+                                </span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="dinolabsIDETabItem activeTab">
+                            <FontAwesomeIcon icon={faWandMagicSparkles} />
+                            Get Started
+                          </div>
+                        )}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+
+              {(!isAccountOpen) && (
+                <div
+                  className="dinolabsIDEMarkdownWrapper"
+                  style={{
+                    height: hasOpenFile ? `${markdownHeight}%` : "90%",
+                    zoom: zoomLevel,
+                  }}
+                >
+                  {panes.map((pane, paneIndex) => (
+                    <React.Fragment key={`pane-${paneIndex}`}>
+                      <div
+                        key={paneIndex}
+                        className="dinolabsIDEMarkdownPaneWrapper"
+                        style={{
+                          width: panes.length > 1 ? `${paneWidths[`pane${paneIndex + 1}`]}%` : "100%",
+                        }}
+                        onClick={() => setActivePaneIndex(paneIndex)}
+                      >
+                        <div className="dinolabsIDEMarkdownPaneFlex">
+                          {pane.openedTabs.length > 0 ? (
+                            pane.openedTabs.map(tab => (
+                              <div
+                                key={tab.id}
+                                className="dinolabsIDEMarkdownPane"
+                                style={{
+                                  display: pane.activeTabId === tab.id ? "block" : "none",
+                                }}
+                              >
+                                <DinoLabsIDEMarkdown
+                                  fileContent={tab.content}
+                                  detectedLanguage={tab.language}
+                                  forceOpen={tab.forceOpen}
+                                  onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
+                                  searchTerm={tab.searchTerm}
+                                  setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
+                                  replaceTerm={tab.replaceTerm}
+                                  setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
+                                  searchPositions={tab.searchPositions}
+                                  setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
+                                  currentSearchIndex={tab.currentSearchIndex}
+                                  setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
+                                  onSplit={splitTab}
+                                  disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
+                                  paneIndex={paneIndex}
+                                  tabId={tab.id}
+                                  isSearchOpen={tab.isSearchOpen}
+                                  isReplaceOpen={tab.isReplaceOpen}
+                                  setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
+                                  setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
+                                  ref={editorRefs.current[paneIndex][tab.id]}
+                                  onEdit={handleEdit}
+                                  onSave={handleSave}
+                                  fileHandle={tab.fileHandle}
+                                  isGlobalSearchActive={!!globalSearchQuery}
+                                  keyBinds={keyBinds}
+                                  zoomLevel={zoomLevel}
+                                  colorTheme={colorTheme}
+                                />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="dinolabsIDENoFileSelectedWrapper">
+                              <div className="dinolabsIDEGetStartedStack">
+                                <div className="dinolabsIDEGetStartedFlex">
+                                  <div className="dinolabsIDEGetStartedWrapperInfo">
+                                    <label className="dinolabsIDETitle">
+                                      Dino Labs Web Developer
+                                    </label>
+                                    <label className="dinolabsIDESubtitle">
+                                      Version 1.0.0 (Beta)
+                                    </label>
+                                    <div className="vevktorIDEStartButtonWrapper">
+                                      <button className="dinolabsIDEStartButton" onClick={handleLoadRepository}>
+                                        <FontAwesomeIcon icon={faFolderOpen} />
+                                        Import a Directory
+                                      </button>
+
+                                      <button className="dinolabsIDEStartButton" onClick={handleLoadFile}>
+                                        <FontAwesomeIcon icon={faCode} />
+                                        Import a File
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {isPlotRendered ? (
+                                    <LinePlot plotType="getStartedPageUsagePlot" data={personalUsageByDay} />
+                                  ) : (
+                                    <div className="getStartedLinePlot" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                      <div className="loading-circle" />
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="dinolabsIDELanguageDisplayFlex">
+
+                                  {isPlotRendered ? (
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages">
+                                      <div className="dinolabsIDEUsageLanguagesContainer">
+                                        {usageLanguages.length === 0 ? (
+                                          <p className="dinolabsIDELanguageUsageUnavailable">No usage data available.</p>
+                                        ) : (
+                                          <ul className="dinolabsIDEUsageLanguageList">
+                                            {usageLanguages.slice(0, 5).map((language) => {
+                                              const total = usageLanguages.reduce((acc, lang) => acc + lang.count, 0);
+                                              const percentage = (language.count / total) * 100;
+                                              const languageColors = {
+                                                Javascript: "#EB710E",
+                                                Typescript: "#3178c6",
+                                                HTML: "#e34c26",
+                                                CSS: "#9FB7EF",
+                                                JSON: "#8e44ad",
+                                                XML: "#1abc9c",
+                                                Python: "#3572a5",
+                                                PHP: "#8993be",
+                                                Swift: "#ffac45",
+                                                C: "#a8b9cc",
+                                                "C++": "#f34b7d",
+                                                "C#": "#178600",
+                                                Rust: "#dea584",
+                                                Bash: "#4eaa25",
+                                                Shell: "#89e051",
+                                                "Monkey C": "#f45b69",
+                                                SQL: "#c5b7db",
+                                                Assembly: "#5d9ca3",
+                                                default: "#95a5a6"
+                                              };
+                                              const color = languageColors[language.language] || languageColors.default;
+
+                                              return (
+                                                <li key={language.language} className="dinolabsIDELanguageItem">
+                                                  <div className="dinolabsIDELanguageLabel">
+                                                    {language.language}
+                                                    <span>{percentage.toFixed(1)}%</span>
+                                                  </div>
+                                                  <div
+                                                    className="dinolabsIDELanguageBar"
+                                                    style={{
+                                                      width: `${percentage}%`,
+                                                      backgroundColor: color,
+                                                    }}
+                                                  ></div>
+                                                </li>
+                                              );
+                                            })}
+                                          </ul>
+
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                      <div className="loading-circle" />
+                                    </div>
+                                  )}
+
+                                  {isPlotRendered ? (
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages">
+                                      <DoughnutPlot
+                                        cellType="languageUsage"
+                                        data={{ usageLanguages }}
+                                        fontSizeMultiplier={1.7}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                      <div className="loading-circle" />
+                                    </div>
+                                  )}
+
+
+                                </div>
+
+
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {paneIndex < panes.length - 1 && (
+                        <div
+                          className="resizablePaneDivider"
+                          onMouseDown={handleMouseDownPane}
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+
+              {/*{hasOpenFile && (!isAccountOpen) && (
+                <>
+                  <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
+                  <div className="dinolabsIDEConsoleWrapper" style={{ height: `${consoleHeight}%` }}>
+                    
+                  </div>
+                </>
+              )}*/}
+
+              {(!isAccountOpen) && (
+                <div className="bottomIDEControlBar" />
+              )}
+
+              {isAccountOpen && (
+                <DinoLabsIDEAccount
+                  onClose={() => setIsAccountOpen(false)}
+                  keyBinds={keyBinds}
+                  setKeyBinds={setKeyBinds}
+                  zoomLevel={zoomLevel}
+                  setZoomLevel={setZoomLevel}
+                  colorTheme={colorTheme}
+                  setColorTheme={setColorTheme}
+                />
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {contextMenuVisible && (
+      ) : (
+        !isLoaded ? (
+          <div className="dinolabsIDEHeaderContainer" style={{ "background-color": "#222222" }}>
+            <div className="loading-wrapper">
+              <div className="loading-circle" />
+
+              <label className="loading-title">
+                Dino Labs Web IDE
+              </label>
+            </div>
+          </div>
+
+        ) : (
+          <div className="dinolabsIDEHeaderContainer">
+            <div className="dinolabsIDEUnavailableWrapper">
+              <img className="dinolabsIDEUnavailableImage" src="./DinoLabsLogo-White.png" alt="Logo" />
+              <label className="dinolabsUnavailableLabel">
+                The Dino Labs IDE is currently unavailable at this screen size.
+              </label>
+
+              <label className="dinolabsUnavailableSubLabel">
+                Please sign in on a {screenSize < 700 ? "larger" : "smaller"} screen to continue.
+              </label>
+            </div>
+          </div>
+        )
+
+      )}
+
+      {(screenSize >= 700 && screenSize <= 5399) && contextMenuVisible && (
         <ul
           className="dinolabsIDEContextMenu"
-          ref={contextMenuRef} 
+          ref={contextMenuRef}
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
@@ -2450,7 +2448,7 @@ const DinoLabsIDE = () => {
           )}
           <li
             className="dinolabsIDEContextMenuItem"
-            style={{"border-bottom": "none"}}
+            style={{ "border-bottom": "none" }}
             onClick={copyRelativePathToClipboard}
           >
             Copy Relative Path

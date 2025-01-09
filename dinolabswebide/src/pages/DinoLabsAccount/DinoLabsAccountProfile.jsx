@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import "../../styles/mainStyles/AccountStyles/DinoLabsIDEAccount.css";
-import "../../styles/helperStyles/ConsoleToggleSwitch.css";
+import "../../styles/helperStyles/Switch.css";
+import "../../styles/helperStyles/Checkbox.css";
+import "../../styles/helperStyles/Slider.css";
 import "../../styles/mainStyles/DinoLabsIDEPlots.css";
 import "../../styles/helperStyles/LoadingSpinner.css";
 import { showDialog } from "../DinoLabsIDEAlert.jsx"; 
@@ -117,7 +119,7 @@ const DinoLabsIDEAccount = ({
                 ]);
                 setIsLoaded(true);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                return; 
             }
         };
 
@@ -200,7 +202,6 @@ const DinoLabsIDEAccount = ({
             setZoomLevel(data[0].userzoomlevel); 
             setColorTheme(data[0].usercolortheme); 
         } catch (error) {
-            console.error("Error fetching user info:", error);
             return; 
         }
     };
@@ -240,7 +241,6 @@ const DinoLabsIDEAccount = ({
                 }))
             );
         } catch (error) {
-            console.error("Error fetching personal usage data:", error);
             return; 
         }
     };
@@ -270,7 +270,6 @@ const DinoLabsIDEAccount = ({
                 throw new Error(`Failed to update show values: ${response.statusText}`);
             }
         } catch (error) {
-            console.error("Error updating show column value:", error);
             return; 
         }
     };
@@ -325,7 +324,6 @@ const DinoLabsIDEAccount = ({
             throw new Error(`Failed to save key binds: ${response.statusText}`);
             }
         } catch (error) {
-            console.error("Error saving key binds:", error);
             await showDialog({
             title: "System Alert",
             message: "Failed to save key bindings. Please try again.",
@@ -355,7 +353,6 @@ const DinoLabsIDEAccount = ({
             throw new Error("Failed to save preferences");
             }
         } catch (error) {
-            console.error("Error saving preferences:", error);
             await showDialog({
             title: "System Alert",
             message: "Failed to save preferences. Please try again.",

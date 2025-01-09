@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import "../styles/mainStyles/DinoLabsIDEAlert.css";
 
-function DinoLabsIDEAlert({ 
-  visible, 
-  title = '', 
-  message = '', 
-  inputs = [], 
+function DinoLabsIDEAlert({
+  visible,
+  title = '',
+  message = '',
+  inputs = [],
   showCancel = false,
-  onConfirm, 
-  onCancel 
+  onConfirm,
+  onCancel
 }) {
   const initialState = inputs.reduce((acc, input) => {
     acc[input.name] = input.defaultValue || (input.type === 'checkbox' ? false : '');
     return acc;
   }, {});
-  
+
   const [values, setValues] = useState(initialState);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ function DinoLabsIDEAlert({
   return (
     <div className="dinolabsIDEAlertOverlay">
       <div className="dinolabsIDEAlert">
-        <img className="dinolabsAlertImage" src="./DinoLabsLogo-White.png" alt="Logo"/>
+        <img className="dinolabsAlertImage" src="./DinoLabsLogo-White.png" alt="Logo" />
         {title && <label className="dinolabsAlertHeader">{title}</label>}
         <label className="dinolabsAlertSubHeader">{message}</label>
         {inputs.length > 0 && inputs.map((input) => (
@@ -76,8 +76,8 @@ function DinoLabsIDEAlert({
             onClick={handleConfirm}
             onKeyDown={(e) => {
               if (
-                e.key === "Enter" && 
-                inputs.length > 0 && 
+                e.key === "Enter" &&
+                inputs.length > 0 &&
                 areAllInputsFilled()
               ) {
                 handleConfirm();

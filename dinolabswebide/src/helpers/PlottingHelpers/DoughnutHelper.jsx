@@ -173,7 +173,7 @@ const DoughnutPlot = ({ cellType, data, organizationName, fontSizeMultiplier }) 
           const hoveredColor = params.color;
           const value = typeof params.value === 'number' && !Number.isInteger(params.value) ? params.value.toFixed(2) : params.value;
           return `
-                <div className="tooltipWrapper" style="color: white; padding: 0; background-color: rgba(24,24,24,0.95); padding: 1vw; border: 2px solid #222832; border-radius: 0.4rem;">
+                <div className="tooltipWrapper" style="color: white; padding: 0; background-color: rgba(24,24,24,0.95); padding: 1vw; border: 2px solid #222832; border-radius: 0.4vw;">
                     <div style="font-weight: bold; font-size: 1.2vw; color: rgba(255,255,255,0.9);">${params.name}</div>
                     <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.6); width: 100%; margin: 1vw 0;">
                     <div style="color: ${hoveredColor};">Count: <b style="color: white;">${value}</b></div>
