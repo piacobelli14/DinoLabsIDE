@@ -734,16 +734,20 @@
     padding-top: 0.2vw;
     padding-bottom: 0.2vw;
     overflow: scroll;
+    z-index: 1; 
   }
 
   .directoryListItemRoot {
     position: sticky;
     top: 0;
-    background: inherit;
-    z-index: 2;
+    z-index: 1000;
     background-color: black;
     padding-top: 0.6vw;
     padding-bottom: 0.6vw;
+  }
+
+  .directoryListItemRoot:hover {
+    background-color: black;
   }
 
   .leadingDirectoryFileStackContent>.directoryListItem::before {
@@ -766,7 +770,7 @@
   }
 
   .directoryListItemRoot:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 0.6;
   }
 
   .directoryListNestedFiles {

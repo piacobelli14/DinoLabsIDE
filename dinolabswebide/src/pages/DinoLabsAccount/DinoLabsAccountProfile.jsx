@@ -335,7 +335,7 @@ const DinoLabsIDEAccount = ({
     const saveUserPreferences = async (userID, organizationID, zoomLevel, colorTheme) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-preferences", {
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-keybinds", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -729,8 +729,8 @@ const DinoLabsIDEAccount = ({
                                                         max="3"
                                                         step="0.1"
                                                         onChange={(e) => setZoomLevel(Number(e.target.value))} 
-                                                        onMouseUp={(e) => saveUserPreferences(userID, organizationID, colorTheme)} 
-                                                        onTouchEnd={(e) => saveUserPreferences(userID, organizationID, colorTheme)} 
+                                                        onMouseUp={(e) => saveUserPreferences(userID, organizationID, Number(e.target.value), colorTheme)} 
+                                                        onTouchEnd={(e) => saveUserPreferences(userID, organizationID, Number(e.target.value), colorTheme)} 
                                                         className="dinolabsIDESettingsSlider"
                                                     />
                                                     <label className="dinolabsIDESettingsToggleLabel">{(zoomLevel * 100).toFixed(0)}%</label>

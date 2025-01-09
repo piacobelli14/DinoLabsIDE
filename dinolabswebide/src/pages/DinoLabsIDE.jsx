@@ -2175,7 +2175,7 @@ const DinoLabsIDE = () => {
                   className="dinolabsIDEMarkdownWrapper"
                   style={{
                     height: hasOpenFile ? `${markdownHeight}%` : "90%",
-                    zoom: zoomLevel,
+                    zoom: hasOpenFile ? zoomLevel : 1,
                   }}
                 >
                   {panes.map((pane, paneIndex) => (
