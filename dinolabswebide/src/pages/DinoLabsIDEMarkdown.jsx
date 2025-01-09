@@ -145,8 +145,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
     setFontSize(updatedSpecs.fontSize);
   }, [screenSize]);
 
-
-
   if (!undoStackMap[tabId]) {
     undoStackMap[tabId] = [];
   }
@@ -1057,304 +1055,318 @@ const DinoLabsIDEMarkdown = forwardRef(({
     };
   }, [lineHeight, containerHeight, viewCode, collapsedLines]);
 
+  const totalLines = viewCode.split(/\r?\n/).length;
+  const linesArr = viewCode.split(/\r?\n/);
+  const visibleLines = linesArr.slice(visibleStartLine, visibleEndLine);
+  const highlightedPartial = syntaxHighlight(
+    visibleLines.join('\n'),
+    currentLanguage.toLowerCase(),
+    searchTerm,
+    isCaseSensitiveSearch,
+    activeLineNumber,
+    colorTheme
+  );
+
   return (
     <div className="codeEditorContainer" style={{ fontFamily: 'monospace', height: '100%', width: '100%' }}>
 
       <div className="codeEditorLanguageIndicator">
-        <div
-          className={
-            (!isSearchOpenInternal && !isReplaceOpenInternal) || isGlobalSearchActive
-              ? "codeEditorLanguageFlex"
-              : "codeEditorLanguageFlexSupplement"
-          }
-          style={{
-            padding:
-              (!isSearchOpenInternal && !isReplaceOpenInternal) || isGlobalSearchActive
-                ? 0
-                : "",
-          }}
-        >
-          {(isSearchOpenInternal || isReplaceOpenInternal) && !isGlobalSearchActive && (
-            <label className="codeEditorLanguageText">
-              {languageImageMap[currentLanguage] ? (
-                <img
-                  src={`/language-images/${languageImageMap[currentLanguage]}`}
-                  alt={`${currentLanguage} icon`}
-                  className="language-icon"
-                />
-              ) : (
-                <FontAwesomeIcon icon={faCode} className="language-icon" />
-              )}
-
-              <strong>{currentLanguage}</strong>
-            </label>
-          )}
-
+        <div className="codeEditorLanguageIndicator">
           <div
-            className="codeEditorSearchButtonFlex"
+            className={
+              (!isSearchOpenInternal && !isReplaceOpenInternal) || isGlobalSearchActive
+                ? "codeEditorLanguageFlex"
+                : "codeEditorLanguageFlexSupplement"
+            }
             style={{
-              flexDirection:
+              padding:
                 (!isSearchOpenInternal && !isReplaceOpenInternal) || isGlobalSearchActive
-                  ? "column"
+                  ? 0
                   : "",
-              marginRight: disableSplit ? "0" : "",
             }}
           >
-            {isSearchOpenInternal && !isGlobalSearchActive ? (
-              <Tippy content={"Close"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchButton"
-                  onClick={() => {
-                    setIsSearchOpenInternal(false);
-                    setTabSearchOpen(false);
-                    setIsReplaceOpenInternal(false);
-                    setTabReplaceOpen(false);
-                    setSearchTerm("");
-                    setReplaceTerm("");
-                    setSearchPositions([]);
-                    setCurrentSearchIndex(-1);
-                    setActiveLineNumber(null);
-                  }}
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faXmark} />
-                </button>
-              </Tippy>
-            ) : (
-              <Tippy content={"Search"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchButton"
-                  onClick={() => {
-                    if (!isGlobalSearchActive) {
-                      setIsSearchOpenInternal(true);
-                      setTabSearchOpen(true);
-                      setIsReplaceOpenInternal(false);
-                      setTabReplaceOpen(false);
-                    }
-                  }}
-                  style={{
-                    opacity: isGlobalSearchActive ? "0.6" : "1.0",
-                    cursor: isGlobalSearchActive ? "not-allowed" : "pointer",
-                  }}
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faMagnifyingGlass} />
-                </button>
-              </Tippy>
+            {(isSearchOpenInternal || isReplaceOpenInternal) && !isGlobalSearchActive && (
+              <label className="codeEditorLanguageText">
+                {languageImageMap[currentLanguage] ? (
+                  <img
+                    src={`/language-images/${languageImageMap[currentLanguage]}`}
+                    alt={`${currentLanguage} icon`}
+                    className="language-icon"
+                  />
+                ) : (
+                  <FontAwesomeIcon icon={faCode} className="language-icon" />
+                )}
+
+                <strong>{currentLanguage}</strong>
+              </label>
             )}
 
-            {isReplaceOpenInternal && !isGlobalSearchActive ? (
-              <Tippy content={"Close"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchButton"
-                  onClick={() => {
-                    setIsReplaceOpenInternal(false);
-                    setTabReplaceOpen(false);
-                    setIsSearchOpenInternal(false);
-                    setTabSearchOpen(false);
-                    setSearchTerm("");
-                    setReplaceTerm("");
-                    setSearchPositions([]);
-                    setCurrentSearchIndex(-1);
-                    setActiveLineNumber(null);
-                  }}
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faXmark} />
-                </button>
-              </Tippy>
-            ) : (
-              <Tippy content={"Search & Replace"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchButton"
-                  onClick={() => {
-                    if (!isGlobalSearchActive) {
-                      setIsReplaceOpenInternal(true);
-                      setTabReplaceOpen(true);
+            <div
+              className="codeEditorSearchButtonFlex"
+              style={{
+                flexDirection:
+                  (!isSearchOpenInternal && !isReplaceOpenInternal) || isGlobalSearchActive
+                    ? "column"
+                    : "",
+                marginRight: disableSplit ? "0" : "",
+              }}
+            >
+              {isSearchOpenInternal && !isGlobalSearchActive ? (
+                <Tippy content={"Close"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchButton"
+                    onClick={() => {
                       setIsSearchOpenInternal(false);
                       setTabSearchOpen(false);
-                    }
-                  }}
-                  style={{
-                    opacity: isGlobalSearchActive ? "0.6" : "1.0",
-                    cursor: isGlobalSearchActive ? "not-allowed" : "pointer",
-                  }}
+                      setIsReplaceOpenInternal(false);
+                      setTabReplaceOpen(false);
+                      setSearchTerm("");
+                      setReplaceTerm("");
+                      setSearchPositions([]);
+                      setCurrentSearchIndex(-1);
+                      setActiveLineNumber(null);
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </Tippy>
+              ) : (
+                <Tippy content={"Search"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchButton"
+                    onClick={() => {
+                      if (!isGlobalSearchActive) {
+                        setIsSearchOpenInternal(true);
+                        setTabSearchOpen(true);
+                        setIsReplaceOpenInternal(false);
+                        setTabReplaceOpen(false);
+                      }
+                    }}
+                    style={{
+                      opacity: isGlobalSearchActive ? "0.6" : "1.0",
+                      cursor: isGlobalSearchActive ? "not-allowed" : "pointer",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faMagnifyingGlass} />
+                  </button>
+                </Tippy>
+              )}
+
+              {isReplaceOpenInternal && !isGlobalSearchActive ? (
+                <Tippy content={"Close"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchButton"
+                    onClick={() => {
+                      setIsReplaceOpenInternal(false);
+                      setTabReplaceOpen(false);
+                      setIsSearchOpenInternal(false);
+                      setTabSearchOpen(false);
+                      setSearchTerm("");
+                      setReplaceTerm("");
+                      setSearchPositions([]);
+                      setCurrentSearchIndex(-1);
+                      setActiveLineNumber(null);
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </Tippy>
+              ) : (
+                <Tippy content={"Search & Replace"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchButton"
+                    onClick={() => {
+                      if (!isGlobalSearchActive) {
+                        setIsReplaceOpenInternal(true);
+                        setTabReplaceOpen(true);
+                        setIsSearchOpenInternal(false);
+                        setTabSearchOpen(false);
+                      }
+                    }}
+                    style={{
+                      opacity: isGlobalSearchActive ? "0.6" : "1.0",
+                      cursor: isGlobalSearchActive ? "not-allowed" : "pointer",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+                  </button>
+                </Tippy>
+              )}
+
+              <Tippy
+                content={
+                  copySuccess === "Code copied to clipboard!"
+                    ? "Copied to Clipboard!"
+                    : copySuccess === "Cut to clipboard!"
+                      ? "Cut to Clipboard!"
+                      : copySuccess === "Failed to copy!"
+                        ? "Failed to copy!"
+                        : copySuccess === "Failed to paste!"
+                          ? "Failed to paste!"
+                          : "Copy to Clipboard"
+                }
+                theme="tooltip-light"
+              >
+                <button
+                  type="button"
+                  className="codeEditorSearchButton"
+                  onClick={copyToClipboard}
+                  title="Copy Code to Clipboard"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={isGlobalSearchActive}
                 >
-                  <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+                  <FontAwesomeIcon icon={faCopy} />
                 </button>
               </Tippy>
-            )}
 
-            <Tippy
-              content={
-                copySuccess === "Code copied to clipboard!"
-                  ? "Copied to Clipboard!"
-                  : copySuccess === "Cut to clipboard!"
-                    ? "Cut to Clipboard!"
-                    : copySuccess === "Failed to copy!"
-                      ? "Failed to copy!"
-                      : copySuccess === "Failed to paste!"
-                        ? "Failed to paste!"
-                        : "Copy to Clipboard"
-              }
-              theme="tooltip-light"
-            >
-              <button
-                type="button"
-                className="codeEditorSearchButton"
-                onClick={copyToClipboard}
-                title="Copy Code to Clipboard"
-                onMouseDown={(e) => e.preventDefault()}
-                disabled={isGlobalSearchActive}
-              >
-                <FontAwesomeIcon icon={faCopy} />
-              </button>
-            </Tippy>
-
-            <Tippy content={"Split Tabs"} theme="tooltip-light">
-              <button
-                type="button"
-                className="codeEditorSearchButton"
-                onClick={onSplit}
-                disabled={disableSplit || isGlobalSearchActive}
-                style={{
-                  cursor:
-                    disableSplit || isGlobalSearchActive ? "not-allowed" : "pointer",
-                  opacity:
-                    disableSplit || isGlobalSearchActive ? 0.5 : 1,
-                }}
-                onMouseDown={(e) => e.preventDefault()}
-              >
-                <FontAwesomeIcon icon={faTableColumns} />
-              </button>
-            </Tippy>
+              <Tippy content={"Split Tabs"} theme="tooltip-light">
+                <button
+                  type="button"
+                  className="codeEditorSearchButton"
+                  onClick={onSplit}
+                  disabled={disableSplit || isGlobalSearchActive}
+                  style={{
+                    cursor:
+                      disableSplit || isGlobalSearchActive ? "not-allowed" : "pointer",
+                    opacity:
+                      disableSplit || isGlobalSearchActive ? 0.5 : 1,
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <FontAwesomeIcon icon={faTableColumns} />
+                </button>
+              </Tippy>
+            </div>
           </div>
+
+          {(isSearchOpenInternal || isReplaceOpenInternal) && !isGlobalSearchActive && (
+            <div className="codeEditorLanguageFlexSupplement">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={clickEnterSearch}
+                ref={searchInputRef}
+                className="codeEditorSearchBox"
+                style={{ fontFamily: "monospace" }}
+                disabled={isGlobalSearchActive}
+              />
+
+              <div className="codeEditorSearchOperationsButtonWrapperMini">
+                <Tippy content={"Case Sensitive"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchOperationsButton"
+                    onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)}
+                    title="Toggle Case Sensitivity"
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon
+                      icon={faA}
+                      style={{
+                        color: isCaseSensitiveSearch ? "#AD6ADD" : "",
+                      }}
+                    />
+                  </button>
+                </Tippy>
+
+                <Tippy content={"Next"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchOperationsButton"
+                    onClick={perfomNextSearch}
+                    title="Next Search Result"
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faArrowDown} />
+                  </button>
+                </Tippy>
+
+                <Tippy content={"Previous"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchOperationsButton"
+                    onClick={performPreviousSearch}
+                    title="Previous Search Result"
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faArrowUp} />
+                  </button>
+                </Tippy>
+              </div>
+            </div>
+          )}
+
+          {isReplaceOpenInternal && !isGlobalSearchActive && (
+            <div className="codeEditorLanguageFlexSupplement">
+              <input
+                type="text"
+                placeholder="Replace..."
+                value={replaceTerm}
+                onChange={(e) => setReplaceTerm(e.target.value)}
+                className="codeEditorSearchBox"
+                style={{ fontFamily: "monospace" }}
+                disabled={isGlobalSearchActive}
+              />
+
+              <div className="codeEditorSearchOperationsButtonWrapperMini">
+                <Tippy content={"Replace Selection"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchOperationsButton"
+                    onClick={performReplace}
+                    title="Replace Current Match"
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faSquare} />
+                  </button>
+                </Tippy>
+
+                <Tippy content={"Replace All Occurrences"} theme="tooltip-light">
+                  <button
+                    type="button"
+                    className="codeEditorSearchOperationsButton"
+                    onClick={performReplaceAll}
+                    title="Replace All Matches"
+                    onMouseDown={(e) => e.preventDefault()}
+                    disabled={isGlobalSearchActive}
+                  >
+                    <FontAwesomeIcon icon={faList} />
+                  </button>
+                </Tippy>
+              </div>
+            </div>
+          )}
+
+          {(isReplaceOpenInternal || isSearchOpenInternal) && !isGlobalSearchActive && (
+            <div className="codeEditorLanguageFlex">
+              {searchPositions.length > 0 && (
+                <span className="codeEditorSearchMatchIndicator">
+                  {currentSearchIndex + 1} of {searchPositions.length} results found
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        {(isSearchOpenInternal || isReplaceOpenInternal) && !isGlobalSearchActive && (
-          <div className="codeEditorLanguageFlexSupplement">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={clickEnterSearch}
-              ref={searchInputRef}
-              className="codeEditorSearchBox"
-              style={{ fontFamily: "monospace" }}
-              disabled={isGlobalSearchActive}
-            />
-
-            <div className="codeEditorSearchOperationsButtonWrapperMini">
-              <Tippy content={"Case Sensitive"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchOperationsButton"
-                  onClick={() => setIsCaseSensitiveSearch(!isCaseSensitiveSearch)}
-                  title="Toggle Case Sensitivity"
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon
-                    icon={faA}
-                    style={{
-                      color: isCaseSensitiveSearch ? "#AD6ADD" : "",
-                    }}
-                  />
-                </button>
-              </Tippy>
-
-              <Tippy content={"Next"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchOperationsButton"
-                  onClick={perfomNextSearch}
-                  title="Next Search Result"
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faArrowDown} />
-                </button>
-              </Tippy>
-
-              <Tippy content={"Previous"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchOperationsButton"
-                  onClick={performPreviousSearch}
-                  title="Previous Search Result"
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faArrowUp} />
-                </button>
-              </Tippy>
-            </div>
-          </div>
-        )}
-
-        {isReplaceOpenInternal && !isGlobalSearchActive && (
-          <div className="codeEditorLanguageFlexSupplement">
-            <input
-              type="text"
-              placeholder="Replace..."
-              value={replaceTerm}
-              onChange={(e) => setReplaceTerm(e.target.value)}
-              className="codeEditorSearchBox"
-              style={{ fontFamily: "monospace" }}
-              disabled={isGlobalSearchActive}
-            />
-
-            <div className="codeEditorSearchOperationsButtonWrapperMini">
-              <Tippy content={"Replace Selection"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchOperationsButton"
-                  onClick={performReplace}
-                  title="Replace Current Match"
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faSquare} />
-                </button>
-              </Tippy>
-
-              <Tippy content={"Replace All Occurrences"} theme="tooltip-light">
-                <button
-                  type="button"
-                  className="codeEditorSearchOperationsButton"
-                  onClick={performReplaceAll}
-                  title="Replace All Matches"
-                  onMouseDown={(e) => e.preventDefault()}
-                  disabled={isGlobalSearchActive}
-                >
-                  <FontAwesomeIcon icon={faList} />
-                </button>
-              </Tippy>
-            </div>
-          </div>
-        )}
-
-        {(isReplaceOpenInternal || isSearchOpenInternal) && !isGlobalSearchActive && (
-          <div className="codeEditorLanguageFlex">
-            {searchPositions.length > 0 && (
-              <span className="codeEditorSearchMatchIndicator">
-                {currentSearchIndex + 1} of {searchPositions.length} results found
-              </span>
-            )}
-          </div>
-        )}
       </div>
-
 
       {isSupported || forceOpen ? (
         <DinoLabsIDEMirror
@@ -1385,7 +1397,8 @@ const DinoLabsIDEMarkdown = forwardRef(({
           preRef={preRef}
           textareaRef={textareaRef}
           lineNumberRef={lineNumberRef}
-          highlightedCode={syntaxHighlight(viewCode, currentLanguage.toLowerCase(), searchTerm, isCaseSensitiveSearch, activeLineNumber, colorTheme)}
+          highlightedPartial={highlightedPartial}
+          totalLines={totalLines}
           displayLines={{ displayedLines: viewCode, lineNumberMappings: lineNumberMappings }}
           mapping={lineNumberMappings}
           getMaxDigits={getMaxDigits}

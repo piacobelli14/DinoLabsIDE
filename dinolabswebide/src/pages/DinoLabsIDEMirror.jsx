@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 
 const DinoLabsIDEMirror = forwardRef(({
@@ -29,7 +28,8 @@ const DinoLabsIDEMirror = forwardRef(({
   preRef,
   textareaRef,
   lineNumberRef,
-  highlightedCode,
+  highlightedPartial,
+  totalLines,
   displayLines,
   mapping,
   getMaxDigits,
@@ -177,7 +177,7 @@ const DinoLabsIDEMirror = forwardRef(({
             lineHeight: `${lineHeight}px`,
             fontSize: `${fontSize}px`
           }}
-          dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          dangerouslySetInnerHTML={{ __html: `<div style="height:${visibleStartLine*lineHeight}px;"></div>${highlightedPartial}<div style="height:${(totalLines-visibleEndLine)*lineHeight}px;"></div>` }}
         />
 
         <textarea
@@ -214,4 +214,3 @@ const DinoLabsIDEMirror = forwardRef(({
 });
 
 export default DinoLabsIDEMirror;
-
