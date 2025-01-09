@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
+import DinoLabsIDEMedia from "./DinoLabsIDEMedia.jsx";
 import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
 import { showDialog } from "./DinoLabsIDEAlert.jsx";
 import "../styles/mainStyles/DinoLabsIDE.css";
@@ -616,19 +617,27 @@ const DinoLabsIDE = () => {
     try {
       const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
       const fileId = prefixPath(rootDirectoryName, fileHandle.name);
-
-      let content;
-      if (modifiedContents[fileId]) {
-        content = modifiedContents[fileId];
-      } else {
-        const file = await fileHandle.getFile();
-        content = await file.text();
-      }
-
+  
       const parts = fileHandle.name.split('.');
       const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
-      const language = extensionToLanguageMap[extension] || "Unknown";
-
+      let mediaType = null;
+      for (const type in mediaExtensions) {
+        if (mediaExtensions[type].includes(extension)) {
+          mediaType = type;
+          break;
+        }
+      }
+  
+      let content;
+      if (!mediaType) {
+        if (modifiedContents[fileId]) {
+          content = modifiedContents[fileId];
+        } else {
+          const file = await fileHandle.getFile();
+          content = await file.text();
+        }
+      }
+  
       let existingTabPaneIndex = -1;
       let existingTab = null;
       panes.forEach((pane, index) => {
@@ -638,7 +647,7 @@ const DinoLabsIDE = () => {
           existingTab = tab;
         }
       });
-
+  
       if (existingTab) {
         setActivePaneIndex(existingTabPaneIndex);
         setPanes(prevPanes => {
@@ -648,35 +657,57 @@ const DinoLabsIDE = () => {
         });
         return;
       }
-
-      const newTab = {
-        id: fileId,
-        name: fileHandle.name,
-        content: content,
-        language: language,
-        forceOpen: false,
-        searchTerm: "",
-        replaceTerm: "",
-        searchPositions: [],
-        currentSearchIndex: -1,
-        isSearchOpen: false,
-        isReplaceOpen: false,
-        fileHandle: fileHandle
-      };
-
-      setPanes(prevPanes => {
-        const newPanes = [...prevPanes];
-        newPanes[activePaneIndex].openedTabs.push(newTab);
-        newPanes[activePaneIndex].activeTabId = newTab.id;
-        return newPanes;
-      });
-
-      setOriginalContents(prev => ({ ...prev, [fileId]: content }));
-      setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
+  
+      if (mediaType) {
+        const newTab = {
+          id: fileId,
+          name: fileHandle.name,
+          isMedia: true,
+          fileHandle: fileHandle
+        };
+  
+        setPanes(prevPanes => {
+          const newPanes = [...prevPanes];
+          newPanes[activePaneIndex].openedTabs.push(newTab);
+          newPanes[activePaneIndex].activeTabId = newTab.id;
+          return newPanes;
+        });
+  
+        setOriginalContents(prev => ({ ...prev, [fileId]: null }));
+        setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
+        return;
+      } else {
+        const language = extensionToLanguageMap[extension] || "Unknown";
+        const newTab = {
+          id: fileId,
+          name: fileHandle.name,
+          content: content,
+          language: language,
+          forceOpen: false,
+          searchTerm: "",
+          replaceTerm: "",
+          searchPositions: [],
+          currentSearchIndex: -1,
+          isSearchOpen: false,
+          isReplaceOpen: false,
+          fileHandle: fileHandle
+        };
+  
+        setPanes(prevPanes => {
+          const newPanes = [...prevPanes];
+          newPanes[activePaneIndex].openedTabs.push(newTab);
+          newPanes[activePaneIndex].activeTabId = newTab.id;
+          return newPanes;
+        });
+  
+        setOriginalContents(prev => ({ ...prev, [fileId]: content }));
+        setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
+      }
     } catch (error) {
       return;
     }
   };
+  
 
   const handleFileClick = async (file, parentPath) => {
     const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -687,10 +718,7 @@ const DinoLabsIDE = () => {
         break;
       }
     }
-
-
-
-    const isSupported = supportedExtensions.includes(fileExtension);
+  
     const fileId = prefixPath(rootDirectoryName, file.fullPath || `${parentPath}/${file.name}`);
     let existingTabPaneIndex = -1;
     let existingTab = null;
@@ -701,7 +729,7 @@ const DinoLabsIDE = () => {
         existingTab = tab;
       }
     });
-
+  
     if (existingTab) {
       setActivePaneIndex(existingTabPaneIndex);
       setPanes(prevPanes => {
@@ -711,27 +739,46 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-
+  
+    if (mediaType) {
+      const newTab = {
+        id: fileId,
+        name: file.name,
+        isMedia: true,
+        fileHandle: file.handle
+      };
+  
+      setPanes(prevPanes => {
+        const newPanes = [...prevPanes];
+        newPanes[activePaneIndex].openedTabs.push(newTab);
+        newPanes[activePaneIndex].activeTabId = newTab.id;
+        return newPanes;
+      });
+  
+      setOriginalContents(prev => ({ ...prev, [fileId]: null }));
+      setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
+      return;
+    }
+  
     try {
       let content;
       if (modifiedContents[fileId]) {
         content = modifiedContents[fileId];
-      }
-      else if (file.handle) {
+      } else if (file.handle) {
         const fileData = await file.handle.getFile();
         content = await fileData.text();
       } else {
-        content = isSupported
+        content = supportedExtensions.includes(fileExtension)
           ? "Error reading file content."
           : "The content of this file type could not be automatically detected. Try to open it anyway.";
       }
-
+  
       const language = extensionToLanguageMap[fileExtension] || "Unknown";
       const newTab = {
         id: fileId,
         name: file.name,
         content: content,
-        language: isSupported ? language : "Unknown",
+        language: supportedExtensions.includes(fileExtension) ? language : "Unknown",
         forceOpen: false,
         searchTerm: "",
         replaceTerm: "",
@@ -741,21 +788,18 @@ const DinoLabsIDE = () => {
         isReplaceOpen: false,
         fileHandle: file.handle
       };
-
+  
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
         newPanes[activePaneIndex].openedTabs.push(newTab);
         newPanes[activePaneIndex].activeTabId = newTab.id;
         return newPanes;
       });
-
-      setOriginalContents(prev => ({ ...prev, [fileId]: content }));
-      setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     } catch (error) {
       const newTab = {
         id: fileId,
         name: file.name,
-        content: isSupported
+        content: supportedExtensions.includes(fileExtension)
           ? "Error reading file content."
           : "The content of this file type could not be automatically detected. Try to open it anyway.",
         language: "Unknown",
@@ -768,17 +812,18 @@ const DinoLabsIDE = () => {
         isReplaceOpen: false,
         fileHandle: null
       };
-
+  
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
         newPanes[activePaneIndex].openedTabs.push(newTab);
         newPanes[activePaneIndex].activeTabId = newTab.id;
         return newPanes;
       });
-
+  
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     }
   };
+  
 
   const toggleDirectory = (directoryKey) => {
     setOpenedDirectories(prev => ({
@@ -2194,40 +2239,42 @@ const DinoLabsIDE = () => {
                               <div
                                 key={tab.id}
                                 className="dinolabsIDEMarkdownPane"
-                                style={{
-                                  display: pane.activeTabId === tab.id ? "block" : "none",
-                                }}
+                                style={{ display: pane.activeTabId === tab.id ? "block" : "none" }}
                               >
-                                <DinoLabsIDEMarkdown
-                                  fileContent={tab.content}
-                                  detectedLanguage={tab.language}
-                                  forceOpen={tab.forceOpen}
-                                  onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
-                                  searchTerm={tab.searchTerm}
-                                  setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
-                                  replaceTerm={tab.replaceTerm}
-                                  setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
-                                  searchPositions={tab.searchPositions}
-                                  setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
-                                  currentSearchIndex={tab.currentSearchIndex}
-                                  setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
-                                  onSplit={splitTab}
-                                  disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
-                                  paneIndex={paneIndex}
-                                  tabId={tab.id}
-                                  isSearchOpen={tab.isSearchOpen}
-                                  isReplaceOpen={tab.isReplaceOpen}
-                                  setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
-                                  setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
-                                  ref={editorRefs.current[paneIndex][tab.id]}
-                                  onEdit={handleEdit}
-                                  onSave={handleSave}
-                                  fileHandle={tab.fileHandle}
-                                  isGlobalSearchActive={!!globalSearchQuery}
-                                  keyBinds={keyBinds}
-                                  zoomLevel={zoomLevel}
-                                  colorTheme={colorTheme}
-                                />
+                                {tab.isMedia ? (
+                                  <DinoLabsIDEMedia fileHandle={tab.fileHandle} />
+                                ) : (
+                                  <DinoLabsIDEMarkdown
+                                    fileContent={tab.content}
+                                    detectedLanguage={tab.language}
+                                    forceOpen={tab.forceOpen}
+                                    onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
+                                    searchTerm={tab.searchTerm}
+                                    setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
+                                    replaceTerm={tab.replaceTerm}
+                                    setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
+                                    searchPositions={tab.searchPositions}
+                                    setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
+                                    currentSearchIndex={tab.currentSearchIndex}
+                                    setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
+                                    onSplit={splitTab}
+                                    disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
+                                    paneIndex={paneIndex}
+                                    tabId={tab.id}
+                                    isSearchOpen={tab.isSearchOpen}
+                                    isReplaceOpen={tab.isReplaceOpen}
+                                    setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
+                                    setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
+                                    ref={editorRefs.current[paneIndex][tab.id]}
+                                    onEdit={handleEdit}
+                                    onSave={handleSave}
+                                    fileHandle={tab.fileHandle}
+                                    isGlobalSearchActive={!!globalSearchQuery}
+                                    keyBinds={keyBinds}
+                                    zoomLevel={zoomLevel}
+                                    colorTheme={colorTheme}
+                                  />
+                                )}
                               </div>
                             ))
                           ) : (
