@@ -339,19 +339,19 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
             </div>
 
             <div className="dinolabsIDEColorFormattingFlex">
-                <select
-                    className="dinolabsIDEColorFormatSelection"
-                    id="formatSelect"
-                    value={selectedFormat}
-                    onChange={(e) => setSelectedFormat(e.target.value)}
-                >
-                    <option value="hex">Hex</option>
-                    <option value="rgba">RGBA</option>
-                    <option value="hsl">HSL</option>
-                    <option value="hsb">HSB</option>
-                </select>
-
                 <div className="dinolabsIDEColorFormatEntryWrapper">
+                    <select
+                        className="dinolabsIDEColorFormatSelection"
+                        id="formatSelect"
+                        value={selectedFormat}
+                        onChange={(e) => setSelectedFormat(e.target.value)}
+                    >
+                        <option value="hex">Hex</option>
+                        <option value="rgba">RGBA</option>
+                        <option value="hsl">HSL</option>
+                        <option value="hsb">HSB</option>
+                    </select>
+
                     {selectedFormat !== "hex" ? (
                         <input
                             className="dinolabsIDEColorInputBig"
@@ -359,26 +359,29 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
                             onChange={(e) => handleInputChange(e.target.value)}
                         />
                     ) : (
-                        <>
-                            <input
-                                className="dinolabsIDEColorInput"
-                                value={computeColorOutput(hsv)}
-                                onChange={(e) => handleInputChange(e.target.value)}
-                            />
-                            <input
-                                className="dinolabsIDEAlphaInput"
-                                type="text"
-                                value={`${(hsv.a * 100).toFixed(0)}%`}
-                                onChange={(e) => {
-                                    let val = parseFloat(e.target.value);
-                                    if (isNaN(val)) val = 100;
-                                    val = Math.max(0, Math.min(val, 100));
-                                    updateColor({ ...hsv, a: val / 100 });
-                                }}
-                            />
-                        </>
+                        <input
+                            className="dinolabsIDEColorInput"
+                            value={computeColorOutput(hsv)}
+                            onChange={(e) => handleInputChange(e.target.value)}
+                        />
+                    )}
+
+                    {selectedFormat === "hex" && (
+                        <input
+                            className="dinolabsIDEAlphaInput"
+                            type="text"
+                            value={`${(hsv.a * 100).toFixed(0)}%`}
+                            onChange={(e) => {
+                                let val = parseFloat(e.target.value);
+                                if (isNaN(val)) val = 100;
+                                val = Math.max(0, Math.min(val, 100));
+                                updateColor({ ...hsv, a: val / 100 });
+                            }}
+                        />
                     )}
                 </div>
+
+                
             </div>
         </div>
     );

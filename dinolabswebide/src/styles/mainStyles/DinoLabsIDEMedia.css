@@ -84,7 +84,6 @@
     background-color: #222222;
     border: 0.4vh solid rgba(255, 255, 255, 0.2);
     border-radius: 0.4vw;
-    max-width: 30%;
     font-size: 1vw;
     font-weight: 800;
     color: #c0c0c0;
@@ -92,7 +91,7 @@
 }
 
 .dinolabsIDEMediaPositionInput {
-    max-width: 30%;
+    max-width: 40%;
 }
 
 .dinolabsIDEMediaPositionInputMini {
