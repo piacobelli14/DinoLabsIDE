@@ -16,7 +16,7 @@
     align-items: center;
     background-color: #333;
     height: 100%;
-    width: 40%; 
+    width: 35%; 
     overflow: scroll;
     padding: 0; 
 }
@@ -26,7 +26,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 60% !important; 
+    width: 65% !important; 
     height: 100% !important; 
     background-color: #252525;
     border-left: 0.6vh solid rgba(0, 0, 0, 0.4); 
@@ -40,8 +40,8 @@
     align-items: flex-start;
     box-sizing: border-box; 
     width: 100%; 
-    padding: 1vw; 
-    border-bottom: 0.2vh solid rgba(255,255,255,0.2); 
+    padding: 1.1vw; 
+    border-bottom: 0.25vh solid rgba(255,255,255,0.2); 
 }
 
 .dinolabsIDEMediaHeaderFlex {
@@ -90,6 +90,7 @@
 
 .dinolabsIDEMediaPositionInputMini {
     max-width: 20%; 
+    font-size: 0.8vw; 
 }
 
 .dinolabsIDEMediaCellFlexTitle {
@@ -165,11 +166,21 @@
     border: 0.2vh solid #c0c0c0; 
 }
 
+.dinolabsIDEMediaColorPickerWrapper {
+    width: 60%; 
+    height: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: visible;
+    background-color: purple;
+}
+
 .dinolabsIDEMediaColorPicker {
     border: none;
     background: none;
     padding: 0;
-    width: 2vw;  
+    min-width: 2vw;  
     height: 2vw; 
     cursor: pointer;
     -webkit-appearance: none;
@@ -200,11 +211,11 @@
     right: 0;
     background-color: #333;
     height: 8%; 
-    width: 30%;  
+    width: 20%;  
     border-top: 0.6vh solid rgba(0, 0, 0, 0.4); 
     border-left: 0.6vh solid rgba(0, 0, 0, 0.4); 
     z-index: 4; 
-    border-top-left-radius: 0.6vw;
+    border-top-left-radius: 1vw;
     padding: 1vw !important; 
     box-sizing: border-box;
 }
@@ -220,7 +231,7 @@
 }
 
 .dinolabsIDEMediaModeIndicator {
-    font-size: 1.2vw; 
+    font-size: 1.4vw; 
     font-weight: 600; 
     color: #c0c0c0; 
     display: flex; 
@@ -269,8 +280,8 @@
 }
 
 .dinolabsIDEMediaResizeHandle {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     background: rgba(255,255,255,0.6);
     border: 0.4vh solid #000;
     position: absolute;
@@ -280,36 +291,38 @@
     border-radius: 50%;
 }
 
-.dinolabsIDEMediaResizeHandle.top-left {
-    top: -6px;
-    left: -6px;
-    cursor: nwse-resize;
-}
-
-.dinolabsIDEMediaResizeHandle.top-right {
-    top: -6px;
-    right: -6px;
-    cursor: nesw-resize;
-}
-
+.dinolabsIDEMediaResizeHandle.top-left,
 .dinolabsIDEMediaResizeHandle.bottom-left {
-    bottom: -6px;
-    left: -6px;
+    cursor: nwse-resize;
+}
+
+.dinolabsIDEMediaResizeHandle.top-right,
+.dinolabsIDEMediaResizeHandle.bottom-right {
     cursor: nesw-resize;
 }
 
-.dinolabsIDEMediaResizeHandle.bottom-right {
-    bottom: -6px;
-    right: -6px;
-    cursor: nwse-resize;
+.dinolabsIDEMediaResizeHandle:hover {
+    opacity: 0.6; 
 }
 
 .dinolabsIDEMediaCropRectangle .dinolabsIDEMediaResizeHandle {
     background: rgba(31, 174, 245, 0.8);
-    box-sizing: border-box; 
-    pointer-events: none;
+    border: white;
 }
 
+.dinolabsIDECornerInputGridWrapper {
+    width: 100%; 
+    display: flex; 
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
 
-
-
+.dinolabsIDECornerInputFlex {
+    display: flex; 
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%; 
+    gap: 1vw;
+    margin-bottom: 1vw;
+}

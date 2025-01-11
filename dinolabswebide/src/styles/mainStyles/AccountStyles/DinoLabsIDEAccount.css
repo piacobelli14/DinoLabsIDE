@@ -343,6 +343,10 @@
       gap: 0.8vw;
    }
 
+   .dinolabsIDEContentSliderWrapper {
+      width: 10vw; 
+   }
+
    .dinolabsIDESettingsToggleLabel {
       font-size: 0.8vw;
       font-weight: 700;

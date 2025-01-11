@@ -555,7 +555,7 @@ const DinoLabsIDEAccount = ({
                                                                     updateShowColumnValue(userID, organizationID, "showpersonalemail", !displayEmail); 
                                                                 }} />
                                                                 <span className="consoleSlider round"></span>
-                                                            </label>
+                                                            </label>    
                                                         </Tippy>
     
                                                         <label className="dinolabsIDESettingsToggleLabel"> 
@@ -722,6 +722,7 @@ const DinoLabsIDEAccount = ({
                                                     <span>Set Default Zoom Level</span>
 
                                                     <span>
+                                                    <div className="dinolabsIDEContentSliderWrapper">
                                                     <input
                                                         type="range"
                                                         value={zoomLevel}
@@ -733,6 +734,7 @@ const DinoLabsIDEAccount = ({
                                                         onTouchEnd={(e) => saveUserPreferences(userID, organizationID, Number(e.target.value), colorTheme)} 
                                                         className="dinolabsIDESettingsSlider"
                                                     />
+                                                    </div>
                                                     <label className="dinolabsIDESettingsToggleLabel">{(zoomLevel * 100).toFixed(0)}%</label>
                                                     </span>
                                                 </button>
