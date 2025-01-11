@@ -3,16 +3,16 @@ import "../styles/mainStyles/DinoLabsIDEMedia.css";
 import "../styles/helperStyles/Slider.css";
 import "../styles/helperStyles/Checkbox.css";
 import DinoLabsIDEColorPicker from './DinoLabsIDEColorPicker';
-import { showDialog } from "./DinoLabsIDEAlert.jsx"; 
+import { showDialog } from "./DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-    faArrowLeft, faArrowRight, faArrowsLeftRightToLine, faArrowsRotate, 
-    faArrowsUpToLine, faBorderTopLeft, faCropSimple, faDownload, faLeftRight, 
-    faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus, faPalette, faPenRuler, 
-    faPlus, faRightLeft, faRotate, faRotateLeft, faRotateRight, faRuler, 
-    faRulerCombined, faSave, faSwatchbook, faTabletScreenButton, faUpDown 
+import {
+    faArrowLeft, faArrowRight, faArrowsLeftRightToLine, faArrowsRotate,
+    faArrowsUpToLine, faBorderTopLeft, faCropSimple, faDownload, faLeftRight,
+    faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus, faPalette, faPenRuler,
+    faPlus, faRightLeft, faRotate, faRotateLeft, faRotateRight, faRuler,
+    faRulerCombined, faSave, faSwatchbook, faTabletScreenButton, faUpDown
 } from '@fortawesome/free-solid-svg-icons';
 
 function DinoLabsIDEMedia({ fileHandle }) {
@@ -33,14 +33,14 @@ function DinoLabsIDEMedia({ fileHandle }) {
     const [panY, setPanY] = useState(0);
     const draggingRef = useRef(false);
     const lastMousePosRef = useRef({ x: 0, y: 0 });
-    const [imageWidth, setImageWidth] = useState(400);
-    const [imageHeight, setImageHeight] = useState(400);
-    const [nativeWidth, setNativeWidth] = useState(400);
-    const [nativeHeight, setNativeHeight] = useState(400);
+    const [imageWidth, setImageWidth] = useState(500);
+    const [imageHeight, setImageHeight] = useState(500);
+    const [nativeWidth, setNativeWidth] = useState(500);
+    const [nativeHeight, setNativeHeight] = useState(500);
     const [resizingCorner, setResizingCorner] = useState(null);
     const resizingRef = useRef(false);
     const lastResizePosRef = useRef({ x: 0, y: 0 });
-    const initialSizeRef = useRef({ width: 400, height: 400 });
+    const initialSizeRef = useRef({ width: 500, height: 500 });
     const initialPosRef = useRef({ x: 0, y: 0 });
     const [isCropping, setIsCropping] = useState(false);
     const [cropRect, setCropRect] = useState({ x: 0, y: 0, width: 100, height: 100 });
@@ -65,8 +65,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
     const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
     const aspectRatioRef = useRef(1);
 
-    const [isDrawColorOpen, setIsDrawColorOpen] = useState(false); 
-    const [isHighlightColorOpen, setIsHighlightColorOpen] = useState(false); 
+    const [isDrawColorOpen, setIsDrawColorOpen] = useState(false);
+    const [isHighlightColorOpen, setIsHighlightColorOpen] = useState(false);
     const [isCropDisabled, setIsCropDisabled] = useState(false);
 
     useEffect(() => {
@@ -83,8 +83,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                     img.onload = () => {
                         setNativeWidth(img.naturalWidth);
                         setNativeHeight(img.naturalHeight);
-                        const scaleFactor = 400 / img.naturalHeight;
-                        setImageHeight(400);
+                        const scaleFactor = 500 / img.naturalHeight;
+                        setImageHeight(500);
                         setImageWidth(img.naturalWidth * scaleFactor);
                     };
                     img.src = objectUrl;
@@ -105,14 +105,14 @@ function DinoLabsIDEMedia({ fileHandle }) {
     useEffect(() => {
         const normalizedRotation = rotation % 360;
         const isAtOriginalPosition = normalizedRotation === 0;
-    
+
         if (isAtOriginalPosition && flipX === 1 && flipY === 1) {
-            setIsCropDisabled(false);  
+            setIsCropDisabled(false);
         } else {
-            setIsCropDisabled(true);  
+            setIsCropDisabled(true);
         }
     }, [rotation, flipX, flipY]);
-    
+
     const resetImage = () => {
         setZoom(1);
         setRotation(0);
@@ -134,10 +134,10 @@ function DinoLabsIDEMedia({ fileHandle }) {
         setBorderBottomRightRadius(0);
         setPaths([]);
         setUndonePaths([]);
-        const scaleFactor = 400 / nativeHeight;
-        setImageHeight(400);
+        const scaleFactor = 500 / nativeHeight;
+        setImageHeight(500);
         setImageWidth(nativeWidth * scaleFactor);
-        setIsCropDisabled(false); 
+        setIsCropDisabled(false);
     };
 
     const downloadImage = () => {
@@ -410,10 +410,10 @@ function DinoLabsIDEMedia({ fileHandle }) {
             const { x, y } = getSvgPoint(e);
             currentPathPoints.current.push(`L${x} ${y}`);
             const d = currentPathPoints.current.join(' ');
-            setTempPath({ 
-                d, 
-                color: actionMode === 'Drawing' ? drawColor : highlightColor, 
-                width: actionMode === 'Highlighting' ? 10 : 2 
+            setTempPath({
+                d,
+                color: actionMode === 'Drawing' ? drawColor : highlightColor,
+                width: actionMode === 'Highlighting' ? 10 : 2
             });
         }
     };
@@ -456,37 +456,37 @@ function DinoLabsIDEMedia({ fileHandle }) {
             <div className="dinolabsIDEMediaContentWrapper">
                 <div className="dinoLabsIDEMediaToolBar">
 
-                    <div className="dinolabsIDEMediaCellWrapper"> 
+                    <div className="dinolabsIDEMediaCellWrapper">
 
                         <div className="dinolabsIDEMediaHeaderFlex">
-                            <label className="dinolabsIDEMediaCellTitle"> 
-                                <FontAwesomeIcon icon={faTabletScreenButton}/>
+                            <label className="dinolabsIDEMediaCellTitle">
+                                <FontAwesomeIcon icon={faTabletScreenButton} />
                                 Layout
-                            </label> 
+                            </label>
 
                             <div className="dinolabsIDEMediaCellFlexSupplement">
                                 <Tippy content="Reset Image" theme="tooltip-light">
                                     <button onClick={resetImage} className="dinolabsIDEMediaToolButtonHeader">
-                                        <FontAwesomeIcon icon={faArrowsRotate}/>
+                                        <FontAwesomeIcon icon={faArrowsRotate} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Save to Original File" theme="tooltip-light">
                                     <button className="dinolabsIDEMediaToolButtonHeader">
-                                        <FontAwesomeIcon icon={faSave}/>
+                                        <FontAwesomeIcon icon={faSave} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Download Image" theme="tooltip-light">
                                     <button onClick={downloadImage} className="dinolabsIDEMediaToolButtonHeader">
-                                        <FontAwesomeIcon icon={faDownload}/>
+                                        <FontAwesomeIcon icon={faDownload} />
                                     </button>
                                 </Tippy>
                             </div>
                         </div>
 
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Position
                             </label>
 
@@ -496,7 +496,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     type="text"
                                     value={`X: ${panX}`}
                                     onChange={(e) => {
-                                        const newValue = e.target.value.replace(/[^0-9.-]/g, ""); 
+                                        const newValue = e.target.value.replace(/[^0-9.-]/g, "");
                                         setPanX(Number(newValue));
                                     }}
                                 />
@@ -506,7 +506,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     type="text"
                                     value={`Y: ${panY}`}
                                     onChange={(e) => {
-                                        const newValue = e.target.value.replace(/[^0-9.-]/g, ""); 
+                                        const newValue = e.target.value.replace(/[^0-9.-]/g, "");
                                         setPanY(Number(newValue));
                                     }}
                                 />
@@ -517,62 +517,62 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             <div className="dinolabsIDEMediaCellFlex">
                                 <Tippy content="Zoom In" theme="tooltip-light">
                                     <button onClick={() => setZoom(prev => prev + 0.1)} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+                                        <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Zoom Out" theme="tooltip-light">
                                     <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faMagnifyingGlassMinus}/>
+                                        <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Rotate Left" theme="tooltip-light">
                                     <button onClick={() => {
-                                        setRotation(prev => prev - 90); 
+                                        setRotation(prev => prev - 90);
                                         setIsCropping(false);
                                     }} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faRotateLeft}/>
+                                        <FontAwesomeIcon icon={faRotateLeft} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Rotate Right" theme="tooltip-light">
                                     <button onClick={() => {
-                                        setRotation(prev => prev + 90); 
+                                        setRotation(prev => prev + 90);
                                         setIsCropping(false);
                                     }} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faRotateRight}/>
+                                        <FontAwesomeIcon icon={faRotateRight} />
                                     </button>
                                 </Tippy>
 
                                 <Tippy content="Flip Horizontally" theme="tooltip-light">
                                     <button onClick={() => {
-                                        setFlipX(prev => -prev); 
+                                        setFlipX(prev => -prev);
                                         setIsCropping(false);
                                     }} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faLeftRight}/>
+                                        <FontAwesomeIcon icon={faLeftRight} />
                                     </button>
                                 </Tippy>
-                                
+
                                 <Tippy content="Flip Vertically" theme="tooltip-light">
                                     <button onClick={() => {
                                         setFlipY(prev => -prev)
                                         setIsCropping(false);
                                     }} className="dinolabsIDEMediaToolButton">
-                                        <FontAwesomeIcon icon={faUpDown}/>
+                                        <FontAwesomeIcon icon={faUpDown} />
                                     </button>
                                 </Tippy>
                             </div>
-                            
+
                         </div>
                     </div>
 
-                    <div className="dinolabsIDEMediaCellWrapper"> 
+                    <div className="dinolabsIDEMediaCellWrapper">
                         <div className="dinolabsIDEMediaHeaderFlex">
-                            <label className="dinolabsIDEMediaCellTitle"> 
-                                <FontAwesomeIcon icon={faRulerCombined}/>
+                            <label className="dinolabsIDEMediaCellTitle">
+                                <FontAwesomeIcon icon={faRulerCombined} />
                                 Dimensions
-                            </label> 
+                            </label>
                             <label className="dinolabsIDEConfrmationCheck">
                                 <input
                                     type="checkbox"
@@ -586,7 +586,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             </label>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Image Size
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
@@ -595,7 +595,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     type="text"
                                     value={`W: ${Math.round(imageWidth)}px`}
                                     onChange={(e) => {
-                                        const newValue = e.target.value.replace(/[^0-9.-]/g, ""); 
+                                        const newValue = e.target.value.replace(/[^0-9.-]/g, "");
                                         setImageWidth(Number(newValue));
                                     }}
                                 />
@@ -604,104 +604,106 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     type="text"
                                     value={`H: ${Math.round(imageHeight)}px`}
                                     onChange={(e) => {
-                                        const newValue = e.target.value.replace(/[^0-9.-]/g, ""); 
-                                        setImageHeight(Number(newValue)); 
+                                        const newValue = e.target.value.replace(/[^0-9.-]/g, "");
+                                        setImageHeight(Number(newValue));
                                     }}
                                 />
                             </div>
                         </div>
-                        <div className="dinolabsIDEMediaCellFlex">
-                            <Tippy content="Restore Width Based Aspect Ratio" theme="tooltip-light">
-                                <button onClick={restoreAspectRatioWidth} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faArrowsLeftRightToLine}/>
-                                </button>
-                            </Tippy>
-                            <Tippy content="Restore Height Based Aspect Ratio" theme="tooltip-light">
-                                <button onClick={restoreAspectRatioHeight} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faArrowsUpToLine}/>
-                                </button>
-                            </Tippy>
-                            <Tippy content="Crop Image" theme="tooltip-light">
-                                <button
-                                    onClick={() => {
-                                        if (isCropDisabled) {
-                                            return;
-                                        }
-                                    
-                                        if (isCropping) {
-                                            const img = new Image();
-                                            img.onload = () => {
-                                                const scaleX = nativeWidth / imageWidth;
-                                                const scaleY = nativeHeight / imageHeight;
-                                    
-                                                const sx = cropRect.x * scaleX;
-                                                const sy = cropRect.y * scaleY;
-                                                const sw = cropRect.width * scaleX;
-                                                const sh = cropRect.height * scaleY;
-                                    
-                                                const canvasCrop = document.createElement('canvas');
-                                                canvasCrop.width = sw;
-                                                canvasCrop.height = sh;
-                                    
-                                                const ctxCrop = canvasCrop.getContext('2d');
-                                                ctxCrop.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-                                                const newDataUrl = canvasCrop.toDataURL();
-                                    
-                                                setUrl(newDataUrl);
-                                                setPanX(0);
-                                                setPanY(0);
-                                                setImageWidth(cropRect.width);
-                                                setImageHeight(cropRect.height);
-                                                setNativeWidth(sw);
-                                                setNativeHeight(sh);
-                                                setIsCropping(false);
-                                                setPaths([]);
-                                                setUndonePaths([]);
-                                            };
-                                            img.src = url;
-                                        } else {
-                                            setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
-                                            setIsCropping(true);
-                                        }
-                                    }}
-                                    disabled={isCropDisabled ? true : false}
-                                    style={{ "opacity": isCropDisabled ? "0.6" : "1.0",  backgroundColor: isCropping ? "#5C2BE2" : "" }}
-                                    className="dinolabsIDEMediaToolButton"
-                                >
-                                    <FontAwesomeIcon icon={faCropSimple}/>
-                                </button>
-                            </Tippy>
-                        </div>
-                    </div>
-
-                    <div className="dinolabsIDEMediaCellWrapper"> 
-                        <div className="dinolabsIDEMediaHeaderFlex">
-                            <label className="dinolabsIDEMediaCellTitle"> 
-                                <FontAwesomeIcon icon={faPalette}/>
-                                Drawing
-                            </label> 
-                            <div className="dinolabsIDEMediaCellFlexSupplement">
-                                <Tippy content="Undo Marks" theme="tooltip-light">
-                                    <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                        <FontAwesomeIcon icon={faArrowLeft}/>
+                        <div className="dinolabsIDEMediaCellFlexStack">
+                            <div className="dinolabsIDEMediaCellFlex">
+                                <Tippy content="Restore Width Based Aspect Ratio" theme="tooltip-light">
+                                    <button onClick={restoreAspectRatioWidth} className="dinolabsIDEMediaToolButton">
+                                        <FontAwesomeIcon icon={faArrowsLeftRightToLine} />
                                     </button>
                                 </Tippy>
-                                <Tippy content="Redo Marks" theme="tooltip-light">
-                                    <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                        <FontAwesomeIcon icon={faArrowRight}/>
+                                <Tippy content="Restore Height Based Aspect Ratio" theme="tooltip-light">
+                                    <button onClick={restoreAspectRatioHeight} className="dinolabsIDEMediaToolButton">
+                                        <FontAwesomeIcon icon={faArrowsUpToLine} />
+                                    </button>
+                                </Tippy>
+                                <Tippy content="Crop Image" theme="tooltip-light">
+                                    <button
+                                        onClick={() => {
+                                            if (isCropDisabled) {
+                                                return;
+                                            }
+
+                                            if (isCropping) {
+                                                const img = new Image();
+                                                img.onload = () => {
+                                                    const scaleX = nativeWidth / imageWidth;
+                                                    const scaleY = nativeHeight / imageHeight;
+
+                                                    const sx = cropRect.x * scaleX;
+                                                    const sy = cropRect.y * scaleY;
+                                                    const sw = cropRect.width * scaleX;
+                                                    const sh = cropRect.height * scaleY;
+
+                                                    const canvasCrop = document.createElement('canvas');
+                                                    canvasCrop.width = sw;
+                                                    canvasCrop.height = sh;
+
+                                                    const ctxCrop = canvasCrop.getContext('2d');
+                                                    ctxCrop.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+                                                    const newDataUrl = canvasCrop.toDataURL();
+
+                                                    setUrl(newDataUrl);
+                                                    setPanX(0);
+                                                    setPanY(0);
+                                                    setImageWidth(cropRect.width);
+                                                    setImageHeight(cropRect.height);
+                                                    setNativeWidth(sw);
+                                                    setNativeHeight(sh);
+                                                    setIsCropping(false);
+                                                    setPaths([]);
+                                                    setUndonePaths([]);
+                                                };
+                                                img.src = url;
+                                            } else {
+                                                setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
+                                                setIsCropping(true);
+                                            }
+                                        }}
+                                        disabled={isCropDisabled ? true : false}
+                                        style={{ "opacity": isCropDisabled ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
+                                        className="dinolabsIDEMediaToolButton"
+                                    >
+                                        <FontAwesomeIcon icon={faCropSimple} />
                                     </button>
                                 </Tippy>
                             </div>
                         </div>
-  
+                    </div>
+
+                    <div className="dinolabsIDEMediaCellWrapper">
+                        <div className="dinolabsIDEMediaHeaderFlex">
+                            <label className="dinolabsIDEMediaCellTitle">
+                                <FontAwesomeIcon icon={faPalette} />
+                                Drawing
+                            </label>
+                            <div className="dinolabsIDEMediaCellFlexSupplement">
+                                <Tippy content="Undo Marks" theme="tooltip-light">
+                                    <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                        <FontAwesomeIcon icon={faArrowLeft} />
+                                    </button>
+                                </Tippy>
+                                <Tippy content="Redo Marks" theme="tooltip-light">
+                                    <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                        <FontAwesomeIcon icon={faArrowRight} />
+                                    </button>
+                                </Tippy>
+                            </div>
+                        </div>
+
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Draw on Image
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
-                                <button 
-                                    onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')} 
-                                    style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "" }} 
+                                <button
+                                    onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
+                                    style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "" }}
                                     className="dinolabsIDEMediaToolButtonBig"
                                 >
                                     Draw
@@ -714,7 +716,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         />
                                     }
                                     visible={isDrawColorOpen}
-                                    onClickOutside={() => setIsDrawColorOpen(false)} 
+                                    onClickOutside={() => setIsDrawColorOpen(false)}
                                     interactive={true}
                                     placement="right"
                                     className="color-picker-tippy"
@@ -731,13 +733,13 @@ function DinoLabsIDEMedia({ fileHandle }) {
                         </div>
 
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Highlight on Image
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
-                                <button 
-                                    onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')} 
-                                    style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "" }} 
+                                <button
+                                    onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
+                                    style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "" }}
                                     className="dinolabsIDEMediaToolButtonBig"
                                 >
                                     Highlight
@@ -749,7 +751,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                             onChange={setHighlightColor}
                                         />
                                     }
-                                    visible={isHighlightColorOpen} 
+                                    visible={isHighlightColorOpen}
                                     onClickOutside={() => setIsHighlightColorOpen(false)}
                                     interactive={true}
                                     placement="right"
@@ -767,181 +769,181 @@ function DinoLabsIDEMedia({ fileHandle }) {
                         </div>
                     </div>
 
-                    <div className="dinolabsIDEMediaCellWrapper"> 
+                    <div className="dinolabsIDEMediaCellWrapper">
                         <div className="dinolabsIDEMediaHeaderFlex">
-                            <label className="dinolabsIDEMediaCellTitle"> 
-                                <FontAwesomeIcon icon={faSwatchbook}/>
+                            <label className="dinolabsIDEMediaCellTitle">
+                                <FontAwesomeIcon icon={faSwatchbook} />
                                 Styles
-                            </label> 
+                            </label>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Opacity
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setOpacity(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="100" 
-                                        value={opacity} 
-                                        onChange={(e) => setOpacity(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={opacity}
+                                        onChange={(e) => setOpacity(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setOpacity(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Hue
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setHue(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="360" 
-                                        value={hue} 
-                                        onChange={(e) => setHue(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={hue}
+                                        onChange={(e) => setHue(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setHue(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Saturation
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setSaturation(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="360" 
-                                        value={saturation} 
-                                        onChange={(e) => setSaturation(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={saturation}
+                                        onChange={(e) => setSaturation(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setSaturation(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Brightness
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setBrightness(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="360" 
-                                        value={brightness} 
-                                        onChange={(e) => setBrightness(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={brightness}
+                                        onChange={(e) => setBrightness(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setBrightness(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Contrast
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setContrast(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="360" 
-                                        value={contrast} 
-                                        onChange={(e) => setContrast(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={contrast}
+                                        onChange={(e) => setContrast(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setContrast(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Blur
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setBlur(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="100" 
-                                        value={blur} 
-                                        onChange={(e) => setBlur(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={blur}
+                                        onChange={(e) => setBlur(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setBlur(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Spread
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faMinus}/>
+                                    <FontAwesomeIcon icon={faMinus} />
                                 </button>
-                                <div className="dinolabsIDEMediaSliderWrapper"> 
-                                    <input 
-                                        className="dinolabsIDESettingsSlider" 
-                                        type="range" 
-                                        min="0" 
-                                        max="100" 
-                                        value={spread} 
-                                        onChange={(e) => setSpread(Number(e.target.value))} 
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={spread}
+                                        onChange={(e) => setSpread(Number(e.target.value))}
                                     />
                                 </div>
                                 <button onClick={() => setSpread(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
-                                    <FontAwesomeIcon icon={faPlus}/>
+                                    <FontAwesomeIcon icon={faPlus} />
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div className="dinolabsIDEMediaCellWrapper"> 
+                    <div className="dinolabsIDEMediaCellWrapper">
                         <div className="dinolabsIDEMediaHeaderFlex">
-                            <label className="dinolabsIDEMediaCellTitle"> 
-                                <FontAwesomeIcon icon={faBorderTopLeft}/>
+                            <label className="dinolabsIDEMediaCellTitle">
+                                <FontAwesomeIcon icon={faBorderTopLeft} />
                                 Corner Rounding
-                            </label> 
+                            </label>
                             <label className="dinolabsIDEConfrmationCheck">
                                 <input
                                     type="checkbox"
@@ -965,7 +967,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             </label>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
-                            <label className="dinolabsIDEMediaCellFlexTitle"> 
+                            <label className="dinolabsIDEMediaCellFlexTitle">
                                 Corner Radii
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
@@ -987,18 +989,18 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                 ) : (
                                     <div className="dinolabsIDECornerInputGridWrapper">
                                         <div className="dinolabsIDECornerInputFlex">
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`TL: ${borderTopLeftRadius}px`}
-                                            onChange={(e) => setBorderTopLeftRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
-                                        />
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`TR: ${borderTopRightRadius}px`}
-                                            onChange={(e) => setBorderTopRightRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
-                                        />
+                                            <input
+                                                className="dinolabsIDEMediaPositionInput"
+                                                type="text"
+                                                value={`TL: ${borderTopLeftRadius}px`}
+                                                onChange={(e) => setBorderTopLeftRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                            />
+                                            <input
+                                                className="dinolabsIDEMediaPositionInput"
+                                                type="text"
+                                                value={`TR: ${borderTopRightRadius}px`}
+                                                onChange={(e) => setBorderTopRightRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                            />
                                         </div>
 
                                         <div className="dinolabsIDECornerInputFlex">
@@ -1032,8 +1034,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                     onMouseUp={handleDragEnd}
                     onMouseLeave={handleDragEnd}
                 >
-                    <div className="dinolabsIDEMediaExportActionsWrapper"> 
-                        <div className="dinolabsIDEMediaExportActionsWrapperFlex"> 
+                    <div className="dinolabsIDEMediaExportActionsWrapper">
+                        <div className="dinolabsIDEMediaExportActionsWrapperFlex">
                             <label className="dinolabsIDEMediaModeIndicator">
                                 {actionMode}
                             </label>
@@ -1051,8 +1053,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             scale(${flipX * zoom}, ${flipY * zoom}) 
                             rotate(${rotation}deg)
                             `,
-                            borderRadius: syncCorners 
-                                ? `${borderRadius}px` 
+                            borderRadius: syncCorners
+                                ? `${borderRadius}px`
                                 : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
                         }}
                     >
@@ -1106,7 +1108,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     pointerEvents: 'none'
                                 }}
                             >
-                               <div
+                                <div
                                     className="dinolabsIDEMediaResizeHandle top-left"
                                     style={{ pointerEvents: 'auto', top: `-8px`, left: `-8px` }}
                                     onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
@@ -1143,22 +1145,22 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             onMouseUp={handleSvgMouseUp}
                         >
                             {paths.map((pathData, index) => (
-                                <path 
-                                    key={index} 
-                                    d={pathData.d} 
-                                    stroke={pathData.color} 
-                                    strokeWidth={pathData.width} 
-                                    fill="none" 
-                                    strokeLinecap="round" 
+                                <path
+                                    key={index}
+                                    d={pathData.d}
+                                    stroke={pathData.color}
+                                    strokeWidth={pathData.width}
+                                    fill="none"
+                                    strokeLinecap="round"
                                 />
                             ))}
                             {tempPath && (
-                                <path 
-                                    d={tempPath.d} 
-                                    stroke={tempPath.color} 
-                                    strokeWidth={tempPath.width} 
-                                    fill="none" 
-                                    strokeLinecap="round" 
+                                <path
+                                    d={tempPath.d}
+                                    stroke={tempPath.color}
+                                    strokeWidth={tempPath.width}
+                                    fill="none"
+                                    strokeLinecap="round"
                                 />
                             )}
                         </svg>

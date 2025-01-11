@@ -4,9 +4,10 @@
     background-color: rgba(0, 0, 0, 0.4);
     overflow: scroll;
     position: relative;
-    display: flex; 
-    justify-content: center; 
+    display: flex;
+    justify-content: center;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .dinoLabsIDEMediaToolBar {
@@ -16,9 +17,10 @@
     align-items: center;
     background-color: #333;
     height: 100%;
-    width: 35%; 
+    width: 35%;
     overflow: scroll;
-    padding: 0; 
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .dinolabsIDEMediaContainer {
@@ -26,149 +28,161 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 65% !important; 
-    height: 100% !important; 
+    width: 65% !important;
+    height: 100% !important;
     background-color: #252525;
-    border-left: 0.6vh solid rgba(0, 0, 0, 0.4); 
+    border-left: 0.6vh solid rgba(0, 0, 0, 0.4);
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .dinolabsIDEMediaCellWrapper {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-start;
-    box-sizing: border-box; 
-    width: 100%; 
-    padding: 1.1vw; 
-    border-bottom: 0.25vh solid rgba(255,255,255,0.2); 
+    box-sizing: border-box;
+    width: 100%;
+    padding-bottom: 2vw;
+    border-bottom: 0.25vh solid rgba(255, 255, 255, 0.2);    
 }
 
 .dinolabsIDEMediaHeaderFlex {
     display: flex;
     justify-content: space-between;
-    align-items: center; 
-    width: 100%; 
-    margin-bottom: 1vw; 
+    align-items: center;
+    width: 100%;
+    height: 4vw; 
+    padding: 0 2vw; 
+    margin-bottom: 2vw;
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 .dinolabsIDEMediaCellTitle {
-    font-size: 1.2vw; 
+    font-size: 1.2vw;
     font-weight: 700;
     color: #c0c0c0;
     display: flex;
-    align-items: center; 
-    gap: 1vw; 
+    align-items: center;
+    gap: 1vw;
     overflow: hidden;
 }
 
 .dinolabsIDEMediaCellFlexStack {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
     margin-bottom: 1vw;
-    width: 100%; 
+    width: 100%;
+    padding: 0 2vw; 
 }
 
-.dinolabsIDEMediaPositionInput, 
+.dinolabsIDEMediaPositionInput,
 .dinolabsIDEMediaPositionInputMini {
-    padding: 1vw 1vw; 
+    padding: 1vw 1vw;
     background-color: #222222;
-    border: 0.4vh solid rgba(255,255,255,0.2); 
-    border-radius: 0.4vw; 
-    max-width: 30%; 
+    border: 0.4vh solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.4vw;
+    max-width: 30%;
     font-size: 1vw;
     font-weight: 800;
-    color: #c0c0c0; 
+    color: #c0c0c0;
     box-shadow: 0 0 6px black;
 }
 
 .dinolabsIDEMediaPositionInput {
-    max-width: 30%; 
+    max-width: 30%;
 }
 
 .dinolabsIDEMediaPositionInputMini {
-    max-width: 20%; 
-    font-size: 0.8vw; 
+    max-width: 20%;
+    font-size: 0.8vw;
 }
 
 .dinolabsIDEMediaCellFlexTitle {
     font-size: 1vw;
-    font-weight: 600; 
+    font-weight: 600;
     color: #c0c0c0;
-    opacity: 0.8;  
+    opacity: 0.8;
 }
 
 .dinolabsIDEMediaCellFlex {
-    display: flex; 
-    justify-content: flex-start; 
+    display: flex;
+    justify-content: flex-start;
     align-items: center;
-    margin-top: 0.4vw; 
-    width: 90%; 
-    gap: 4%; 
+    margin-top: 0.4vw;
+    width: 100%;
+    gap: 4%;
 }
 
 .dinolabsIDEMediaCellFlexSupplement {
-    display: flex; 
-    justify-content: flex-end; 
+    display: flex;
+    justify-content: flex-end;
     align-items: center;
-    gap: 1vw; 
+    gap: 1vw;
+    height: 100%;
 }
 
-.dinolabsIDEMediaToolButton, 
-.dinolabsIDEMediaToolButtonBig, 
+.dinolabsIDEMediaToolButton,
+.dinolabsIDEMediaToolButtonBig,
 .dinolabsIDEMediaToolButtonHeader {
     background-color: #3C3C3C;
-    border: 0.2vh solid #c0c0c0; 
-    border-radius: 0.4vw; 
-    font-size: 1vw; 
-    font-weight: 700; 
-    color: #f5f5f5; 
+    border: 0.2vh solid #c0c0c0;
+    border-radius: 0.4vw;
+    font-size: 1vw;
+    font-weight: 700;
+    color: #f5f5f5;
     cursor: pointer;
     transition: transform 0.3s ease, opacity 0.3s ease;
-    outline: none; 
-    box-shadow: 0 0 8px black; 
+    outline: none;
+    box-shadow: 0 0 8px black;
+    box-sizing: border-box; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
 }
 
 .dinolabsIDEMediaToolButton {
-    min-width: 10%; 
-    max-width: 10%; 
-    padding: 0.6vw; 
+    min-width: 10%;
+    max-width: 10%;
+    padding: 0.6vw;
 }
 
 .dinolabsIDEMediaToolButtonBig {
-    min-width: 30%; 
-    max-width: 30%; 
+    min-width: 30%;
+    max-width: 30%;
     padding: 1vw;
 }
 
 .dinolabsIDEMediaToolButtonHeader {
-    width: auto; 
-    padding: 0.6vw 1vw; 
+    width: auto;
+    padding: 1vw;
+    max-height: 55%;
+
 }
 
-.dinolabsIDEMediaToolButton:hover, 
+.dinolabsIDEMediaToolButton:hover,
 .dinolabsIDEMediaToolButtonBig:hover {
-    opacity: 0.6; 
-    outline: none; 
-    border: 0.2vh solid #c0c0c0; 
+    opacity: 0.6;
+    outline: none;
+    border: 0.2vh solid #c0c0c0;
 }
 
 .dinolabsIDEMediaToolButton:hover {
-    transform: scale(1.1); 
+    transform: scale(1.1);
 }
 
-.dinolabsIDEMediaToolButton:focus, 
+.dinolabsIDEMediaToolButton:focus,
 .dinolabsIDEMediaToolButtonBig:focus {
-    opacity: 1.0; 
-    outline: none; 
-    border: 0.2vh solid #c0c0c0; 
+    opacity: 1.0;
+    outline: none;
+    border: 0.2vh solid #c0c0c0;
 }
 
 .dinolabsIDEMediaColorPickerWrapper {
-    width: 60%; 
-    height: 100%; 
+    width: 60%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -180,88 +194,88 @@
     border: none;
     background: none;
     padding: 0;
-    min-width: 2vw;  
-    height: 2vw; 
+    min-width: 2vw;
+    height: 2vw;
     cursor: pointer;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    box-shadow: 0 0 10px black; 
-    border: 0.2vh solid white; 
-    border-radius: 0.2vw; 
-  }
-  
-  .dinolabsIDEMediaColorPicker::-webkit-color-swatch-wrapper {
+    box-shadow: 0 0 10px black;
+    border: 0.2vh solid white;
+    border-radius: 0.2vw;
+}
+
+.dinolabsIDEMediaColorPicker::-webkit-color-swatch-wrapper {
     padding: 0;
-  }
-  
-  .dinolabsIDEMediaColorPicker::-webkit-color-swatch {
+}
+
+.dinolabsIDEMediaColorPicker::-webkit-color-swatch {
     border: none;
-    border-radius: 0.2vw; 
-  }
-  
-  .dinolabsIDEMediaColorPicker::-moz-color-swatch {
+    border-radius: 0.2vw;
+}
+
+.dinolabsIDEMediaColorPicker::-moz-color-swatch {
     border: none;
-    border-radius: 0.2vw; 
-  }
+    border-radius: 0.2vw;
+}
 
 .dinolabsIDEMediaExportActionsWrapper {
-    position: absolute; 
-    bottom: 0; 
+    position: absolute;
+    bottom: 0;
     right: 0;
     background-color: #333;
-    height: 8%; 
-    width: 20%;  
-    border-top: 0.6vh solid rgba(0, 0, 0, 0.4); 
-    border-left: 0.6vh solid rgba(0, 0, 0, 0.4); 
-    z-index: 4; 
+    height: 8%;
+    width: 20%;
+    border-top: 0.6vh solid rgba(0, 0, 0, 0.4);
+    border-left: 0.6vh solid rgba(0, 0, 0, 0.4);
+    z-index: 4;
     border-top-left-radius: 1vw;
-    padding: 1vw !important; 
+    padding: 1vw !important;
     box-sizing: border-box;
 }
 
 .dinolabsIDEMediaExportActionsWrapperFlex {
-    display: flex; 
+    display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%; 
+    width: 100%;
     height: 100%;
     border-top-left-radius: 0.6vw;
-    cursor: auto; 
+    cursor: auto;
 }
 
 .dinolabsIDEMediaModeIndicator {
-    font-size: 1.4vw; 
-    font-weight: 600; 
-    color: #c0c0c0; 
-    display: flex; 
+    font-size: 1.4vw;
+    font-weight: 600;
+    color: #c0c0c0;
+    display: flex;
     align-items: center;
 }
 
 .dinolabsIDEMediaModeIndicator span {
-    font-weight: 500; 
-    color: #c0c0c0; 
-    font-size: 1.1vw; 
-    margin-right: 0.6vw; 
+    font-weight: 500;
+    color: #c0c0c0;
+    font-size: 1.1vw;
+    margin-right: 0.6vw;
 }
 
 
 .dinolabsIDEMediaSliderWrapper {
-    width: 60%; 
-    padding: 0;  
+    width: 60%;
+    padding: 0;
 }
 
 .dinolabsIDEConfrmationCheck {
-    display: flex; 
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6vw; 
+    gap: 0.6vw;
 }
 
 .dinolabsIDEConfrmationCheck span {
-    font-size: 1.1vw; 
-    font-weight: 600; 
-    color: #c0c0c0; 
+    font-size: 1.1vw;
+    font-weight: 600;
+    color: #c0c0c0;
 }
 
 .dinolabsIDEImageResizer {
@@ -282,7 +296,7 @@
 .dinolabsIDEMediaResizeHandle {
     width: 12px;
     height: 12px;
-    background: rgba(255,255,255,0.6);
+    background: rgba(255, 255, 255, 0.6);
     border: 0.4vh solid #000;
     position: absolute;
     z-index: 10;
@@ -302,7 +316,7 @@
 }
 
 .dinolabsIDEMediaResizeHandle:hover {
-    opacity: 0.6; 
+    opacity: 0.6;
 }
 
 .dinolabsIDEMediaCropRectangle .dinolabsIDEMediaResizeHandle {
@@ -311,18 +325,18 @@
 }
 
 .dinolabsIDECornerInputGridWrapper {
-    width: 100%; 
-    display: flex; 
+    width: 100%;
+    display: flex;
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
 }
 
 .dinolabsIDECornerInputFlex {
-    display: flex; 
+    display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 100%; 
+    width: 100%;
     gap: 1vw;
     margin-bottom: 1vw;
 }
