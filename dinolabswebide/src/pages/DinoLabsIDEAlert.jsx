@@ -58,15 +58,31 @@ function DinoLabsIDEAlert({
         <label className="dinolabsAlertSubHeader">{message}</label>
         {inputs.length > 0 && inputs.map((input) => (
           <label className="dinolabsIDEAlertInputWrapper" key={input.name}>
-            <input
-              className={`dinolabsIDEAlertInput input-${input.type || 'text'}`}
-              type={input.type || 'text'}
-              name={input.name}
-              value={input.type === 'checkbox' ? undefined : values[input.name]}
-              checked={input.type === 'checkbox' ? values[input.name] : undefined}
-              onChange={handleChange}
-              {...(input.attributes || {})}
-            />
+            {input.type === 'select' ? (
+              <select
+                className="dinolabsIDEAlertInput input-select"
+                name={input.name}
+                value={values[input.name]}
+                onChange={handleChange}
+                {...(input.attributes || {})}
+              >
+                {input.options && input.options.map((option, index) => (
+                  <option key={index} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                className={`dinolabsIDEAlertInput input-${input.type || 'text'}`}
+                type={input.type || 'text'}
+                name={input.name}
+                value={input.type === 'checkbox' ? undefined : values[input.name]}
+                checked={input.type === 'checkbox' ? values[input.name] : undefined}
+                onChange={handleChange}
+                {...(input.attributes || {})}
+              />
+            )}
           </label>
         ))}
         <div className="dinolabsIDEAlertButtonsFlex">

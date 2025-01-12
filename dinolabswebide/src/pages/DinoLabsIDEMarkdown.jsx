@@ -50,7 +50,6 @@ const generateEditorId = () => {
   return `dinolabs-editor-${editorIdCounter}`;
 };
 
-
 const DinoLabsIDEMarkdown = forwardRef(({
   fileContent,
   detectedLanguage,
@@ -132,7 +131,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
     }
   };
 
-
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -185,7 +183,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
       const { displayedLines, lineNumberMappings } = generateViewCode(newContent, collapsedLines);
       setViewCode(displayedLines.join('\n'));
       setLineNumberMappings(lineNumberMappings);
-      setCollapsedLines(new Set());
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
       setActiveLineNumber(null);
@@ -226,7 +223,6 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const { displayedLines, lineNumberMappings } = generateViewCode(trimmedContent, collapsedLines);
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
-    setCollapsedLines(new Set());
     setSearchPositions([]);
     setCurrentSearchIndex(-1);
     setActiveLineNumber(null);
@@ -268,9 +264,37 @@ const DinoLabsIDEMarkdown = forwardRef(({
   }, [currentSearchIndex, searchPositions]);
 
   const handleKeyDown = (event) => {
+    if (textareaRef.current) {
+      const { selectionStart } = textareaRef.current;
+      const lines = viewCode.split(/\r?\n/);
+      let cumulative = 0;
+      let currentLineIndex = 0;
+  
+      for (let i = 0; i < lines.length; i++) {
+        cumulative += lines[i].length + 1; 
+        if (selectionStart < cumulative) {
+          currentLineIndex = i;
+          break;
+        }
+      }
+  
+      const currentLine = lines[currentLineIndex];
+      if (currentLine.trim() === '...') {
+        const nonModifyingKeys = [
+          "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+          "Escape", "Control", "Shift", "Meta", "Alt",
+          "F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12"
+        ];
+        if (!nonModifyingKeys.includes(event.key)) {
+          event.preventDefault();
+          return;
+        }
+      }
+    }
+  
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modifier = isMac ? event.metaKey : event.ctrlKey;
-
+  
     if (modifier) {
       const key = event.key.toLowerCase();
       switch (key) {
@@ -313,7 +337,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
           break;
       }
     }
-
+  
     if (event.key === "Tab") {
       event.preventDefault();
       const { selectionStart, selectionEnd } = event.target;
@@ -323,18 +347,20 @@ const DinoLabsIDEMarkdown = forwardRef(({
         viewCode.substring(0, selectionStart) +
         tabCharacter +
         viewCode.substring(selectionEnd);
-
+  
       undoStackMap[tabId].push({ fullCode, collapsedLines: new Set(collapsedLines) });
       redoStackMap[tabId] = [];
-
-      setViewCode(updatedViewCode);
-      setFullCode(mapViewToFullCode(updatedViewCode, fullCode, collapsedLines));
-      setLineNumberMappings(generateViewCode(updatedViewCode, collapsedLines).lineNumberMappings);
-      setCollapsedLines(new Set());
+  
+      const newFullCode = mapViewToFullCode(updatedViewCode, fullCode, collapsedLines);
+      setFullCode(newFullCode);
+      const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+      setViewCode(displayedLines.join('\n'));
+      setLineNumberMappings(lineNumberMappings);
+      setCollapsedLines(new Set(collapsedLines)); 
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
       setActiveLineNumber(null);
-
+  
       setTimeout(() => {
         event.target.selectionStart = event.target.selectionEnd =
           selectionStart + tabCharacter.length;
@@ -347,15 +373,17 @@ const DinoLabsIDEMarkdown = forwardRef(({
     if (!isSettingContentRef.current) {
       const previousState = { fullCode, collapsedLines: new Set(collapsedLines) };
       const updatedViewCode = event.target.value;
+      const originalViewCode = viewCode;
+      const caretPosition = textareaRef.current.selectionStart;
       const updatedViewLines = updatedViewCode.split(/\r?\n/);
-      const originalViewLines = viewCode.split(/\r?\n/);
+      const originalViewLines = originalViewCode.split(/\r?\n/);
       const newViewLines = [...updatedViewLines];
-
+  
       let isValid = true;
-
+  
       newViewLines.forEach((line, idx) => {
         if (originalViewLines[idx] && originalViewLines[idx].trim() === '...') {
-          const expectedIndent = getIndentLevel(originalViewLines[idx]) + 4;
+          const expectedIndent = getIndentLevel(originalViewLines[idx]);
           const actualIndent = getIndentLevel(line);
           if (line.trim() !== '...' || actualIndent !== expectedIndent) {
             newViewLines[idx] = ' '.repeat(expectedIndent) + '...';
@@ -363,24 +391,25 @@ const DinoLabsIDEMarkdown = forwardRef(({
           }
         }
       });
-
+  
       if (!isValid) {
         setViewCode(newViewLines.join('\n'));
         return;
       }
 
-      const newFullCode = updatedViewCode;
-      setViewCode(updatedViewCode);
+      const newFullCode = mapViewToFullCode(updatedViewCode, fullCode, collapsedLines);
       setFullCode(newFullCode);
-      setLineNumberMappings(generateViewCode(updatedViewCode, collapsedLines).lineNumberMappings);
+      const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+      setViewCode(displayedLines.join('\n'));
+      setLineNumberMappings(lineNumberMappings);
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
       setActiveLineNumber(null);
       updateVisibleLines();
-
+  
       undoStackMap[tabId].push({ fullCode, collapsedLines: new Set(collapsedLines) });
       redoStackMap[tabId] = [];
-
+  
       onEdit(paneIndex, tabId, previousState, { fullCode: newFullCode, collapsedLines: new Set(collapsedLines) });
     }
   };
@@ -445,9 +474,11 @@ const DinoLabsIDEMarkdown = forwardRef(({
           viewCode.substring(0, selectionStart) +
           viewCode.substring(selectionEnd);
 
-        setViewCode(updatedViewCode);
-        setFullCode(mapViewToFullCode(updatedViewCode, fullCode, collapsedLines));
-        setLineNumberMappings(generateViewCode(updatedViewCode, collapsedLines).lineNumberMappings);
+        const newFullCode = mapViewToFullCode(updatedViewCode, fullCode, collapsedLines);
+        setFullCode(newFullCode);
+        const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+        setViewCode(displayedLines.join('\n'));
+        setLineNumberMappings(lineNumberMappings);
         setSearchPositions([]);
         setCurrentSearchIndex(-1);
         setActiveLineNumber(null);
@@ -458,7 +489,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
             setCopySuccess("");
           }, 2000);
         });
-        onEdit(paneIndex, tabId, previousState, { fullCode: mapViewToFullCode(updatedViewCode, fullCode, collapsedLines), collapsedLines: new Set(collapsedLines) });
+        onEdit(paneIndex, tabId, previousState, { fullCode: newFullCode, collapsedLines: new Set(collapsedLines) });
       }
     }
   };
@@ -496,7 +527,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const selectedViewLines = viewLines.slice(startLine, endLine + 1);
     const selectedMappingLines = lineNumberMappings.slice(startLine, endLine + 1);
     const copiedLines = selectedViewLines.map((line, idx) => {
-      const mappingLine = lineNumberMappings[startLine + idx];
+      const mappingLine = selectedMappingLines[idx];
       if (React.isValidElement(mappingLine)) {
         const startLineNumber = parseInt(mappingLine.props['data-start-line'], 10);
         const endLineNumber = parseInt(mappingLine.props['data-end-line'], 10);
@@ -537,16 +568,18 @@ const DinoLabsIDEMarkdown = forwardRef(({
           text +
           viewCode.substring(selectionEnd);
 
-        setViewCode(updatedViewCode);
-        setFullCode(mapViewToFullCode(updatedViewCode, fullCode, collapsedLines));
-        setLineNumberMappings(generateViewCode(updatedViewCode, collapsedLines).lineNumberMappings);
+        const newFullCode = mapViewToFullCode(updatedViewCode, fullCode, collapsedLines);
+        setFullCode(newFullCode);
+        const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+        setViewCode(displayedLines.join('\n'));
+        setLineNumberMappings(lineNumberMappings);
         setSearchPositions([]);
         setCurrentSearchIndex(-1);
         setActiveLineNumber(null);
 
         updateVisibleLines();
 
-        onEdit(paneIndex, tabId, previousState, { fullCode: mapViewToFullCode(updatedViewCode, fullCode, collapsedLines), collapsedLines: new Set(collapsedLines) });
+        onEdit(paneIndex, tabId, previousState, { fullCode: newFullCode, collapsedLines: new Set(collapsedLines) });
       }).catch(() => {
         setCopySuccess("Failed to paste!");
         setTimeout(() => {
@@ -573,10 +606,10 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const displayedLines = [];
     const lineNumberMappings = [];
     const skippedLines = new Set();
-
+  
     for (let i = 0; i < lines.length; i++) {
       if (skippedLines.has(i)) continue;
-
+  
       if (collapsedSet.has(i)) {
         const parentLine = lines[i];
         if (parentLine.trim() === "") {
@@ -584,17 +617,17 @@ const DinoLabsIDEMarkdown = forwardRef(({
           lineNumberMappings.push(i + 1);
           continue;
         }
-
+  
         displayedLines.push(parentLine);
         lineNumberMappings.push(i + 1);
-
+  
         const blockLines = getBlockLines(fullCode, i);
         if (blockLines.length > 0) {
           const startLineNumber = blockLines[0] + 1;
           const endLineNumber = blockLines[blockLines.length - 1] + 1;
           const currentIndent = getIndentLevel(parentLine);
           const ellipsisIndent = ' '.repeat(currentIndent + 4);
-
+  
           displayedLines.push(ellipsisIndent + '...');
           lineNumberMappings.push(
             <span key={`mapping-${i}-${editorId}`} data-start-line={startLineNumber} data-end-line={endLineNumber}>
@@ -608,11 +641,11 @@ const DinoLabsIDEMarkdown = forwardRef(({
         lineNumberMappings.push(i + 1);
       }
     }
-
+  
     while (displayedLines.length > 0) {
       const lastLine = displayedLines[displayedLines.length - 1].trim();
       const lastMapping = lineNumberMappings[lineNumberMappings.length - 1];
-
+  
       if ((lastLine === '...' || lastLine === '') && !React.isValidElement(lastMapping)) {
         displayedLines.pop();
         lineNumberMappings.pop();
@@ -620,7 +653,7 @@ const DinoLabsIDEMarkdown = forwardRef(({
         break;
       }
     }
-
+  
     return { displayedLines, lineNumberMappings };
   };
 
@@ -628,36 +661,25 @@ const DinoLabsIDEMarkdown = forwardRef(({
     const viewLines = updatedViewCode.split(/\r?\n/);
     const fullLines = currentFullCode.split(/\r?\n/);
     const newFullLines = [];
-    let fullIndex = 0;
+    let viewIndex = 0;
 
-    for (let viewIndex = 0; viewIndex < viewLines.length; viewIndex++) {
-      const viewLine = viewLines[viewIndex];
+    for (let i = 0; i < viewLines.length; i++) {
+      const line = viewLines[i];
 
-      if (viewLine.trim() === '...') {
-        const collapsedRange = lineNumberMappings[viewIndex];
-        if (React.isValidElement(collapsedRange)) {
-          const startLineNumber = parseInt(collapsedRange.props['data-start-line'], 10);
-          const endLineNumber = parseInt(collapsedRange.props['data-end-line'], 10);
+      if (line.trim() === '...') {
+        const mappingLine = lineNumberMappings[i];
+        if (React.isValidElement(mappingLine)) {
+          const startLineNumber = parseInt(mappingLine.props['data-start-line'], 10);
+          const endLineNumber = parseInt(mappingLine.props['data-end-line'], 10);
           newFullLines.push(...fullLines.slice(startLineNumber - 1, endLineNumber));
-          fullIndex = endLineNumber;
         }
       } else {
-        if (fullIndex < fullLines.length) {
-          newFullLines.push(fullLines[fullIndex]);
-          fullIndex++;
-        } else {
-          newFullLines.push(viewLine);
-        }
+        newFullLines.push(line);
       }
     }
 
-    while (fullIndex < fullLines.length) {
-      newFullLines.push(fullLines[fullIndex]);
-      fullIndex++;
-    }
-
     return newFullLines.join('\n');
-  };
+  };  
 
   const updateVisibleLines = () => {
     if (!lineNumberRef.current) return;
@@ -707,21 +729,21 @@ const DinoLabsIDEMarkdown = forwardRef(({
     if (textareaRef.current) {
       savedScrollTopRef.current = textareaRef.current.scrollTop;
     }
-
+  
     const newCollapsedLines = new Set(collapsedLines);
-
+  
     if (newCollapsedLines.has(startLineIndex)) {
       newCollapsedLines.delete(startLineIndex);
     } else {
       newCollapsedLines.add(startLineIndex);
     }
-
+  
     undoStackMap[tabId].push({ fullCode, collapsedLines: new Set(collapsedLines) });
     redoStackMap[tabId] = [];
     setCollapsedLines(newCollapsedLines);
     setActiveLineNumber(null);
     const { displayedLines, lineNumberMappings } = generateViewCode(fullCode, newCollapsedLines);
-
+  
     setViewCode(displayedLines.join('\n'));
     setLineNumberMappings(lineNumberMappings);
     updateVisibleLines();
@@ -916,8 +938,9 @@ const DinoLabsIDEMarkdown = forwardRef(({
     undoStackMap[tabId].push(previousState);
     redoStackMap[tabId] = [];
     setFullCode(newFullCode);
-    setViewCode(generateViewCode(newFullCode, collapsedLines).displayedLines.join('\n'));
-    setLineNumberMappings(generateViewCode(newFullCode, collapsedLines).lineNumberMappings);
+    const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+    setViewCode(displayedLines.join('\n'));
+    setLineNumberMappings(lineNumberMappings);
     setActiveLineNumber(null);
 
     const updatedSearchPositions = searchPositions.filter((_, idx) => idx !== currentSearchIndex);
@@ -952,8 +975,9 @@ const DinoLabsIDEMarkdown = forwardRef(({
     redoStackMap[tabId] = [];
 
     setFullCode(newFullCode);
-    setViewCode(generateViewCode(newFullCode, collapsedLines).displayedLines.join('\n'));
-    setLineNumberMappings(generateViewCode(newFullCode, collapsedLines).lineNumberMappings);
+    const { displayedLines, lineNumberMappings } = generateViewCode(newFullCode, collapsedLines);
+    setViewCode(displayedLines.join('\n'));
+    setLineNumberMappings(lineNumberMappings);
     setSearchPositions([]);
     setCurrentSearchIndex(-1);
     setActiveLineNumber(null);

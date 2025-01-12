@@ -88,20 +88,20 @@
         justify-content: center;
         align-items: center;
         width: 100%;
-        padding: 1vw 0;
+        padding: 1vw 0 0 0;
     }
 
     .dinolabsIDEAlertInput.input-text {
         background-color: #191919;
         border: 0.2vh solid #c0c0c0;
-        padding: 1vw;
+        padding: 0.6vw;
         font-size: 0.9vw;
         font-weight: 700;
         color: #c0c0c0;
         border-radius: 0.4vw;
-        ;
         width: 70%;
         outline: none;
+        box-shadow: 0 0 4px #191919; 
     }
 
     .dinolabsIDEAlertInput.input-text:hover {
@@ -110,9 +110,46 @@
     }
 
     .dinolabsIDEAlertInput.input-text:focus {
-        opacity: 0.6;
+        opacity: 1.0;
         outline: none;
     }
+
+    .dinolabsIDEAlertInput.input-select {
+        background-color: #191919;
+        border: 0.2vh solid #c0c0c0;
+        padding: 0.6vw;
+        font-size: 0.9vw;
+        font-weight: 700;
+        color: #c0c0c0;
+        border-radius: 0.4vw;
+        width: 55%;
+        outline: none;
+        cursor: pointer; 
+        box-shadow: 0 0 4px #191919;
+    }
+
+    .dinolabsIDEAlertInput.input-select:hover {
+        opacity: 0.6;
+        outline: none;
+        cursor: pointer; 
+    }
+
+    .dinolabsIDEAlertInput.input-select:focus {
+        opacity: 1.0;
+        outline: none;
+        cursor: pointer; 
+    }
+
+    .dinolabsIDEAlertInput::-ms-expand {
+        display: none; 
+    }
+    
+    .dinolabsIDEAlertInput {
+        -webkit-appearance: none;  
+        -moz-appearance: none;    
+        appearance: none;          
+    }
+    
 
 
 

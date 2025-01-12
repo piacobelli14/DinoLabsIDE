@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import "../styles/mainStyles/DinoLabsIDEMedia.css";
 import "../styles/helperStyles/Slider.css";
@@ -9,10 +10,12 @@ import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faArrowLeft, faArrowRight, faArrowsLeftRightToLine, faArrowsRotate,
-    faArrowsUpToLine, faBorderTopLeft, faCropSimple, faDownload, faLeftRight,
-    faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus, faPalette, faPenRuler,
+    faArrowsUpToLine, faBorderTopLeft, faCircle, faCropSimple, faDownload, faLeftRight,
+    faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus, faBrush, faPenRuler,
     faPlus, faRightLeft, faRotate, faRotateLeft, faRotateRight, faRuler,
-    faRulerCombined, faSave, faSwatchbook, faTabletScreenButton, faUpDown
+    faRulerCombined, faSave, faSquareCaretLeft, faSwatchbook, faTabletScreenButton, faUpDown,
+    faSquarePlus,
+    faXmarkCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 function DinoLabsIDEMedia({ fileHandle }) {
@@ -33,24 +36,25 @@ function DinoLabsIDEMedia({ fileHandle }) {
     const [panY, setPanY] = useState(0);
     const draggingRef = useRef(false);
     const lastMousePosRef = useRef({ x: 0, y: 0 });
-    const [imageWidth, setImageWidth] = useState(500);
-    const [imageHeight, setImageHeight] = useState(500);
-    const [nativeWidth, setNativeWidth] = useState(500);
-    const [nativeHeight, setNativeHeight] = useState(500);
+    const [imageWidth, setImageWidth] = useState(450);
+    const [imageHeight, setImageHeight] = useState(450);
+    const [nativeWidth, setNativeWidth] = useState(450);
+    const [nativeHeight, setNativeHeight] = useState(450);
     const [resizingCorner, setResizingCorner] = useState(null);
     const resizingRef = useRef(false);
     const lastResizePosRef = useRef({ x: 0, y: 0 });
-    const initialSizeRef = useRef({ width: 500, height: 500 });
+    const initialSizeRef = useRef({ width: 450, height: 450 });
     const initialPosRef = useRef({ x: 0, y: 0 });
     const [isCropping, setIsCropping] = useState(false);
     const [cropRect, setCropRect] = useState({ x: 0, y: 0, width: 100, height: 100 });
+    const [cropRotation, setCropRotation] = useState(0);
     const cropResizingRef = useRef(false);
     const cropResizingCorner = useRef(null);
     const cropLastResizePosRef = useRef({ x: 0, y: 0 });
     const cropInitialRectRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
     const [actionMode, setActionMode] = useState('Idle');
     const [drawColor, setDrawColor] = useState('#5C2BE2');
-    const [highlightColor, setHighlightColor] = useState('#00FF62');
+    const [highlightColor, setHighlightColor] = useState('#00ff624d');
     const [paths, setPaths] = useState([]);
     const [undonePaths, setUndonePaths] = useState([]);
     const [tempPath, setTempPath] = useState(null);
@@ -64,10 +68,19 @@ function DinoLabsIDEMedia({ fileHandle }) {
     const [syncCorners, setSyncCorners] = useState(false);
     const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
     const aspectRatioRef = useRef(1);
-
+    const [grayscale, setGrayscale] = useState(0);
+    const [sepia, setSepia] = useState(0);
+    const [removeBackground, setRemoveBackground] = useState(false);
+    const [drawBrushSize, setDrawBrushSize] = useState(4);
+    const [highlightBrushSize, setHighlightBrushSize] = useState(4);
+    const [cropHistory, setCropHistory] = useState([]);
+    const [textOverlays, setTextOverlays] = useState([]);
+    const [selectedTextId, setSelectedTextId] = useState(null);
+    const [focusedTextId, setFocusedTextId] = useState(null);
     const [isDrawColorOpen, setIsDrawColorOpen] = useState(false);
     const [isHighlightColorOpen, setIsHighlightColorOpen] = useState(false);
     const [isCropDisabled, setIsCropDisabled] = useState(false);
+    const [circleCrop, setCircleCrop] = useState(false);
 
     useEffect(() => {
         const loadMedia = async () => {
@@ -83,8 +96,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                     img.onload = () => {
                         setNativeWidth(img.naturalWidth);
                         setNativeHeight(img.naturalHeight);
-                        const scaleFactor = 500 / img.naturalHeight;
-                        setImageHeight(500);
+                        const scaleFactor = 450 / img.naturalHeight;
+                        setImageHeight(450);
                         setImageWidth(img.naturalWidth * scaleFactor);
                     };
                     img.src = objectUrl;
@@ -113,6 +126,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
         }
     }, [rotation, flipX, flipY]);
 
+
     const resetImage = () => {
         setZoom(1);
         setRotation(0);
@@ -134,31 +148,75 @@ function DinoLabsIDEMedia({ fileHandle }) {
         setBorderBottomRightRadius(0);
         setPaths([]);
         setUndonePaths([]);
-        const scaleFactor = 500 / nativeHeight;
-        setImageHeight(500);
+        const scaleFactor = 450 / nativeHeight;
+        setImageHeight(450);
         setImageWidth(nativeWidth * scaleFactor);
         setIsCropDisabled(false);
     };
 
-    const downloadImage = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = imageWidth;
-        canvas.height = imageHeight;
-        const ctx = canvas.getContext('2d');
 
-        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px)`;
+    const downloadImage = async () => {
+        const alertResult = await showDialog({
+            title: 'Select Image Type and Scale',
+            message: 'Select the image type and scale.',
+            inputs: [
+                {
+                    name: 'fileType',
+                    type: 'select',
+                    label: 'Image Type',
+                    defaultValue: 'png',  
+                    options: [
+                        { label: '.png', value: 'png' },
+                        { label: '.jpg', value: 'jpg' },
+                        { label: '.jpeg', value: 'jpeg' },
+                    ]
+                },
+                {
+                    name: 'scale',
+                    type: 'select',
+                    label: 'Scale',
+                    defaultValue: '1x',  
+                    options: [
+                        { label: '1x', value: '1x' },
+                        { label: '2x', value: '2x' },
+                        { label: '3x', value: '3x' }
+                    ]
+                }
+            ],
+            showCancel: true
+        });
+    
+        if (!alertResult) {
+            return;
+        }
+    
+        const fileType = alertResult?.fileType || 'png'; 
+        const scale = alertResult?.scale || '1x';         
+    
+        const scaleFactor = scale === '2x' ? 2 : scale === '3x' ? 3 : 1;
+        const mimeType = (fileType === 'jpg' || fileType === 'jpeg') ? 'image/jpeg' : 'image/png';
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = imageWidth * scaleFactor;
+        canvas.height = imageHeight * scaleFactor;
+        const ctx = canvas.getContext('2d');
+        
+        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
         if (spread) {
             filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
         }
         ctx.filter = filterString;
         ctx.globalAlpha = opacity / 100;
-
+    
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(rotation * Math.PI / 180);
-        ctx.scale(flipX * zoom, flipY * zoom);
-
+        ctx.scale(flipX * zoom * scaleFactor, flipY * zoom * scaleFactor);
+    
         const roundedRect = new Path2D();
-        if (syncCorners) {
+        if (circleCrop) {
+            const radius = Math.min(imageWidth, imageHeight) / 2;
+            roundedRect.arc(0, 0, radius, 0, 2 * Math.PI);
+        } else if (syncCorners) {
             const radius = borderRadius;
             roundedRect.moveTo(-imageWidth / 2 + radius, -imageHeight / 2);
             roundedRect.lineTo(imageWidth / 2 - radius, -imageHeight / 2);
@@ -185,12 +243,12 @@ function DinoLabsIDEMedia({ fileHandle }) {
             roundedRect.quadraticCurveTo(-imageWidth / 2, -imageHeight / 2, -imageWidth / 2 + tl, -imageHeight / 2);
         }
         ctx.clip(roundedRect);
-
+    
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
             ctx.drawImage(img, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-
+    
             ctx.save();
             ctx.translate(-imageWidth / 2, -imageHeight / 2);
             paths.forEach(pathData => {
@@ -205,18 +263,31 @@ function DinoLabsIDEMedia({ fileHandle }) {
                 }
             });
             ctx.restore();
-
-            const dataUrl = canvas.toDataURL();
+    
+            if(removeBackground){
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                for(let i = 0; i < data.length; i += 4){
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    if(r > 240 && g > 240 && b > 240){
+                        data[i+3] = 0;
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+    
+            const dataUrl = canvas.toDataURL(mimeType);
             const link = document.createElement('a');
             link.href = dataUrl;
-            link.download = fileHandle.name || 'edited_image.png';
+            link.download = fileHandle.name ? fileHandle.name.replace(/\.\w+$/, '.' + fileType) : 'edited_image.' + fileType;
             link.click();
         };
         img.src = url;
     };
-
+    
     const handleDragStart = (e) => {
-        if (actionMode !== 'Idle') return;
+        if (actionMode !== 'Idle' || selectedTextId) return;
+        if (isCropping) return;
         draggingRef.current = true;
         lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -236,6 +307,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
 
     const handleResizeMouseDown = (corner, e) => {
         if (actionMode !== 'Idle') return;
+        if (isCropping) return;
         e.stopPropagation();
         e.preventDefault();
         setResizingCorner(corner);
@@ -346,10 +418,11 @@ function DinoLabsIDEMedia({ fileHandle }) {
 
     const handleCropGlobalMouseMove = (e) => {
         if (!cropResizingRef.current) return;
+    
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-
+    
         if (cropResizingCorner.current === 'bottom-right') {
             width += dx;
             height += dy;
@@ -367,15 +440,19 @@ function DinoLabsIDEMedia({ fileHandle }) {
             width -= dx;
             height -= dy;
         }
-
+    
+        if (circleCrop) {
+            height = width; 
+        }
+    
         setCropRect({
             x,
             y,
-            width: Math.max(width, 10),
-            height: Math.max(height, 10)
+            width: Math.max(width, 10),  
+            height: Math.max(height, 10),
         });
     };
-
+    
     useEffect(() => {
         const onMouseMove = (e) => handleCropGlobalMouseMove(e);
         const onMouseUp = () => { cropResizingRef.current = false; };
@@ -384,6 +461,78 @@ function DinoLabsIDEMedia({ fileHandle }) {
         return () => {
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, []);
+
+    const cropRotatingRef = useRef(false);
+    const cropInitialRotation = useRef(0);
+    const cropRotationStartAngle = useRef(0);
+    const cropRotationCenter = useRef({ x:0, y:0 });
+
+    const cropDraggingRef = useRef(false);
+    const lastCropDragPosRef = useRef({ x: 0, y: 0 });
+
+    const handleCropMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cropDraggingRef.current = true;
+        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleCropMouseMove = (e) => {
+        if(!cropDraggingRef.current) return;
+        const dx = e.clientX - lastCropDragPosRef.current.x;
+        const dy = e.clientY - lastCropDragPosRef.current.y;
+        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
+        setCropRect(prev => ({...prev, x: prev.x + dx, y: prev.y + dy}));
+    };
+
+    const handleCropMouseUp = () => {
+        cropDraggingRef.current = false;
+    };
+
+    useEffect(() => {
+        const onMouseMove = (e) => handleCropMouseMove(e);
+        const onMouseUp = () => handleCropMouseUp();
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        return () => {
+             window.removeEventListener('mousemove', onMouseMove);
+             window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, []);
+
+    const handleCropRotationMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cropRotatingRef.current = true;
+        const rect = e.currentTarget.parentElement.getBoundingClientRect();
+        cropRotationCenter.current = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+        const dx = e.clientX - cropRotationCenter.current.x;
+        const dy = e.clientY - cropRotationCenter.current.y;
+        cropRotationStartAngle.current = Math.atan2(dy, dx) * (180/Math.PI);
+        cropInitialRotation.current = cropRotation;
+    };
+
+    const handleCropGlobalMouseMoveRotation = (e) => {
+        if(!cropRotatingRef.current) return;
+        const dx = e.clientX - cropRotationCenter.current.x;
+        const dy = e.clientY - cropRotationCenter.current.y;
+        const angle = Math.atan2(dy, dx) * (180/Math.PI);
+        const deltaAngle = angle - cropRotationStartAngle.current;
+        setCropRotation(cropInitialRotation.current + deltaAngle);
+    };
+
+    const handleCropGlobalMouseUpRotation = () => {
+        cropRotatingRef.current = false;
+    };
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleCropGlobalMouseMoveRotation);
+        window.addEventListener('mouseup', handleCropGlobalMouseUpRotation);
+        return () => {
+            window.removeEventListener('mousemove', handleCropGlobalMouseMoveRotation);
+            window.removeEventListener('mouseup', handleCropGlobalMouseUpRotation);
         };
     }, []);
 
@@ -413,7 +562,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
             setTempPath({
                 d,
                 color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                width: actionMode === 'Highlighting' ? 10 : 2
+                width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
             });
         }
     };
@@ -448,6 +597,39 @@ function DinoLabsIDEMedia({ fileHandle }) {
             return newUndone;
         });
     };
+
+    const undoCrop = () => {
+        if (cropHistory.length > 0) {
+            const previous = cropHistory[cropHistory.length - 1];
+            setCropHistory(prev => prev.slice(0, prev.length - 1));
+            setUrl(previous.url);
+            setPanX(previous.panX);
+            setPanY(previous.panY);
+            setImageWidth(previous.imageWidth);
+            setImageHeight(previous.imageHeight);
+            setNativeWidth(previous.nativeWidth);
+            setNativeHeight(previous.nativeHeight);
+            setPaths([]);
+            setUndonePaths([]);
+            setIsCropping(false);
+        }
+    };
+
+    const addTextOverlay = () => {
+        const newOverlay = {
+            id: Date.now(),
+            text: 'Edit me',
+            fontFamily: 'Arial',
+            fontSize: 20,
+            color: '#000000',
+            x: imageWidth / 2 - 50,
+            y: imageHeight / 2 - 10
+        };
+        setTextOverlays([...textOverlays, newOverlay]);
+    };
+
+    const getSelectedText = () => textOverlays.find(t => t.id === selectedTextId) || {};
+
 
     if (!url) return <div>Loading media...</div>;
 
@@ -634,35 +816,80 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                                 img.onload = () => {
                                                     const scaleX = nativeWidth / imageWidth;
                                                     const scaleY = nativeHeight / imageHeight;
+                                                    const rad = cropRotation * Math.PI / 180;
 
-                                                    const sx = cropRect.x * scaleX;
-                                                    const sy = cropRect.y * scaleY;
-                                                    const sw = cropRect.width * scaleX;
-                                                    const sh = cropRect.height * scaleY;
+                                                    const cx = cropRect.x + cropRect.width / 2;
+                                                    const cy = cropRect.y + cropRect.height / 2;
+
+                                                    const corners = [
+                                                        { x: cropRect.x, y: cropRect.y },
+                                                        { x: cropRect.x + cropRect.width, y: cropRect.y },
+                                                        { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
+                                                        { x: cropRect.x, y: cropRect.y + cropRect.height }
+                                                    ];
+
+                                                    const rotatedCorners = corners.map(pt => {
+                                                        const dx = pt.x - cx;
+                                                        const dy = pt.y - cy;
+                                                        return {
+                                                            x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * scaleX,
+                                                            y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * scaleY
+                                                        };
+                                                    });
+
+                                                    const xs = rotatedCorners.map(pt => pt.x);
+                                                    const ys = rotatedCorners.map(pt => pt.y);
+                                                    const minX = Math.min(...xs);
+                                                    const maxX = Math.max(...xs);
+                                                    const minY = Math.min(...ys);
+                                                    const maxY = Math.max(...ys);
+                                                    const cropWidth = maxX - minX;
+                                                    const cropHeight = maxY - minY;
 
                                                     const canvasCrop = document.createElement('canvas');
-                                                    canvasCrop.width = sw;
-                                                    canvasCrop.height = sh;
-
+                                                    canvasCrop.width = cropWidth;
+                                                    canvasCrop.height = cropHeight;
                                                     const ctxCrop = canvasCrop.getContext('2d');
-                                                    ctxCrop.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+
+                                                    ctxCrop.save();
+                                                    ctxCrop.beginPath();
+                                                    ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
+                                                    for (let i = 1; i < rotatedCorners.length; i++) {
+                                                        ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
+                                                    }
+                                                    ctxCrop.closePath();
+                                                    ctxCrop.clip();
+
+                                                    ctxCrop.drawImage(img, -minX, -minY, nativeWidth, nativeHeight);
+                                                    ctxCrop.restore();
+
                                                     const newDataUrl = canvasCrop.toDataURL();
+
+                                                    setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight }]);
 
                                                     setUrl(newDataUrl);
                                                     setPanX(0);
                                                     setPanY(0);
                                                     setImageWidth(cropRect.width);
                                                     setImageHeight(cropRect.height);
-                                                    setNativeWidth(sw);
-                                                    setNativeHeight(sh);
+                                                    setNativeWidth(cropWidth);
+                                                    setNativeHeight(cropHeight);
                                                     setIsCropping(false);
                                                     setPaths([]);
                                                     setUndonePaths([]);
+                                                    setCircleCrop(false); 
+                                                    setIsDrawColorOpen(false);
+                                                    setIsHighlightColorOpen(false); 
+                                                    setActionMode('idle'); 
                                                 };
                                                 img.src = url;
                                             } else {
                                                 setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
                                                 setIsCropping(true);
+                                                setCircleCrop(false); 
+                                                setIsDrawColorOpen(false);
+                                                setIsHighlightColorOpen(false); 
+                                                setActionMode('idle'); 
                                             }
                                         }}
                                         disabled={isCropDisabled ? true : false}
@@ -672,14 +899,54 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         <FontAwesomeIcon icon={faCropSimple} />
                                     </button>
                                 </Tippy>
+
+                                {isCropping && (
+                                    <Tippy content="Circle Crop" theme="tooltip-light">
+                                        <button 
+                                            onClick={() => {
+                                            setCircleCrop(prev => {
+                                                const newVal = !prev;
+                                                if(newVal) {
+                                                    setCropRect(prevRect => ({...prevRect, height: prevRect.width}));
+                                                }
+                                                return newVal;
+                                            })
+                                            }}
+                                            style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
+                                            className="dinolabsIDEMediaToolButton"
+                                        >
+                                            <FontAwesomeIcon icon={faCircle}/>
+                                        </button>
+                                    </Tippy>
+                                )}
+                                <Tippy content="Undo Crop" theme="tooltip-light">
+                                    <button onClick={undoCrop} className="dinolabsIDEMediaToolButton"
+                                        disabled={isCropDisabled ? true : false}
+                                        style={{ "opacity": isCropDisabled ? "0.6" : "1.0"}}
+                                    >
+                                        <FontAwesomeIcon icon={faSquareCaretLeft} />
+                                    </button>
+                                </Tippy>
                             </div>
                         </div>
+                        {isCropping && (
+                            <div className="dinolabsIDEMediaCellFlexStack">
+                                <label className="dinolabsIDEMediaCellFlexTitle">
+                                    Crop Presets
+                                </label>
+                                <div className="dinolabsIDEMediaCellFlex">
+                                    <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
+                                    <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
+                                    <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="dinolabsIDEMediaCellWrapper">
                         <div className="dinolabsIDEMediaHeaderFlex">
                             <label className="dinolabsIDEMediaCellTitle">
-                                <FontAwesomeIcon icon={faPalette} />
+                                <FontAwesomeIcon icon={faBrush} />
                                 Drawing
                             </label>
                             <div className="dinolabsIDEMediaCellFlexSupplement">
@@ -695,6 +962,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                 </Tippy>
                             </div>
                         </div>
+                        
 
                         <div className="dinolabsIDEMediaCellFlexStack">
                             <label className="dinolabsIDEMediaCellFlexTitle">
@@ -729,7 +997,22 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         }}
                                     />
                                 </Tippy>
+
+                                <div className="dinolabsIDEMediaBrushSizeFlex">
+                                    {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                        <button key={opt.size}
+                                        onClick={() => setDrawBrushSize(opt.size)}
+                                        style={{
+                                            backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : ''
+                                        }}
+                                        className="dinolabsIDEMediaToolButtonMini"
+                                        >
+                                        {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+                           
                         </div>
 
                         <div className="dinolabsIDEMediaCellFlexStack">
@@ -765,6 +1048,20 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         }}
                                     />
                                 </Tippy>
+
+                                <div className="dinolabsIDEMediaBrushSizeFlex">
+                                    {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                        <button key={opt.size}
+                                        onClick={() => setHighlightBrushSize(opt.size)}
+                                        style={{
+                                            backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : ''
+                                        }}
+                                        className="dinolabsIDEMediaToolButtonMini"
+                                        >
+                                        {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -774,6 +1071,18 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             <label className="dinolabsIDEMediaCellTitle">
                                 <FontAwesomeIcon icon={faSwatchbook} />
                                 Styles
+                            </label>
+
+                            <label className="dinolabsIDEConfrmationCheck">
+                                <input
+                                    type="checkbox"
+                                    className="dinolabsIDESettingsCheckbox"
+                                    checked={removeBackground} 
+                                    onChange={e => setRemoveBackground(e.target.checked)}
+                                />
+                                <span>
+                                    Remove Background
+                                </span>
                             </label>
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
@@ -916,7 +1225,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                         </div>
                         <div className="dinolabsIDEMediaCellFlexStack">
                             <label className="dinolabsIDEMediaCellFlexTitle">
-                                Spread
+                                Shadow
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
@@ -937,7 +1246,54 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                 </button>
                             </div>
                         </div>
+                        <div className="dinolabsIDEMediaCellFlexStack">
+                            <label className="dinolabsIDEMediaCellFlexTitle">
+                                Grayscale
+                            </label>
+                            <div className="dinolabsIDEMediaCellFlex">
+                                <button onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faMinus} />
+                                </button>
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={grayscale}
+                                        onChange={(e) => setGrayscale(Number(e.target.value))}
+                                    />
+                                </div>
+                                <button onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faPlus} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="dinolabsIDEMediaCellFlexStack">
+                            <label className="dinolabsIDEMediaCellFlexTitle">
+                                Sepia
+                            </label>
+                            <div className="dinolabsIDEMediaCellFlex">
+                                <button onClick={() => setSepia(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faMinus} />
+                                </button>
+                                <div className="dinolabsIDEMediaSliderWrapper">
+                                    <input
+                                        className="dinolabsIDESettingsSlider"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={sepia}
+                                        onChange={(e) => setSepia(Number(e.target.value))}
+                                    />
+                                </div>
+                                <button onClick={() => setSepia(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faPlus} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
+ 
                     <div className="dinolabsIDEMediaCellWrapper">
                         <div className="dinolabsIDEMediaHeaderFlex">
                             <label className="dinolabsIDEMediaCellTitle">
@@ -1022,6 +1378,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             </div>
                         </div>
                     </div>
+
+                    
                 </div>
 
                 <div
@@ -1029,11 +1387,27 @@ function DinoLabsIDEMedia({ fileHandle }) {
                     style={{
                         cursor: 'grab',
                     }}
-                    onMouseDown={handleDragStart}
+                    onMouseDown={(e) => {
+                        if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
+                            setFocusedTextId(null);
+                            setSelectedTextId(null);
+                        }
+                        handleDragStart(e);
+                    }}
                     onMouseMove={handleDragMove}
                     onMouseUp={handleDragEnd}
                     onMouseLeave={handleDragEnd}
                 >
+                    <div className="diolabsIDEMediaSupplementalButtonsFlexWrapper"> 
+                        {isCropping && (
+                            <div className="diolabsIDEMediaSupplementalButtonsFlex">
+                                <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
+                                <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
+                                <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="dinolabsIDEMediaExportActionsWrapper">
                         <div className="dinolabsIDEMediaExportActionsWrapperFlex">
                             <label className="dinolabsIDEMediaModeIndicator">
@@ -1067,32 +1441,38 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             style={{
                                 width: '100%',
                                 height: '100%',
-                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) ${spread ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
                                 userSelect: 'none',
                                 borderRadius: 'inherit',
                                 opacity: opacity / 100
                             }}
                         />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle top-left"
-                            onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
-                            style={{ top: `-6px`, left: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle top-right"
-                            onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
-                            style={{ top: `-6px`, right: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle bottom-left"
-                            onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
-                            style={{ bottom: `-6px`, left: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle bottom-right"
-                            onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
-                            style={{ bottom: `-6px`, right: `-6px` }}
-                        />
+                        
+                        
+                        {!isCropping && (
+                            <>
+                            <div
+                                className="dinolabsIDEMediaResizeHandle top-left"
+                                onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
+                                style={{ top: `-6px`, left: `-6px` }}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle top-right"
+                                onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
+                                style={{ top: `-6px`, right: `-6px` }}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle bottom-left"
+                                onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
+                                style={{ bottom: `-6px`, left: `-6px` }}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle bottom-right"
+                                onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
+                                style={{ bottom: `-6px`, right: `-6px` }}
+                            />
+                            </>
+                        )}
                         {isCropping && (
                             <div
                                 className="dinolabsIDEMediaCropRectangle"
@@ -1100,13 +1480,14 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     position: 'absolute',
                                     border: '0.4vh dashed rgba(31, 174, 245, 1)',
                                     backgroundColor: 'rgba(0,0,0,0.6)',
-                                    boxSizing: 'none',
                                     left: cropRect.x,
                                     top: cropRect.y,
                                     width: cropRect.width,
                                     height: cropRect.height,
-                                    pointerEvents: 'none'
+                                    transform: `rotate(${cropRotation}deg)`,
+                                    borderRadius: circleCrop ? '50%' : '0'
                                 }}
+                                onMouseDown={handleCropMouseDown}
                             >
                                 <div
                                     className="dinolabsIDEMediaResizeHandle top-left"
@@ -1127,6 +1508,26 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     className="dinolabsIDEMediaResizeHandle bottom-right"
                                     style={{ pointerEvents: 'auto', bottom: `-8px`, right: `-8px` }}
                                     onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
                                 />
                             </div>
                         )}
@@ -1170,12 +1571,46 @@ function DinoLabsIDEMedia({ fileHandle }) {
         );
     } else if (mediaType === 'video') {
         return (
-            <div className="media-container video-container">
-                <div className="media-controls">
-                    <button className="media-button">Download Video</button>
-                    <button className="media-button">Full Screen</button>
+            <div className="dinolabsIDEMediaContentWrapper">
+                <div className="dinoLabsIDEMediaToolBar">
                 </div>
-                <video src={url} controls className="media-content" />
+
+                <div
+                    className="dinolabsIDEMediaContainer"
+                    style={{
+                        cursor: 'grab',
+                    }}
+                >
+                    <div
+                        className="dinolabsIDEImageResizer"
+                        style={{
+                            top: `calc(50% + ${panY}px)`,
+                            left: `calc(50% + ${panX}px)`,
+                            width: `${imageWidth}px`,
+                            height: `${imageHeight}px`,
+                            transform: `
+                            translate(-50%, -50%) 
+                            scale(${flipX * zoom}, ${flipY * zoom}) 
+                            rotate(${rotation}deg)
+                            `,
+                            borderRadius: syncCorners
+                                ? `${borderRadius}px`
+                                : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
+                        }}
+                    >
+                        <video src={url} controls
+                            className="dinolabsIDEMediaContent"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                                userSelect: 'none',
+                                borderRadius: 'inherit',
+                                opacity: opacity / 100
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
         );
     } else if (mediaType === 'audio') {

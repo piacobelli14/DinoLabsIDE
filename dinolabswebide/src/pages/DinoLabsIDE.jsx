@@ -49,10 +49,10 @@ function escapeRegExp(str) {
 }
 
 const extensionToLanguageMap = {
-  js: "JavaScript",
-  jsx: "JavaScript",
-  ts: "TypeScript",
-  tsx: "TypeScript",
+  js: "Javascript",
+  jsx: "Javascript",
+  ts: "Typescript",
+  tsx: "Typescript",
   html: "HTML",
   css: "CSS",
   json: "JSON",
