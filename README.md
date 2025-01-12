@@ -1,3 +1,3 @@
 # DinoLabsIDE
 
-https://www.playground.dinolaboratories.com/dinolabs-ide
+https://www.playground.dinolaboratories.com/
