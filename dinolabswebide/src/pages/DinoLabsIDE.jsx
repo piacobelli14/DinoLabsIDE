@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
-import DinoLabsIDEMedia from "./DinoLabsIDEMedia.jsx";
-import DinoLabsIDEAccount from "./DinoLabsAccount/DinoLabsAccountProfile";
+import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
+import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor.jsx"; 
+import DinoLabsIDEAudioEditor from "./DinoLabsIDEMedia/DinoLabsIDEAudioEditor.jsx"; 
+import DinoLabsIDEAccount from "./DinoLabsIDEAccount/DinoLabsIDEAccount.jsx";
 import { showDialog } from "./DinoLabsIDEAlert.jsx";
 import "../styles/mainStyles/DinoLabsIDE.css";
 import "../styles/mainStyles/DinoLabsIDEUnavailable.css";
@@ -2242,7 +2244,19 @@ const DinoLabsIDE = () => {
                                 style={{ display: pane.activeTabId === tab.id ? "block" : "none" }}
                               >
                                 {tab.isMedia ? (
-                                  <DinoLabsIDEMedia fileHandle={tab.fileHandle} />
+                                  <>
+                                    {(['png', 'jpg', 'jpeg'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDEImageEditor fileHandle={tab.fileHandle} />
+                                    )}
+
+                                    {(['mp4', 'mkv', 'avi', 'mov'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDEVideoEditor fileHandle={tab.fileHandle} />
+                                    )}
+
+                                    {(['mp3', 'wav', 'flac'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDEAudioEditor fileHandle={tab.fileHandle} />
+                                    )}
+                                  </>
                                 ) : (
                                   <DinoLabsIDEMarkdown
                                     fileContent={tab.content}

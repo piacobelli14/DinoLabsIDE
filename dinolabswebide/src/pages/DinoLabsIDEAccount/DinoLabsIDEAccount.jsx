@@ -7,9 +7,9 @@ import "../../styles/helperStyles/Slider.css";
 import "../../styles/mainStyles/DinoLabsIDEPlots.css";
 import "../../styles/helperStyles/LoadingSpinner.css";
 import { showDialog } from "../DinoLabsIDEAlert.jsx"; 
-import useIsTouchDevice from "../../TouchDevice"; 
+import useIsTouchDevice from "../../TouchDevice.jsx"; 
 import LinePlot from "../../helpers/PlottingHelpers/LineHelper.jsx";
-import useAuth from "../../UseAuth"; 
+import useAuth from "../../UseAuth.jsx"; 
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import {

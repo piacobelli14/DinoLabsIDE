@@ -41,7 +41,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route index element={<Navigate to="dinolabs-ide" replace />} />
+          <Route index element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>
