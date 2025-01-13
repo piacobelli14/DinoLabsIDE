@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import "../styles/mainStyles/DinoLabsIDEMedia.css";
 import "../styles/helperStyles/Slider.css";
@@ -126,7 +125,6 @@ function DinoLabsIDEMedia({ fileHandle }) {
         }
     }, [rotation, flipX, flipY]);
 
-
     const resetImage = () => {
         setZoom(1);
         setRotation(0);
@@ -153,7 +151,6 @@ function DinoLabsIDEMedia({ fileHandle }) {
         setImageWidth(nativeWidth * scaleFactor);
         setIsCropDisabled(false);
     };
-
 
     const downloadImage = async () => {
         const alertResult = await showDialog({
@@ -202,7 +199,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
         const ctx = canvas.getContext('2d');
         
         let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-        if (spread) {
+        if (spread && !removeBackground) {
             filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
         }
         ctx.filter = filterString;
@@ -217,7 +214,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
             const radius = Math.min(imageWidth, imageHeight) / 2;
             roundedRect.arc(0, 0, radius, 0, 2 * Math.PI);
         } else if (syncCorners) {
-            const radius = borderRadius;
+            let radius = borderRadius;
+            radius = Math.min(radius, imageWidth/2, imageHeight/2);
             roundedRect.moveTo(-imageWidth / 2 + radius, -imageHeight / 2);
             roundedRect.lineTo(imageWidth / 2 - radius, -imageHeight / 2);
             roundedRect.quadraticCurveTo(imageWidth / 2, -imageHeight / 2, imageWidth / 2, -imageHeight / 2 + radius);
@@ -228,10 +226,10 @@ function DinoLabsIDEMedia({ fileHandle }) {
             roundedRect.lineTo(-imageWidth / 2, -imageHeight / 2 + radius);
             roundedRect.quadraticCurveTo(-imageWidth / 2, -imageHeight / 2, -imageWidth / 2 + radius, -imageHeight / 2);
         } else {
-            const tl = borderTopLeftRadius;
-            const tr = borderTopRightRadius;
-            const br = borderBottomRightRadius;
-            const bl = borderBottomLeftRadius;
+            const tl = Math.min(borderTopLeftRadius, imageWidth/2, imageHeight/2);
+            const tr = Math.min(borderTopRightRadius, imageWidth/2, imageHeight/2);
+            const br = Math.min(borderBottomRightRadius, imageWidth/2, imageHeight/2);
+            const bl = Math.min(borderBottomLeftRadius, imageWidth/2, imageHeight/2);
             roundedRect.moveTo(-imageWidth / 2 + tl, -imageHeight / 2);
             roundedRect.lineTo(imageWidth / 2 - tr, -imageHeight / 2);
             roundedRect.quadraticCurveTo(imageWidth / 2, -imageHeight / 2, imageWidth / 2, -imageHeight / 2 + tr);
@@ -262,19 +260,18 @@ function DinoLabsIDEMedia({ fileHandle }) {
                     console.error('Error drawing path:', err);
                 }
             });
-            ctx.restore();
-    
-            if(removeBackground){
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-                for(let i = 0; i < data.length; i += 4){
-                    const r = data[i], g = data[i+1], b = data[i+2];
-                    if(r > 240 && g > 240 && b > 240){
-                        data[i+3] = 0;
-                    }
+            if(tempPath) {
+                ctx.strokeStyle = tempPath.color;
+                ctx.lineWidth = tempPath.width;
+                ctx.lineCap = "round";
+                try {
+                    const p = new Path2D(tempPath.d);
+                    ctx.stroke(p);
+                } catch (err) {
+                    console.error('Error drawing temp path:', err);
                 }
-                ctx.putImageData(imageData, 0, 0);
             }
+            ctx.restore();
     
             const dataUrl = canvas.toDataURL(mimeType);
             const link = document.createElement('a');
@@ -284,7 +281,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
         };
         img.src = url;
     };
-    
+
     const handleDragStart = (e) => {
         if (actionMode !== 'Idle' || selectedTextId) return;
         if (isCropping) return;
@@ -549,7 +546,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
         const { x, y } = getSvgPoint(e);
         if (actionMode === 'Drawing' || actionMode === 'Highlighting') {
             isDrawingRef.current = true;
-            currentPathPoints.current = [`M${x} ${y}`];
+            currentPathPoints.current = [{ x, y }];
             setUndonePaths([]);
         }
     };
@@ -557,21 +554,43 @@ function DinoLabsIDEMedia({ fileHandle }) {
     const handleSvgMouseMove = (e) => {
         if (isDrawingRef.current && (actionMode === 'Drawing' || actionMode === 'Highlighting')) {
             const { x, y } = getSvgPoint(e);
-            currentPathPoints.current.push(`L${x} ${y}`);
-            const d = currentPathPoints.current.join(' ');
-            setTempPath({
-                d,
-                color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
-            });
+            currentPathPoints.current.push({ x, y });
+            const pts = currentPathPoints.current;
+            if(pts.length > 1) {
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for(let i = 1; i < pts.length - 1; i++){
+                    let x_mid = (pts[i].x + pts[i+1].x) / 2;
+                    let y_mid = (pts[i].y + pts[i+1].y) / 2;
+                    d += ` Q ${pts[i].x} ${pts[i].y} ${x_mid} ${y_mid}`;
+                }
+                d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`;
+                setTempPath({
+                    d,
+                    color: actionMode === 'Drawing' ? drawColor : highlightColor,
+                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
+                });
+            }
         }
     };
 
     const handleSvgMouseUp = (e) => {
         if (isDrawingRef.current && (actionMode === 'Drawing' || actionMode === 'Highlighting')) {
             isDrawingRef.current = false;
-            if (tempPath) {
-                setPaths(prev => [...prev, tempPath]);
+            const pts = currentPathPoints.current;
+            if (pts.length > 1) {
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for (let i = 1; i < pts.length - 1; i++) {
+                    let x_mid = (pts[i].x + pts[i + 1].x) / 2;
+                    let y_mid = (pts[i].y + pts[i + 1].y) / 2;
+                    d += ` Q ${pts[i].x} ${pts[i].y} ${x_mid} ${y_mid}`;
+                }
+                d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`;
+                const newPath = {
+                    d,
+                    color: actionMode === 'Drawing' ? drawColor : highlightColor,
+                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
+                };
+                setPaths(prev => [...prev, newPath]);
             }
             setTempPath(null);
             currentPathPoints.current = [];
@@ -609,8 +628,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
             setImageHeight(previous.imageHeight);
             setNativeWidth(previous.nativeWidth);
             setNativeHeight(previous.nativeHeight);
-            setPaths([]);
-            setUndonePaths([]);
+            setPaths(previous.paths);
+            setUndonePaths(previous.undonePaths);
             setIsCropping(false);
         }
     };
@@ -807,6 +826,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                 <Tippy content="Crop Image" theme="tooltip-light">
                                     <button
                                         onClick={() => {
+                                            if (actionMode === 'Drawing' || actionMode === 'Highlighting') return;
                                             if (isCropDisabled) {
                                                 return;
                                             }
@@ -814,6 +834,36 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                             if (isCropping) {
                                                 const img = new Image();
                                                 img.onload = () => {
+                                                    const offscreenCanvas = document.createElement('canvas');
+                                                    offscreenCanvas.width = nativeWidth;
+                                                    offscreenCanvas.height = nativeHeight;
+                                                    const offscreenCtx = offscreenCanvas.getContext('2d');
+                                                    offscreenCtx.drawImage(img, 0, 0, nativeWidth, nativeHeight);
+                                                    offscreenCtx.save();
+                                                    paths.forEach(pathData => {
+                                                        offscreenCtx.strokeStyle = pathData.color;
+                                                        offscreenCtx.lineWidth = pathData.width;
+                                                        offscreenCtx.lineCap = "round";
+                                                        try {
+                                                            const p = new Path2D(pathData.d);
+                                                            offscreenCtx.stroke(p);
+                                                        } catch (err) {
+                                                            console.error('Error drawing path:', err);
+                                                        }
+                                                    });
+                                                    if(tempPath) {
+                                                        offscreenCtx.strokeStyle = tempPath.color;
+                                                        offscreenCtx.lineWidth = tempPath.width;
+                                                        offscreenCtx.lineCap = "round";
+                                                        try {
+                                                            const p = new Path2D(tempPath.d);
+                                                            offscreenCtx.stroke(p);
+                                                        } catch (err) {
+                                                            console.error('Error drawing temp path:', err);
+                                                        }
+                                                    }
+                                                    offscreenCtx.restore();
+                                                    
                                                     const scaleX = nativeWidth / imageWidth;
                                                     const scaleY = nativeHeight / imageHeight;
                                                     const rad = cropRotation * Math.PI / 180;
@@ -853,19 +903,24 @@ function DinoLabsIDEMedia({ fileHandle }) {
 
                                                     ctxCrop.save();
                                                     ctxCrop.beginPath();
-                                                    ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
-                                                    for (let i = 1; i < rotatedCorners.length; i++) {
-                                                        ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
+                                                    if(circleCrop) {
+                                                        const radius = Math.min(cropWidth, cropHeight) / 2;
+                                                        ctxCrop.arc(cropWidth/2, cropHeight/2, radius, 0, 2*Math.PI);
+                                                    } else {
+                                                        ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
+                                                        for (let i = 1; i < rotatedCorners.length; i++) {
+                                                            ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
+                                                        }
+                                                        ctxCrop.closePath();
                                                     }
-                                                    ctxCrop.closePath();
                                                     ctxCrop.clip();
 
-                                                    ctxCrop.drawImage(img, -minX, -minY, nativeWidth, nativeHeight);
+                                                    ctxCrop.drawImage(offscreenCanvas, -minX, -minY, nativeWidth, nativeHeight);
                                                     ctxCrop.restore();
 
                                                     const newDataUrl = canvasCrop.toDataURL();
 
-                                                    setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight }]);
+                                                    setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight, paths, undonePaths }]);
 
                                                     setUrl(newDataUrl);
                                                     setPanX(0);
@@ -877,10 +932,9 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                                     setIsCropping(false);
                                                     setPaths([]);
                                                     setUndonePaths([]);
-                                                    setCircleCrop(false); 
                                                     setIsDrawColorOpen(false);
                                                     setIsHighlightColorOpen(false); 
-                                                    setActionMode('idle'); 
+                                                    setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
                                                 };
                                                 img.src = url;
                                             } else {
@@ -889,11 +943,11 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                                 setCircleCrop(false); 
                                                 setIsDrawColorOpen(false);
                                                 setIsHighlightColorOpen(false); 
-                                                setActionMode('idle'); 
+                                                setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
                                             }
                                         }}
-                                        disabled={isCropDisabled ? true : false}
-                                        style={{ "opacity": isCropDisabled ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
+                                        disabled={(isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? true : false}
+                                        style={{ "opacity": (isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
                                         className="dinolabsIDEMediaToolButton"
                                     >
                                         <FontAwesomeIcon icon={faCropSimple} />
@@ -971,7 +1025,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button
                                     onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
-                                    style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "" }}
+                                    style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                    disabled={isCropping}
                                     className="dinolabsIDEMediaToolButtonBig"
                                 >
                                     Draw
@@ -1022,7 +1077,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             <div className="dinolabsIDEMediaCellFlex">
                                 <button
                                     onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
-                                    style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "" }}
+                                    style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                    disabled={isCropping}
                                     className="dinolabsIDEMediaToolButtonBig"
                                 >
                                     Highlight
@@ -1309,11 +1365,12 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         setSyncCorners(e.target.checked);
                                         if (e.target.checked) {
                                             const radius = borderRadius || borderTopLeftRadius || 0;
-                                            setBorderRadius(radius);
-                                            setBorderTopLeftRadius(radius);
-                                            setBorderTopRightRadius(radius);
-                                            setBorderBottomLeftRadius(radius);
-                                            setBorderBottomRightRadius(radius);
+                                            const limited = Math.min(radius, 100);
+                                            setBorderRadius(limited);
+                                            setBorderTopLeftRadius(limited);
+                                            setBorderTopRightRadius(limited);
+                                            setBorderBottomLeftRadius(limited);
+                                            setBorderBottomRightRadius(limited);
                                         }
                                     }}
                                 />
@@ -1333,8 +1390,9 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                         type="text"
                                         value={`Corner: ${borderRadius}px`}
                                         onChange={(e) => {
-                                            const newVal = e.target.value.replace(/[^0-9.-]/g, "");
-                                            const val = Number(newVal);
+                                            const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                            let val = Number(newVal);
+                                            val = Math.min(val, 100);
                                             setBorderRadius(val);
                                             setBorderTopLeftRadius(val);
                                             setBorderTopRightRadius(val);
@@ -1349,13 +1407,23 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                                 className="dinolabsIDEMediaPositionInput"
                                                 type="text"
                                                 value={`TL: ${borderTopLeftRadius}px`}
-                                                onChange={(e) => setBorderTopLeftRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                    let val = Number(newVal);
+                                                    val = Math.min(val, 100);
+                                                    setBorderTopLeftRadius(val);
+                                                }}
                                             />
                                             <input
                                                 className="dinolabsIDEMediaPositionInput"
                                                 type="text"
                                                 value={`TR: ${borderTopRightRadius}px`}
-                                                onChange={(e) => setBorderTopRightRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                    let val = Number(newVal);
+                                                    val = Math.min(val, 100);
+                                                    setBorderTopRightRadius(val);
+                                                }}
                                             />
                                         </div>
 
@@ -1364,13 +1432,23 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                                 className="dinolabsIDEMediaPositionInput"
                                                 type="text"
                                                 value={`BL: ${borderBottomLeftRadius}px`}
-                                                onChange={(e) => setBorderBottomLeftRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                    let val = Number(newVal);
+                                                    val = Math.min(val, 100);
+                                                    setBorderBottomLeftRadius(val);
+                                                }}
                                             />
                                             <input
                                                 className="dinolabsIDEMediaPositionInput"
                                                 type="text"
                                                 value={`BR: ${borderBottomRightRadius}px`}
-                                                onChange={(e) => setBorderBottomRightRadius(Number(e.target.value.replace(/[^0-9.-]/g, "")))}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                    let val = Number(newVal);
+                                                    val = Math.min(val, 100);
+                                                    setBorderBottomRightRadius(val);
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -1449,7 +1527,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                         />
                         
                         
-                        {!isCropping && (
+                        {!isCropping && actionMode === 'Idle' && (
                             <>
                             <div
                                 className="dinolabsIDEMediaResizeHandle top-left"
@@ -1485,7 +1563,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                     width: cropRect.width,
                                     height: cropRect.height,
                                     transform: `rotate(${cropRotation}deg)`,
-                                    borderRadius: circleCrop ? '50%' : '0'
+                                    borderRadius: circleCrop ? '50%' : '0',
+                                    zIndex: 10
                                 }}
                                 onMouseDown={handleCropMouseDown}
                             >
@@ -1532,6 +1611,7 @@ function DinoLabsIDEMedia({ fileHandle }) {
                             </div>
                         )}
                         <svg
+                            viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
                             style={{
                                 position: 'absolute',
                                 top: 0,
@@ -1539,7 +1619,8 @@ function DinoLabsIDEMedia({ fileHandle }) {
                                 width: '100%',
                                 height: '100%',
                                 pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
-                                cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default'
+                                cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
+                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`
                             }}
                             onMouseDown={handleSvgMouseDown}
                             onMouseMove={handleSvgMouseMove}
