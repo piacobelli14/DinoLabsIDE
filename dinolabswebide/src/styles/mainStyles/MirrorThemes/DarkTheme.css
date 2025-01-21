@@ -1,7 +1,4 @@
 .dark-token {
-    white-space: pre;
-    display: inline;
-    vertical-align: top;
     font-weight: 700;
     font-family: monospace;
 }
@@ -175,10 +172,6 @@
 }
 .dark-token.standard-library {
     color: #3b9b8b;
-}
-.searchHighlight {
-    background-color: #cc9e3f;
-    color: #fff;
 }
 .dark-token.property {
     color: #6a9dc2;

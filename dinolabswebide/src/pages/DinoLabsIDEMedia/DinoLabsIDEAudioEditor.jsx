@@ -36,7 +36,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
 
                 return () => URL.revokeObjectURL(objectUrl);
             } catch (error) {
-                console.error('Failed to load media:', error);
+                return; 
             }
         };
         loadMedia();

@@ -15,7 +15,11 @@ import {
     faPlus, faRightLeft, faRotate, faRotateLeft, faRotateRight, faRuler,
     faRulerCombined, faSave, faSquareCaretLeft, faSwatchbook, faTabletScreenButton, faUpDown,
     faSquarePlus,
-    faXmarkCircle
+    faXmarkCircle,
+    faBackward,
+    faForward,
+    faPlay,
+    faPause
 } from '@fortawesome/free-solid-svg-icons';
 
 function DinoLabsIDEImageEditor({ fileHandle }) {
@@ -106,7 +110,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
               img.src = objectUrl;
             } 
           } catch (error) {
-            console.error('Failed to load media:', error);
+            return; 
           }
         };
       
@@ -263,7 +267,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     const p = new Path2D(pathData.d);
                     ctx.stroke(p);
                 } catch (err) {
-                    console.error('Error drawing path:', err);
+                    return; 
                 }
             });
             if(tempPath) {
@@ -274,7 +278,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     const p = new Path2D(tempPath.d);
                     ctx.stroke(p);
                 } catch (err) {
-                    console.error('Error drawing temp path:', err);
+                    return;
                 }
             }
             ctx.restore();
@@ -640,1012 +644,1000 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         }
     };
 
-    const addTextOverlay = () => {
-        const newOverlay = {
-            id: Date.now(),
-            text: 'Edit me',
-            fontFamily: 'Arial',
-            fontSize: 20,
-            color: '#000000',
-            x: imageWidth / 2 - 50,
-            y: imageHeight / 2 - 10
-        };
-        setTextOverlays([...textOverlays, newOverlay]);
-    };
-
-    const getSelectedText = () => textOverlays.find(t => t.id === selectedTextId) || {};
-
     return (
 
-    <div className="dinolabsIDEMediaContentWrapper">
-        <div className="dinoLabsIDEMediaToolBar">
+        <div className="dinolabsIDEMediaContentWrapper">
+            <div className="dinoLabsIDEMediaToolBar">
 
-            <div className="dinolabsIDEMediaCellWrapper">
+                <div className="dinolabsIDEMediaCellWrapper">
 
-                <div className="dinolabsIDEMediaHeaderFlex">
-                    <label className="dinolabsIDEMediaCellTitle">
-                        <FontAwesomeIcon icon={faTabletScreenButton} />
-                        Layout
-                    </label>
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faTabletScreenButton} />
+                            Layout
+                        </label>
 
-                    <div className="dinolabsIDEMediaCellFlexSupplement">
-                        <Tippy content="Reset Image" theme="tooltip-light">
-                            <button onClick={resetImage} className="dinolabsIDEMediaToolButtonHeader">
-                                <FontAwesomeIcon icon={faArrowsRotate} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Download Image" theme="tooltip-light">
-                            <button onClick={downloadImage} className="dinolabsIDEMediaToolButtonHeader">
-                                <FontAwesomeIcon icon={faDownload} />
-                            </button>
-                        </Tippy>
-                    </div>
-                </div>
-
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Position
-                    </label>
-
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <input
-                            className="dinolabsIDEMediaPositionInput"
-                            type="text"
-                            value={`X: ${panX}`}
-                            onChange={(e) => {
-                                const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                setPanX(Number(newValue));
-                            }}
-                        />
-
-                        <input
-                            className="dinolabsIDEMediaPositionInput"
-                            type="text"
-                            value={`Y: ${panY}`}
-                            onChange={(e) => {
-                                const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                setPanY(Number(newValue));
-                            }}
-                        />
-                    </div>
-                </div>
-
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <Tippy content="Zoom In" theme="tooltip-light">
-                            <button onClick={() => setZoom(prev => prev + 0.1)} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Zoom Out" theme="tooltip-light">
-                            <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Rotate Left" theme="tooltip-light">
-                            <button onClick={() => {
-                                setRotation(prev => prev - 90);
-                                setIsCropping(false);
-                            }} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faRotateLeft} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Rotate Right" theme="tooltip-light">
-                            <button onClick={() => {
-                                setRotation(prev => prev + 90);
-                                setIsCropping(false);
-                            }} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faRotateRight} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Flip Horizontally" theme="tooltip-light">
-                            <button onClick={() => {
-                                setFlipX(prev => -prev);
-                                setIsCropping(false);
-                            }} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faLeftRight} />
-                            </button>
-                        </Tippy>
-
-                        <Tippy content="Flip Vertically" theme="tooltip-light">
-                            <button onClick={() => {
-                                setFlipY(prev => -prev)
-                                setIsCropping(false);
-                            }} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faUpDown} />
-                            </button>
-                        </Tippy>
-                    </div>
-
-                </div>
-            </div>
-
-            <div className="dinolabsIDEMediaCellWrapper">
-                <div className="dinolabsIDEMediaHeaderFlex">
-                    <label className="dinolabsIDEMediaCellTitle">
-                        <FontAwesomeIcon icon={faRulerCombined} />
-                        Dimensions
-                    </label>
-                    <label className="dinolabsIDEConfrmationCheck">
-                        <input
-                            type="checkbox"
-                            className="dinolabsIDESettingsCheckbox"
-                            checked={maintainAspectRatio}
-                            onChange={(e) => setMaintainAspectRatio(e.target.checked)}
-                        />
-                        <span>
-                            Preserve Aspect Ratio
-                        </span>
-                    </label>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Image Size
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <input
-                            className="dinolabsIDEMediaPositionInput"
-                            type="text"
-                            value={`W: ${Math.round(imageWidth)}px`}
-                            onChange={(e) => {
-                                const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                setImageWidth(Number(newValue));
-                            }}
-                        />
-                        <input
-                            className="dinolabsIDEMediaPositionInput"
-                            type="text"
-                            value={`H: ${Math.round(imageHeight)}px`}
-                            onChange={(e) => {
-                                const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                setImageHeight(Number(newValue));
-                            }}
-                        />
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <Tippy content="Restore Width Based Aspect Ratio" theme="tooltip-light">
-                            <button onClick={restoreAspectRatioWidth} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faArrowsLeftRightToLine} />
-                            </button>
-                        </Tippy>
-                        <Tippy content="Restore Height Based Aspect Ratio" theme="tooltip-light">
-                            <button onClick={restoreAspectRatioHeight} className="dinolabsIDEMediaToolButton">
-                                <FontAwesomeIcon icon={faArrowsUpToLine} />
-                            </button>
-                        </Tippy>
-                        <Tippy content="Crop Image" theme="tooltip-light">
-                            <button
-                                onClick={() => {
-                                    if (actionMode === 'Drawing' || actionMode === 'Highlighting') return;
-                                    if (isCropDisabled) {
-                                        return;
-                                    }
-
-                                    if (isCropping) {
-                                        const img = new Image();
-                                        img.onload = () => {
-                                            const offscreenCanvas = document.createElement('canvas');
-                                            offscreenCanvas.width = nativeWidth;
-                                            offscreenCanvas.height = nativeHeight;
-                                            const offscreenCtx = offscreenCanvas.getContext('2d');
-                                            offscreenCtx.drawImage(img, 0, 0, nativeWidth, nativeHeight);
-                                            offscreenCtx.save();
-                                            paths.forEach(pathData => {
-                                                offscreenCtx.strokeStyle = pathData.color;
-                                                offscreenCtx.lineWidth = pathData.width;
-                                                offscreenCtx.lineCap = "round";
-                                                try {
-                                                    const p = new Path2D(pathData.d);
-                                                    offscreenCtx.stroke(p);
-                                                } catch (err) {
-                                                    console.error('Error drawing path:', err);
-                                                }
-                                            });
-                                            if(tempPath) {
-                                                offscreenCtx.strokeStyle = tempPath.color;
-                                                offscreenCtx.lineWidth = tempPath.width;
-                                                offscreenCtx.lineCap = "round";
-                                                try {
-                                                    const p = new Path2D(tempPath.d);
-                                                    offscreenCtx.stroke(p);
-                                                } catch (err) {
-                                                    console.error('Error drawing temp path:', err);
-                                                }
-                                            }
-                                            offscreenCtx.restore();
-                                            
-                                            const scaleX = nativeWidth / imageWidth;
-                                            const scaleY = nativeHeight / imageHeight;
-                                            const rad = cropRotation * Math.PI / 180;
-
-                                            const cx = cropRect.x + cropRect.width / 2;
-                                            const cy = cropRect.y + cropRect.height / 2;
-
-                                            const corners = [
-                                                { x: cropRect.x, y: cropRect.y },
-                                                { x: cropRect.x + cropRect.width, y: cropRect.y },
-                                                { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
-                                                { x: cropRect.x, y: cropRect.y + cropRect.height }
-                                            ];
-
-                                            const rotatedCorners = corners.map(pt => {
-                                                const dx = pt.x - cx;
-                                                const dy = pt.y - cy;
-                                                return {
-                                                    x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * scaleX,
-                                                    y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * scaleY
-                                                };
-                                            });
-
-                                            const xs = rotatedCorners.map(pt => pt.x);
-                                            const ys = rotatedCorners.map(pt => pt.y);
-                                            const minX = Math.min(...xs);
-                                            const maxX = Math.max(...xs);
-                                            const minY = Math.min(...ys);
-                                            const maxY = Math.max(...ys);
-                                            const cropWidth = maxX - minX;
-                                            const cropHeight = maxY - minY;
-
-                                            const canvasCrop = document.createElement('canvas');
-                                            canvasCrop.width = cropWidth;
-                                            canvasCrop.height = cropHeight;
-                                            const ctxCrop = canvasCrop.getContext('2d');
-
-                                            ctxCrop.save();
-                                            ctxCrop.beginPath();
-                                            if(circleCrop) {
-                                                const radius = Math.min(cropWidth, cropHeight) / 2;
-                                                ctxCrop.arc(cropWidth/2, cropHeight/2, radius, 0, 2*Math.PI);
-                                            } else {
-                                                ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
-                                                for (let i = 1; i < rotatedCorners.length; i++) {
-                                                    ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
-                                                }
-                                                ctxCrop.closePath();
-                                            }
-                                            ctxCrop.clip();
-
-                                            ctxCrop.drawImage(offscreenCanvas, -minX, -minY, nativeWidth, nativeHeight);
-                                            ctxCrop.restore();
-
-                                            const newDataUrl = canvasCrop.toDataURL();
-
-                                            setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight, paths, undonePaths }]);
-
-                                            setUrl(newDataUrl);
-                                            setPanX(0);
-                                            setPanY(0);
-                                            setImageWidth(cropRect.width);
-                                            setImageHeight(cropRect.height);
-                                            setNativeWidth(cropWidth);
-                                            setNativeHeight(cropHeight);
-                                            setIsCropping(false);
-                                            setPaths([]);
-                                            setUndonePaths([]);
-                                            setIsDrawColorOpen(false);
-                                            setIsHighlightColorOpen(false); 
-                                            setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
-                                        };
-                                        img.src = url;
-                                    } else {
-                                        setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
-                                        setIsCropping(true);
-                                        setCircleCrop(false); 
-                                        setIsDrawColorOpen(false);
-                                        setIsHighlightColorOpen(false); 
-                                        setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
-                                    }
-                                }}
-                                disabled={(isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? true : false}
-                                style={{ "opacity": (isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
-                                className="dinolabsIDEMediaToolButton"
-                            >
-                                <FontAwesomeIcon icon={faCropSimple} />
-                            </button>
-                        </Tippy>
-
-                        {isCropping && (
-                            <Tippy content="Circle Crop" theme="tooltip-light">
-                                <button 
-                                    onClick={() => {
-                                    setCircleCrop(prev => {
-                                        const newVal = !prev;
-                                        if(newVal) {
-                                            setCropRect(prevRect => ({...prevRect, height: prevRect.width}));
-                                        }
-                                        return newVal;
-                                    })
-                                    }}
-                                    style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
-                                    className="dinolabsIDEMediaToolButton"
-                                >
-                                    <FontAwesomeIcon icon={faCircle}/>
+                        <div className="dinolabsIDEMediaCellFlexSupplement">
+                            <Tippy content="Reset Image" theme="tooltip-light">
+                                <button onClick={resetImage} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faArrowsRotate} />
                                 </button>
                             </Tippy>
-                        )}
-                        <Tippy content="Undo Crop" theme="tooltip-light">
-                            <button onClick={undoCrop} className="dinolabsIDEMediaToolButton"
-                                disabled={isCropDisabled ? true : false}
-                                style={{ "opacity": isCropDisabled ? "0.6" : "1.0"}}
-                            >
-                                <FontAwesomeIcon icon={faSquareCaretLeft} />
-                            </button>
-                        </Tippy>
+
+                            <Tippy content="Download Image" theme="tooltip-light">
+                                <button onClick={downloadImage} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faDownload} />
+                                </button>
+                            </Tippy>
+                        </div>
                     </div>
-                </div>
-                {isCropping && (
+
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <label className="dinolabsIDEMediaCellFlexTitle">
-                            Crop Presets
+                            Position
                         </label>
+
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
-                            <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
-                            <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="dinolabsIDEMediaCellWrapper">
-                <div className="dinolabsIDEMediaHeaderFlex">
-                    <label className="dinolabsIDEMediaCellTitle">
-                        <FontAwesomeIcon icon={faBrush} />
-                        Drawing
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlexSupplement">
-                        <Tippy content="Undo Marks" theme="tooltip-light">
-                            <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                <FontAwesomeIcon icon={faArrowLeft} />
-                            </button>
-                        </Tippy>
-                        <Tippy content="Redo Marks" theme="tooltip-light">
-                            <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                <FontAwesomeIcon icon={faArrowRight} />
-                            </button>
-                        </Tippy>
-                    </div>
-                </div>
-                
-
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Draw on Image
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button
-                            onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
-                            style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
-                            disabled={isCropping}
-                            className="dinolabsIDEMediaToolButtonBig"
-                        >
-                            Draw
-                        </button>
-                        <Tippy
-                            content={
-                                <DinoLabsIDEColorPicker
-                                    color={drawColor}
-                                    onChange={setDrawColor}
-                                />
-                            }
-                            visible={isDrawColorOpen}
-                            onClickOutside={() => setIsDrawColorOpen(false)}
-                            interactive={true}
-                            placement="right"
-                            className="color-picker-tippy"
-                        >
-                            <label
-                                className="dinolabsIDEMediaColorPicker"
-                                onClick={() => setIsDrawColorOpen((prev) => !prev)}
-                                style={{
-                                    backgroundColor: drawColor,
-                                }}
-                            />
-                        </Tippy>
-
-                        <div className="dinolabsIDEMediaBrushSizeFlex">
-                            {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
-                                <button key={opt.size}
-                                onClick={() => setDrawBrushSize(opt.size)}
-                                style={{
-                                    backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : ''
-                                }}
-                                className="dinolabsIDEMediaToolButtonMini"
-                                >
-                                {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    
-                </div>
-
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Highlight on Image
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button
-                            onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
-                            style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
-                            disabled={isCropping}
-                            className="dinolabsIDEMediaToolButtonBig"
-                        >
-                            Highlight
-                        </button>
-                        <Tippy
-                            content={
-                                <DinoLabsIDEColorPicker
-                                    color={highlightColor}
-                                    onChange={setHighlightColor}
-                                />
-                            }
-                            visible={isHighlightColorOpen}
-                            onClickOutside={() => setIsHighlightColorOpen(false)}
-                            interactive={true}
-                            placement="right"
-                            className="color-picker-tippy"
-                        >
-                            <label
-                                className="dinolabsIDEMediaColorPicker"
-                                onClick={() => setIsHighlightColorOpen((prev) => !prev)}
-                                style={{
-                                    backgroundColor: highlightColor,
-                                }}
-                            />
-                        </Tippy>
-
-                        <div className="dinolabsIDEMediaBrushSizeFlex">
-                            {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
-                                <button key={opt.size}
-                                onClick={() => setHighlightBrushSize(opt.size)}
-                                style={{
-                                    backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : ''
-                                }}
-                                className="dinolabsIDEMediaToolButtonMini"
-                                >
-                                {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="dinolabsIDEMediaCellWrapper">
-                <div className="dinolabsIDEMediaHeaderFlex">
-                    <label className="dinolabsIDEMediaCellTitle">
-                        <FontAwesomeIcon icon={faSwatchbook} />
-                        Styles
-                    </label>
-
-                    <label className="dinolabsIDEConfrmationCheck">
-                        <input
-                            type="checkbox"
-                            className="dinolabsIDESettingsCheckbox"
-                            checked={removeBackground} 
-                            onChange={e => setRemoveBackground(e.target.checked)}
-                        />
-                        <span>
-                            Remove Background
-                        </span>
-                    </label>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Opacity
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setOpacity(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={opacity}
-                                onChange={(e) => setOpacity(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setOpacity(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Hue
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setHue(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="360"
-                                value={hue}
-                                onChange={(e) => setHue(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setHue(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Saturation
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setSaturation(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="360"
-                                value={saturation}
-                                onChange={(e) => setSaturation(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setSaturation(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Brightness
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setBrightness(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="360"
-                                value={brightness}
-                                onChange={(e) => setBrightness(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setBrightness(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Contrast
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setContrast(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="360"
-                                value={contrast}
-                                onChange={(e) => setContrast(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setContrast(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Blur
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setBlur(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={blur}
-                                onChange={(e) => setBlur(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setBlur(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Shadow
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={spread}
-                                onChange={(e) => setSpread(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setSpread(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Grayscale
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={grayscale}
-                                onChange={(e) => setGrayscale(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Sepia
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        <button onClick={() => setSepia(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faMinus} />
-                        </button>
-                        <div className="dinolabsIDEMediaSliderWrapper">
-                            <input
-                                className="dinolabsIDESettingsSlider"
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={sepia}
-                                onChange={(e) => setSepia(Number(e.target.value))}
-                            />
-                        </div>
-                        <button onClick={() => setSepia(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="dinolabsIDEMediaCellWrapper">
-                <div className="dinolabsIDEMediaHeaderFlex">
-                    <label className="dinolabsIDEMediaCellTitle">
-                        <FontAwesomeIcon icon={faBorderTopLeft} />
-                        Corner Rounding
-                    </label>
-                    <label className="dinolabsIDEConfrmationCheck">
-                        <input
-                            type="checkbox"
-                            className="dinolabsIDESettingsCheckbox"
-                            checked={syncCorners}
-                            onChange={(e) => {
-                                setSyncCorners(e.target.checked);
-                                if (e.target.checked) {
-                                    const radius = borderRadius || borderTopLeftRadius || 0;
-                                    const limited = Math.min(radius, 100);
-                                    setBorderRadius(limited);
-                                    setBorderTopLeftRadius(limited);
-                                    setBorderTopRightRadius(limited);
-                                    setBorderBottomLeftRadius(limited);
-                                    setBorderBottomRightRadius(limited);
-                                }
-                            }}
-                        />
-                        <span>
-                            Sync Corners
-                        </span>
-                    </label>
-                </div>
-                <div className="dinolabsIDEMediaCellFlexStack">
-                    <label className="dinolabsIDEMediaCellFlexTitle">
-                        Corner Radii
-                    </label>
-                    <div className="dinolabsIDEMediaCellFlex">
-                        {syncCorners ? (
                             <input
                                 className="dinolabsIDEMediaPositionInput"
                                 type="text"
-                                value={`Corner: ${borderRadius}px`}
+                                value={`X: ${panX}`}
                                 onChange={(e) => {
-                                    const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                    let val = Number(newVal);
-                                    val = Math.min(val, 100);
-                                    setBorderRadius(val);
-                                    setBorderTopLeftRadius(val);
-                                    setBorderTopRightRadius(val);
-                                    setBorderBottomLeftRadius(val);
-                                    setBorderBottomRightRadius(val);
+                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setPanX(Number(newValue));
                                 }}
                             />
-                        ) : (
-                            <div className="dinolabsIDECornerInputGridWrapper">
-                                <div className="dinolabsIDECornerInputFlex">
-                                    <input
-                                        className="dinolabsIDEMediaPositionInput"
-                                        type="text"
-                                        value={`TL: ${borderTopLeftRadius}px`}
-                                        onChange={(e) => {
-                                            const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                            let val = Number(newVal);
-                                            val = Math.min(val, 100);
-                                            setBorderTopLeftRadius(val);
-                                        }}
-                                    />
-                                    <input
-                                        className="dinolabsIDEMediaPositionInput"
-                                        type="text"
-                                        value={`TR: ${borderTopRightRadius}px`}
-                                        onChange={(e) => {
-                                            const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                            let val = Number(newVal);
-                                            val = Math.min(val, 100);
-                                            setBorderTopRightRadius(val);
-                                        }}
-                                    />
-                                </div>
 
-                                <div className="dinolabsIDECornerInputFlex">
-                                    <input
-                                        className="dinolabsIDEMediaPositionInput"
-                                        type="text"
-                                        value={`BL: ${borderBottomLeftRadius}px`}
-                                        onChange={(e) => {
-                                            const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                            let val = Number(newVal);
-                                            val = Math.min(val, 100);
-                                            setBorderBottomLeftRadius(val);
+                            <input
+                                className="dinolabsIDEMediaPositionInput"
+                                type="text"
+                                value={`Y: ${panY}`}
+                                onChange={(e) => {
+                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setPanY(Number(newValue));
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <Tippy content="Zoom In" theme="tooltip-light">
+                                <button onClick={() => setZoom(prev => prev + 0.1)} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+                                </button>
+                            </Tippy>
+
+                            <Tippy content="Zoom Out" theme="tooltip-light">
+                                <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
+                                </button>
+                            </Tippy>
+
+                            <Tippy content="Rotate Left" theme="tooltip-light">
+                                <button onClick={() => {
+                                    setRotation(prev => prev - 90);
+                                    setIsCropping(false);
+                                }} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faRotateLeft} />
+                                </button>
+                            </Tippy>
+
+                            <Tippy content="Rotate Right" theme="tooltip-light">
+                                <button onClick={() => {
+                                    setRotation(prev => prev + 90);
+                                    setIsCropping(false);
+                                }} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faRotateRight} />
+                                </button>
+                            </Tippy>
+
+                            <Tippy content="Flip Horizontally" theme="tooltip-light">
+                                <button onClick={() => {
+                                    setFlipX(prev => -prev);
+                                    setIsCropping(false);
+                                }} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faLeftRight} />
+                                </button>
+                            </Tippy>
+
+                            <Tippy content="Flip Vertically" theme="tooltip-light">
+                                <button onClick={() => {
+                                    setFlipY(prev => -prev)
+                                    setIsCropping(false);
+                                }} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faUpDown} />
+                                </button>
+                            </Tippy>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faRulerCombined} />
+                            Dimensions
+                        </label>
+                        <label className="dinolabsIDEConfrmationCheck">
+                            <input
+                                type="checkbox"
+                                className="dinolabsIDESettingsCheckbox"
+                                checked={maintainAspectRatio}
+                                onChange={(e) => setMaintainAspectRatio(e.target.checked)}
+                            />
+                            <span>
+                                Preserve Aspect Ratio
+                            </span>
+                        </label>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Image Size
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <input
+                                className="dinolabsIDEMediaPositionInput"
+                                type="text"
+                                value={`W: ${Math.round(imageWidth)}px`}
+                                onChange={(e) => {
+                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setImageWidth(Number(newValue));
+                                }}
+                            />
+                            <input
+                                className="dinolabsIDEMediaPositionInput"
+                                type="text"
+                                value={`H: ${Math.round(imageHeight)}px`}
+                                onChange={(e) => {
+                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setImageHeight(Number(newValue));
+                                }}
+                            />
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <Tippy content="Restore Width Based Aspect Ratio" theme="tooltip-light">
+                                <button onClick={restoreAspectRatioWidth} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faArrowsLeftRightToLine} />
+                                </button>
+                            </Tippy>
+                            <Tippy content="Restore Height Based Aspect Ratio" theme="tooltip-light">
+                                <button onClick={restoreAspectRatioHeight} className="dinolabsIDEMediaToolButton">
+                                    <FontAwesomeIcon icon={faArrowsUpToLine} />
+                                </button>
+                            </Tippy>
+                            <Tippy content="Crop Image" theme="tooltip-light">
+                                <button
+                                    onClick={() => {
+                                        if (actionMode === 'Drawing' || actionMode === 'Highlighting') return;
+                                        if (isCropDisabled) {
+                                            return;
+                                        }
+
+                                        if (isCropping) {
+                                            const img = new Image();
+                                            img.onload = () => {
+                                                const offscreenCanvas = document.createElement('canvas');
+                                                offscreenCanvas.width = nativeWidth;
+                                                offscreenCanvas.height = nativeHeight;
+                                                const offscreenCtx = offscreenCanvas.getContext('2d');
+                                                offscreenCtx.drawImage(img, 0, 0, nativeWidth, nativeHeight);
+                                                offscreenCtx.save();
+                                                paths.forEach(pathData => {
+                                                    offscreenCtx.strokeStyle = pathData.color;
+                                                    offscreenCtx.lineWidth = pathData.width;
+                                                    offscreenCtx.lineCap = "round";
+                                                    try {
+                                                        const p = new Path2D(pathData.d);
+                                                        offscreenCtx.stroke(p);
+                                                    } catch (err) {
+                                                        return;
+                                                    }
+                                                });
+                                                if(tempPath) {
+                                                    offscreenCtx.strokeStyle = tempPath.color;
+                                                    offscreenCtx.lineWidth = tempPath.width;
+                                                    offscreenCtx.lineCap = "round";
+                                                    try {
+                                                        const p = new Path2D(tempPath.d);
+                                                        offscreenCtx.stroke(p);
+                                                    } catch (err) {
+                                                        return;
+                                                    }
+                                                }
+                                                offscreenCtx.restore();
+                                                
+                                                const scaleX = nativeWidth / imageWidth;
+                                                const scaleY = nativeHeight / imageHeight;
+                                                const rad = cropRotation * Math.PI / 180;
+
+                                                const cx = cropRect.x + cropRect.width / 2;
+                                                const cy = cropRect.y + cropRect.height / 2;
+
+                                                const corners = [
+                                                    { x: cropRect.x, y: cropRect.y },
+                                                    { x: cropRect.x + cropRect.width, y: cropRect.y },
+                                                    { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
+                                                    { x: cropRect.x, y: cropRect.y + cropRect.height }
+                                                ];
+
+                                                const rotatedCorners = corners.map(pt => {
+                                                    const dx = pt.x - cx;
+                                                    const dy = pt.y - cy;
+                                                    return {
+                                                        x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * scaleX,
+                                                        y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * scaleY
+                                                    };
+                                                });
+
+                                                const xs = rotatedCorners.map(pt => pt.x);
+                                                const ys = rotatedCorners.map(pt => pt.y);
+                                                const minX = Math.min(...xs);
+                                                const maxX = Math.max(...xs);
+                                                const minY = Math.min(...ys);
+                                                const maxY = Math.max(...ys);
+                                                const cropWidth = maxX - minX;
+                                                const cropHeight = maxY - minY;
+
+                                                const canvasCrop = document.createElement('canvas');
+                                                canvasCrop.width = cropWidth;
+                                                canvasCrop.height = cropHeight;
+                                                const ctxCrop = canvasCrop.getContext('2d');
+
+                                                ctxCrop.save();
+                                                ctxCrop.beginPath();
+                                                if(circleCrop) {
+                                                    const radius = Math.min(cropWidth, cropHeight) / 2;
+                                                    ctxCrop.arc(cropWidth/2, cropHeight/2, radius, 0, 2*Math.PI);
+                                                } else {
+                                                    ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
+                                                    for (let i = 1; i < rotatedCorners.length; i++) {
+                                                        ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
+                                                    }
+                                                    ctxCrop.closePath();
+                                                }
+                                                ctxCrop.clip();
+
+                                                ctxCrop.drawImage(offscreenCanvas, -minX, -minY, nativeWidth, nativeHeight);
+                                                ctxCrop.restore();
+
+                                                const newDataUrl = canvasCrop.toDataURL();
+
+                                                setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight, paths, undonePaths }]);
+
+                                                setUrl(newDataUrl);
+                                                setPanX(0);
+                                                setPanY(0);
+                                                setImageWidth(cropRect.width);
+                                                setImageHeight(cropRect.height);
+                                                setNativeWidth(cropWidth);
+                                                setNativeHeight(cropHeight);
+                                                setIsCropping(false);
+                                                setPaths([]);
+                                                setUndonePaths([]);
+                                                setIsDrawColorOpen(false);
+                                                setIsHighlightColorOpen(false); 
+                                                setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
+                                            };
+                                            img.src = url;
+                                        } else {
+                                            setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
+                                            setIsCropping(true);
+                                            setCircleCrop(false); 
+                                            setIsDrawColorOpen(false);
+                                            setIsHighlightColorOpen(false); 
+                                            setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
+                                        }
+                                    }}
+                                    disabled={(isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? true : false}
+                                    style={{ "opacity": (isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
+                                    <FontAwesomeIcon icon={faCropSimple} />
+                                </button>
+                            </Tippy>
+
+                            {isCropping && (
+                                <Tippy content="Circle Crop" theme="tooltip-light">
+                                    <button 
+                                        onClick={() => {
+                                        setCircleCrop(prev => {
+                                            const newVal = !prev;
+                                            if(newVal) {
+                                                setCropRect(prevRect => ({...prevRect, height: prevRect.width}));
+                                            }
+                                            return newVal;
+                                        })
                                         }}
-                                    />
-                                    <input
-                                        className="dinolabsIDEMediaPositionInput"
-                                        type="text"
-                                        value={`BR: ${borderBottomRightRadius}px`}
-                                        onChange={(e) => {
-                                            const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                            let val = Number(newVal);
-                                            val = Math.min(val, 100);
-                                            setBorderBottomRightRadius(val);
-                                        }}
-                                    />
-                                </div>
+                                        style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
+                                        className="dinolabsIDEMediaToolButton"
+                                    >
+                                        <FontAwesomeIcon icon={faCircle}/>
+                                    </button>
+                                </Tippy>
+                            )}
+                            <Tippy content="Undo Crop" theme="tooltip-light">
+                                <button onClick={undoCrop} className="dinolabsIDEMediaToolButton"
+                                    disabled={isCropDisabled ? true : false}
+                                    style={{ "opacity": isCropDisabled ? "0.6" : "1.0"}}
+                                >
+                                    <FontAwesomeIcon icon={faSquareCaretLeft} />
+                                </button>
+                            </Tippy>
+                        </div>
+                    </div>
+                    {isCropping && (
+                        <div className="dinolabsIDEMediaCellFlexStack">
+                            <label className="dinolabsIDEMediaCellFlexTitle">
+                                Crop Presets
+                            </label>
+                            <div className="dinolabsIDEMediaCellFlex">
+                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
+                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
+                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
                             </div>
-                        )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faBrush} />
+                            Drawing
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlexSupplement">
+                            <Tippy content="Undo Marks" theme="tooltip-light">
+                                <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faArrowLeft} />
+                                </button>
+                            </Tippy>
+                            <Tippy content="Redo Marks" theme="tooltip-light">
+                                <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faArrowRight} />
+                                </button>
+                            </Tippy>
+                        </div>
+                    </div>
+                    
+
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Draw on Image
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button
+                                onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
+                                style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                disabled={isCropping}
+                                className="dinolabsIDEMediaToolButtonBig"
+                            >
+                                Draw
+                            </button>
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={drawColor}
+                                        onChange={setDrawColor}
+                                    />
+                                }
+                                visible={isDrawColorOpen}
+                                onClickOutside={() => setIsDrawColorOpen(false)}
+                                interactive={true}
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <label
+                                    className="dinolabsIDEMediaColorPicker"
+                                    onClick={() => setIsDrawColorOpen((prev) => !prev)}
+                                    style={{
+                                        backgroundColor: drawColor,
+                                    }}
+                                />
+                            </Tippy>
+
+                            <div className="dinolabsIDEMediaBrushSizeFlex">
+                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                    <button key={opt.size}
+                                    onClick={() => setDrawBrushSize(opt.size)}
+                                    style={{
+                                        backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : ''
+                                    }}
+                                    className="dinolabsIDEMediaToolButtonMini"
+                                    >
+                                    {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Highlight on Image
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button
+                                onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
+                                style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                disabled={isCropping}
+                                className="dinolabsIDEMediaToolButtonBig"
+                            >
+                                Highlight
+                            </button>
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={highlightColor}
+                                        onChange={setHighlightColor}
+                                    />
+                                }
+                                visible={isHighlightColorOpen}
+                                onClickOutside={() => setIsHighlightColorOpen(false)}
+                                interactive={true}
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <label
+                                    className="dinolabsIDEMediaColorPicker"
+                                    onClick={() => setIsHighlightColorOpen((prev) => !prev)}
+                                    style={{
+                                        backgroundColor: highlightColor,
+                                    }}
+                                />
+                            </Tippy>
+
+                            <div className="dinolabsIDEMediaBrushSizeFlex">
+                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                    <button key={opt.size}
+                                    onClick={() => setHighlightBrushSize(opt.size)}
+                                    style={{
+                                        backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : ''
+                                    }}
+                                    className="dinolabsIDEMediaToolButtonMini"
+                                    >
+                                    {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            
-        </div>
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faSwatchbook} />
+                            Styles
+                        </label>
 
-        <div
-            className="dinolabsIDEMediaContainer"
-            style={{
-                cursor: 'grab',
-            }}
-            onMouseDown={(e) => {
-                if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
-                    setFocusedTextId(null);
-                    setSelectedTextId(null);
-                }
-                handleDragStart(e);
-            }}
-            onMouseMove={handleDragMove}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-        >
-            <div className="diolabsIDEMediaSupplementalButtonsFlexWrapper"> 
-                {isCropping && (
-                    <div className="diolabsIDEMediaSupplementalButtonsFlex">
-                        <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
-                        <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
-                        <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
+                        <label className="dinolabsIDEConfrmationCheck">
+                            <input
+                                type="checkbox"
+                                className="dinolabsIDESettingsCheckbox"
+                                checked={removeBackground} 
+                                onChange={e => setRemoveBackground(e.target.checked)}
+                            />
+                            <span>
+                                Remove Background
+                            </span>
+                        </label>
                     </div>
-                )}
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Opacity
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setOpacity(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={opacity}
+                                    onChange={(e) => setOpacity(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setOpacity(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Hue
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setHue(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="360"
+                                    value={hue}
+                                    onChange={(e) => setHue(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setHue(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Saturation
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setSaturation(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="360"
+                                    value={saturation}
+                                    onChange={(e) => setSaturation(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setSaturation(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Brightness
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setBrightness(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="360"
+                                    value={brightness}
+                                    onChange={(e) => setBrightness(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setBrightness(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Contrast
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setContrast(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="360"
+                                    value={contrast}
+                                    onChange={(e) => setContrast(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setContrast(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Blur
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setBlur(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={blur}
+                                    onChange={(e) => setBlur(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setBlur(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Shadow
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={spread}
+                                    onChange={(e) => setSpread(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setSpread(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Grayscale
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={grayscale}
+                                    onChange={(e) => setGrayscale(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Sepia
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={() => setSepia(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <div className="dinolabsIDEMediaSliderWrapper">
+                                <input
+                                    className="dinolabsIDESettingsSlider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={sepia}
+                                    onChange={(e) => setSepia(Number(e.target.value))}
+                                />
+                            </div>
+                            <button onClick={() => setSepia(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faBorderTopLeft} />
+                            Corner Rounding
+                        </label>
+                        <label className="dinolabsIDEConfrmationCheck">
+                            <input
+                                type="checkbox"
+                                className="dinolabsIDESettingsCheckbox"
+                                checked={syncCorners}
+                                onChange={(e) => {
+                                    setSyncCorners(e.target.checked);
+                                    if (e.target.checked) {
+                                        const radius = borderRadius || borderTopLeftRadius || 0;
+                                        const limited = Math.min(radius, 100);
+                                        setBorderRadius(limited);
+                                        setBorderTopLeftRadius(limited);
+                                        setBorderTopRightRadius(limited);
+                                        setBorderBottomLeftRadius(limited);
+                                        setBorderBottomRightRadius(limited);
+                                    }
+                                }}
+                            />
+                            <span>
+                                Sync Corners
+                            </span>
+                        </label>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Corner Radii
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            {syncCorners ? (
+                                <input
+                                    className="dinolabsIDEMediaPositionInput"
+                                    type="text"
+                                    value={`Corner: ${borderRadius}px`}
+                                    onChange={(e) => {
+                                        const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                        let val = Number(newVal);
+                                        val = Math.min(val, 100);
+                                        setBorderRadius(val);
+                                        setBorderTopLeftRadius(val);
+                                        setBorderTopRightRadius(val);
+                                        setBorderBottomLeftRadius(val);
+                                        setBorderBottomRightRadius(val);
+                                    }}
+                                />
+                            ) : (
+                                <div className="dinolabsIDECornerInputGridWrapper">
+                                    <div className="dinolabsIDECornerInputFlex">
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`TL: ${borderTopLeftRadius}px`}
+                                            onChange={(e) => {
+                                                const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let val = Number(newVal);
+                                                val = Math.min(val, 100);
+                                                setBorderTopLeftRadius(val);
+                                            }}
+                                        />
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`TR: ${borderTopRightRadius}px`}
+                                            onChange={(e) => {
+                                                const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let val = Number(newVal);
+                                                val = Math.min(val, 100);
+                                                setBorderTopRightRadius(val);
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="dinolabsIDECornerInputFlex">
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`BL: ${borderBottomLeftRadius}px`}
+                                            onChange={(e) => {
+                                                const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let val = Number(newVal);
+                                                val = Math.min(val, 100);
+                                                setBorderBottomLeftRadius(val);
+                                            }}
+                                        />
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`BR: ${borderBottomRightRadius}px`}
+                                            onChange={(e) => {
+                                                const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let val = Number(newVal);
+                                                val = Math.min(val, 100);
+                                                setBorderBottomRightRadius(val);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                
             </div>
 
-            <div className="dinolabsIDEMediaExportActionsWrapper">
-                <div className="dinolabsIDEMediaExportActionsWrapperFlex">
-                    <label className="dinolabsIDEMediaModeIndicator">
-                        {actionMode}
-                    </label>
-                </div>
-            </div>
             <div
-                className="dinolabsIDEImageResizer"
+                className="dinolabsIDEMediaContainer"
                 style={{
-                    top: `calc(50% + ${panY}px)`,
-                    left: `calc(50% + ${panX}px)`,
-                    width: `${imageWidth}px`,
-                    height: `${imageHeight}px`,
-                    transform: `
-                    translate(-50%, -50%) 
-                    scale(${flipX * zoom}, ${flipY * zoom}) 
-                    rotate(${rotation}deg)
-                    `,
-                    borderRadius: syncCorners
-                        ? `${borderRadius}px`
-                        : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
+                    cursor: 'grab',
                 }}
+                onMouseDown={(e) => {
+                    if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
+                        setFocusedTextId(null);
+                        setSelectedTextId(null);
+                    }
+                    handleDragStart(e);
+                }}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
             >
-                <img
-                    src={url}
-                    alt="Media content"
-                    draggable={false}
-                    onDragStart={(e) => e.preventDefault()}
-                    className="dinolabsIDEMediaContent"
+                <div className="diolabsIDEMediaSupplementalButtonsFlexWrapper"> 
+                    {isCropping && (
+                        <div className="diolabsIDEMediaSupplementalButtonsFlex">
+                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
+                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
+                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
+                        </div>
+                    )}
+                </div>
+
+                <div
+                    className="dinolabsIDEImageResizer"
                     style={{
-                        width: '100%',
-                        height: '100%',
-                        filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
-                        userSelect: 'none',
-                        borderRadius: 'inherit',
-                        opacity: opacity / 100
+                        top: `calc(50% + ${panY}px)`,
+                        left: `calc(50% + ${panX}px)`,
+                        width: `${imageWidth}px`,
+                        height: `${imageHeight}px`,
+                        transform: `
+                        translate(-50%, -50%) 
+                        scale(${flipX * zoom}, ${flipY * zoom}) 
+                        rotate(${rotation}deg)
+                        `,
+                        borderRadius: syncCorners
+                            ? `${borderRadius}px`
+                            : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
                     }}
-                />
-                
-                
-                {!isCropping && actionMode === 'Idle' && (
-                    <>
-                    <div
-                        className="dinolabsIDEMediaResizeHandle top-left"
-                        onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
-                        style={{ top: `-6px`, left: `-6px` }}
-                    />
-                    <div
-                        className="dinolabsIDEMediaResizeHandle top-right"
-                        onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
-                        style={{ top: `-6px`, right: `-6px` }}
-                    />
-                    <div
-                        className="dinolabsIDEMediaResizeHandle bottom-left"
-                        onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
-                        style={{ bottom: `-6px`, left: `-6px` }}
-                    />
-                    <div
-                        className="dinolabsIDEMediaResizeHandle bottom-right"
-                        onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
-                        style={{ bottom: `-6px`, right: `-6px` }}
-                    />
-                    </>
-                )}
-                {isCropping && (
-                    <div
-                        className="dinolabsIDEMediaCropRectangle"
+                >
+                    <img
+                        src={url}
+                        alt="Media content"
+                        draggable={false}
+                        onDragStart={(e) => e.preventDefault()}
+                        className="dinolabsIDEMediaContent"
                         style={{
-                            position: 'absolute',
-                            border: '0.4vh dashed rgba(31, 174, 245, 1)',
-                            backgroundColor: 'rgba(0,0,0,0.6)',
-                            left: cropRect.x,
-                            top: cropRect.y,
-                            width: cropRect.width,
-                            height: cropRect.height,
-                            transform: `rotate(${cropRotation}deg)`,
-                            borderRadius: circleCrop ? '50%' : '0',
-                            zIndex: 10
+                            width: '100%',
+                            height: '100%',
+                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                            userSelect: 'none',
+                            borderRadius: 'inherit',
+                            opacity: opacity / 100
                         }}
-                        onMouseDown={handleCropMouseDown}
-                    >
+                    />
+                    
+                    
+                    {!isCropping && actionMode === 'Idle' && (
+                        <>
                         <div
                             className="dinolabsIDEMediaResizeHandle top-left"
-                            style={{ pointerEvents: 'auto', top: `-8px`, left: `-8px` }}
-                            onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
+                            onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
+                            style={{ top: `-6px`, left: `-6px` }}
                         />
                         <div
                             className="dinolabsIDEMediaResizeHandle top-right"
-                            style={{ pointerEvents: 'auto', top: `-8px`, right: `-8px` }}
-                            onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
+                            onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
+                            style={{ top: `-6px`, right: `-6px` }}
                         />
                         <div
                             className="dinolabsIDEMediaResizeHandle bottom-left"
-                            style={{ pointerEvents: 'auto', bottom: `-8px`, left: `-8px` }}
-                            onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
+                            onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
+                            style={{ bottom: `-6px`, left: `-6px` }}
                         />
                         <div
                             className="dinolabsIDEMediaResizeHandle bottom-right"
-                            style={{ pointerEvents: 'auto', bottom: `-8px`, right: `-8px` }}
-                            onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                            onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
+                            style={{ bottom: `-6px`, right: `-6px` }}
                         />
-                        <div
-                            className="dinolabsIDEMediaRotationHandle top-left"
-                            style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
-                            onMouseDown={handleCropRotationMouseDown}
-                        />
-                        <div
-                            className="dinolabsIDEMediaRotationHandle top-right"
-                            style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
-                            onMouseDown={handleCropRotationMouseDown}
-                        />
-                        <div
-                            className="dinolabsIDEMediaRotationHandle bottom-left"
-                            style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
-                            onMouseDown={handleCropRotationMouseDown}
-                        />
-                        <div
-                            className="dinolabsIDEMediaRotationHandle bottom-right"
-                            style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
-                            onMouseDown={handleCropRotationMouseDown}
-                        />
-                    </div>
-                )}
-                <svg
-                    viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
-                        cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
-                        filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`
-                    }}
-                    onMouseDown={handleSvgMouseDown}
-                    onMouseMove={handleSvgMouseMove}
-                    onMouseUp={handleSvgMouseUp}
-                >
-                    {paths.map((pathData, index) => (
-                        <path
-                            key={index}
-                            d={pathData.d}
-                            stroke={pathData.color}
-                            strokeWidth={pathData.width}
-                            fill="none"
-                            strokeLinecap="round"
-                        />
-                    ))}
-                    {tempPath && (
-                        <path
-                            d={tempPath.d}
-                            stroke={tempPath.color}
-                            strokeWidth={tempPath.width}
-                            fill="none"
-                            strokeLinecap="round"
-                        />
+                        </>
                     )}
-                </svg>
+                    {isCropping && (
+                        <div
+                            className="dinolabsIDEMediaCropRectangle"
+                            style={{
+                                position: 'absolute',
+                                border: '0.4vh dashed rgba(31, 174, 245, 1)',
+                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                left: cropRect.x,
+                                top: cropRect.y,
+                                width: cropRect.width,
+                                height: cropRect.height,
+                                transform: `rotate(${cropRotation}deg)`,
+                                borderRadius: circleCrop ? '50%' : '0',
+                                zIndex: 10
+                            }}
+                            onMouseDown={handleCropMouseDown}
+                        >
+                            <div
+                                className="dinolabsIDEMediaResizeHandle top-left"
+                                style={{ pointerEvents: 'auto', top: `-8px`, left: `-8px` }}
+                                onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle top-right"
+                                style={{ pointerEvents: 'auto', top: `-8px`, right: `-8px` }}
+                                onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle bottom-left"
+                                style={{ pointerEvents: 'auto', bottom: `-8px`, left: `-8px` }}
+                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
+                            />
+                            <div
+                                className="dinolabsIDEMediaResizeHandle bottom-right"
+                                style={{ pointerEvents: 'auto', bottom: `-8px`, right: `-8px` }}
+                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                            />
+                            <div
+                                className="dinolabsIDEMediaRotationHandle top-left"
+                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
+                                onMouseDown={handleCropRotationMouseDown}
+                            />
+                            <div
+                                className="dinolabsIDEMediaRotationHandle top-right"
+                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
+                                onMouseDown={handleCropRotationMouseDown}
+                            />
+                            <div
+                                className="dinolabsIDEMediaRotationHandle bottom-left"
+                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
+                                onMouseDown={handleCropRotationMouseDown}
+                            />
+                            <div
+                                className="dinolabsIDEMediaRotationHandle bottom-right"
+                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
+                                onMouseDown={handleCropRotationMouseDown}
+                            />
+                        </div>
+                    )}
+                    <svg
+                        viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
+                            cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
+                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`
+                        }}
+                        onMouseDown={handleSvgMouseDown}
+                        onMouseMove={handleSvgMouseMove}
+                        onMouseUp={handleSvgMouseUp}
+                    >
+                        {paths.map((pathData, index) => (
+                            <path
+                                key={index}
+                                d={pathData.d}
+                                stroke={pathData.color}
+                                strokeWidth={pathData.width}
+                                fill="none"
+                                strokeLinecap="round"
+                            />
+                        ))}
+                        {tempPath && (
+                            <path
+                                d={tempPath.d}
+                                stroke={tempPath.color}
+                                strokeWidth={tempPath.width}
+                                fill="none"
+                                strokeLinecap="round"
+                            />
+                        )}
+                    </svg>
+                </div>
+
+                <div className="dinolabsIDEVideoInputBottomBar"> 
+                    <div> 
+                    </div>
+                    <label className="dinolabsIDEMediaModeIndicator">
+                        <span>
+                        {isCropping ? 'Cropping' : 'Idle'}
+                        </span>
+                    </label>
+                </div>
             </div>
         </div>
-    </div>
     ); 
 }
 

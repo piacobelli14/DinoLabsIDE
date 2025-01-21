@@ -335,7 +335,7 @@ const DinoLabsIDEAccount = ({
     const saveUserPreferences = async (userID, organizationID, zoomLevel, colorTheme) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-keybinds", {
+            const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/update-user-preferences", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -761,7 +761,7 @@ const DinoLabsIDEAccount = ({
                                                             </button>
                                                             {isEditingKeyBinds === action ? (
                                                                 <select 
-                                                                    className="dinolabsIDESettingsKeyIcon"
+                                                                    className="dinolabsIDESettingsKeyIconSelect"
                                                                     value={key}
                                                                     onChange={(e) => {
                                                                         handleKeyBindChange(action, e.target.value);

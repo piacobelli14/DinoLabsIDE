@@ -1,439 +1,521 @@
-.dinolabsIDEMediaContentWrapper {
-    height: 100%;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    overflow: scroll;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
+@media (min-width: 700px) and (max-width: 5399px) {
+    .dinolabsIDEMediaContentWrapper {
+        height: 100%;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        overflow: scroll;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    .dinoLabsIDEMediaToolBar {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        background-color: #171717;
+        height: 100%;
+        width: 30%;
+        overflow: scroll;
+        padding: 0;
+        box-sizing: border-box;
+        border-right: 0.6vh solid rgba(0, 0, 0, 0.4);
+    }
+
+    .dinolabsIDEMediaContainer {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70% !important;
+        height: 100% !important;
+        background-color: #252525;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    .dinolabsIDEMediaCellWrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        box-sizing: border-box;
+        width: 100%;
+        padding-bottom: 2vw;
+        border-bottom: 0.25vh solid rgba(255, 255, 255, 0.2);    
+    }
+
+    .dinolabsIDEMediaHeaderFlex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        height: 4vw; 
+        padding: 0 2vw; 
+        margin-bottom: 1.5vw;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .dinolabsIDEMediaCellTitle {
+        font-size: 1.2vw;
+        font-weight: 700;
+        color: #c0c0c0;
+        display: flex;
+        align-items: center;
+        gap: 1vw;
+        overflow: hidden;
+    }
+
+    .dinolabsIDEMediaCellFlexStackSplitWrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1vw;
+        width: 100%;
+        padding: 0 2vw; 
+    }
+
+    .dinolabsIDEMediaCellFlexStack {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        margin-bottom: 1vw;
+        width: 100%;
+        padding: 0 2vw; 
+    }
+
+    .dinolabsIDEMediaCellFlexStackHalf {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        width: 46%;
+    }
+
+    .dinolabsIDEMediaLargeStack,
+    .dinolabsIDEMediaMiniStack {
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        min-width: 30%;
+        max-width: 30%; 
+    }
+
+    .dinolabsIDEMediaLargeStack {
+        min-width: 40%;
+        max-width: 40%; 
+    }
+
+    .dinolabsIDEMediaMiniStack {
+        min-width: 30%;
+        max-width: 30%; 
+    }
+
+    .dinolabsIDEMediaLargeStack span,
+    .dinolabsIDEMediaMiniStack span {
+        font-size: 0.9vw;
+        font-weight: 500;
+        color: #c0c0c0;
+        opacity: 0.8;
+        margin: 0.4vw 0;
+    }
+
+
+
+
+
+
+    .dinolabsIDEMediaPositionInput,
+    .dinolabsIDEMediaPositionInputMini, 
+    .dinolabsIDEMediaCSSInput {
+        padding: 1vw 1vw;
+        background-color: #222222;
+        border: 0.4vh solid rgba(255, 255, 255, 0.2);
+        border-radius: 0.4vw;
+        font-size: 1vw;
+        font-weight: 800;
+        color: #c0c0c0;
+        box-shadow: 0 0 6px black;
+    }
+
+    .dinolabsIDEMediaPositionInput {
+        max-width: 40%;
+    }
+
+    .dinolabsIDEMediaPositionInputMini {
+        max-width: 20%;
+        font-size: 0.8vw;
+    }
+
+    .dinolabsIDEMediaCSSInput {
+        min-width: 100%;
+        max-width: 100%; 
+    }
+
+    .dinolabsIDEMediaCellFlexTitle {
+        font-size: 1vw;
+        font-weight: 600;
+        color: #c0c0c0;
+        opacity: 0.8;
+        margin: 0.4vw 0;
+    }
+
+    .dinolabsIDEMediaCellFlexTitle span {
+        font-size: 0.9vw; 
+        font-weight: 500; 
+        margin-left: 1vw;
+    }
+
+    .dinolabsIDEMediaCellFlex {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-top: 0.4vw;
+        width: 100%;
+        gap: 4%;
+    }
+
+    .dinolabsIDEMediaCellFlexSupplement {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 1vw;
+        height: 100%;
+    }
+
+    .dinolabsIDEMediaBrushSizeFlex {
+        width: calc(60% - 2vw); 
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        gap: 5%; 
+    }
+
+    .dinolabsIDEMediaToolButton,
+    .dinolabsIDEMediaToolButtonBig,
+    .dinolabsIDEMediaToolButtonBigger,
+    .dinolabsIDEMediaToolButtonHeader, 
+    .dinolabsIDEMediaToolButtonText, 
+    .dinolabsIDEMediaToolButtonMini {
+        background-color: #3C3C3C;
+        border: 0.2vh solid #c0c0c0;
+        border-radius: 0.4vw;
+        font-size: 1vw;
+        font-weight: 700;
+        color: #f5f5f5;
+        cursor: pointer;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        outline: none;
+        box-shadow: 0 0 8px black;
+        box-sizing: border-box; 
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+    }
+
+    .dinolabsIDEMediaToolButton {
+        min-width: 10%;
+        max-width: 10%;
+        padding: 0.6vw;
+    }
+
+    .dinolabsIDEMediaToolButtonBig {
+        min-width: 30%;
+        max-width: 30%;
+        padding: 1vw;
+    }
+
+    .dinolabsIDEMediaToolButtonBigger {
+        min-width: 40%;
+        max-width: 40%;
+        padding: 1vw;
+        gap: 1vw; 
+    }
+
+    .dinolabsIDEMediaToolButtonHeader {
+        width: auto;
+        padding: 1vw;
+        max-height: 55%;
+    }
+
+    .dinolabsIDEMediaToolButtonText {
+        min-width: 15%;
+        max-width: 15%;
+        padding: 0.6vw;
+    }
+
+    .dinolabsIDEMediaToolButtonMini {
+        min-width: 15%;
+        max-width: 15%;
+        padding: 0.6vw;
+    }
+
+    .dinolabsIDEMediaToolButton:hover,
+    .dinolabsIDEMediaToolButtonBig:hover, 
+    .dinolabsIDEMediaToolButtonText:hover, 
+    .dinolabsIDEMediaToolButtonMini:hover {
+        opacity: 0.6;
+        outline: none;
+        border: 0.2vh solid #c0c0c0;
+    }
+
+    .dinolabsIDEMediaToolButton:hover, 
+    .dinolabsIDEMediaToolButtonText:hover, 
+    .dinolabsIDEMediaToolButtonMini:hover {
+        transform: scale(1.1);
+    }
+
+    .dinolabsIDEMediaToolButton:focus,
+    .dinolabsIDEMediaToolButtonBig:focus, 
+    .dinolabsIDEMediaToolButtonText:focus, 
+    .dinolabsIDEMediaToolButtonMini:focus {
+        opacity: 1.0;
+        outline: none;
+        border: 0.2vh solid #c0c0c0;
+    }
+
+    .dinolabsIDEMediaColorPicker, 
+    .dinolabsIDEMediaColorPickerLarge {
+        border: none;
+        background: none;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        box-shadow: 0 0 10px black;
+        border: 0.2vh solid white;
+        border-radius: 0.2vw;
+    }
+
+    .dinolabsIDEMediaColorPicker {
+        padding: 0;
+        min-width: 2vw;
+        max-width: 2vw; 
+        height: 2vw;
+    }
+
+    .dinolabsIDEMediaColorPickerLarge {
+        padding: 0;
+        min-width: 80%;
+        max-width: 80%; 
+        height: 2.5vw;
+    }
+
+    .dinolabsIDEMediaSliderWrapper {
+        width: 70%;
+        padding: 0 1vw;
+        display: flex; 
+        justify-content: center;
+    }
+
+    .dinolabsIDEConfrmationCheck {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6vw;
+    }
+
+    .dinolabsIDEConfrmationCheck span {
+        font-size: 1.1vw;
+        font-weight: 600;
+        color: #c0c0c0;
+    }
+
+    .dinolabsIDEImageResizer {
+        position: absolute;
+        cursor: move;
+    }
+
+    .dinolabsIDEMediaContent {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+        user-select: none;
+        pointer-events: none;
+        max-width: none;
+        max-height: none;
+    }
+
+    .dinolabsIDEMediaResizeHandle {
+        width: 12px;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 0.4vh solid #000;
+        position: absolute;
+        z-index: 10;
+        cursor: pointer;
+        box-sizing: border-box;
+        border-radius: 50%;
+    }
+
+    .dinolabsIDEMediaResizeHandle.top-left,
+    .dinolabsIDEMediaResizeHandle.bottom-left, 
+    .dinolabsIDEMediaResizeHandle.top-right,
+    .dinolabsIDEMediaResizeHandle.bottom-right, 
+    .dinolabsIDEMediaRotationHandle.top-left,
+    .dinolabsIDEMediaRotationHandle.bottom-left, 
+    .dinolabsIDEMediaRotationHandle.top-right,
+    .dinolabsIDEMediaRotationHandle.bottom-right {
+        cursor: grab;
+    }
+
+    .dinolabsIDEMediaResizeHandle:hover {
+        opacity: 0.6;
+    }
+
+    .dinolabsIDEMediaCropRectangle .dinolabsIDEMediaResizeHandle {
+        background: rgba(31, 174, 245, 0.8);
+        border: white;
+    }
+
+    .dinolabsIDEMediaRotationHandle {
+        background: rgba(31, 174, 245, 0.8);
+        border: white;
+        width: 1vw; 
+        height: 1vw;
+        border-radius: 0.1vw; 
+    }
+
+    .dinolabsIDECornerInputGridWrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    .dinolabsIDECornerInputFlex {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        width: 100%;
+        gap: 1vw;
+        margin-bottom: 1vw;
+    }
 }
 
-.dinoLabsIDEMediaToolBar {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    background-color: #333;
-    height: 100%;
-    width: 35%;
-    overflow: scroll;
-    padding: 0;
-    box-sizing: border-box;
-}
+@media (min-width: 700px) and (max-width: 5399px) {
+    
+    .dinolabsIDEMediaModeIndicator {
+        width: 33%; 
+        font-size: 0.9vw;
+        font-weight: 600;
+        color: #c0c0c0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
 
-.dinolabsIDEMediaContainer {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 65% !important;
-    height: 100% !important;
-    background-color: #252525;
-    border-left: 0.6vh solid rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-    box-sizing: border-box;
-}
+    .dinolabsIDEMediaModeIndicator span {
+        font-weight: 700;
+        color: #c0c0c0;
+        font-size: 1.4vw;
+        margin-right: 0.6vw;
+    }
 
-.dinolabsIDEMediaCellWrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-start;
-    box-sizing: border-box;
-    width: 100%;
-    padding-bottom: 2vw;
-    border-bottom: 0.25vh solid rgba(255, 255, 255, 0.2);    
-}
+    .dinolabsIDEVideoInputBottomBar {
+        display: flex; 
+        justify-content: space-between;
+        align-items: center;
+        width: 100%; 
+        height: 10%; 
+        background-color: #171717;
+        position: absolute; 
+        bottom: 0;
+        right: 0; 
+        left: 0; 
+        border-top: 0.6vh solid rgba(0, 0, 0, 0.4);
+        z-index: 4;
+        box-sizing: border-box;
+        padding: 0 2vw; 
+    }
 
-.dinolabsIDEMediaHeaderFlex {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: 4vw; 
-    padding: 0 2vw; 
-    margin-bottom: 1.5vw;
-    background-color: rgba(0, 0, 0, 0.4);
-}
+    .dinolabsIDEVideoContentFlexBig, 
+    .dinolabsIDEVideoContentFlexSmall {
+        width: 33%; 
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        gap: 1.5vw; 
+    }
 
-.dinolabsIDEMediaCellTitle {
-    font-size: 1.2vw;
-    font-weight: 700;
-    color: #c0c0c0;
-    display: flex;
-    align-items: center;
-    gap: 1vw;
-    overflow: hidden;
-}
+    .dinolabsIDEVideoContentFlexBig {
+        width: auto; 
+        justify-content: center;
+        overflow: scroll;
+    }
 
-.dinolabsIDEMediaCellFlexStackSplitWrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1vw;
-    width: 100%;
-    padding: 0 2vw; 
-}
+    .dinolabsIDEVideoContentFlexSmall {
+        width: auto; 
+    }
 
-.dinolabsIDEMediaCellFlexStack {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    margin-bottom: 1vw;
-    width: 100%;
-    padding: 0 2vw; 
-}
+    .dinolabsIDEVideoButton, 
+    .dinolabsIDEVideoButtonHelper, 
+    .dinolabsIDEVideoButtonSupplementLeading, 
+    .dinolabsIDEVideoButtonSupplementTrailing, 
+    .dinolabsIDEVideoButtonX {
+        background-color: rgba(255, 255, 255, 0.0);
+        padding: 0; 
+        color: #c0c0c0; 
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        cursor: pointer; 
+        outline: none; 
+        order: none; 
+    }
 
-.dinolabsIDEMediaCellFlexStackHalf {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    width: 46%;
-}
+    .dinolabsIDEVideoButton {
+        font-size: 1.4vw; 
+        opacity: 1.0; 
+    }
 
-.dinolabsIDEMediaLargeStack,
-.dinolabsIDEMediaMiniStack {
-    display: flex; 
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    min-width: 30%;
-    max-width: 30%; 
-}
+    .dinolabsIDEVideoButtonHelper {
+        font-size: 1.4vw; 
+        opacity: 1.0; 
+    }
 
-.dinolabsIDEMediaLargeStack {
-    min-width: 40%;
-    max-width: 40%; 
-}
+    .dinolabsIDEVideoButtonSupplementLeading, 
+    .dinolabsIDEVideoButtonSupplementTrailing {
+        font-size: 1.2vw; 
+        opacity: 0.9; 
+    }
 
-.dinolabsIDEMediaMiniStack {
-    min-width: 30%;
-    max-width: 30%; 
-}
+    .dinolabsIDEVideoButtonX {
+        font-size: 0.9vw; 
+        font-weight: 600; 
+        opacity: 0.8; 
+    }
 
-.dinolabsIDEMediaLargeStack span,
-.dinolabsIDEMediaMiniStack span {
-    font-size: 0.9vw;
-    font-weight: 500;
-    color: #c0c0c0;
-    opacity: 0.8;
-    margin: 0.4vw 0;
-}
+    .dinolabsIDEVideoButtonSupplementLeading {
+        margin-right: 0.6vw;
+    }
 
+    .dinolabsIDEVideoButtonSupplementTrailing {
+        margin-left: 0.6vw;
+        margin-right: 1vw;
+    }
 
+    .dinolabsIDEVideoButton:hover, 
+    .dinolabsIDEVideoButtonHelper:hover,
+    .dinolabsIDEVideoButtonSupplementLeading:hover, 
+    .dinolabsIDEVideoButtonSupplementTrailing:hover, 
+    .dinolabsIDEVideoButtonX:hover {
+        opacity: 0.6; 
+        transform: scale(1.1); 
+        outline: none; 
+        border: none; 
+    }
 
-
-
-
-.dinolabsIDEMediaPositionInput,
-.dinolabsIDEMediaPositionInputMini, 
-.dinolabsIDEMediaCSSInput {
-    padding: 1vw 1vw;
-    background-color: #222222;
-    border: 0.4vh solid rgba(255, 255, 255, 0.2);
-    border-radius: 0.4vw;
-    font-size: 1vw;
-    font-weight: 800;
-    color: #c0c0c0;
-    box-shadow: 0 0 6px black;
-}
-
-.dinolabsIDEMediaPositionInput {
-    max-width: 40%;
-}
-
-.dinolabsIDEMediaPositionInputMini {
-    max-width: 20%;
-    font-size: 0.8vw;
-}
-
-.dinolabsIDEMediaCSSInput {
-    min-width: 100%;
-    max-width: 100%; 
-}
-
-.dinolabsIDEMediaCellFlexTitle {
-    font-size: 1vw;
-    font-weight: 600;
-    color: #c0c0c0;
-    opacity: 0.8;
-    margin: 0.4vw 0;
-}
-
-.dinolabsIDEMediaCellFlexTitle span {
-    font-size: 0.9vw; 
-    font-weight: 500; 
-    margin-left: 1vw;
-}
-
-.dinolabsIDEMediaCellFlex {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    margin-top: 0.4vw;
-    width: 100%;
-    gap: 4%;
-}
-
-.dinolabsIDEMediaCellFlexSupplement {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 1vw;
-    height: 100%;
-}
-
-.dinolabsIDEMediaBrushSizeFlex {
-    width: calc(60% - 2vw); 
-    display: flex; 
-    justify-content: center;
-    align-items: center;
-    gap: 5%; 
-}
-
-.dinolabsIDEMediaToolButton,
-.dinolabsIDEMediaToolButtonBig,
-.dinolabsIDEMediaToolButtonBigger,
-.dinolabsIDEMediaToolButtonHeader, 
-.dinolabsIDEMediaToolButtonText, 
-.dinolabsIDEMediaToolButtonMini {
-    background-color: #3C3C3C;
-    border: 0.2vh solid #c0c0c0;
-    border-radius: 0.4vw;
-    font-size: 1vw;
-    font-weight: 700;
-    color: #f5f5f5;
-    cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    outline: none;
-    box-shadow: 0 0 8px black;
-    box-sizing: border-box; 
-    display: flex; 
-    justify-content: center;
-    align-items: center;
-}
-
-.dinolabsIDEMediaToolButton {
-    min-width: 10%;
-    max-width: 10%;
-    padding: 0.6vw;
-}
-
-.dinolabsIDEMediaToolButtonBig {
-    min-width: 30%;
-    max-width: 30%;
-    padding: 1vw;
-}
-
-.dinolabsIDEMediaToolButtonBigger {
-    min-width: 40%;
-    max-width: 40%;
-    padding: 1vw;
-    gap: 1vw; 
-}
-
-.dinolabsIDEMediaToolButtonHeader {
-    width: auto;
-    padding: 1vw;
-    max-height: 55%;
-}
-
-.dinolabsIDEMediaToolButtonText {
-    min-width: 15%;
-    max-width: 15%;
-    padding: 0.6vw;
-}
-
-.dinolabsIDEMediaToolButtonMini {
-    min-width: 15%;
-    max-width: 15%;
-    padding: 0.6vw;
-}
-
-.dinolabsIDEMediaToolButton:hover,
-.dinolabsIDEMediaToolButtonBig:hover, 
-.dinolabsIDEMediaToolButtonText:hover, 
-.dinolabsIDEMediaToolButtonMini:hover {
-    opacity: 0.6;
-    outline: none;
-    border: 0.2vh solid #c0c0c0;
-}
-
-.dinolabsIDEMediaToolButton:hover, 
-.dinolabsIDEMediaToolButtonText:hover, 
-.dinolabsIDEMediaToolButtonMini:hover {
-    transform: scale(1.1);
-}
-
-.dinolabsIDEMediaToolButton:focus,
-.dinolabsIDEMediaToolButtonBig:focus, 
-.dinolabsIDEMediaToolButtonText:focus, 
-.dinolabsIDEMediaToolButtonMini:focus {
-    opacity: 1.0;
-    outline: none;
-    border: 0.2vh solid #c0c0c0;
-}
-
-.dinolabsIDEMediaColorPicker, 
-.dinolabsIDEMediaColorPickerLarge {
-    border: none;
-    background: none;
-    cursor: pointer;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    box-shadow: 0 0 10px black;
-    border: 0.2vh solid white;
-    border-radius: 0.2vw;
-}
-
-.dinolabsIDEMediaColorPicker {
-    padding: 0;
-    min-width: 2vw;
-    max-width: 2vw; 
-    height: 2vw;
-}
-
-.dinolabsIDEMediaColorPickerLarge {
-    padding: 0;
-    min-width: 80%;
-    max-width: 80%; 
-    height: 2.5vw;
-}
-
-.dinolabsIDEMediaExportActionsWrapper {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: #333;
-    height: 8%;
-    width: 20%;
-    border-top: 0.6vh solid rgba(0, 0, 0, 0.4);
-    border-left: 0.6vh solid rgba(0, 0, 0, 0.4);
-    z-index: 4;
-    border-top-left-radius: 1vw;
-    padding: 1vw !important;
-    box-sizing: border-box;
-}
-
-.dinolabsIDEMediaExportActionsWrapperFlex {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    border-top-left-radius: 0.6vw;
-    cursor: auto;
-}
-
-.dinolabsIDEMediaModeIndicator {
-    font-size: 1.4vw;
-    font-weight: 600;
-    color: #c0c0c0;
-    display: flex;
-    align-items: center;
-}
-
-.dinolabsIDEMediaModeIndicator span {
-    font-weight: 500;
-    color: #c0c0c0;
-    font-size: 1.1vw;
-    margin-right: 0.6vw;
-}
-
-
-.dinolabsIDEMediaSliderWrapper {
-    width: 70%;
-    padding: 0 1vw;
-    display: flex; 
-    justify-content: center;
-}
-
-.dinolabsIDEConfrmationCheck {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6vw;
-}
-
-.dinolabsIDEConfrmationCheck span {
-    font-size: 1.1vw;
-    font-weight: 600;
-    color: #c0c0c0;
-}
-
-.dinolabsIDEImageResizer {
-    position: absolute;
-    cursor: move;
-}
-
-.dinolabsIDEMediaContent {
-    max-width: 100%;
-    max-height: 100%;
-    display: block;
-    user-select: none;
-    pointer-events: none;
-    max-width: none;
-    max-height: none;
-}
-
-.dinolabsIDEMediaResizeHandle {
-    width: 12px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 0.4vh solid #000;
-    position: absolute;
-    z-index: 10;
-    cursor: pointer;
-    box-sizing: border-box;
-    border-radius: 50%;
-}
-
-.dinolabsIDEMediaResizeHandle.top-left,
-.dinolabsIDEMediaResizeHandle.bottom-left, 
-.dinolabsIDEMediaResizeHandle.top-right,
-.dinolabsIDEMediaResizeHandle.bottom-right, 
-.dinolabsIDEMediaRotationHandle.top-left,
-.dinolabsIDEMediaRotationHandle.bottom-left, 
-.dinolabsIDEMediaRotationHandle.top-right,
-.dinolabsIDEMediaRotationHandle.bottom-right {
-    cursor: grab;
-}
-
-.dinolabsIDEMediaResizeHandle:hover {
-    opacity: 0.6;
-}
-
-.dinolabsIDEMediaCropRectangle .dinolabsIDEMediaResizeHandle {
-    background: rgba(31, 174, 245, 0.8);
-    border: white;
-}
-
-.dinolabsIDEMediaRotationHandle {
-    background: rgba(31, 174, 245, 0.8);
-    border: white;
-    width: 1vw; 
-    height: 1vw;
-    border-radius: 0.1vw; 
-}
-
-.dinolabsIDECornerInputGridWrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: center;
-}
-
-.dinolabsIDECornerInputFlex {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    width: 100%;
-    gap: 1vw;
-    margin-bottom: 1vw;
+    .dinolabsIDEVideoButton:focus, 
+    .dinolabsIDEVideoButtonHelper:focus, 
+    .dinolabsIDEVideoButtonSupplementLeading:focus, 
+    .dinolabsIDEVideoButtonSupplementTrailing:focus, 
+    .dinolabsIDEVideoButtonX:focus {
+        outline: none; 
+        border: none; 
+    }
 }

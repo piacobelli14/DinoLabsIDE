@@ -1,9 +1,7 @@
 .default-token {
-    white-space: pre;
-    display: inline;
-    vertical-align: top;
-    font-weight: 700;
     font-family: monospace;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 .default-token.keyword {
     color: #C586C0;
@@ -125,7 +123,6 @@
 }
 .default-token.preprocessor {
     color: #FF00FF;
-    font-weight: bold;
 }
 .default-token.arrow,
 .default-token.spread,
@@ -176,10 +173,6 @@
 .default-token.standard-library {
     color: #4EC9B0;
 }
-.searchHighlight {
-    background-color: #ffd54f;
-    color: #000;
-}
 .default-token.property {
     color: #9CDCFE;
 }
@@ -218,7 +211,6 @@
 }
 .default-token.tag {
     color: #569CD6;
-    font-weight: bold;
 }
 .default-token.attribute {
     color: #9CDCFE;

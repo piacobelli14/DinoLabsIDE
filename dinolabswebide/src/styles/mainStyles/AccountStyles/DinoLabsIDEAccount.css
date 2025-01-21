@@ -371,7 +371,8 @@
       color: #c0c0c0;
    }
 
-   .dinolabsIDESettingsKeyIcon {
+   .dinolabsIDESettingsKeyIcon, 
+   .dinolabsIDESettingsKeyIconSelect {
       padding: 0.4vw 0.8vw;
       background-color: rgba(255, 255, 255, 0.1);
       font-size: 0.8vw;
@@ -382,18 +383,35 @@
       outline: none;
       box-shadow: 0 0 2px rgba(255, 255, 255, 0.6);
       cursor: pointer;
+      text-align: center;
    }
 
-   .dinolabsIDESettingsKeyIcon:hover {
+   .dinolabsIDESettingsKeyIcon:hover, 
+   .dinolabsIDESettingsKeyIconSelect:hover {
       opacity: 0.6;
       border: none;
       outline: none;
    }
 
-   .dinolabsIDESettingsKeyIcon:focus {
+   .dinolabsIDESettingsKeyIcon:focus, 
+   .dinolabsIDESettingsKeyIconSelect:focus {
       border: none;
       outline: none;
    }
+
+   .dinolabsIDESettingsKeyIconSelect {
+      background-color: rgba(255, 255, 255, 0.4);
+   }
+
+   .dinolabsIDESettingsKeyIconSelect::-ms-expand {
+      display: none; 
+  }
+  
+  .dinolabsIDESettingsKeyIconSelect {
+      -webkit-appearance: none;  
+      -moz-appearance: none;    
+      appearance: none;          
+  }
 
    .dinolabsIDESettingsInput {
       padding: 0.4vw 0.8vw;

@@ -176,7 +176,6 @@ const getFileIcon = (filename) => {
   );
 };
 
-
 const prefixPath = (rootDirectoryName, path) => {
   if (path.startsWith(rootDirectoryName)) {
     return path;
@@ -266,6 +265,17 @@ const DinoLabsIDE = () => {
       return 18;
     }
   };
+
+  const mediaExtensionsToDisable = [...mediaExtensions.image, ...mediaExtensions.video, ...mediaExtensions.audio];
+  const hasImageVideoOpen = panes.some(pane =>
+    pane.openedTabs.some(tab => {
+      if (tab.isMedia && tab.fileHandle && typeof tab.fileHandle.name === 'string') {
+        const ext = tab.fileHandle.name.split('.').pop().toLowerCase();
+        return mediaExtensionsToDisable.includes(ext);
+      }
+      return false;
+    })
+  );
 
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
@@ -2007,6 +2017,10 @@ const DinoLabsIDE = () => {
                                 onClick={() => setIsRootOpen(!isRootOpen)}
                                 onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: rootDirectoryName })}
                                 className="directoryListItemRoot"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) =>
+                                  handleItemDrop(e, { fullPath: rootDirectoryName, type: 'directory' })
+                                }
                               >
                                 <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
                                 {rootDirectoryName}
@@ -2272,7 +2286,19 @@ const DinoLabsIDE = () => {
                                     currentSearchIndex={tab.currentSearchIndex}
                                     setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
                                     onSplit={splitTab}
-                                    disableSplit={panes.length >= 2 || pane.openedTabs.length <= 1}
+                                    disableSplit={
+                                      panes.length >= 2 || 
+                                      pane.openedTabs.length <= 1 ||
+                                      pane.openedTabs.some(tab => {
+                                        if (tab.isMedia && tab.fileHandle && typeof tab.fileHandle.name === 'string') {
+                                          const ext = tab.fileHandle.name.split('.').pop().toLowerCase();
+                                          return mediaExtensions.image.includes(ext) || 
+                                                 mediaExtensions.video.includes(ext) || 
+                                                 mediaExtensions.audio.includes(ext);
+                                        }
+                                        return false;
+                                      })
+                                    }
                                     paneIndex={paneIndex}
                                     tabId={tab.id}
                                     isSearchOpen={tab.isSearchOpen}
@@ -2285,7 +2311,6 @@ const DinoLabsIDE = () => {
                                     fileHandle={tab.fileHandle}
                                     isGlobalSearchActive={!!globalSearchQuery}
                                     keyBinds={keyBinds}
-                                    zoomLevel={zoomLevel}
                                     colorTheme={colorTheme}
                                   />
                                 )}
@@ -2521,4 +2546,3 @@ const DinoLabsIDE = () => {
 };
 
 export default DinoLabsIDE;
-

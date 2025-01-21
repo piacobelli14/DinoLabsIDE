@@ -1,7 +1,4 @@
 .light-token {
-    white-space: pre;
-    display: inline;
-    vertical-align: top;
     font-weight: 700;
     font-family: monospace;
 }
@@ -171,10 +168,6 @@
 }
 .light-token.standard-library {
     color: #40E0D0;
-}
-.searchHighlight {
-    background-color: #FFFACD;
-    color: #000;
 }
 .light-token.property {
     color: #ADD8E6;

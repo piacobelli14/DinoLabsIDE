@@ -196,7 +196,7 @@ const DoughnutPlot = ({ cellType, data, organizationName, fontSizeMultiplier }) 
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: border * 1.5,
-            borderColor: "#222832",
+            borderColor: "#131313",
             borderWidth: border,
           },
           emphasis: {
