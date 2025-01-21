@@ -1,5 +1,3 @@
-
-// DinoLabsIDEParser.js
 export const getTokenPatterns = (language) => {
     switch (language.toLowerCase()) {
         case 'python':
@@ -471,6 +469,21 @@ export const getTokenPatterns = (language) => {
                 `([^<>&]+)`,
                 `([\\(\\)\\[\\]\\{\\}])`
             ];
+        case 'dockerfile':
+            return [
+                `(#[^\\n]*)`,
+                `\\b(FROM|RUN|CMD|LABEL|EXPOSE|ENV|ADD|COPY|ENTRYPOINT|VOLUME|USER|WORKDIR|ARG|ONBUILD|STOPSIGNAL|HEALTHCHECK|SHELL)\\b`,
+                `("[^"]*"|'[^']*')`,
+                `([^\\s]+)`
+            ];
+        case 'makefile':
+            return [
+                `(#[^\\n]*)`,
+                `^([A-Za-z0-9_./-]+:)`,
+                `(\\$\\([A-Za-z0-9_]+\\))`,
+                `("(?:(?:[^"\\\\]|\\\\.)*)"|'(?:(?:[^'\\\\]|\\\\.)*)')`,
+                `([^\\s]+)`
+            ];
         default:
             return null;
     }
@@ -572,6 +585,12 @@ export const tokenTypes = {
         'entity',
         'text',
         'operator'
+    ], 
+    dockerfile: [
+        'comment', 'instruction', 'string', 'variable'
+    ],
+    makefile: [
+        'comment', 'target', 'variable', 'string', 'text'
     ]
 };
 

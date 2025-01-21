@@ -135,7 +135,8 @@ const extensionToImageMap = {
   tmp: "cacheExtensions.svg",
   temp: "cacheExtensions.svg",
   bak: "cacheExtensions.svg",
-  dockerfile: "dockerExtension.svg",
+  dockerfile: "dockerfileExtension.svg",
+  makefile: "makefileExtension.svg", 
   git: "githubExtension.svg"
 };
 
@@ -143,7 +144,7 @@ const supportedExtensions = [
   'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
   'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
-  'md', 'txt'
+  'md', 'txt', 'dockerfile', 'makefile'
 ];
 
 const mediaExtensions = {
@@ -158,6 +159,8 @@ const getFileIcon = (filename) => {
 
   if (lowerFilename === "dockerfile") {
     extension = "dockerfile";
+  } else if (lowerFilename === "makefile") {
+    extension = "makefile"; 
   } else if (lowerFilename.startsWith('.git')) {
     extension = "git"
   } else {
@@ -632,6 +635,11 @@ const DinoLabsIDE = () => {
   
       const parts = fileHandle.name.split('.');
       const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
+      const lowerName = fileHandle.name.toLowerCase();
+      const language = (lowerName === "dockerfile") ? "Dockerfile" :
+                        (lowerName === "makefile") ? "Makefile" :
+                        extensionToLanguageMap[extension] || "Unknown";
+    
       let mediaType = null;
       for (const type in mediaExtensions) {
         if (mediaExtensions[type].includes(extension)) {
@@ -785,7 +793,10 @@ const DinoLabsIDE = () => {
           : "The content of this file type could not be automatically detected. Try to open it anyway.";
       }
   
-      const language = extensionToLanguageMap[fileExtension] || "Unknown";
+      const lowerName = file.name.toLowerCase();
+      const language = (lowerName === "dockerfile") ? "Dockerfile" :
+                      (lowerName === "makefile") ? "Makefile" :
+                      extensionToLanguageMap[fileExtension] || "Unknown";
       const newTab = {
         id: fileId,
         name: file.name,

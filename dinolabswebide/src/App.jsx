@@ -41,7 +41,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route index element={<Navigate to="/" replace />} />
+          <Route index element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
     </Router>
