@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark, faRightToBracket, faIdCard, faRightFromBracket, faPerson, faStopwatch, faDatabase, faListCheck, faGear, faFileZipper, faSignal, faComputer, faCaretDown, faCaretRight, faCode } from "@fortawesome/free-solid-svg-icons"; 
-
-import DLWhite from "/DinoLabsLogo-White.png";
 import "../styles/helperStyles/DinoLabsNav.css";
 import useAuth from "../UseAuth.jsx";
 import useIsTouchDevice from "../TouchDevice.jsx";
@@ -12,20 +10,8 @@ const DinoLabsNav = ({ activePage }) => {
     const navigate = useNavigate();
     const isTouchDevice = useIsTouchDevice();
     const { token, userID, organizationID, isAdmin, loading } = useAuth();
-    const [phiAccess, setPHIAccess] = useState(false);
-    const [rawAccess, setRawAccess] = useState(false);
-    const [alertAccess, setAlertAccess] = useState(false);
-    const [enrollAbility, setEnrollAbility] = useState(false);
-    const [dischargeAbility, setDischargeAbility] = useState(false);
-    const [deleteAbility, setDeleteAbility] = useState(false);
-    const [editAbility, setEditAbility] = useState(false);
-    const [exportAbility, setExportAbility] = useState(false);
-    const [deviceAbility, setDeviceAbility] = useState(false);
-    
     const [isHamburger, setIsHamburger] = useState(false);
     const [isTokenExpired, setIsTokenExpired] = useState(false);
-    const [permissionsLoading, setPermissionLoading] = useState(false); 
-    const [isAdminDropdown, setIsAdminDropdown] = useState(false); 
 
     useEffect(() => {
         const checkTokenExpiration = () => {
@@ -81,7 +67,7 @@ const DinoLabsNav = ({ activePage }) => {
                 <div className="homeTopNavBarContainer"> 
 
                     <div className="homeSkipToContent"> 
-                        <img className="homeLogo" src={DLWhite} alt="Dino Labs Logo"/>
+                        <img className="homeLogo" src="./DinoLabsLogo-White.png" alt="Logo"/>
                         <label className="homeHeader" style={{"color": "#c0c0c0"}}>
                             Dino Labs Web IDE
                         </label> 

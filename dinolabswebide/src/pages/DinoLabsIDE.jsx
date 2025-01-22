@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
+import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor.jsx"; 
+import DinoLabsIDEPDFEditor from "./DinoLabsIDEText/DinoLabsIDEPDFEditor.jsx"; 
 import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
 import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor.jsx"; 
 import DinoLabsIDEAudioEditor from "./DinoLabsIDEMedia/DinoLabsIDEAudioEditor.jsx"; 
@@ -140,12 +142,17 @@ const extensionToImageMap = {
   git: "githubExtension.svg"
 };
 
-const supportedExtensions = [
+const markdownExtensions = [
   'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
   'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
-  'md', 'txt', 'dockerfile', 'makefile'
+  'dockerfile', 'makefile'
 ];
+
+const textExtensions = {
+  richText: ['doc', 'docx'],
+  pdf: ['pdf'],
+};
 
 const mediaExtensions = {
   image: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp'],
@@ -270,16 +277,6 @@ const DinoLabsIDE = () => {
   };
 
   const mediaExtensionsToDisable = [...mediaExtensions.image, ...mediaExtensions.video, ...mediaExtensions.audio];
-  const hasImageVideoOpen = panes.some(pane =>
-    pane.openedTabs.some(tab => {
-      if (tab.isMedia && tab.fileHandle && typeof tab.fileHandle.name === 'string') {
-        const ext = tab.fileHandle.name.split('.').pop().toLowerCase();
-        return mediaExtensionsToDisable.includes(ext);
-      }
-      return false;
-    })
-  );
-
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -788,7 +785,7 @@ const DinoLabsIDE = () => {
         const fileData = await file.handle.getFile();
         content = await fileData.text();
       } else {
-        content = supportedExtensions.includes(fileExtension)
+        content = markdownExtensions.includes(fileExtension)
           ? "Error reading file content."
           : "The content of this file type could not be automatically detected. Try to open it anyway.";
       }
@@ -801,7 +798,7 @@ const DinoLabsIDE = () => {
         id: fileId,
         name: file.name,
         content: content,
-        language: supportedExtensions.includes(fileExtension) ? language : "Unknown",
+        language: markdownExtensions.includes(fileExtension) ? language : "Unknown",
         forceOpen: false,
         searchTerm: "",
         replaceTerm: "",
@@ -822,7 +819,7 @@ const DinoLabsIDE = () => {
       const newTab = {
         id: fileId,
         name: file.name,
-        content: supportedExtensions.includes(fileExtension)
+        content: markdownExtensions.includes(fileExtension)
           ? "Error reading file content."
           : "The content of this file type could not be automatically detected. Try to open it anyway.",
         language: "Unknown",
@@ -2273,58 +2270,81 @@ const DinoLabsIDE = () => {
                                     {(['png', 'jpg', 'jpeg'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEImageEditor fileHandle={tab.fileHandle} />
                                     )}
-
                                     {(['mp4', 'mkv', 'avi', 'mov'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEVideoEditor fileHandle={tab.fileHandle} />
                                     )}
-
                                     {(['mp3', 'wav', 'flac'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEAudioEditor fileHandle={tab.fileHandle} />
                                     )}
                                   </>
                                 ) : (
-                                  <DinoLabsIDEMarkdown
-                                    fileContent={tab.content}
-                                    detectedLanguage={tab.language}
-                                    forceOpen={tab.forceOpen}
-                                    onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
-                                    searchTerm={tab.searchTerm}
-                                    setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
-                                    replaceTerm={tab.replaceTerm}
-                                    setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
-                                    searchPositions={tab.searchPositions}
-                                    setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
-                                    currentSearchIndex={tab.currentSearchIndex}
-                                    setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
-                                    onSplit={splitTab}
-                                    disableSplit={
-                                      panes.length >= 2 || 
-                                      pane.openedTabs.length <= 1 ||
-                                      pane.openedTabs.some(tab => {
-                                        if (tab.isMedia && tab.fileHandle && typeof tab.fileHandle.name === 'string') {
-                                          const ext = tab.fileHandle.name.split('.').pop().toLowerCase();
-                                          return mediaExtensions.image.includes(ext) || 
-                                                 mediaExtensions.video.includes(ext) || 
-                                                 mediaExtensions.audio.includes(ext);
+                                  <>
+                                    {(['doc', 'docx'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDERichTextEditor fileHandle={tab.fileHandle} />
+                                    )}
+
+                                    {(['pdf'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDEPDFEditor fileHandle={tab.fileHandle} />
+                                    )}
+
+                                    {([
+                                        'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
+                                        'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
+                                        'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
+                                        'dockerfile', 'makefile'
+                                      ].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDEMarkdown
+                                        fileContent={tab.content}
+                                        detectedLanguage={tab.language}
+                                        forceOpen={tab.forceOpen}
+                                        onForceOpen={() => handleForceOpenTab(paneIndex, tab.id)}
+                                        searchTerm={tab.searchTerm}
+                                        setSearchTerm={(term) => setTabSearchTerm(paneIndex, tab.id, term)}
+                                        replaceTerm={tab.replaceTerm}
+                                        setReplaceTerm={(term) => setTabReplaceTerm(paneIndex, tab.id, term)}
+                                        searchPositions={tab.searchPositions}
+                                        setSearchPositions={(positions) => setTabSearchPositions(paneIndex, tab.id, positions)}
+                                        currentSearchIndex={tab.currentSearchIndex}
+                                        setCurrentSearchIndex={(index) => setTabCurrentSearchIndex(paneIndex, tab.id, index)}
+                                        onSplit={splitTab}
+                                        disableSplit={
+                                          panes.length >= 2 ||
+                                          pane.openedTabs.length <= 1 ||
+                                          pane.openedTabs.some(innerTab => {
+                                            if (innerTab.isMedia && innerTab.fileHandle?.name) {
+                                              const ext = innerTab.fileHandle.name.split('.').pop().toLowerCase();
+                                              return (
+                                                mediaExtensions.image.includes(ext) ||
+                                                mediaExtensions.video.includes(ext) ||
+                                                mediaExtensions.audio.includes(ext)
+                                              );
+                                            }
+                                            return false;
+                                          })
                                         }
-                                        return false;
-                                      })
-                                    }
-                                    paneIndex={paneIndex}
-                                    tabId={tab.id}
-                                    isSearchOpen={tab.isSearchOpen}
-                                    isReplaceOpen={tab.isReplaceOpen}
-                                    setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
-                                    setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
-                                    ref={editorRefs.current[paneIndex][tab.id]}
-                                    onEdit={handleEdit}
-                                    onSave={handleSave}
-                                    fileHandle={tab.fileHandle}
-                                    isGlobalSearchActive={!!globalSearchQuery}
-                                    keyBinds={keyBinds}
-                                    colorTheme={colorTheme}
-                                  />
+                                        paneIndex={paneIndex}
+                                        tabId={tab.id}
+                                        isSearchOpen={tab.isSearchOpen}
+                                        isReplaceOpen={tab.isReplaceOpen}
+                                        setTabSearchOpen={(isOpen) => setTabSearchOpen(paneIndex, tab.id, isOpen)}
+                                        setTabReplaceOpen={(isOpen) => setTabReplaceOpen(paneIndex, tab.id, isOpen)}
+                                        ref={editorRefs.current[paneIndex][tab.id]}
+                                        onEdit={handleEdit}
+                                        onSave={handleSave}
+                                        fileHandle={tab.fileHandle}
+                                        isGlobalSearchActive={!!globalSearchQuery}
+                                        keyBinds={keyBinds}
+                                        colorTheme={colorTheme}
+                                      />
+
+                                    )}
+
+                                  </>
+
+                                  
+                                  
                                 )}
+
                               </div>
                             ))
                           ) : (

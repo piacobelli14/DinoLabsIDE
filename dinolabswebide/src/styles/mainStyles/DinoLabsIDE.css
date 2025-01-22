@@ -1430,7 +1430,7 @@
     min-height: 100%; 
     resize: none;
     background: transparent;
-    color: transparent; 
+    color:  white; 
     caret-color: white;
     font-family: monospace;
     letter-spacing: 0px;
