@@ -10,9 +10,36 @@ import {
     faAlignJustify,
     faAlignLeft,
     faAlignRight,
-    faArrowUpWideShort, faBarsStaggered, faBold, faCaretRight, faChevronRight, faDownload, faDroplet, faEllipsisV, faEraser, faFile, 
-    faFont, faHighlighter, faIndent, faItalic, faListNumeric, faListUl, faMinus, faOutdent, faPenToSquare, 
-    faPlus, faStrikethrough, faUnderline 
+    faArrowUpWideShort, 
+    faBarsStaggered, 
+    faBold, 
+    faCaretRight, 
+    faChevronRight, 
+    faDownload, 
+    faDroplet, 
+    faEllipsisV, 
+    faEraser, 
+    faFile, 
+    faFont, 
+    faHighlighter, 
+    faIndent, 
+    faItalic, 
+    faListNumeric, 
+    faListUl, 
+    faMinus, 
+    faOutdent, 
+    faPenToSquare, 
+    faPlus, 
+    faStrikethrough, 
+    faUnderline,
+    faUndo,
+    faRedo,
+    faCut,
+    faCopy,
+    faPaste,
+    faArrowPointer,
+    faSearch,
+    faSync
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
@@ -340,6 +367,62 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         window.print();
     };
 
+    // ----- Updated for Edit functionality -----
+    const handleSelectAll = () => {
+        if (!editorRef.current) return;
+        const range = document.createRange();
+        range.selectNodeContents(editorRef.current);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    };
+
+    const handlePaste = async () => {
+      restoreSelection();
+      try {
+        const text = await navigator.clipboard.readText();
+        document.execCommand('insertText', false, text);
+      } catch (err) {
+        console.error("Failed to paste from clipboard: ", err);
+      }
+    };
+
+    const handleSearch = async () => {
+      const result = await showDialog({
+        title: 'Search',
+        message: 'Enter search term:',
+        inputs: [
+          { name: 'searchTerm', type: 'text', defaultValue: '' }
+        ],
+        showCancel: true
+      });
+      if (!result) return;
+      const { searchTerm } = result;
+      if (!searchTerm.trim()) return;
+
+      // Placeholder for actual search logic
+      alert(`Searching for "${searchTerm}"...`);
+    };
+
+    const handleSearchReplace = async () => {
+      const result = await showDialog({
+        title: 'Search & Replace',
+        message: 'Enter search term and replace value:',
+        inputs: [
+          { name: 'searchTerm', type: 'text', defaultValue: '' },
+          { name: 'replaceTerm', type: 'text', defaultValue: '' }
+        ],
+        showCancel: true
+      });
+      if (!result) return;
+      const { searchTerm, replaceTerm } = result;
+      if (!searchTerm.trim()) return;
+
+      // Placeholder for actual search & replace logic
+      alert(`Replacing "${searchTerm}" with "${replaceTerm}"...`);
+    };
+    // -----------------------------------------
+
     if (error) {
         return; 
     }
@@ -413,6 +496,95 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                             className="dinolabsIDETextEditingContextMenuVertical"
                                             ref={editModalRef}
                                         >
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={() => execCommand("undo")}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faUndo}/>
+                                                    Undo
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={() => execCommand("redo")}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faRedo}/>
+                                                    Redo
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={() => execCommand("cut")}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faCut}/>
+                                                    Cut
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={() => execCommand("copy")}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faCopy}/>
+                                                    Copy
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            {/* Updated paste button to custom paste handler */}
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handlePaste}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faPaste}/>
+                                                    Paste
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handleSelectAll}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faArrowPointer}/>
+                                                    Select All
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            {/* Converted to use custom dialog */}
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handleSearch}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faSearch}/>
+                                                    Search
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handleSearchReplace}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faSync}/>
+                                                    Search & Replace
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
                                         </div>
                                     )
                                 }
