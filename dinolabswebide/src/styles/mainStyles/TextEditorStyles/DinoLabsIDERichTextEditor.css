@@ -1,0 +1,327 @@
+@media (min-width: 700px) and (max-width: 5399px) {
+    .context-menu-tippy {
+        background: none;
+        border: none; 
+        box-shadow: none; 
+        padding: 0 1vw; 
+        background-color: #313131;
+        border-radius: 1.4vw; 
+        margin-top: 0.2vw; 
+    }
+
+    .context-menu-tippy .tippy-arrow {
+        display: none; 
+    }
+
+    .dinolabsIDETextEditingContextMenu {
+        width: 100%; 
+        height: 100%; 
+        padding: 1vw;
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        gap: 1vw; 
+    }
+}
+
+@media (min-width: 700px) and (max-width: 5399px) {
+    .dinolabsIDETextWrapper {
+        width: 100%; 
+        height: 100%;
+        display: flex; 
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .dinolabsIDETextToolBar {
+        width: 100%; 
+        padding: 1vw;
+        background-color: #171717; 
+        display: flex; 
+        align-items: center;
+        border-bottom: 0.6vh solid rgba(0, 0, 0, 0.4);
+    }
+    
+    .dinolabsIDETextEditorWrapper {
+        flex: 1; 
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: auto;
+    }
+    
+    .dinolabsIDETextTitleWrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 35%; 
+        box-sizing: border-box;
+        overflow: scroll; 
+        padding: 0vw 1vw; 
+    }
+
+    .dinolabsIDEFileNameStack {
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        box-sizing: border-box;
+        width: calc(100% - 4vw); 
+    }
+
+    .dinolabsIDETextFileIcon {
+        font-size: 2.5vw; 
+        color: #5c2be2; 
+        margin-right: 1vw; 
+    }
+
+    .dinolasIDETextFileNameInput {
+        padding: 0.4vw 0.2vw; 
+        box-sizing: border-box;
+        background-color: rgba(255,255,255,0.0); 
+        border: 0.2vh solid rgba(0, 0, 0, 0.0);
+        border-radius: 0.4vw; 
+        color: #d8d8d8; 
+        font-size: 1.8vw; 
+        font-weight: 600;
+        width: 100%; 
+        margin-bottom: 0.2vw; 
+        overflow: scroll; 
+        white-space: nowrap;
+    }
+
+    .dinolabsIDETextOperationsButtonsWrapper {
+        display: flex; 
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1vw; 
+        padding: 0 1vw 0 0.4vw; 
+    }
+
+    .dinolabsIDETextOperationsButton {
+        background-color: rgba(255,255,255,0.0); 
+        border: none; 
+        outline: none; 
+        padding: 0; 
+        font-size: 1.1vw; 
+        font-weight: 450; 
+        color: #c0c0c0; 
+        cursor: pointer;
+    }
+
+    .dinolabsIDETextOperationsButton:hover {
+        opacity: 0.6; 
+        border: none; 
+        outline: none;
+    }
+
+    .dinolabsIDETextOperationsButton:hover {
+        opacity: 1.0; 
+        border: none; 
+        outline: none;
+    }
+
+    .dinolabsIDETextEditingButtonsWrapper {
+        background-color: rgba(255,255,255,0.1);
+        width: 60%; 
+        padding: 0.8vw; 
+        border-radius: 1.4vw; 
+        display: flex; 
+        justify-content: center;
+        align-items: center;  
+    }
+
+    .dinolabsIDETextEditingInputWrapper {
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        height: 100%; 
+        border-left: 0.3vh solid rgba(255,255,255,0.2); 
+        gap: 0.2vw; 
+        padding: 0 1vw; 
+    }
+
+    .dinolabsIDETextEditingButton {
+        background-color: rgba(255, 255, 255, 0.0);
+        padding: 0.6vw; 
+        font-size: 1.2vw; 
+        font-weight: 600;
+        color: #f5f5f5; 
+        border: none;
+        border-radius: 0.4vw;
+        outline: none;  
+        cursor: pointer;
+    }
+
+    .dinolabsIDETextEditingButton:hover {
+        background-color: rgba(255, 255, 255, 0.2);  
+        outline: none;
+        border: none;  
+    }
+
+    .dinolabsIDETextEditingButton:focus {
+        background-color: rgba(255, 255, 255, 0.0);
+        outline: none;
+        border: none;    
+    }
+
+    .dinolabsIDETextEditingInput, 
+    .dinolabsIDETextEditingSelect {
+        background-color: rgba(255, 255, 255, 0.0);
+        padding: 0.6vw;
+        border-radius: 0.4vw; 
+        font-size: 1.2vw; 
+        font-weight: 600;
+        border: none; 
+        outline: none; 
+        width: 5vw;
+        text-align: center;
+        overflow: scroll; 
+        white-space: nowrap;
+    }
+
+    .dinolabsIDETextEditingInput {
+        width: 5vw; 
+    }
+
+    .dinolabsIDETextEditingSelect {
+        width: 8vw; 
+        cursor: pointer;
+        text-overflow: ellipsis !important;
+    }
+
+    .dinolabsIDETextEditingInput:hover, 
+    .dinolabsIDETextEditingSelect:hover {
+        background-color: rgba(255, 255, 255, 0.2);    
+        outline: none;
+        border: none;
+    }
+
+    .dinolabsIDETextEditingInput:focus, 
+    .dinolabsIDETextEditingSelect:focus {
+        background-color: rgba(255, 255, 255, 0.2);
+        outline: none;
+        border: none;    
+    }
+
+
+    .dinolabsIDETextEditingSelect::-ms-expand {
+        display: none; 
+    }
+    
+    .dinolabsIDETextEditingSelect {
+        -webkit-appearance: none;  
+        -moz-appearance: none;    
+        appearance: none;          
+    }
+    
+
+
+    .dinolabsIDeTextEditorStack {
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 90%; 
+        height: 100%; 
+        max-height: 100%; 
+        min-height: 100%;
+        position: relative; 
+        box-sizing: border-box;
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .dinolabsIDETextEditor {
+        width: 100%; 
+        background-color: rgba(255, 255, 255, 0.9);
+        color: black; 
+        overflow: auto;
+        padding: 1vw 2vw;  
+        box-sizing: border-box;  
+        border: 0.4vh solid #222222; 
+        border-radius: 0.4vw; 
+        box-shadow: 0 10px 10px black;
+        position: absolute;
+        height: 90%; 
+        top: 5%; 
+        bottom: 5%; 
+        z-index: 1; 
+        scrollbar-width: thin; 
+        scrollbar-color: rgba(0, 0, 0, 0.05); 
+    }
+    
+    .dinoLabsTextEditorTopBar, 
+    .dinoLabsTextEditorBottomBar {
+        width: 100%; 
+        background-color: rgba(255,255,255,0.0); 
+        z-index: 2; 
+        position: absolute; 
+    }
+
+    .dinoLabsTextEditorTopBar {
+        height: 5%; 
+        top: 0; 
+    }
+
+    .dinoLabsTextEditorBottomBar {
+        height: 5%; 
+        bottom: 0; 
+    }
+
+    .dinolabsIDETextTipMargin {
+        width: 5%; 
+        height: 100%; 
+        min-height: 100%;
+        max-height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); 
+        border: none; 
+        padding: 1vw; 
+        box-sizing: border-box;
+    }
+
+    .dinolabsIDETextCommentMargin {
+        width: 5%; 
+        height: 100%; 
+        min-height: 100%;
+        max-height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); 
+        border: none; 
+        box-sizing: border-box;
+    }
+
+    .dinolabsIDETextColorWrapper {
+        font-size: 1vw;
+        font-weight: 600; 
+        color: #f5f5f5; 
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        gap: 0.8vw; 
+        background-color: rgba(255,255,255,0.2);
+        padding: 0.6vw 1.4vw;
+        border-radius: 0.4vw;  
+    }
+
+    .dinolabsIDETextColorWrapper span {
+        margin-right: 0.8vw;
+        margin-left: 0.4vw; 
+        white-space: nowrap;
+    }
+
+    .dinolabsIDETextColorPicker {
+        border: none;
+        background: none;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        box-shadow: 0 0 10px black;
+        border: 0.2vh solid white;
+        border-radius: 0.2vw;
+        padding: 0;
+        min-width: 1.5vw;
+        max-width: 1.5vw; 
+        height: 1.5vw;
+    }
+}

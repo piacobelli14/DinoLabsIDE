@@ -76,8 +76,6 @@ const extensionToLanguageMap = {
   mcgen: "Monkey C",
   sql: "SQL",
   asm: "Assembly",
-  md: "Markdown",
-  txt: "Text"
 };
 
 const extensionToImageMap = {
@@ -143,14 +141,14 @@ const extensionToImageMap = {
 };
 
 const markdownExtensions = [
-  'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
+  'js', 'jsx', 'ts', 'tsx', 'html', 'css',
   'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
   'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
   'dockerfile', 'makefile'
 ];
 
 const textExtensions = {
-  richText: ['doc', 'docx'],
+  richText: ['txt', 'md'],
   pdf: ['pdf'],
 };
 
@@ -2279,8 +2277,12 @@ const DinoLabsIDE = () => {
                                   </>
                                 ) : (
                                   <>
-                                    {(['doc', 'docx'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
-                                      <DinoLabsIDERichTextEditor fileHandle={tab.fileHandle} />
+                                    {(['txt', 'md'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDERichTextEditor 
+                                        fileHandle={tab.fileHandle}
+                                        onEdit={handleEdit}        
+                                        onSave={handleSave}        
+                                      />
                                     )}
 
                                     {(['pdf'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
@@ -2288,7 +2290,7 @@ const DinoLabsIDE = () => {
                                     )}
 
                                     {([
-                                        'txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css',
+                                        'js', 'jsx', 'ts', 'tsx', 'html', 'css',
                                         'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
                                         'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
                                         'dockerfile', 'makefile'

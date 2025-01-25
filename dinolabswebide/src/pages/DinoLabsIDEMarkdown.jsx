@@ -46,8 +46,6 @@ const languageImageMap = {
   Bash: "bash.svg",
   Shell: "shell.svg",
   SQL: "sql.svg",
-  Markdown: "markdown.svg",
-  Text: "txtExtension.svg",
   Dockerfile: "dockerfileExtension.svg",
   Makefile: "makefileExtension.svg",
 };
