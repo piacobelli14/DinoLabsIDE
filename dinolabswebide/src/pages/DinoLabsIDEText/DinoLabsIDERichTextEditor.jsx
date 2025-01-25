@@ -10,7 +10,7 @@ import {
     faAlignJustify,
     faAlignLeft,
     faAlignRight,
-    faArrowUpWideShort, faBarsStaggered, faBold, faDroplet, faEllipsisV, faEraser, faFile, 
+    faArrowUpWideShort, faBarsStaggered, faBold, faCaretRight, faChevronRight, faDownload, faDroplet, faEllipsisV, faEraser, faFile, 
     faFont, faHighlighter, faIndent, faItalic, faListNumeric, faListUl, faMinus, faOutdent, faPenToSquare, 
     faPlus, faStrikethrough, faUnderline 
 } from "@fortawesome/free-solid-svg-icons";
@@ -33,6 +33,16 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const lineSpacingModalRef = useRef(null);
     const listModalRef = useRef(null);
     const moreModalRef = useRef(null);
+    const fileButtonRef = useRef(null);
+    const fileModalRef = useRef(null);
+    const editButtonRef = useRef(null);
+    const editModalRef = useRef(null);
+    const insertButtonRef = useRef(null);
+    const insertModalRef = useRef(null);
+    const formatButtonRef = useRef(null);
+    const formatModalRef = useRef(null);
+    const toolsButtonRef = useRef(null);
+    const toolsModalRef = useRef(null);
     const [textColor, setTextColor] = useState("#000000");
     const [isTextColorOpen, setIsTextColorOpen] = useState(false);
     const [textHighlightColor, setTextHighlightColor] = useState("#ffffff");
@@ -106,6 +116,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             if (openModal) {
                 let modalRef = null;
                 let buttonRef = null;
+
                 if (openModal === 'align') {
                     modalRef = alignModalRef.current;
                     buttonRef = alignButtonRef.current;
@@ -118,7 +129,24 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 } else if (openModal === 'more') {
                     modalRef = moreModalRef.current;
                     buttonRef = moreButtonRef.current;
+                } 
+                else if (openModal === 'file') {
+                    modalRef = fileModalRef.current;
+                    buttonRef = fileButtonRef.current;
+                } else if (openModal === 'edit') {
+                    modalRef = editModalRef.current;
+                    buttonRef = editButtonRef.current;
+                } else if (openModal === 'insert') {
+                    modalRef = insertModalRef.current;
+                    buttonRef = insertButtonRef.current;
+                } else if (openModal === 'format') {
+                    modalRef = formatModalRef.current;
+                    buttonRef = formatButtonRef.current;
+                } else if (openModal === 'tools') {
+                    modalRef = toolsModalRef.current;
+                    buttonRef = toolsButtonRef.current;
                 }
+
                 if (
                     modalRef && !modalRef.contains(event.target) &&
                     buttonRef && !buttonRef.contains(event.target)
@@ -279,6 +307,39 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         execCommand("hiliteColor", color);
     };
 
+    const handleDownload = async () => {
+        const result = await showDialog({
+            title: 'Download as...',
+            message: 'Select a file type to download this file as.',
+            inputs: [
+                {
+                    name: 'fileType',
+                    type: 'select',
+                    options: [
+                        { label: 'Plain Text (.txt)', value: 'txt' },
+                        { label: 'Markdown (.md)', value: 'md' }
+                    ]
+                }
+            ],
+            showCancel: true
+        });
+        if (result) {
+            const content = editorRef.current.innerText;
+            const fileExtension = result.fileType === 'md' ? 'md' : 'txt';
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName.replace(/\.[^/.]+$/, '') + '.' + fileExtension;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (error) {
         return; 
     }
@@ -293,36 +354,156 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             {fileName}
                         </label> 
                         <div className="dinolabsIDETextOperationsButtonsWrapper"> 
-                            <button
-                                className="dinolabsIDETextOperationsButton"
-                                onMouseDown={(e) => e.preventDefault()}
+                            <Tippy
+                                visible={openModal === 'file'}
+                                onClickOutside={() => setOpenModal(null)}
+                                placement="bottom"
+                                interactive={true}
+                                className="context-menu-tippy-vertical"
+                                content={
+                                    openModal === 'file' && (
+                                        <div 
+                                            className="dinolabsIDETextEditingContextMenuVertical"
+                                            ref={fileModalRef}
+                                        >
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handleDownload}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faDownload}/>
+                                                    Download
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+
+                                            <button 
+                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                onClick={handlePrint}
+                                            > 
+                                                <span>
+                                                    <FontAwesomeIcon icon={faDownload}/>
+                                                    Print
+                                                </span>
+                                                <FontAwesomeIcon icon={faCaretRight}/>
+                                            </button>
+                                        </div>
+                                    )
+                                }
                             >
-                                File
-                            </button>
-                            <button
-                                className="dinolabsIDETextOperationsButton"
-                                onMouseDown={(e) => e.preventDefault()}
+                                <button
+                                    className="dinolabsIDETextOperationsButton"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => toggleModal('file')}
+                                    ref={fileButtonRef}
+                                >
+                                    File
+                                </button>
+                            </Tippy>
+
+                            <Tippy
+                                visible={openModal === 'edit'}
+                                onClickOutside={() => setOpenModal(null)}
+                                placement="bottom"
+                                interactive={true}
+                                className="context-menu-tippy-vertical"
+                                content={
+                                    openModal === 'edit' && (
+                                        <div 
+                                            className="dinolabsIDETextEditingContextMenuVertical"
+                                            ref={editModalRef}
+                                        >
+                                        </div>
+                                    )
+                                }
                             >
-                                Edit
-                            </button>
-                            <button
-                                className="dinolabsIDETextOperationsButton"
-                                onMouseDown={(e) => e.preventDefault()}
+                                <button
+                                    className="dinolabsIDETextOperationsButton"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => toggleModal('edit')}
+                                    ref={editButtonRef}
+                                >
+                                    Edit
+                                </button>
+                            </Tippy>
+
+                            <Tippy
+                                visible={openModal === 'insert'}
+                                onClickOutside={() => setOpenModal(null)}
+                                placement="bottom"
+                                interactive={true}
+                                className="context-menu-tippy-vertical"
+                                content={
+                                    openModal === 'insert' && (
+                                        <div 
+                                            className="dinolabsIDETextEditingContextMenuVertical"
+                                            ref={insertModalRef}
+                                        >
+                                        </div>
+                                    )
+                                }
                             >
-                                Insert
-                            </button>
-                            <button
-                                className="dinolabsIDETextOperationsButton"
-                                onMouseDown={(e) => e.preventDefault()}
+                                <button
+                                    className="dinolabsIDETextOperationsButton"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => toggleModal('insert')}
+                                    ref={insertButtonRef}
+                                >
+                                    Insert
+                                </button>
+                            </Tippy>
+
+                            <Tippy
+                                visible={openModal === 'format'}
+                                onClickOutside={() => setOpenModal(null)}
+                                placement="bottom"
+                                interactive={true}
+                                className="context-menu-tippy-vertical"
+                                content={
+                                    openModal === 'format' && (
+                                        <div 
+                                            className="dinolabsIDETextEditingContextMenuVertical"
+                                            ref={formatModalRef}
+                                        >
+                                        </div>
+                                    )
+                                }
                             >
-                                Format
-                            </button>
-                            <button
-                                className="dinolabsIDETextOperationsButton"
-                                onMouseDown={(e) => e.preventDefault()}
+                                <button
+                                    className="dinolabsIDETextOperationsButton"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => toggleModal('format')}
+                                    ref={formatButtonRef}
+                                >
+                                    Format
+                                </button>
+                            </Tippy>
+                            
+                            <Tippy
+                                visible={openModal === 'tools'}
+                                onClickOutside={() => setOpenModal(null)}
+                                placement="bottom"
+                                interactive={true}
+                                className="context-menu-tippy-vertical"
+                                content={
+                                    openModal === 'tools' && (
+                                        <div 
+                                            className="dinolabsIDETextEditingContextMenuVertical"
+                                            ref={toolsModalRef}
+                                        >
+                                        </div>
+                                    )
+                                }
                             >
-                                Tools
-                            </button>
+                                <button
+                                    className="dinolabsIDETextOperationsButton"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => toggleModal('tools')}
+                                    ref={toolsButtonRef}
+                                >
+                                    Tools
+                                </button>
+                            </Tippy>
                         </div>
                     </div>
                 </div>
@@ -430,10 +611,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 onClickOutside={() => setOpenModal(null)}
                                 placement="bottom"
                                 interactive={true}
-                                className="context-menu-tippy"
+                                className="context-menu-tippy-horizontal"
                                 content={
                                     openModal === 'align' && (
-                                        <div className="dinolabsIDETextEditingContextMenu" 
+                                        <div className="dinolabsIDETextEditingContextMenuHorizontal" 
                                             ref={alignModalRef}
                                         >
                                             <Tippy content="Align Left" theme="tooltip-light" placement="bottom">
@@ -510,10 +691,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 onClickOutside={() => setOpenModal(null)}
                                 placement="bottom"
                                 interactive={true}
-                                className="context-menu-tippy"
+                                className="context-menu-tippy-horizontal"
                                 content={
                                     openModal === 'lineSpacing' && (
-                                        <div className="dinolabsIDETextEditingContextMenu"
+                                        <div className="dinolabsIDETextEditingContextMenuHorizontal"
                                             ref={lineSpacingModalRef}
                                         >
                                             <Tippy content="1x" theme="tooltip-light" placement="bottom">
@@ -582,10 +763,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 onClickOutside={() => setOpenModal(null)}
                                 placement="bottom"
                                 interactive={true}
-                                className="context-menu-tippy"
+                                className="context-menu-tippy-horizontal"
                                 content={
                                     openModal === 'lists' && (
-                                        <div className="dinolabsIDETextEditingContextMenu"
+                                        <div className="dinolabsIDETextEditingContextMenuHorizontal"
                                             ref={listModalRef}
                                         >
                                             <Tippy content="Bullet List" theme="tooltip-light" placement="bottom">
@@ -633,10 +814,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 }}
                                 placement="bottom"
                                 interactive={true}
-                                className="context-menu-tippy"
+                                className="context-menu-tippy-horizontal"
                                 content={
                                     openModal === 'more' && (
-                                        <div className="dinolabsIDETextEditingContextMenu"
+                                        <div className="dinolabsIDETextEditingContextMenuHorizontal"
                                             ref={moreModalRef}
                                         >
                                             <div
