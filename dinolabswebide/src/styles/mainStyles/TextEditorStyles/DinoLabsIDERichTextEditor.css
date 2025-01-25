@@ -101,6 +101,51 @@
         border-radius: 0.4vw; 
         outline: none; 
     }
+
+    .dinolabsIDETextEditingTableGridWrapper {
+        border: none; 
+        outline: none; 
+        padding: 1vw; 
+        background-color: #191919;
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .dinolabsIDETextEditingTableGrid {
+        display: grid; 
+        grid-template-columns: repeat(10, auto);
+        grid-template-rows: repeat(8, auto);
+        gap: 0.4vw; 
+        padding: 1vw; 
+    }
+
+    .dinolabsIDETextEditingTableGridCells {
+        width: 1.8vw; 
+        height: 1.8vw; 
+        cursor: pointer; 
+        border: none; 
+        border-radius: 0.1vw; 
+    }
+
+    .dinolabsIDETextEditingGridLabel {
+        font-size: 1vw; 
+        font-weight: 600; 
+        color: #f5f5f5;
+        padding: 0.4vw 0 0.4vw 0;  
+        text-align: center; 
+    }
+
+    .dinolabsIDETextEditingGridOperationsFlex {
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        padding: 1vw; 
+        border-top: 0.2vh solid rgba(255,255,255,0.1); 
+    }
+    
+
     
 
 
