@@ -37,7 +37,8 @@ import {
   faPaste,
   faArrowPointer,
   faTable,
-  faBorderStyle
+  faBorderStyle,
+  faIcons
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
@@ -87,6 +88,27 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   const [tableBorderColor, setTableBorderColor] = useState("#cccccc");
   const [isTableBorderColorOpen, setIsTableBorderColorOpen] = useState(false);
   const [tableBorderWidth, setTableBorderWidth] = useState("1px");
+  const [openSpecialCharPicker, setOpenSpecialCharPicker] = useState(false);
+  const specialCharButtonRef = useRef(null);
+
+  const [openMathPicker, setOpenMathPicker] = useState(false);
+  const [openLatinPicker, setOpenLatinPicker] = useState(false);
+  const [openGreekPicker, setOpenGreekPicker] = useState(false);
+  const [openPunctuationPicker, setOpenPunctuationPicker] = useState(false);
+
+  const mathSymbols = [
+    "∀","∁","∂","∃","∄","∅","∆","∇","∈","∉","∊","∋","∌","∍","∎","∏","∐","∑","−","±","÷","×","⋅","√","∛","∜","∝","∞","∟","∠","∢","∣","∧","∨","¬","∩","∪","∫","∬","∭","∮","∯","∰","∱","∲","∳","∴","∵","∶","∷","∸","∹","∺","∻","∼","∽","≁","≂","≃","≄","≅","≆","≇","≈","≉","≊","≋","≌","≍","≎","≏","≐","≑","≒","≓","≔","≕","≖","≗","≘","≙","≚","≛","≜","≝","≞","≟","≠","≡","≤","≥","≦","≧","≨","≩","≪","≫","≬","≭","≮","≯","≰","≱"
+  ];
+  const latinSymbols = [
+    "À","Á","Â","Ã","Ä","Å","Æ","Ç","È","É","Ê","Ë","Ì","Í","Î","Ï","Ñ","Ò","Ó","Ô","Õ","Ö","Ù","Ú","Û","Ü","Ý","ß","à","á","â","ã","ä","å","æ","ç","è","é","ê","ë","ì","í","î","ï","ñ","ò","ó","ô","õ","ö","ù","ú","û","ü","ý","ÿ"
+  ];
+  const greekSymbols = [
+    "Α","Β","Γ","Δ","Ε","Ζ","Η","Θ","Ι","Κ","Λ","Μ","Ν","Ξ","Ο","Π","Ρ","Σ","Τ","Υ","Φ","Χ","Ψ","Ω",
+    "α","β","γ","δ","ε","ζ","η","θ","ι","κ","λ","μ","ν","ξ","ο","π","ρ","σ","τ","υ","φ","χ","ψ","ω"
+  ];
+  const punctuationSymbols = [
+    "…","—","–","‘","’","“","”","«","»","¡","¿","§","¶","•","†","‡"
+  ];
 
   const styleMap = {
     H1: { fontSize: "32px", fontWeight: "bold" },
@@ -210,6 +232,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     setIsTableFontColorOpen(false);
     setIsTableBackgroundColorOpen(false);
     setIsTableBorderColorOpen(false);
+    setOpenSpecialCharPicker(false);
+    setOpenMathPicker(false);
+    setOpenLatinPicker(false);
+    setOpenGreekPicker(false);
+    setOpenPunctuationPicker(false);
   }
 
   function storeSelection() {
@@ -273,6 +300,17 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         p.style[prop] = val;
       });
     });
+  }
+
+  function getSelectedTable() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return null;
+    const range = selection.getRangeAt(0);
+    let node = range.commonAncestorContainer;
+    while (node && node !== editorRef.current && node.nodeName !== "TABLE") {
+      node = node.parentNode;
+    }
+    return node && node.nodeName === "TABLE" ? node : null;
   }
 
   function applyLineSpacing(spacing) {
@@ -349,6 +387,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         setIsTableFontColorOpen(false);
         setIsTableBackgroundColorOpen(false);
         setIsTableBorderColorOpen(false);
+        setOpenSpecialCharPicker(false);
+        setOpenMathPicker(false);
+        setOpenLatinPicker(false);
+        setOpenGreekPicker(false);
+        setOpenPunctuationPicker(false);
       }
       return newModal;
     });
@@ -446,7 +489,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
       };
       const onMouseMove = e => {
         const width = startWidth + (e.pageX - startX);
-        cell.style.width = width + "px";
+        cell.style.width = `${width}px`;
       };
       const onMouseUp = () => {
         document.removeEventListener("mousemove", onMouseMove);
@@ -545,7 +588,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     restoreSelection();
     document.execCommand("removeFormat");
     const cells = getSelectedTableCells();
-    if (!cells.length) return onSave(editorRef.current.innerHTML);
+    if (!cells.length) {
+      onSave(editorRef.current.innerHTML);
+      return;
+    }
     const visitedTables = new Set();
     cells.forEach(cell => {
       const tbl = cell.closest("table");
@@ -570,6 +616,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         }
       });
     });
+    onSave(editorRef.current.innerHTML);
+  }
+
+  function insertSpecialCharacter(character) {
+    restoreSelection();
+    document.execCommand("insertText", false, character);
     onSave(editorRef.current.innerHTML);
   }
 
@@ -616,6 +668,15 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
   }
 
+  function handleWordCount() {
+    const text = editorRef.current.innerText.trim();
+    const wordCount = text ? text.split(/\s+/).length : 0;
+    showDialog({
+      title: "Word Count",
+      message: "Your word count is: " + wordCount
+    });
+  }
+
   if (error) {
     return null;
   }
@@ -650,7 +711,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faDownload} />
                           Download
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -660,7 +720,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faDownload} />
                           Print
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                     </div>
                   )
@@ -695,7 +754,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faUndo} />
                           Undo
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -705,7 +763,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faRedo} />
                           Redo
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -715,7 +772,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faCut} />
                           Cut
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -725,7 +781,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faCopy} />
                           Copy
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -735,7 +790,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faPaste} />
                           Paste
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -745,7 +799,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faArrowPointer} />
                           Select All
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                     </div>
                   )
@@ -780,7 +833,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faListUl} />
                           Bulleted List
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <button
                         className="dinolabsIDETextEditingContextMenuButtonWrapper"
@@ -790,7 +842,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faListNumeric} />
                           Numbered List
                         </span>
-                        <FontAwesomeIcon icon={faCaretRight} />
                       </button>
                       <Tippy
                         visible={openTablePicker}
@@ -954,30 +1005,30 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 </Tippy>
                               </div>
                             </div>
-
-                            <div className="dinolabsIDETextEditingGridOperationsFlex"> 
-                                <div className="dinolabsIDETextEditingInputWrapper">
-                                    <Tippy content="Border Width" theme="tooltip-light" placement="bottom">
-                                        <select
-                                            className="dinolabsIDETextEditingSelect" style={{"border": "none"}}
-                                            value={tableBorderWidth}
-                                            onMouseDown={e => {
-                                                e.preventDefault();
-                                                storeSelection();
-                                            }}
-                                            onChange={e => {
-                                                restoreSelection();
-                                                setTableBorderWidth(e.target.value);
-                                                applyExistingTableStyle({ borderWidth: e.target.value });
-                                            }}
-                                        >
-                                            <option value="1px">1px</option>
-                                            <option value="2px">2px</option>
-                                            <option value="3px">3px</option>
-                                            <option value="4px">4px</option>
-                                        </select>
-                                    </Tippy>
-                                </div>
+                            <div className="dinolabsIDETextEditingGridOperationsFlex">
+                              <div className="dinolabsIDETextEditingInputWrapper" style={{ border: "none" }}>
+                                <Tippy content="Border Width" theme="tooltip-light" placement="bottom">
+                                  <select
+                                    className="dinolabsIDETextEditingSelect"
+                                    style={{ border: "none" }}
+                                    value={tableBorderWidth}
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      storeSelection();
+                                    }}
+                                    onChange={e => {
+                                      restoreSelection();
+                                      setTableBorderWidth(e.target.value);
+                                      applyExistingTableStyle({ borderWidth: e.target.value });
+                                    }}
+                                  >
+                                    <option value="1px">1px</option>
+                                    <option value="2px">2px</option>
+                                    <option value="3px">3px</option>
+                                    <option value="4px">4px</option>
+                                  </select>
+                                </Tippy>
+                              </div>
                             </div>
                           </div>
                         }
@@ -996,6 +1047,190 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <span>
                             <FontAwesomeIcon icon={faTable} />
                             Table
+                          </span>
+                          <FontAwesomeIcon icon={faCaretRight} />
+                        </button>
+                      </Tippy>
+                      <Tippy
+                        visible={openSpecialCharPicker}
+                        onClickOutside={() => {
+                          setOpenSpecialCharPicker(false);
+                          setOpenMathPicker(false);
+                          setOpenLatinPicker(false);
+                          setOpenGreekPicker(false);
+                          setOpenPunctuationPicker(false);
+                        }}
+                        placement="right-start"
+                        interactive={true}
+                        className="context-menu-tippy-vertical"
+                        content={
+                          <div className="dinolabsIDETextEditingContextMenuVertical">
+                            <Tippy
+                              visible={openMathPicker}
+                              onClickOutside={() => setOpenMathPicker(false)}
+                              placement="right-start"
+                              interactive={true}
+                              className="context-menu-tippy-vertical"
+                              content={
+                                <div className="dinolabsIDETextEditingTableGridWrapper">
+                                  <div className="dinolabsIDETextEditingTableGrid">
+                                    {mathSymbols.map(symbol => (
+                                      <div
+                                        key={symbol}
+                                        className="dinolabsIDETextEditingTableGridCells"
+                                        onMouseDown={e => e.preventDefault()}
+                                        onClick={() => insertSpecialCharacter(symbol)}
+                                      >
+                                        {symbol}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setOpenMathPicker(prev => !prev);
+                                  setOpenLatinPicker(false);
+                                  setOpenGreekPicker(false);
+                                  setOpenPunctuationPicker(false);
+                                }}
+                              >
+                                <span>Math</span>
+                                <FontAwesomeIcon icon={faCaretRight} />
+                              </button>
+                            </Tippy>
+                            <Tippy
+                              visible={openLatinPicker}
+                              onClickOutside={() => setOpenLatinPicker(false)}
+                              placement="right-start"
+                              interactive={true}
+                              className="context-menu-tippy-vertical"
+                              content={
+                                <div className="dinolabsIDETextEditingTableGridWrapper">
+                                  <div className="dinolabsIDETextEditingTableGrid">
+                                    {latinSymbols.map(symbol => (
+                                      <div
+                                        key={symbol}
+                                        className="dinolabsIDETextEditingTableGridCells"
+                                        onMouseDown={e => e.preventDefault()}
+                                        onClick={() => insertSpecialCharacter(symbol)}
+                                      >
+                                        {symbol}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setOpenLatinPicker(prev => !prev);
+                                  setOpenMathPicker(false);
+                                  setOpenGreekPicker(false);
+                                  setOpenPunctuationPicker(false);
+                                }}
+                              >
+                                <span>Latin</span>
+                                <FontAwesomeIcon icon={faCaretRight} />
+                              </button>
+                            </Tippy>
+                            <Tippy
+                              visible={openGreekPicker}
+                              onClickOutside={() => setOpenGreekPicker(false)}
+                              placement="right-start"
+                              interactive={true}
+                              className="context-menu-tippy-vertical"
+                              content={
+                                <div className="dinolabsIDETextEditingTableGridWrapper">
+                                  <div className="dinolabsIDETextEditingTableGrid">
+                                    {greekSymbols.map(symbol => (
+                                      <div
+                                        key={symbol}
+                                        className="dinolabsIDETextEditingTableGridCells"
+                                        onMouseDown={e => e.preventDefault()}
+                                        onClick={() => insertSpecialCharacter(symbol)}
+                                      >
+                                        {symbol}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setOpenGreekPicker(prev => !prev);
+                                  setOpenMathPicker(false);
+                                  setOpenLatinPicker(false);
+                                  setOpenPunctuationPicker(false);
+                                }}
+                              >
+                                <span>Greek</span>
+                                <FontAwesomeIcon icon={faCaretRight} />
+                              </button>
+                            </Tippy>
+                            <Tippy
+                              visible={openPunctuationPicker}
+                              onClickOutside={() => setOpenPunctuationPicker(false)}
+                              placement="right-start"
+                              interactive={true}
+                              className="context-menu-tippy-vertical"
+                              content={
+                                <div className="dinolabsIDETextEditingTableGridWrapper">
+                                  <div className="dinolabsIDETextEditingTableGrid">
+                                    {punctuationSymbols.map(symbol => (
+                                      <div
+                                        key={symbol}
+                                        className="dinolabsIDETextEditingTableGridCells"
+                                        onMouseDown={e => e.preventDefault()}
+                                        onClick={() => insertSpecialCharacter(symbol)}
+                                      >
+                                        {symbol}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setOpenPunctuationPicker(prev => !prev);
+                                  setOpenMathPicker(false);
+                                  setOpenLatinPicker(false);
+                                  setOpenGreekPicker(false);
+                                }}
+                              >
+                                <span>Special Punctuation</span>
+                                <FontAwesomeIcon icon={faCaretRight} />
+                              </button>
+                            </Tippy>
+                          </div>
+                        }
+                      >
+                        <button
+                          className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => {
+                            setOpenSpecialCharPicker(prev => !prev);
+                            setOpenMathPicker(false);
+                            setOpenLatinPicker(false);
+                            setOpenGreekPicker(false);
+                            setOpenPunctuationPicker(false);
+                          }}
+                          ref={specialCharButtonRef}
+                        >
+                          <span>
+                            <FontAwesomeIcon icon={faIcons} />
+                            Special Characters
                           </span>
                           <FontAwesomeIcon icon={faCaretRight} />
                         </button>
@@ -1025,6 +1260,60 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                       className="dinolabsIDETextEditingContextMenuVertical"
                       ref={formatModalRef}
                     >
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => handleAlign("justifyLeft")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faAlignLeft} />
+                          Align Left
+                        </span>
+                      </button>
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => handleAlign("justifyCenter")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faAlignCenter} />
+                          Align Center
+                        </span>
+                      </button>
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => handleAlign("justifyRight")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faAlignRight} />
+                          Align Right
+                        </span>
+                      </button>
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => handleAlign("justifyFull")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faAlignJustify} />
+                          Justify
+                        </span>
+                      </button>
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => execCommand("indent")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faIndent} />
+                          Indent
+                        </span>
+                      </button>
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={() => execCommand("outdent")}
+                      >
+                        <span>
+                          <FontAwesomeIcon icon={faOutdent} />
+                          Outdent
+                        </span>
+                      </button>
                     </div>
                   )
                 }
@@ -1050,6 +1339,14 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                       className="dinolabsIDETextEditingContextMenuVertical"
                       ref={toolsModalRef}
                     >
+                      <button
+                        className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                        onClick={handleWordCount}
+                      >
+                        <span>
+                          Word Count
+                        </span>
+                      </button>
                     </div>
                   )
                 }
