@@ -125,6 +125,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const [formElementFontWeight, setFormElementFontWeight] = useState("normal");
 
     useEffect(() => {
+        const handleAlertShow = () => closeAllMenus();
+        window.addEventListener('alertWillShow', handleAlertShow);
+        return () => window.removeEventListener('alertWillShow', handleAlertShow);
+    }, []);
+
+    useEffect(() => {
         if (!fileHandle) return;
         (async () => {
             try {

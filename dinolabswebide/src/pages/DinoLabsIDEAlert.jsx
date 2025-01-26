@@ -119,6 +119,8 @@ function DinoLabsIDEAlert({
 
 export function showDialog({ title, message, inputs = [], showCancel = false }) {
   return new Promise((resolve) => {
+    window.dispatchEvent(new Event('alertWillShow'));
+
     const container = document.createElement('div');
     document.body.appendChild(container);
 

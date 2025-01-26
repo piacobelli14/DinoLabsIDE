@@ -1,13 +1,16 @@
 @media (min-width: 700px) and (max-width: 5399px) {
     .tippy-box {
         padding: 0 !important;
-      }
+        z-index: 3; 
+    }
+
     .context-menu-tippy-horizontal, 
     .context-menu-tippy-vertical {
         background: none;
         border: none; 
         box-shadow: none; 
         box-sizing: border-box;
+        z-index: 3; 
     }
 
     .context-menu-tippy-horizontal {
