@@ -72,3 +72,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #f5f5f5; 
   text-shadow: 0 0 0 !important; 
 }
+
+.button {
+  outline: none; 
+}
+
+.button:hover {
+  outline: none; 
+}
+.button:focus {
+  outline: none; 
+}

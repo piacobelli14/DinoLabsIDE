@@ -38,7 +38,8 @@ import {
   faArrowPointer,
   faTable,
   faBorderStyle,
-  faIcons
+  faIcons,
+  faICursor
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
@@ -51,7 +52,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   const [fontStyle, setFontStyle] = useState("P");
   const [fontType, setFontType] = useState("Arial");
   const [fileName, setFileName] = useState(fileHandle.name);
-
   const alignButtonRef = useRef(null);
   const lineSpacingButtonRef = useRef(null);
   const listButtonRef = useRef(null);
@@ -70,17 +70,14 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   const formatModalRef = useRef(null);
   const toolsButtonRef = useRef(null);
   const toolsModalRef = useRef(null);
-
   const [textColor, setTextColor] = useState("#000000");
   const [isTextColorOpen, setIsTextColorOpen] = useState(false);
   const [textHighlightColor, setTextHighlightColor] = useState("#ffffff");
   const [isTextHighlightColorOpen, setIsTextHighlightColorOpen] = useState(false);
-
   const [openTablePicker, setOpenTablePicker] = useState(false);
   const tableButtonRef = useRef(null);
   const [tableRows, setTableRows] = useState(1);
   const [tableCols, setTableCols] = useState(1);
-
   const [tableFontColor, setTableFontColor] = useState("#000000");
   const [isTableFontColorOpen, setIsTableFontColorOpen] = useState(false);
   const [tableBackgroundColor, setTableBackgroundColor] = useState("#ffffff");
@@ -90,12 +87,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   const [tableBorderWidth, setTableBorderWidth] = useState("1px");
   const [openSpecialCharPicker, setOpenSpecialCharPicker] = useState(false);
   const specialCharButtonRef = useRef(null);
-
   const [openMathPicker, setOpenMathPicker] = useState(false);
   const [openLatinPicker, setOpenLatinPicker] = useState(false);
   const [openGreekPicker, setOpenGreekPicker] = useState(false);
   const [openPunctuationPicker, setOpenPunctuationPicker] = useState(false);
-
   const mathSymbols = [
     "∀","∁","∂","∃","∄","∅","∆","∇","∈","∉","∊","∋","∌","∍","∎","∏","∐","∑","−","±","÷","×","⋅","√","∛","∜","∝","∞","∟","∠","∢","∣","∧","∨","¬","∩","∪","∫","∬","∭","∮","∯","∰","∱","∲","∳","∴","∵","∶","∷","∸","∹","∺","∻","∼","∽","≁","≂","≃","≄","≅","≆","≇","≈","≉","≊","≋","≌","≍","≎","≏","≐","≑","≒","≓","≔","≕","≖","≗","≘","≙","≚","≛","≜","≝","≞","≟","≠","≡","≤","≥","≦","≧","≨","≩","≪","≫","≬","≭","≮","≯","≰","≱"
   ];
@@ -109,13 +104,23 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   const punctuationSymbols = [
     "…","—","–","‘","’","“","”","«","»","¡","¿","§","¶","•","†","‡"
   ];
-
   const styleMap = {
     H1: { fontSize: "32px", fontWeight: "bold" },
     H2: { fontSize: "24px", fontWeight: "bold" },
     H3: { fontSize: "20px", fontWeight: "bold" },
     P: { fontSize: "16px", fontWeight: "normal" }
   };
+  const [openFormElementsPicker, setOpenFormElementsPicker] = useState(false);
+  const [formElementFontColor, setFormElementFontColor] = useState("#000000");
+  const [isFormElementFontColorOpen, setIsFormElementFontColorOpen] = useState(false);
+  const [formElementBackgroundColor, setFormElementBackgroundColor] = useState("#ffffff");
+  const [isFormElementBackgroundColorOpen, setIsFormElementBackgroundColorOpen] = useState(false);
+  const [formElementBorderColor, setFormElementBorderColor] = useState("#cccccc");
+  const [isFormElementBorderColorOpen, setIsFormElementBorderColorOpen] = useState(false);
+  const [formElementBorderWidth, setFormElementBorderWidth] = useState("1px");
+  const formElementsButtonRef = useRef(null);
+  const [formElementFontSize, setFormElementFontSize] = useState("16px");
+  const [formElementFontWeight, setFormElementFontWeight] = useState("normal");
 
   useEffect(() => {
     if (!fileHandle) return;
@@ -162,10 +167,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
       const sel = window.getSelection();
       if (!sel.rangeCount) return;
       const range = sel.getRangeAt(0);
-      if (
-        editorRef.current &&
-        editorRef.current.contains(range.commonAncestorContainer)
-      ) {
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
         savedRangeRef.current = range.cloneRange();
       }
     };
@@ -237,6 +239,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     setOpenLatinPicker(false);
     setOpenGreekPicker(false);
     setOpenPunctuationPicker(false);
+    setOpenFormElementsPicker(false);
+    setIsFormElementFontColorOpen(false);
+    setIsFormElementBackgroundColorOpen(false);
+    setIsFormElementBorderColorOpen(false);
   }
 
   function storeSelection() {
@@ -293,6 +299,15 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     return selectedCells;
   }
 
+  function getSelectedFormElements() {
+    restoreSelection();
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return [];
+    const range = selection.getRangeAt(0);
+    const allFormEls = [...editorRef.current.querySelectorAll("input, select, textarea")];
+    return allFormEls.filter(el => range.intersectsNode(el));
+  }
+
   function setParagraphStyle(styleObj) {
     const paragraphs = getParagraphsInSelection();
     paragraphs.forEach(p => {
@@ -321,10 +336,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   }
 
   function handleFontStyleChange(e) {
-    const desiredStyle = e.target.value;
-    setFontStyle(desiredStyle);
     restoreSelection();
-    setParagraphStyle(styleMap[desiredStyle]);
+    setFontStyle(e.target.value);
+    setParagraphStyle(styleMap[e.target.value]);
   }
 
   function applyFontFamily(font) {
@@ -334,9 +348,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   }
 
   function handleFontTypeChange(e) {
-    const type = e.target.value;
-    setFontType(type);
-    applyFontFamily(type);
+    restoreSelection();
+    setFontType(e.target.value);
+    applyFontFamily(e.target.value);
   }
 
   function handleLineSpacing(spacing) {
@@ -347,6 +361,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   }
 
   function applyFontSize(size) {
+    restoreSelection();
     execCommand("fontSize", 7);
     const fontElements = editorRef.current.getElementsByTagName("font");
     for (let i = 0; i < fontElements.length; i++) {
@@ -392,6 +407,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         setOpenLatinPicker(false);
         setOpenGreekPicker(false);
         setOpenPunctuationPicker(false);
+        setOpenFormElementsPicker(false);
+        setIsFormElementFontColorOpen(false);
+        setIsFormElementBackgroundColorOpen(false);
+        setIsFormElementBorderColorOpen(false);
       }
       return newModal;
     });
@@ -461,7 +480,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     try {
       const text = await navigator.clipboard.readText();
       document.execCommand("insertText", false, text);
-    } catch (err) {}
+    } catch {}
   }
 
   function makeColumnsResizable(tableEl) {
@@ -584,6 +603,27 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     onSave(editorRef.current.innerHTML);
   }
 
+  function applyExistingFormElementStyle({
+    fontColor,
+    backgroundColor,
+    borderColor,
+    borderWidth,
+    fontSize,
+    fontWeight
+  }) {
+    const inputs = getSelectedFormElements();
+    if (!inputs.length) return;
+    inputs.forEach(inp => {
+      if (fontColor !== undefined) inp.style.color = fontColor;
+      if (backgroundColor !== undefined) inp.style.backgroundColor = backgroundColor;
+      if (borderColor !== undefined) inp.style.borderColor = borderColor;
+      if (borderWidth !== undefined) inp.style.borderWidth = borderWidth;
+      if (fontSize !== undefined) inp.style.fontSize = fontSize;
+      if (fontWeight !== undefined) inp.style.fontWeight = fontWeight;
+    });
+    onSave(editorRef.current.innerHTML);
+  }
+
   function handleRemoveFormatting() {
     restoreSelection();
     document.execCommand("removeFormat");
@@ -622,6 +662,28 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
   function insertSpecialCharacter(character) {
     restoreSelection();
     document.execCommand("insertText", false, character);
+    onSave(editorRef.current.innerHTML);
+  }
+
+  function insertFormElement(type) {
+    restoreSelection();
+    const input = document.createElement("input");
+    input.type = type;
+    input.style.color = formElementFontColor;
+    input.style.backgroundColor = formElementBackgroundColor;
+    input.style.borderWidth = formElementBorderWidth;
+    input.style.borderColor = formElementBorderColor;
+    input.style.borderStyle = "solid";
+    input.style.margin = "2px";
+    input.style.padding = "2px";
+    input.style.fontSize = formElementFontSize;
+    input.style.fontWeight = formElementFontWeight;
+    if (type === "text") {
+      input.placeholder = "Enter text";
+    } else if (type === "number") {
+      input.placeholder = "Enter number";
+    }
+    document.execCommand("insertHTML", false, input.outerHTML);
     onSave(editorRef.current.innerHTML);
   }
 
@@ -695,7 +757,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 visible={openModal === "file"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-vertical"
                 content={
                   openModal === "file" && (
@@ -727,7 +789,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextOperationsButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("file")}
                   ref={fileButtonRef}
                 >
@@ -738,7 +803,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 visible={openModal === "edit"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-vertical"
                 content={
                   openModal === "edit" && (
@@ -806,7 +871,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextOperationsButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("edit")}
                   ref={editButtonRef}
                 >
@@ -817,7 +885,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 visible={openModal === "insert"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-vertical"
                 content={
                   openModal === "insert" && (
@@ -852,7 +920,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           setIsTableBorderColorOpen(false);
                         }}
                         placement="right-start"
-                        interactive={true}
+                        interactive
                         className="context-menu-tippy-vertical"
                         content={
                           <div className="dinolabsIDETextEditingTableGridWrapper">
@@ -885,7 +953,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 className="dinolabsIDETextEditingInputWrapper"
                                 style={{ border: "none" }}
                               >
-                                <Tippy content="Font Color" theme="tooltip-light" placement="bottom">
+                                <Tippy content="Font Color" placement="bottom">
                                   <Tippy
                                     content={
                                       <DinoLabsIDEColorPicker
@@ -899,7 +967,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                     }
                                     visible={isTableFontColorOpen}
                                     onClickOutside={() => setIsTableFontColorOpen(false)}
-                                    interactive={true}
+                                    interactive
                                     placement="right"
                                     className="color-picker-tippy"
                                   >
@@ -907,10 +975,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                       <FontAwesomeIcon icon={faFont} />
                                       <label
                                         className="dinolabsIDETextColorPicker"
-                                        onMouseDown={e => {
-                                          e.preventDefault();
-                                          storeSelection();
-                                        }}
+                                        onMouseDown={storeSelection}
                                         onClick={() => {
                                           setIsTableFontColorOpen(prev => !prev);
                                           setIsTableBackgroundColorOpen(false);
@@ -925,7 +990,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 </Tippy>
                               </div>
                               <div className="dinolabsIDETextEditingInputWrapper">
-                                <Tippy content="Background Color" theme="tooltip-light" placement="bottom">
+                                <Tippy content="Background Color" placement="bottom">
                                   <Tippy
                                     content={
                                       <DinoLabsIDEColorPicker
@@ -939,7 +1004,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                     }
                                     visible={isTableBackgroundColorOpen}
                                     onClickOutside={() => setIsTableBackgroundColorOpen(false)}
-                                    interactive={true}
+                                    interactive
                                     placement="right"
                                     className="color-picker-tippy"
                                   >
@@ -947,10 +1012,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                       <FontAwesomeIcon icon={faDroplet} />
                                       <label
                                         className="dinolabsIDETextColorPicker"
-                                        onMouseDown={e => {
-                                          e.preventDefault();
-                                          storeSelection();
-                                        }}
+                                        onMouseDown={storeSelection}
                                         onClick={() => {
                                           setIsTableBackgroundColorOpen(prev => !prev);
                                           setIsTableFontColorOpen(false);
@@ -965,7 +1027,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 </Tippy>
                               </div>
                               <div className="dinolabsIDETextEditingInputWrapper">
-                                <Tippy content="Border Color" theme="tooltip-light" placement="bottom">
+                                <Tippy content="Border Color" placement="bottom">
                                   <Tippy
                                     content={
                                       <DinoLabsIDEColorPicker
@@ -979,7 +1041,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                     }
                                     visible={isTableBorderColorOpen}
                                     onClickOutside={() => setIsTableBorderColorOpen(false)}
-                                    interactive={true}
+                                    interactive
                                     placement="right"
                                     className="color-picker-tippy"
                                   >
@@ -987,10 +1049,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                       <FontAwesomeIcon icon={faBorderStyle} />
                                       <label
                                         className="dinolabsIDETextColorPicker"
-                                        onMouseDown={e => {
-                                          e.preventDefault();
-                                          storeSelection();
-                                        }}
+                                        onMouseDown={storeSelection}
                                         onClick={() => {
                                           setIsTableBorderColorOpen(prev => !prev);
                                           setIsTableFontColorOpen(false);
@@ -1007,15 +1066,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             </div>
                             <div className="dinolabsIDETextEditingGridOperationsFlex">
                               <div className="dinolabsIDETextEditingInputWrapper" style={{ border: "none" }}>
-                                <Tippy content="Border Width" theme="tooltip-light" placement="bottom">
+                                <Tippy content="Border Width" placement="bottom">
                                   <select
                                     className="dinolabsIDETextEditingSelect"
                                     style={{ border: "none" }}
                                     value={tableBorderWidth}
-                                    onMouseDown={e => {
-                                      e.preventDefault();
-                                      storeSelection();
-                                    }}
+                                    onMouseDown={storeSelection}
                                     onChange={e => {
                                       restoreSelection();
                                       setTableBorderWidth(e.target.value);
@@ -1061,7 +1117,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           setOpenPunctuationPicker(false);
                         }}
                         placement="right-start"
-                        interactive={true}
+                        interactive
                         className="context-menu-tippy-vertical"
                         content={
                           <div className="dinolabsIDETextEditingContextMenuVertical">
@@ -1069,7 +1125,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               visible={openMathPicker}
                               onClickOutside={() => setOpenMathPicker(false)}
                               placement="right-start"
-                              interactive={true}
+                              interactive
                               className="context-menu-tippy-vertical"
                               content={
                                 <div className="dinolabsIDETextEditingTableGridWrapper">
@@ -1106,7 +1162,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               visible={openLatinPicker}
                               onClickOutside={() => setOpenLatinPicker(false)}
                               placement="right-start"
-                              interactive={true}
+                              interactive
                               className="context-menu-tippy-vertical"
                               content={
                                 <div className="dinolabsIDETextEditingTableGridWrapper">
@@ -1143,7 +1199,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               visible={openGreekPicker}
                               onClickOutside={() => setOpenGreekPicker(false)}
                               placement="right-start"
-                              interactive={true}
+                              interactive
                               className="context-menu-tippy-vertical"
                               content={
                                 <div className="dinolabsIDETextEditingTableGridWrapper">
@@ -1180,7 +1236,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               visible={openPunctuationPicker}
                               onClickOutside={() => setOpenPunctuationPicker(false)}
                               placement="right-start"
-                              interactive={true}
+                              interactive
                               className="context-menu-tippy-vertical"
                               content={
                                 <div className="dinolabsIDETextEditingTableGridWrapper">
@@ -1235,13 +1291,285 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faCaretRight} />
                         </button>
                       </Tippy>
+                      <Tippy
+                        visible={openFormElementsPicker}
+                        onClickOutside={() => {
+                          setOpenFormElementsPicker(false);
+                          setIsFormElementFontColorOpen(false);
+                          setIsFormElementBackgroundColorOpen(false);
+                          setIsFormElementBorderColorOpen(false);
+                        }}
+                        placement="right-start"
+                        interactive
+                        className="context-menu-tippy-vertical"
+                        content={
+                          <div className="dinolabsIDETextEditingTableGridWrapper">
+                            <div className="dinolabsIDETextEditingGridOperationsStack">
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                style={{paddingLeft: 0, paddingRight: 0}}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => insertFormElement("checkbox")}
+                              >
+                                <span>Insert Checkbox</span>
+                              </button>
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                style={{paddingLeft: 0, paddingRight: 0}}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => insertFormElement("text")}
+                              >
+                                <span>Insert Text Input</span>
+                              </button>
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                style={{paddingLeft: 0, paddingRight: 0}}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => insertFormElement("number")}
+                              >
+                                <span>Insert Number Input</span>
+                              </button>
+                              <button
+                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                style={{paddingLeft: 0, paddingRight: 0}}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => insertFormElement("date")}
+                              >
+                                <span>Insert Date Picker</span>
+                              </button>
+                            </div>
+                            <div className="dinolabsIDETextEditingGridOperationsFlex">
+                              <div
+                                className="dinolabsIDETextEditingInputWrapper"
+                                style={{ border: "none" }}
+                              >
+                                <Tippy content="Font Color" placement="bottom">
+                                  <Tippy
+                                    content={
+                                      <DinoLabsIDEColorPicker
+                                        color={formElementFontColor}
+                                        onChange={color => {
+                                          restoreSelection();
+                                          setFormElementFontColor(color);
+                                          applyExistingFormElementStyle({ fontColor: color });
+                                        }}
+                                      />
+                                    }
+                                    visible={isFormElementFontColorOpen}
+                                    onClickOutside={() => setIsFormElementFontColorOpen(false)}
+                                    interactive
+                                    placement="right"
+                                    className="color-picker-tippy"
+                                  >
+                                    <div className="dinolabsIDETextColorWrapper">
+                                      <FontAwesomeIcon icon={faFont} />
+                                      <label
+                                        className="dinolabsIDETextColorPicker"
+                                        onMouseDown={e => {
+                                          e.preventDefault();
+                                          storeSelection();
+                                        }}
+                                        onClick={() => {
+                                          setIsFormElementFontColorOpen(prev => !prev);
+                                          setIsFormElementBackgroundColorOpen(false);
+                                          setIsFormElementBorderColorOpen(false);
+                                        }}
+                                        style={{
+                                          backgroundColor: formElementFontColor
+                                        }}
+                                      />
+                                    </div>
+                                  </Tippy>
+                                </Tippy>
+                              </div>
+                              <div className="dinolabsIDETextEditingInputWrapper">
+                                <Tippy content="Background Color" placement="bottom">
+                                  <Tippy
+                                    content={
+                                      <DinoLabsIDEColorPicker
+                                        color={formElementBackgroundColor}
+                                        onChange={color => {
+                                          restoreSelection();
+                                          setFormElementBackgroundColor(color);
+                                          applyExistingFormElementStyle({ backgroundColor: color });
+                                        }}
+                                      />
+                                    }
+                                    visible={isFormElementBackgroundColorOpen}
+                                    onClickOutside={() =>
+                                      setIsFormElementBackgroundColorOpen(false)
+                                    }
+                                    interactive
+                                    placement="right"
+                                    className="color-picker-tippy"
+                                  >
+                                    <div className="dinolabsIDETextColorWrapper">
+                                      <FontAwesomeIcon icon={faDroplet} />
+                                      <label
+                                        className="dinolabsIDETextColorPicker"
+                                        onMouseDown={e => {
+                                          e.preventDefault();
+                                          storeSelection();
+                                        }}
+                                        onClick={() => {
+                                          setIsFormElementBackgroundColorOpen(prev => !prev);
+                                          setIsFormElementFontColorOpen(false);
+                                          setIsFormElementBorderColorOpen(false);
+                                        }}
+                                        style={{
+                                          backgroundColor: formElementBackgroundColor
+                                        }}
+                                      />
+                                    </div>
+                                  </Tippy>
+                                </Tippy>
+                              </div>
+                              <div className="dinolabsIDETextEditingInputWrapper">
+                                <Tippy content="Border Color" placement="bottom">
+                                  <Tippy
+                                    content={
+                                      <DinoLabsIDEColorPicker
+                                        color={formElementBorderColor}
+                                        onChange={color => {
+                                          restoreSelection();
+                                          setFormElementBorderColor(color);
+                                          applyExistingFormElementStyle({ borderColor: color });
+                                        }}
+                                      />
+                                    }
+                                    visible={isFormElementBorderColorOpen}
+                                    onClickOutside={() => setIsFormElementBorderColorOpen(false)}
+                                    interactive
+                                    placement="right"
+                                    className="color-picker-tippy"
+                                  >
+                                    <div className="dinolabsIDETextColorWrapper">
+                                      <FontAwesomeIcon icon={faBorderStyle} />
+                                      <label
+                                        className="dinolabsIDETextColorPicker"
+                                        onMouseDown={e => {
+                                          e.preventDefault();
+                                          storeSelection();
+                                        }}
+                                        onClick={() => {
+                                          setIsFormElementBorderColorOpen(prev => !prev);
+                                          setIsFormElementFontColorOpen(false);
+                                          setIsFormElementBackgroundColorOpen(false);
+                                        }}
+                                        style={{
+                                          backgroundColor: formElementBorderColor
+                                        }}
+                                      />
+                                    </div>
+                                  </Tippy>
+                                </Tippy>
+                              </div>
+                            </div>
+                            <div className="dinolabsIDETextEditingGridOperationsFlex">
+                              <div
+                                className="dinolabsIDETextEditingInputWrapper"
+                                style={{ border: "none" }}
+                              >
+                                <Tippy content="Border Width" placement="bottom">
+                                  <select
+                                    className="dinolabsIDETextEditingSelect"
+                                    style={{ border: "none" }}
+                                    value={formElementBorderWidth}
+                                    onMouseDown={storeSelection}
+                                    onChange={e => {
+                                      restoreSelection();
+                                      setFormElementBorderWidth(e.target.value);
+                                      applyExistingFormElementStyle({ borderWidth: e.target.value });
+                                    }}
+                                  >
+                                    <option value="1px">1px</option>
+                                    <option value="2px">2px</option>
+                                    <option value="3px">3px</option>
+                                    <option value="4px">4px</option>
+                                  </select>
+                                </Tippy>
+                              </div>
+                              <div
+                                className="dinolabsIDETextEditingInputWrapper"
+                                style={{ border: "none" }}
+                              >
+                                <Tippy content="Font Size" placement="bottom">
+                                  <select
+                                    className="dinolabsIDETextEditingSelect"
+                                    style={{ border: "none" }}
+                                    value={formElementFontSize}
+                                    onMouseDown={storeSelection}
+                                    onChange={e => {
+                                      restoreSelection();
+                                      setFormElementFontSize(e.target.value);
+                                      applyExistingFormElementStyle({ fontSize: e.target.value });
+                                    }}
+                                  >
+                                    <option value="10px">10px</option>
+                                    <option value="12px">12px</option>
+                                    <option value="14px">14px</option>
+                                    <option value="16px">16px</option>
+                                    <option value="18px">18px</option>
+                                    <option value="24px">24px</option>
+                                    <option value="32px">32px</option>
+                                  </select>
+                                </Tippy>
+                              </div>
+                              <div
+                                className="dinolabsIDETextEditingInputWrapper"
+                                style={{ border: "none" }}
+                              >
+                                <Tippy content="Font Weight" placement="bottom">
+                                  <select
+                                    className="dinolabsIDETextEditingSelect"
+                                    style={{ border: "none" }}
+                                    value={formElementFontWeight}
+                                    onMouseDown={storeSelection}
+                                    onChange={e => {
+                                      restoreSelection();
+                                      setFormElementFontWeight(e.target.value);
+                                      applyExistingFormElementStyle({ fontWeight: e.target.value });
+                                    }}
+                                  >
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Bold</option>
+                                    <option value="bolder">Bolder</option>
+                                    <option value="lighter">Lighter</option>
+                                  </select>
+                                </Tippy>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      >
+                        <button
+                          className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => {
+                            setOpenFormElementsPicker(prev => !prev);
+                            setIsFormElementFontColorOpen(false);
+                            setIsFormElementBackgroundColorOpen(false);
+                            setIsFormElementBorderColorOpen(false);
+                          }}
+                          ref={formElementsButtonRef}
+                        >
+                          <span>
+                            <FontAwesomeIcon icon={faICursor} />
+                            Form Elements
+                          </span>
+                          <FontAwesomeIcon icon={faCaretRight} />
+                        </button>
+                      </Tippy>
                     </div>
                   )
                 }
               >
                 <button
                   className="dinolabsIDETextOperationsButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("insert")}
                   ref={insertButtonRef}
                 >
@@ -1252,7 +1580,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 visible={openModal === "format"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-vertical"
                 content={
                   openModal === "format" && (
@@ -1320,7 +1648,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextOperationsButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("format")}
                   ref={formatButtonRef}
                 >
@@ -1331,7 +1662,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 visible={openModal === "tools"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-vertical"
                 content={
                   openModal === "tools" && (
@@ -1353,7 +1684,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextOperationsButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("tools")}
                   ref={toolsButtonRef}
                 >
@@ -1365,7 +1699,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         </div>
         <div className="dinolabsIDETextEditingButtonsWrapper">
           <div className="dinolabsIDETextEditingInputWrapper" style={{ borderLeft: "none" }}>
-            <Tippy content="Decrease Font Size" theme="tooltip-light" placement="bottom">
+            <Tippy content="Decrease Font Size" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1379,7 +1713,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               value={`${currentFontSize}px`}
               readOnly
             />
-            <Tippy content="Increase Font Size" theme="tooltip-light" placement="bottom">
+            <Tippy content="Increase Font Size" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1390,10 +1724,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             </Tippy>
           </div>
           <div className="dinolabsIDETextEditingInputWrapper">
-            <Tippy content="Change Font Style" theme="tooltip-light" placement="bottom">
+            <Tippy content="Change Font Style" placement="bottom" theme="tooltip-light">
               <select
                 className="dinolabsIDETextEditingSelect"
                 value={fontStyle}
+                onMouseDown={storeSelection}
                 onChange={handleFontStyleChange}
               >
                 <option value="H1">Header 1</option>
@@ -1404,10 +1739,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             </Tippy>
           </div>
           <div className="dinolabsIDETextEditingInputWrapper">
-            <Tippy content="Change Font Type" theme="tooltip-light" placement="bottom">
+            <Tippy content="Change Font Type" placement="bottom" theme="tooltip-light">
               <select
                 className="dinolabsIDETextEditingSelect"
                 value={fontType}
+                onMouseDown={storeSelection}
                 onChange={handleFontTypeChange}
               >
                 <option value="Arial">Arial</option>
@@ -1419,7 +1755,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             </Tippy>
           </div>
           <div className="dinolabsIDETextEditingInputWrapper">
-            <Tippy content="Bold Text" theme="tooltip-light" placement="bottom">
+            <Tippy content="Bold Text" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1428,7 +1764,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 <FontAwesomeIcon icon={faBold} />
               </button>
             </Tippy>
-            <Tippy content="Italicize Text" theme="tooltip-light" placement="bottom">
+            <Tippy content="Italicize Text" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1437,7 +1773,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 <FontAwesomeIcon icon={faItalic} />
               </button>
             </Tippy>
-            <Tippy content="Underline Text" theme="tooltip-light" placement="bottom">
+            <Tippy content="Underline Text" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1446,7 +1782,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 <FontAwesomeIcon icon={faUnderline} />
               </button>
             </Tippy>
-            <Tippy content="Strikethrough Text" theme="tooltip-light" placement="bottom">
+            <Tippy content="Strikethrough Text" placement="bottom" theme="tooltip-light">
               <button
                 className="dinolabsIDETextEditingButton"
                 onMouseDown={e => e.preventDefault()}
@@ -1457,12 +1793,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             </Tippy>
           </div>
           <div className="dinolabsIDETextEditingInputWrapper">
-            <Tippy content="Alignment Options" theme="tooltip-light" placement="bottom">
+            <Tippy content="Alignment Options" placement="bottom" theme="tooltip-light">
               <Tippy
                 visible={openModal === "align"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-horizontal"
                 content={
                   openModal === "align" && (
@@ -1470,7 +1806,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                       className="dinolabsIDETextEditingContextMenuHorizontal"
                       ref={alignModalRef}
                     >
-                      <Tippy content="Align Left" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Align Left" placement="bottom">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1479,7 +1815,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faAlignLeft} />
                         </button>
                       </Tippy>
-                      <Tippy content="Align Center" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Align Center" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1488,7 +1824,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faAlignCenter} />
                         </button>
                       </Tippy>
-                      <Tippy content="Align Right" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Align Right" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1497,7 +1833,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faAlignRight} />
                         </button>
                       </Tippy>
-                      <Tippy content="Justify Full" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Justify Full" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1506,7 +1842,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faAlignJustify} />
                         </button>
                       </Tippy>
-                      <Tippy content="Indent" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Indent" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1515,7 +1851,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faIndent} />
                         </button>
                       </Tippy>
-                      <Tippy content="Outdent" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Outdent" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1530,6 +1866,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextEditingButton"
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("align")}
                   ref={alignButtonRef}
                 >
@@ -1537,12 +1877,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 </button>
               </Tippy>
             </Tippy>
-            <Tippy content="Line Spacing" theme="tooltip-light" placement="bottom">
+            <Tippy content="Line Spacing" placement="bottom" theme="tooltip-light">
               <Tippy
                 visible={openModal === "lineSpacing"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-horizontal"
                 content={
                   openModal === "lineSpacing" && (
@@ -1550,7 +1890,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                       className="dinolabsIDETextEditingContextMenuHorizontal"
                       ref={lineSpacingModalRef}
                     >
-                      <Tippy content="1x" theme="tooltip-light" placement="bottom">
+                      <Tippy content="1x" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1559,7 +1899,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           1x
                         </button>
                       </Tippy>
-                      <Tippy content="1.5x" theme="tooltip-light" placement="bottom">
+                      <Tippy content="1.5x" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1568,7 +1908,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           1.5x
                         </button>
                       </Tippy>
-                      <Tippy content="2x" theme="tooltip-light" placement="bottom">
+                      <Tippy content="2x" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1577,7 +1917,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           2x
                         </button>
                       </Tippy>
-                      <Tippy content="2.5x" theme="tooltip-light" placement="bottom">
+                      <Tippy content="2.5x" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1586,7 +1926,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           2.5x
                         </button>
                       </Tippy>
-                      <Tippy content="3x" theme="tooltip-light" placement="bottom">
+                      <Tippy content="3x" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1601,7 +1941,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextEditingButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("lineSpacing")}
                   ref={lineSpacingButtonRef}
                 >
@@ -1609,12 +1952,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 </button>
               </Tippy>
             </Tippy>
-            <Tippy content="List Options" theme="tooltip-light" placement="bottom">
+            <Tippy content="List Options" placement="bottom" theme="tooltip-light">
               <Tippy
                 visible={openModal === "lists"}
                 onClickOutside={() => closeAllMenus()}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-horizontal"
                 content={
                   openModal === "lists" && (
@@ -1622,7 +1965,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                       className="dinolabsIDETextEditingContextMenuHorizontal"
                       ref={listModalRef}
                     >
-                      <Tippy content="Bullet List" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Bullet List" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1631,7 +1974,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                           <FontAwesomeIcon icon={faListUl} />
                         </button>
                       </Tippy>
-                      <Tippy content="Numbered List" theme="tooltip-light" placement="bottom">
+                      <Tippy content="Numbered List" placement="bottom" theme="tooltip-light">
                         <button
                           className="dinolabsIDETextEditingButton"
                           onMouseDown={e => e.preventDefault()}
@@ -1646,7 +1989,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextEditingButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("lists")}
                   ref={listButtonRef}
                 >
@@ -1656,14 +2002,14 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             </Tippy>
           </div>
           <div className="dinolabsIDETextEditingInputWrapper">
-            <Tippy content="More Options" theme="tooltip-light" placement="bottom">
+            <Tippy content="More Options" placement="bottom" theme="tooltip-light">
               <Tippy
                 visible={openModal === "more"}
                 onClickOutside={() => {
                   closeAllMenus();
                 }}
                 placement="bottom"
-                interactive={true}
+                interactive
                 className="context-menu-tippy-horizontal"
                 content={
                   openModal === "more" && (
@@ -1675,7 +2021,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         className="dinolabsIDETextEditingInputWrapper"
                         style={{ border: "none" }}
                       >
-                        <Tippy content="Text Color" theme="tooltip-light" placement="bottom">
+                        <Tippy content="Text Color" placement="bottom" theme="tooltip-light">
                           <Tippy
                             content={
                               <DinoLabsIDEColorPicker
@@ -1688,7 +2034,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             }
                             visible={isTextColorOpen}
                             onClickOutside={() => setIsTextColorOpen(false)}
-                            interactive={true}
+                            interactive
                             placement="right"
                             className="color-picker-tippy"
                           >
@@ -1696,10 +2042,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               <FontAwesomeIcon icon={faDroplet} />
                               <label
                                 className="dinolabsIDETextColorPicker"
-                                onMouseDown={e => {
-                                  e.preventDefault();
-                                  storeSelection();
-                                }}
+                                onMouseDown={storeSelection}
                                 onClick={() => {
                                   setIsTextColorOpen(prev => !prev);
                                   setIsTextHighlightColorOpen(false);
@@ -1713,7 +2056,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </Tippy>
                       </div>
                       <div className="dinolabsIDETextEditingInputWrapper">
-                        <Tippy content="Text Highlight Color" theme="tooltip-light" placement="bottom">
+                        <Tippy content="Text Highlight Color" placement="bottom" theme="tooltip-light">
                           <Tippy
                             content={
                               <DinoLabsIDEColorPicker
@@ -1726,7 +2069,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             }
                             visible={isTextHighlightColorOpen}
                             onClickOutside={() => setIsTextHighlightColorOpen(false)}
-                            interactive={true}
+                            interactive
                             placement="right"
                             className="color-picker-tippy"
                           >
@@ -1734,10 +2077,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                               <FontAwesomeIcon icon={faHighlighter} />
                               <label
                                 className="dinolabsIDETextColorPicker"
-                                onMouseDown={e => {
-                                  e.preventDefault();
-                                  storeSelection();
-                                }}
+                                onMouseDown={storeSelection}
                                 onClick={() => {
                                   setIsTextHighlightColorOpen(prev => !prev);
                                   setIsTextColorOpen(false);
@@ -1751,7 +2091,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </Tippy>
                       </div>
                       <div className="dinolabsIDETextEditingInputWrapper">
-                        <Tippy content="Remove Formatting" theme="tooltip-light" placement="bottom">
+                        <Tippy content="Remove Formatting" placement="bottom" theme="tooltip-light">
                           <button
                             className="dinolabsIDETextEditingButton"
                             onMouseDown={e => e.preventDefault()}
@@ -1767,7 +2107,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
               >
                 <button
                   className="dinolabsIDETextEditingButton"
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    storeSelection();
+                  }}
                   onClick={() => toggleModal("more")}
                   ref={moreButtonRef}
                 >
