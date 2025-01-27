@@ -462,4 +462,36 @@
         max-width: 1.5vw; 
         height: 1.5vw;
     }
+
+    .dinolabsIDETextEditingPageBreak {
+        page-break-before: always;
+        border: 1px dashed #888;
+        margin: 1em 0;
+        height: 0;
+      }
+
+      .dinolabsIDEPageHeader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 10px;
+        z-index: 100;
+      }
+      
+      .dinolabsIDEPageFooter {
+        position: fixed;  
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10px;
+        z-index: 100;
+      }
+      
+      .dinolabsIDEPageNumber {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 101;
+      }
 }
