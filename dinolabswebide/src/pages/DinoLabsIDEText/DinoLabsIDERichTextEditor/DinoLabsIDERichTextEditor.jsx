@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../../../styles/mainStyles/TextEditorStyles/DinoLabsIDERichTextEditor.css";
+import "../../../styles/helperStyles/Checkbox.css";
 import DinoLabsIDEColorPicker from "../../DinoLabsIDEColorPicker.jsx";
 import { showDialog } from "../../DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";
@@ -42,9 +43,48 @@ import {
     faICursor,
     faImage,
     faBorderTopLeft,
-    faArrowsDownToLine
+    faArrowsDownToLine,
+    faXmark,
+    faArrowLeft,
+    faClose,
+    faArrowUpRightFromSquare,
+    faLeftLong,
+    faXmarkSquare,
+    faArrowRightFromBracket
 } from "@fortawesome/free-solid-svg-icons";
 import DinoLabsIDERichTextEditorToolbar from "./DinoLabsIDERichTextEditorToolbar";
+
+const styleMap = {
+    H1: { fontSize: "32px", fontWeight: "bold" },
+    H2: { fontSize: "24px", fontWeight: "bold" },
+    H3: { fontSize: "20px", fontWeight: "bold" },
+    P: { fontSize: "16px", fontWeight: "normal" },
+};
+
+const mathSymbols = [
+    "∀", "∁", "∂", "∃", "∄", "∅", "∆", "∇", "∈", "∉", "∊", "∋", "∌", "∍", "∎", "∏", "∐", "∑",
+    "−", "±", "÷", "×", "⋅", "√", "∛", "∜", "∝", "∞", "∟", "∠", "∢", "∣", "∧", "∨", "¬", "∩",
+    "∪", "∫", "∬", "∭", "∮", "∯", "∰", "∱", "∲", "∳", "∴", "∵", "∶", "∷", "∸", "∹", "∺",
+    "∻", "∼", "∽", "≁", "≂", "≃", "≄", "≅", "≆", "≇", "≈", "≉", "≊", "≋", "≌", "≍", "≎", "≏",
+    "≐", "≑", "≒", "≓", "≔", "≕", "≖", "≗", "≘", "≙", "≚", "≛", "≜", "≝", "≞", "≟", "≠", "≡",
+    "≤", "≥", "≦", "≧", "≨", "≩", "≪", "≫", "≬", "≭", "≮", "≯", "≰", "≱"
+];
+
+const latinSymbols = [
+    "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï", "Ñ", "Ò", "Ó", "Ô",
+    "Õ", "Ö", "Ù", "Ú", "Û", "Ü", "Ý", "ß", "à", "á", "â", "ã", "ä", "å", "æ", "ç", "è", "é", "ê", "ë",
+    "ì", "í", "î", "ï", "ñ", "ò", "ó", "ô", "õ", "ö", "ù", "ú", "û", "ü", "ý", "ÿ"
+];
+
+const greekSymbols = [
+    "Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ", "Λ", "Μ", "Ν", "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ",
+    "Φ", "Χ", "Ψ", "Ω", "α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π",
+    "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω"
+];
+
+const punctuationSymbols = [
+    "…", "—", "–", "‘", "’", "“", "”", "«", "»", "¡", "¿", "§", "¶", "•", "†", "‡"
+];
 
 export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const editorRef = useRef(null);
@@ -52,12 +92,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const imageInputRef = useRef(null);
     const [initialHTML, setInitialHTML] = useState("<p>Loading...</p>");
     const [error, setError] = useState(null);
+    const [fileName, setFileName] = useState(fileHandle.name);
     const [openModal, setOpenModal] = useState(null);
     const [currentFontSize, setCurrentFontSize] = useState(16);
     const [fontStyle, setFontStyle] = useState("P");
     const [fontType, setFontType] = useState("Arial");
-    const [fileName, setFileName] = useState(fileHandle.name);
-
     const alignButtonRef = useRef(null);
     const lineSpacingButtonRef = useRef(null);
     const listButtonRef = useRef(null);
@@ -76,12 +115,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const formatModalRef = useRef(null);
     const toolsButtonRef = useRef(null);
     const toolsModalRef = useRef(null);
-
     const [textColor, setTextColor] = useState("#000000");
     const [isTextColorOpen, setIsTextColorOpen] = useState(false);
     const [textHighlightColor, setTextHighlightColor] = useState("#ffffff");
     const [isTextHighlightColorOpen, setIsTextHighlightColorOpen] = useState(false);
-
     const [openTablePicker, setOpenTablePicker] = useState(false);
     const tableButtonRef = useRef(null);
     const [tableRows, setTableRows] = useState(1);
@@ -93,27 +130,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const [tableBorderColor, setTableBorderColor] = useState("#cccccc");
     const [isTableBorderColorOpen, setIsTableBorderColorOpen] = useState(false);
     const [tableBorderWidth, setTableBorderWidth] = useState("1px");
-
     const [openSpecialCharPicker, setOpenSpecialCharPicker] = useState(false);
     const specialCharButtonRef = useRef(null);
     const [openMathPicker, setOpenMathPicker] = useState(false);
     const [openLatinPicker, setOpenLatinPicker] = useState(false);
     const [openGreekPicker, setOpenGreekPicker] = useState(false);
     const [openPunctuationPicker, setOpenPunctuationPicker] = useState(false);
-    const mathSymbols = [
-        "∀", "∁", "∂", "∃", "∄", "∅", "∆", "∇", "∈", "∉", "∊", "∋", "∌", "∍", "∎", "∏", "∐", "∑", "−", "±", "÷", "×", "⋅", "√", "∛", "∜", "∝", "∞", "∟", "∠", "∢", "∣", "∧", "∨", "¬", "∩", "∪", "∫", "∬", "∭", "∮", "∯", "∰", "∱", "∲", "∳", "∴", "∵", "∶", "∷", "∸", "∹", "∺", "∻", "∼", "∽", "≁", "≂", "≃", "≄", "≅", "≆", "≇", "≈", "≉", "≊", "≋", "≌", "≍", "≎", "≏", "≐", "≑", "≒", "≓", "≔", "≕", "≖", "≗", "≘", "≙", "≚", "≛", "≜", "≝", "≞", "≟", "≠", "≡", "≤", "≥", "≦", "≧", "≨", "≩", "≪", "≫", "≬", "≭", "≮", "≯", "≰", "≱"
-    ];
-    const latinSymbols = [
-        "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï", "Ñ", "Ò", "Ó", "Ô", "Õ", "Ö", "Ù", "Ú", "Û", "Ü", "Ý", "ß", "à", "á", "â", "ã", "ä", "å", "æ", "ç", "è", "é", "ê", "ë", "ì", "í", "î", "ï", "ñ", "ò", "ó", "ô", "õ", "ö", "ù", "ú", "û", "ü", "ý", "ÿ"
-    ];
-    const greekSymbols = [
-        "Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ", "Λ", "Μ", "Ν", "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ", "Φ", "Χ", "Ψ", "Ω",
-        "α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω"
-    ];
-    const punctuationSymbols = [
-        "…", "—", "–", "‘", "’", "“", "”", "«", "»", "¡", "¿", "§", "¶", "•", "†", "‡"
-    ];
-
     const [openFormElementsPicker, setOpenFormElementsPicker] = useState(false);
     const [formElementFontColor, setFormElementFontColor] = useState("#000000");
     const [isFormElementFontColorOpen, setIsFormElementFontColorOpen] = useState(false);
@@ -125,13 +147,16 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const formElementsButtonRef = useRef(null);
     const [formElementFontSize, setFormElementFontSize] = useState("16px");
     const [formElementFontWeight, setFormElementFontWeight] = useState("normal");
-
-    const styleMap = {
-        H1: { fontSize: "32px", fontWeight: "bold" },
-        H2: { fontSize: "24px", fontWeight: "bold" },
-        H3: { fontSize: "20px", fontWeight: "bold" },
-        P:  { fontSize: "16px", fontWeight: "normal" }
-    };
+    const [showSearchPanel, setShowSearchPanel] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [replaceTerm, setReplaceTerm] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [currentResultIndex, setCurrentResultIndex] = useState(-1);
+    const [caseSensitive, setCaseSensitive] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [panelPos, setPanelPos] = useState({ x: 100, y: 100 });
+    const searchPanelRef = useRef(null);
+    const [saveStatus, setSaveStatus] = useState("idle"); 
 
     useEffect(() => {
         const handleAlertShow = () => closeAllMenus();
@@ -148,13 +173,12 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 const bytes = new Uint8Array(arrBuf);
                 const text = new TextDecoder().decode(bytes);
                 const ext = (fileHandle.name || "").split(".").pop().toLowerCase();
-
                 if (ext === "txt" || ext === "md") {
                     const paragraphs = text
                         .split(/\r?\n\s*\r?\n/g)
-                        .map(block => block.replace(/\r?\n/g, " "));
+                        .map((block) => block.replace(/\r?\n/g, " "));
                     const processedHtml = paragraphs
-                        .map(para => {
+                        .map((para) => {
                             const trimmed = para.trim();
                             if (!trimmed) {
                                 return `<p><br/></p>`;
@@ -167,11 +191,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 } else {
                     setInitialHTML(
                         `
-            <p style="color:gray;">Unsupported extension ".${ext}". We only handle .txt/.md here.<br/>
-            Displaying raw text below:</p>
-            <hr/>
-            <pre>${escapeHtml(text)}</pre>
-            `
+                <p style="color:gray;">Unsupported extension ".${ext}". We only handle .txt/.md here.<br/>
+                Displaying raw text below:</p>
+                <hr/>
+                <pre>${escapeHtml(text)}</pre>
+                `
                     );
                 }
             } catch (err) {
@@ -196,7 +220,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }, []);
 
     useEffect(() => {
-        const handleClickOutside = event => {
+        const handleClickOutside = (event) => {
             if (openModal) {
                 let modalRef = null;
                 let buttonRef = null;
@@ -228,7 +252,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                     modalRef = toolsModalRef.current;
                     buttonRef = toolsButtonRef.current;
                 }
-
                 if (
                     modalRef &&
                     !modalRef.contains(event.target) &&
@@ -284,13 +307,40 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         document.execCommand(command, false, value);
     }
 
+    async function saveChanges(updatedHtml) {
+        setSaveStatus("saving"); 
+        const ext = (fileHandle.name || "").split(".").pop().toLowerCase();
+        let dataToWrite;
+        if (ext === "txt" || ext === "md") {
+            dataToWrite = editorRef.current.innerText;
+        } else {
+            dataToWrite = updatedHtml;
+        }
+        onSave(updatedHtml);
+        if (fileHandle) {
+            try {
+                const writable = await fileHandle.createWritable();
+                await writable.write(dataToWrite);
+                await writable.close();
+                setSaveStatus("saved");
+                setTimeout(() => setSaveStatus("idle"), 2000);
+            } catch (err) {
+                setSaveStatus("idle"); 
+                return;
+            }
+        } else {
+            setSaveStatus("saved"); 
+            setTimeout(() => setSaveStatus("idle"), 2000);
+        }
+    }
+
     function getSelectedTableCells() {
         restoreSelection();
         const selection = window.getSelection();
         if (!selection.rangeCount) return [];
         const range = selection.getRangeAt(0);
         const allCells = [...editorRef.current.querySelectorAll("td, th")];
-        return allCells.filter(cell => range.intersectsNode(cell));
+        return allCells.filter((cell) => range.intersectsNode(cell));
     }
 
     function getSelectedFormElements() {
@@ -299,24 +349,23 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         if (!selection.rangeCount) return [];
         const range = selection.getRangeAt(0);
         const allFormEls = [...editorRef.current.querySelectorAll("input, select, textarea")];
-        return allFormEls.filter(el => range.intersectsNode(el));
+        return allFormEls.filter((el) => range.intersectsNode(el));
     }
 
     function applyExistingTableStyle({
         borderColor,
         borderWidth,
         backgroundColor,
-        fontColor
+        fontColor,
     }) {
         const cells = getSelectedTableCells();
         if (!cells.length) return;
         const visitedTables = new Set();
-        cells.forEach(cell => {
+        cells.forEach((cell) => {
             const table = cell.closest("table");
             if (table) visitedTables.add(table);
         });
-
-        visitedTables.forEach(table => {
+        visitedTables.forEach((table) => {
             if (borderColor !== undefined) {
                 table.style.borderColor = borderColor;
                 table.dataset.borderColor = borderColor;
@@ -332,7 +381,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 table.dataset.backgroundColor = backgroundColor;
             }
             const allCells = table.querySelectorAll("td,th");
-            allCells.forEach(c => {
+            allCells.forEach((c) => {
                 if (borderColor !== undefined) {
                     c.style.borderColor = borderColor;
                 }
@@ -341,12 +390,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 }
             });
         });
-
-        cells.forEach(cell => {
+        cells.forEach((cell) => {
             if (fontColor !== undefined) cell.style.color = fontColor;
             if (backgroundColor !== undefined) cell.style.backgroundColor = backgroundColor;
         });
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function applyExistingFormElementStyle({
@@ -355,11 +403,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         borderColor,
         borderWidth,
         fontSize,
-        fontWeight
+        fontWeight,
     }) {
         const inputs = getSelectedFormElements();
         if (!inputs.length) return;
-        inputs.forEach(inp => {
+        inputs.forEach((inp) => {
             if (fontColor !== undefined) inp.style.color = fontColor;
             if (backgroundColor !== undefined) inp.style.backgroundColor = backgroundColor;
             if (borderColor !== undefined) inp.style.borderColor = borderColor;
@@ -367,7 +415,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             if (fontSize !== undefined) inp.style.fontSize = fontSize;
             if (fontWeight !== undefined) inp.style.fontWeight = fontWeight;
         });
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function handleFontStyleChange(e) {
@@ -375,7 +423,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         setFontStyle(e.target.value);
         const paragraphs = getParagraphsInSelection();
         const styleObj = styleMap[e.target.value] || styleMap["P"];
-        paragraphs.forEach(p => {
+        paragraphs.forEach((p) => {
             Object.entries(styleObj).forEach(([prop, val]) => {
                 p.style[prop] = val;
             });
@@ -386,12 +434,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         const selection = window.getSelection();
         if (!selection.rangeCount) return [];
         const range = selection.getRangeAt(0);
-
         const walker = document.createTreeWalker(
             range.commonAncestorContainer,
             NodeFilter.SHOW_TEXT,
             {
-                acceptNode: node => (range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT)
+                acceptNode: (node) => (range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
             }
         );
         const textNodes = [];
@@ -399,7 +446,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             textNodes.push(walker.currentNode);
         }
         const paragraphSet = new Set();
-        textNodes.forEach(node => {
+        textNodes.forEach((node) => {
             let parent = node.parentNode;
             while (parent && parent !== editorRef.current && parent.nodeName !== "P") {
                 parent = parent.parentNode;
@@ -432,14 +479,14 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
 
     function applyLineSpacing(spacing) {
         const paragraphs = getParagraphsInSelection();
-        paragraphs.forEach(p => {
+        paragraphs.forEach((p) => {
             p.style.lineHeight = spacing;
         });
     }
 
     function decreaseFontSize(e) {
         e.preventDefault();
-        setCurrentFontSize(prevSize => {
+        setCurrentFontSize((prevSize) => {
             const newSize = Math.max(8, prevSize - 2);
             applyFontSize(newSize);
             return newSize;
@@ -448,7 +495,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
 
     function increaseFontSize(e) {
         e.preventDefault();
-        setCurrentFontSize(prevSize => {
+        setCurrentFontSize((prevSize) => {
             const newSize = Math.min(72, prevSize + 2);
             applyFontSize(newSize);
             return newSize;
@@ -468,7 +515,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
 
     function toggleModal(modalName) {
-        setOpenModal(prev => {
+        setOpenModal((prev) => {
             const newModal = prev === modalName ? null : modalName;
             if (newModal === null) {
                 closeAllMenus();
@@ -501,13 +548,13 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     function handleTextColorChange(color) {
         setTextColor(color);
         execCommand("foreColor", color);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function handleTextHighlightColorChange(color) {
         setTextHighlightColor(color);
         execCommand("hiliteColor", color);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     async function handleDownload() {
@@ -520,22 +567,35 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                     type: "select",
                     options: [
                         { label: "Plain Text (.txt)", value: "txt" },
-                        { label: "Markdown (.md)", value: "md" }
-                    ]
-                }
+                        { label: "Markdown (.md)", value: "md" },
+                        { label: "HTML (.html)", value: "html" },
+                    ],
+                },
             ],
-            showCancel: true
+            showCancel: true,
         });
         if (result) {
-            const content = editorRef.current.innerText;
-            const fileExtension = result.fileType === "md" ? "md" : "txt";
-            const blob = new Blob([content], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = fileName.replace(/\.[^/.]+$/, "") + "." + fileExtension;
-            link.click();
-            URL.revokeObjectURL(url);
+            if (result.fileType === "html") {
+                const content = editorRef.current.innerHTML;
+                const fileExtension = "html";
+                const blob = new Blob([content], { type: "text/html" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName.replace(/\.[^/.]+$/, "") + "." + fileExtension;
+                link.click();
+                URL.revokeObjectURL(url);
+            } else {
+                const content = editorRef.current.innerText;
+                const fileExtension = result.fileType === "md" ? "md" : "txt";
+                const blob = new Blob([content], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName.replace(/\.[^/.]+$/, "") + "." + fileExtension;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
         }
     }
 
@@ -557,7 +617,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         try {
             const text = await navigator.clipboard.readText();
             document.execCommand("insertText", false, text);
-        } catch {}
+        } catch { }
     }
 
     function insertTable(rows, cols) {
@@ -573,7 +633,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         tableEl.dataset.backgroundColor = tableBackgroundColor;
         tableEl.dataset.borderColor = tableBorderColor;
         tableEl.dataset.borderWidth = tableBorderWidth;
-
         for (let r = 0; r < rows; r++) {
             const rowEl = document.createElement("tr");
             for (let c = 0; c < cols; c++) {
@@ -591,9 +650,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             }
             tableEl.appendChild(rowEl);
         }
-
         setTimeout(() => makeColumnsResizable(tableEl), 50);
-
         if (savedRangeRef.current) {
             restoreSelection();
             const tempDiv = document.createElement("div");
@@ -604,14 +661,14 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             editorRef.current.focus();
         }
         setOpenTablePicker(false);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function makeColumnsResizable(tableEl) {
         const firstRow = tableEl.querySelector("tr");
         if (!firstRow) return;
         const cells = firstRow.querySelectorAll("td, th");
-        cells.forEach(cell => {
+        cells.forEach((cell) => {
             const resizer = document.createElement("div");
             resizer.style.width = "10px";
             resizer.style.cursor = "col-resize";
@@ -622,11 +679,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             resizer.style.zIndex = 2;
             resizer.style.background = "rgba(0,0,0,0.4)";
             resizer.style.borderRadius = "50%";
-
             cell.style.position = "relative";
             let startX;
             let startWidth;
-            const onMouseDown = e => {
+            const onMouseDown = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 startX = e.pageX;
@@ -634,13 +690,16 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 document.addEventListener("mousemove", onMouseMove);
                 document.addEventListener("mouseup", onMouseUp);
             };
-            const onMouseMove = e => {
+            const onMouseMove = (e) => {
                 const width = startWidth + (e.pageX - startX);
-                cell.style.width = `${width}px`;
+                if (width > 50) {
+                    cell.style.width = `${width}px`;
+                }
             };
             const onMouseUp = () => {
                 document.removeEventListener("mousemove", onMouseMove);
                 document.removeEventListener("mouseup", onMouseUp);
+                saveChanges(editorRef.current.innerHTML);
             };
             resizer.addEventListener("mousedown", onMouseDown);
             cell.appendChild(resizer);
@@ -652,41 +711,40 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         document.execCommand("removeFormat");
         const cells = getSelectedTableCells();
         if (!cells.length) {
-            onSave(editorRef.current.innerHTML);
+            saveChanges(editorRef.current.innerHTML);
             return;
         }
         const visitedTables = new Set();
-        cells.forEach(cell => {
+        cells.forEach((cell) => {
             const tbl = cell.closest("table");
             if (tbl) visitedTables.add(tbl);
         });
-
-        visitedTables.forEach(table => {
+        visitedTables.forEach((table) => {
             const bc = table.dataset.borderColor || "#cccccc";
             const bw = table.dataset.borderWidth || "1px";
             const fc = table.dataset.fontColor || "#000000";
             const bgc = table.dataset.backgroundColor || "#ffffff";
             table.style.border = `${bw} solid ${bc}`;
             const allCells = table.querySelectorAll("td,th");
-            allCells.forEach(c => {
+            allCells.forEach((c) => {
                 if (!c.style.border) c.style.border = `${bw} solid ${bc}`;
                 c.style.borderColor = bc;
                 c.style.borderWidth = bw;
             });
-            cells.forEach(c => {
+            cells.forEach((c) => {
                 if (c.closest("table") === table) {
                     c.style.color = fc;
                     c.style.backgroundColor = bgc;
                 }
             });
         });
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function insertSpecialCharacter(character) {
         restoreSelection();
         document.execCommand("insertText", false, character);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function insertFormElement(type) {
@@ -702,18 +760,26 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         input.style.padding = "2px";
         input.style.fontSize = formElementFontSize;
         input.style.fontWeight = formElementFontWeight;
-
         if (type === "text") {
             input.placeholder = "Enter text";
         } else if (type === "number") {
             input.placeholder = "Enter number";
         }
-
         document.execCommand("insertHTML", false, input.outerHTML);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
     }
 
     function handleKeyDown(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+            e.preventDefault();
+            setShowSearchPanel(true);
+            return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            saveChanges(editorRef.current.innerHTML);
+            return;
+        }
         if (e.key === "Tab") {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -761,7 +827,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         const wordCount = text ? text.split(/\s+/).length : 0;
         showDialog({
             title: "Word Count",
-            message: "Your word count is: " + wordCount
+            message: "Your word count is: " + wordCount,
         });
     }
 
@@ -769,7 +835,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
             const reader = new FileReader();
-            reader.onload = evt => {
+            reader.onload = (evt) => {
                 insertResizableImage(evt.target.result, file.name);
             };
             reader.readAsDataURL(file);
@@ -784,7 +850,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         wrapper.style.display = "inline-block";
         wrapper.style.position = "relative";
         wrapper.style.margin = "5px";
-
         const img = document.createElement("img");
         img.src = imgSrc;
         img.alt = alt || "Uploaded image";
@@ -792,7 +857,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         img.style.width = "300px";
         img.style.height = "auto";
         img.style.cursor = "default";
-
         const resizer = document.createElement("div");
         resizer.style.position = "absolute";
         resizer.style.right = "0";
@@ -801,42 +865,175 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         resizer.style.height = "10px";
         resizer.style.cursor = "se-resize";
         resizer.style.background = "#000";
-
         let isResizing = false;
         let originalWidth = 0;
         let originalX = 0;
-
-        resizer.onmousedown = function(e) {
+        resizer.onmousedown = function (e) {
             isResizing = true;
             originalWidth = img.offsetWidth;
             originalX = e.pageX;
             e.preventDefault();
         };
-
-        document.addEventListener("mousemove", function(e) {
+        const onMouseMove = function (e) {
             if (!isResizing) return;
             const width = originalWidth + (e.pageX - originalX);
             if (width > 50) {
                 img.style.width = width + "px";
             }
-        });
-
-        document.addEventListener("mouseup", function() {
-            isResizing = false;
-            onSave(editorRef.current.innerHTML);
-        });
-
+        };
+        const onMouseUp = function () {
+            if (isResizing) {
+                isResizing = false;
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+                saveChanges(editorRef.current.innerHTML);
+            }
+        };
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
         wrapper.appendChild(img);
         wrapper.appendChild(resizer);
-
         const range = window.getSelection().getRangeAt(0);
         range.deleteContents();
         range.insertNode(wrapper);
-        onSave(editorRef.current.innerHTML);
+        saveChanges(editorRef.current.innerHTML);
+    }
+
+    function removeHighlights() {
+        if (!editorRef.current) return;
+        const highlighted = editorRef.current.querySelectorAll("mark.search-highlight");
+        highlighted.forEach((mark) => {
+            const parent = mark.parentNode;
+            if (parent) {
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.normalize();
+            }
+        });
+    }
+
+    function highlightAll(term) {
+        removeHighlights();
+        setSearchResults([]);
+        setCurrentResultIndex(-1);
+        if (!term || !editorRef.current) return;
+        const walker = document.createTreeWalker(editorRef.current, NodeFilter.SHOW_TEXT, null);
+        const textNodes = [];
+        while (walker.nextNode()) {
+            textNodes.push(walker.currentNode);
+        }
+        const newResults = [];
+        const actualSearchTerm = caseSensitive ? term : term.toLowerCase();
+        for (const textNode of textNodes) {
+            if (!textNode.nodeValue) continue;
+            const rawText = textNode.nodeValue;
+            const searchSource = caseSensitive ? rawText : rawText.toLowerCase();
+            if (searchSource.indexOf(actualSearchTerm) === -1) {
+                continue;
+            }
+            let startPos = 0;
+            let resultHTML = "";
+            while (true) {
+                const matchPos = searchSource.indexOf(actualSearchTerm, startPos);
+                if (matchPos === -1) {
+                    resultHTML += escapeHtml(rawText.slice(startPos));
+                    break;
+                }
+                resultHTML += escapeHtml(rawText.slice(startPos, matchPos));
+                const matched = rawText.slice(matchPos, matchPos + term.length);
+                resultHTML += `<mark class="search-highlight">${escapeHtml(matched)}</mark>`;
+                startPos = matchPos + term.length;
+            }
+            const tempSpan = document.createElement("span");
+            tempSpan.innerHTML = resultHTML;
+            const marks = tempSpan.querySelectorAll("mark.search-highlight");
+            marks.forEach((m) => newResults.push(m));
+            const parent = textNode.parentNode;
+            if (parent) {
+                parent.replaceChild(tempSpan, textNode);
+            }
+        }
+        setSearchResults(newResults);
+        if (newResults.length > 0) {
+            setCurrentResultIndex(0);
+            newResults[0].classList.add("current-search-result");
+            newResults[0].scrollIntoView({ block: "center" });
+        }
+    }
+
+    function goToNext() {
+        if (!searchResults.length) return;
+        const oldIndex = currentResultIndex;
+        if (oldIndex >= 0 && oldIndex < searchResults.length) {
+            searchResults[oldIndex].classList.remove("current-search-result");
+        }
+        let newIndex = oldIndex + 1;
+        if (newIndex >= searchResults.length) {
+            newIndex = 0;
+        }
+        setCurrentResultIndex(newIndex);
+        searchResults[newIndex].classList.add("current-search-result");
+        searchResults[newIndex].scrollIntoView({ block: "center" });
+    }
+
+    function goToPrevious() {
+        if (!searchResults.length) return;
+        const oldIndex = currentResultIndex;
+        if (oldIndex >= 0 && oldIndex < searchResults.length) {
+            searchResults[oldIndex].classList.remove("current-search-result");
+        }
+        let newIndex = oldIndex - 1;
+        if (newIndex < 0) {
+            newIndex = searchResults.length - 1;
+        }
+        setCurrentResultIndex(newIndex);
+        searchResults[newIndex].classList.add("current-search-result");
+        searchResults[newIndex].scrollIntoView({ block: "center" });
+    }
+
+    function replaceCurrent() {
+        if (currentResultIndex < 0 || currentResultIndex >= searchResults.length) return;
+        const mark = searchResults[currentResultIndex];
+        mark.replaceWith(document.createTextNode(replaceTerm));
+        editorRef.current.normalize();
+        highlightAll(searchTerm);
+        saveChanges(editorRef.current.innerHTML);
+    }
+
+    function replaceAll() {
+        if (!searchResults.length) return;
+        searchResults.forEach((mark) => {
+            mark.replaceWith(document.createTextNode(replaceTerm));
+        });
+        editorRef.current.normalize();
+        highlightAll(searchTerm);
+        saveChanges(editorRef.current.innerHTML);
+    }
+
+    function handlePanelMouseDown(e) {
+        if (e.target === searchPanelRef.current) {
+            setDragOffset({
+                x: e.clientX - panelPos.x,
+                y: e.clientY - panelPos.y,
+            });
+            document.addEventListener("mousemove", handlePanelMouseMove);
+            document.addEventListener("mouseup", handlePanelMouseUp);
+        }
+    }
+
+    function handlePanelMouseMove(e) {
+        setPanelPos({
+            x: e.clientX - dragOffset.x,
+            y: e.clientY - dragOffset.y,
+        });
+    }
+
+    function handlePanelMouseUp() {
+        document.removeEventListener("mousemove", handlePanelMouseMove);
+        document.removeEventListener("mouseup", handlePanelMouseUp);
     }
 
     if (error) {
-        return null;
+        return <div style={{ color: "red" }}>Error: {error}</div>;
     }
 
     return (
@@ -849,6 +1046,8 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 onChange={handleImageUpload}
             />
             <DinoLabsIDERichTextEditorToolbar
+                saveChanges={saveChanges}
+                saveStatus={saveStatus} 
                 fileName={fileName}
                 openModal={openModal}
                 fileModalRef={fileModalRef}
@@ -960,8 +1159,110 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 handleTextColorChange={handleTextColorChange}
                 handleTextHighlightColorChange={handleTextHighlightColorChange}
                 handleRemoveFormatting={handleRemoveFormatting}
+                setShowSearchPanel={setShowSearchPanel}
             />
             <div className="dinolabsIDETextEditorWrapper">
+                {showSearchPanel && (
+                    <div
+                        className="dinolabsIDETextEditingSearchBoxWrapper"
+                        ref={searchPanelRef}
+                        style={{
+                            top: panelPos.y,
+                            left: panelPos.x,
+                        }}
+                        onMouseDown={handlePanelMouseDown}
+                    >
+                        <div className="dinolabsIDETextEditngSearchBarWrapper">
+                            <label className="dinolabsIDETextEditingSearchLabel">
+                                Search:
+                                <span>
+                                    <input
+                                        className="dinolabsIDESettingsCheckbox"
+                                        type="checkbox"
+                                        checked={caseSensitive}
+                                        onChange={(e) => setCaseSensitive(e.target.checked)}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                    />
+                                    Case Sensitive
+                                </span>
+                            </label>
+                            <input
+                                className="dinolabsIDETextEditingSearchInput"
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                            <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper">
+                                <button
+                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={() => highlightAll(searchTerm)}
+                                >
+                                    Search
+                                </button>
+                                <button
+                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={goToPrevious}
+                                >
+                                    Prev
+                                </button>
+                                <button
+                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={goToNext}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="dinolabsIDETextEditngSearchBarWrapper">
+                            <label className="dinolabsIDETextEditingSearchLabel">
+                                Replace:
+                            </label>
+                            <input
+                                className="dinolabsIDETextEditingSearchInput"
+                                type="text"
+                                value={replaceTerm}
+                                onChange={(e) => setReplaceTerm(e.target.value)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                            <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper">
+                                <button
+                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={replaceCurrent}
+                                >
+                                    Replace
+                                </button>
+                                <button 
+                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    onMouseDown={(e) => e.stopPropagation()} 
+                                    onClick={replaceAll}
+                                >
+                                    Replace All
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper" style={{"justify-content": "center"}}>
+                            <button
+                                className="dinolabsIDETextEditingSearchOperationsButton"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={() => {
+                                    setShowSearchPanel(false);
+                                    removeHighlights();
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faArrowRightFromBracket} style={{"transform": "scaleX(-1)"}}/>
+                                Close Search
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <div className="dinolabsIDETextTipMargin"></div>
                 <div className="dinolabsIDeTextEditorStack">
                     <div className="dinoLabsTextEditorTopBar"></div>
@@ -972,7 +1273,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         suppressContentEditableWarning
                         dangerouslySetInnerHTML={{ __html: initialHTML }}
                         onInput={() => {
-                            onSave(editorRef.current.innerHTML);
+                            saveChanges(editorRef.current.innerHTML);
                         }}
                         onKeyDown={handleKeyDown}
                     />

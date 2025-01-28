@@ -32,22 +32,22 @@ function rgbToHsv(r, g, b) {
     return { h, s: s * 100, v: v * 100 };
 }
 
-function hsvToRgb(h, s, v) {
-    s /= 100; v /= 100;
-    let c = v * s;
+function hsvToRgb(h, s, b) {
+    s /= 100; b /= 100;
+    let c = b * s;
     let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-    let m = v - c;
-    let r, g, b;
-    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
-    else if (h < 120) { r = x; g = c; b = 0; }
-    else if (h < 180) { r = 0; g = c; b = x; }
-    else if (h < 240) { r = 0; g = x; b = c; }
-    else if (h < 300) { r = x; g = 0; b = c; }
-    else { r = c; g = 0; b = x; }
+    let m = b - c;
+    let r, g, bVal;
+    if (h >= 0 && h < 60) { r = c; g = x; bVal = 0; }
+    else if (h < 120) { r = x; g = c; bVal = 0; }
+    else if (h < 180) { r = 0; g = c; bVal = x; }
+    else if (h < 240) { r = 0; g = x; bVal = c; }
+    else if (h < 300) { r = x; g = 0; bVal = c; }
+    else { r = c; g = 0; bVal = x; }
     return {
         r: Math.round((r + m) * 255),
         g: Math.round((g + m) * 255),
-        b: Math.round((b + m) * 255)
+        b: Math.round((bVal + m) * 255)
     };
 }
 
@@ -96,6 +96,8 @@ function hsvToHsb({ h, s, v, a }) {
 function DinoLabsIDEColorPicker({ color, onChange }) {
     const [hsv, setHsv] = useState({ h: 0, s: 0, v: 0, a: 1 });
     const [selectedFormat, setSelectedFormat] = useState('hex');
+    const [inputValue, setInputValue] = useState('');
+    const [alphaInputValue, setAlphaInputValue] = useState('');
     const squareRef = useRef(null);
     const hueRef = useRef(null);
     const alphaRef = useRef(null);
@@ -137,18 +139,27 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
         initializeColor(color);
     }, [color]);
 
+    useEffect(() => {
+        setInputValue(computeColorOutput(hsv));
+        if (selectedFormat === "hex") {
+            setAlphaInputValue(`${(hsv.a * 100).toFixed(0)}%`);
+        }
+    }, [hsv, selectedFormat]);
+
     const parseColorInput = (value) => {
         let newHsv = null;
         if (selectedFormat === 'hex') {
             const rgb = hexToRgb(value);
-            newHsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-            return { ...newHsv, a: rgb.a };
+            if (/^#?[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(value)) {
+                newHsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+                newHsv.a = rgb.a;
+            }
         } else if (selectedFormat === 'rgba') {
             const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
             if (match) {
                 const [, r, g, b, a = '1'] = match;
                 newHsv = rgbToHsv(parseInt(r), parseInt(g), parseInt(b));
-                return { ...newHsv, a: parseFloat(a) };
+                newHsv.a = parseFloat(a);
             }
         } else if (selectedFormat === 'hsl') {
             const match = value.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*([\d.]+))?\)/);
@@ -158,22 +169,32 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
                 const lDecimal = parseInt(l) / 100;
                 const v = lDecimal + sDecimal * Math.min(lDecimal, 1 - lDecimal);
                 const s2 = v === 0 ? 0 : 2 * (1 - lDecimal / v);
-                return { h: parseInt(h), s: s2 * 100, v: v * 100, a: parseFloat(a) };
+                newHsv = { h: parseInt(h), s: s2 * 100, v: v * 100, a: parseFloat(a) };
             }
         } else if (selectedFormat === 'hsb') {
             const match = value.match(/hsb\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*([\d.]+))?\)/);
             if (match) {
                 const [, h, s, b, a = '1'] = match;
-                return { h: parseInt(h), s: parseInt(s), v: parseInt(b), a: parseFloat(a) };
+                newHsv = hsbToHsv(parseInt(h), parseInt(s), parseInt(b), parseFloat(a));
             }
         }
         return newHsv;
     };
 
     const handleInputChange = (value) => {
+        setInputValue(value);
         const newHsv = parseColorInput(value);
         if (newHsv) {
             updateColor(newHsv);
+        }
+    };
+
+    const handleAlphaInputChange = (value) => {
+        setAlphaInputValue(value);
+        let val = parseFloat(value);
+        if (!isNaN(val)) {
+            val = Math.max(0, Math.min(val, 100));
+            updateColor({ ...hsv, a: val / 100 });
         }
     };
 
@@ -355,13 +376,13 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
                     {selectedFormat !== "hex" ? (
                         <input
                             className="dinolabsIDEColorInputBig"
-                            value={computeColorOutput(hsv)}
+                            value={inputValue}
                             onChange={(e) => handleInputChange(e.target.value)}
                         />
                     ) : (
                         <input
                             className="dinolabsIDEColorInput"
-                            value={computeColorOutput(hsv)}
+                            value={inputValue}
                             onChange={(e) => handleInputChange(e.target.value)}
                         />
                     )}
@@ -370,18 +391,11 @@ function DinoLabsIDEColorPicker({ color, onChange }) {
                         <input
                             className="dinolabsIDEAlphaInput"
                             type="text"
-                            value={`${(hsv.a * 100).toFixed(0)}%`}
-                            onChange={(e) => {
-                                let val = parseFloat(e.target.value);
-                                if (isNaN(val)) val = 100;
-                                val = Math.max(0, Math.min(val, 100));
-                                updateColor({ ...hsv, a: val / 100 });
-                            }}
+                            value={alphaInputValue}
+                            onChange={(e) => handleAlphaInputChange(e.target.value)}
                         />
                     )}
                 </div>
-
-                
             </div>
         </div>
     );

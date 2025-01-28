@@ -39,6 +39,9 @@ import {
     faIcons,
     faICursor,
     faImage,
+    faSearch,
+    faPrint,
+    faSave
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDERichTextEditorToolbar(props) {
@@ -63,6 +66,17 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                     >
                                         <button
                                             className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            onClick={props.saveChanges}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSave} />
+                                                {props.saveStatus === "idle" && "Save File"}
+                                                {props.saveStatus === "saving" && "Saving..."}
+                                                {props.saveStatus === "saved" && "Saved!"}
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
                                             onClick={props.handleDownload}
                                         >
                                             <span>
@@ -75,7 +89,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             onClick={props.handlePrint}
                                         >
                                             <span>
-                                                <FontAwesomeIcon icon={faDownload} />
+                                                <FontAwesomeIcon icon={faPrint} />
                                                 Print
                                             </span>
                                         </button>
@@ -159,6 +173,18 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             <span>
                                                 <FontAwesomeIcon icon={faArrowPointer} />
                                                 Select All
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            onClick={() => {
+                                                props.closeAllMenus();
+                                                props.setShowSearchPanel(true);
+                                            }}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSearch} />
+                                                Search/Replace
                                             </span>
                                         </button>
                                     </div>
