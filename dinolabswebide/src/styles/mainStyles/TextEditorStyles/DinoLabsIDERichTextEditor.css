@@ -114,15 +114,19 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        max-height: 70vh; 
+        overflow-y: auto; 
     }
-
+    
     .dinolabsIDETextEditingTableGrid {
         display: grid;
         grid-template-columns: repeat(10, auto);
         grid-template-rows: repeat(8, auto);
         gap: 0.4vw;
         padding: 1vw;
+        overflow-y: auto; 
     }
+    
 
     .dinolabsIDETextEditingTableGridCells {
         width: 1.8vw;
