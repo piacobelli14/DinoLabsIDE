@@ -86,8 +86,7 @@ const mathSymbols = [
     "⎕", "⎖", "⎗", "⎘", "⎙", "⎚", "⎛", "⎜", "⎝", "⎞", "⎟", "⎠", "⎡", "⎢", "⎣", "⎤", "⎥", "⎦",
     "⎧", "⎨", "⎩", "⎪", "⎫", "⎬", "⎭", "⎮", "⎯", "⎰", "⎱", "⎲", "⎳", "⎴", "⎵", "⎶", "⎷", "⎸",
     "⎹", "⎺", "⎻", "⎼", "⎽", "⎾", "⎿"
-];
-
+]; 
 
 const latinSymbols = [
     "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï", "Ñ", "Ò", "Ó", "Ô",
@@ -106,6 +105,26 @@ const punctuationSymbols = [
 ];
 
 export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
+    const [virtualizedParagraphs, setVirtualizedParagraphs] = useState([]);
+    const virtualContainerRef = useRef(null);
+    const [visibleStartIndex, setVisibleStartIndex] = useState(0);
+    const [visibleEndIndex, setVisibleEndIndex] = useState(0);
+    const paragraphHeight = 28; 
+    const buffer = 10; 
+    function handleVirtualScroll() {
+        if (!virtualContainerRef.current) return;
+        const scrollTop = virtualContainerRef.current.scrollTop;
+        const clientHeight = virtualContainerRef.current.clientHeight;
+        const startIndex = Math.floor(scrollTop / paragraphHeight);
+        const endIndex = Math.min(
+            virtualizedParagraphs.length - 1,
+            Math.floor((scrollTop + clientHeight) / paragraphHeight) + buffer
+        );
+        setVisibleStartIndex(startIndex);
+        setVisibleEndIndex(endIndex);
+    }
+    const renderedParagraphs = virtualizedParagraphs.slice(visibleStartIndex, visibleEndIndex + 1);
+    const totalHeight = virtualizedParagraphs.length * paragraphHeight;
     const editorRef = useRef(null);
     const savedRangeRef = useRef(null);
     const imageInputRef = useRef(null);
@@ -175,7 +194,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [panelPos, setPanelPos] = useState({ x: 100, y: 100 });
     const searchPanelRef = useRef(null);
-    const [saveStatus, setSaveStatus] = useState("idle"); 
+    const [saveStatus, setSaveStatus] = useState("idle");
 
     useEffect(() => {
         const handleAlertShow = () => closeAllMenus();
@@ -207,15 +226,20 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         })
                         .join("\n");
                     setInitialHTML(processedHtml);
+                    setVirtualizedParagraphs(
+                        paragraphs.map((p) => (p.trim() ? p.trim() : ""))
+                    );
                 } else {
                     setInitialHTML(
                         `
-                <p style="color:gray;">Unsupported extension ".${ext}". We only handle .txt/.md here.<br/>
-                Displaying raw text below:</p>
-                <hr/>
-                <pre>${escapeHtml(text)}</pre>
-                `
+                        <p style="color:gray;">Unsupported extension ".${ext}". We only handle .txt/.md here.<br/>
+                        Displaying raw text below:</p>
+                        <hr/>
+                        <pre>${escapeHtml(text)}</pre>
+                        `
                     );
+
+                    setVirtualizedParagraphs([text]);
                 }
             } catch (err) {
                 setError("Error loading file: " + (err.message || String(err)));
@@ -315,9 +339,18 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
 
     function restoreSelection() {
         const selection = window.getSelection();
-        if (savedRangeRef.current) {
+        if (
+            savedRangeRef.current &&
+            editorRef.current.contains(savedRangeRef.current.commonAncestorContainer)
+        ) {
             selection.removeAllRanges();
             selection.addRange(savedRangeRef.current);
+        } else {
+            selection.removeAllRanges();
+            const range = document.createRange();
+            range.selectNodeContents(editorRef.current);
+            range.collapse(false);
+            selection.addRange(range);
         }
     }
 
@@ -327,7 +360,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
 
     async function saveChanges(updatedHtml) {
-        setSaveStatus("saving"); 
+        setSaveStatus("saving");
         const ext = (fileHandle.name || "").split(".").pop().toLowerCase();
         let dataToWrite;
         if (ext === "txt" || ext === "md") {
@@ -344,11 +377,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 setSaveStatus("saved");
                 setTimeout(() => setSaveStatus("idle"), 2000);
             } catch (err) {
-                setSaveStatus("idle"); 
+                setSaveStatus("idle");
                 return;
             }
         } else {
-            setSaveStatus("saved"); 
+            setSaveStatus("saved");
             setTimeout(() => setSaveStatus("idle"), 2000);
         }
     }
@@ -636,7 +669,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         try {
             const text = await navigator.clipboard.readText();
             document.execCommand("insertText", false, text);
-        } catch { }
+        } catch {}
     }
 
     function insertTable(rows, cols) {
@@ -1066,7 +1099,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             />
             <DinoLabsIDERichTextEditorToolbar
                 saveChanges={saveChanges}
-                saveStatus={saveStatus} 
+                saveStatus={saveStatus}
                 fileName={fileName}
                 openModal={openModal}
                 fileModalRef={fileModalRef}
@@ -1256,16 +1289,15 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 >
                                     Replace
                                 </button>
-                                <button 
+                                <button
                                     className="dinolabsIDETextEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()} 
+                                    onMouseDown={(e) => e.stopPropagation()}
                                     onClick={replaceAll}
                                 >
                                     Replace All
                                 </button>
                             </div>
                         </div>
-
 
                         <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper" style={{"justify-content": "center"}}>
                             <button
@@ -1282,7 +1314,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </div>
                     </div>
                 )}
-                <div className="dinolabsIDETextTipMargin"></div>
+                <div className="dinolabsIDETextTipMargin"/>
                 <div className="dinolabsIDeTextEditorStack">
                     <div className="dinoLabsTextEditorTopBar"></div>
                     <div
@@ -1296,6 +1328,32 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         }}
                         onKeyDown={handleKeyDown}
                     />
+
+                    <div
+                        className="dinolabsIDETextVirtualizationWrapper"
+                        ref={virtualContainerRef}
+                        onScroll={handleVirtualScroll}
+                    >
+                        <div className="dinolabsIDETextVirtualizationContent" style={{ height: `${totalHeight}px` }}>
+                            {renderedParagraphs.map((paragraph, i) => {
+                                const actualIndex = visibleStartIndex + i;
+                                return (
+                                    <div
+                                        key={actualIndex}
+                                        className="dinolabsIDETextVirtualizationContent"
+                                        style={{
+                                            top: `${(actualIndex) * paragraphHeight}px`,
+                                            height: `${paragraphHeight}px`
+                                        }}
+                                        contentEditable={true}
+                                    >
+                                        {paragraph}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="dinoLabsTextEditorBottomBar"></div>
                 </div>
                 <div className="dinolabsIDETextCommentMargin"></div>

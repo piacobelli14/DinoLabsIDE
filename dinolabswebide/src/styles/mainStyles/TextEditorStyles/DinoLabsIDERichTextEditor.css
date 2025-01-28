@@ -160,11 +160,27 @@
         padding: 1vw;
         width: 100%;
     }
+}
 
+@media (min-width: 700px) and (max-width: 5399px) {
+    .dinolabsIDETextVirtualizationWrapper {
+        position: relative; 
+        height: auto; 
+    }
 
+    .dinolabsIDETextViirtualizationContentWrapper {
+        position: relative; 
+    }
 
-
-
+    .dinolabsIDETextVirtualizationContent {
+        position: absolute; 
+        left: 0; 
+        right: 0; 
+        box-sizing: border-box;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
 }
 
 @media (min-width: 700px) and (max-width: 5399px) {
@@ -192,6 +208,11 @@
         justify-content: center;
         align-items: center;
         overflow: auto;
+        outline: none; 
+    }
+
+    .dinolabsIDETextEditorWrapper:focus {
+        outline: none; 
     }
 
     .dinolabsIDETextTitleWrapper {
