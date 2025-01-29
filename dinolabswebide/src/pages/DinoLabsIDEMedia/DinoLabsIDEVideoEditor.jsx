@@ -9,7 +9,7 @@ import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faArrowLeft, faArrowRight, faArrowsLeftRightToLine, faArrowsRotate,
-    faArrowsUpToLine, faBackward, faBorderTopLeft, faCircle, faCropSimple, faDownload, faFilm, faForward, faLeftRight,
+    faArrowsUpToLine, faBackward, faBorderTopLeft, faCropSimple, faDownload, faFilm, faForward, faLeftRight,
     faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus,
     faPause,
     faPlay,
@@ -57,10 +57,13 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const aspectRatioRef = useRef(1);
     const [grayscale, setGrayscale] = useState(0);
     const [sepia, setSepia] = useState(0);
-    const [removeBackground, setRemoveBackground] = useState(false);
     const [cropHistory, setCropHistory] = useState([]);
     const [isCropDisabled, setIsCropDisabled] = useState(false);
-    const [circleCrop, setCircleCrop] = useState(false);
+    const [isProcessingCrop, setIsProcessingCrop] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentPlaybackRate, setCurrentPlaybackRate] = useState(1.0);
+    const [isLooping, setIsLooping] = useState(false);
+    const videoRef = useRef(null);
 
     useEffect(() => {
         let objectUrl;
@@ -75,21 +78,20 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 const extension = file.name.split('.').pop().toLowerCase();
                 if (['mp4', 'mkv', 'avi', 'mov'].includes(extension)) {
                     setMediaType('video');
-                    const video = document.createElement('video');
-                    video.onloadedmetadata = () => {
-                        setNativeWidth(video.videoWidth);
-                        setNativeHeight(video.videoHeight);
-                        const scaleFactor = 300 / video.videoHeight;
+                    const tempVideo = document.createElement('video');
+                    tempVideo.onloadedmetadata = () => {
+                        setNativeWidth(tempVideo.videoWidth);
+                        setNativeHeight(tempVideo.videoHeight);
+                        const scaleFactor = 300 / tempVideo.videoHeight;
                         setVideoHeight(300);
-                        setVideoWidth(video.videoWidth * scaleFactor);
+                        setVideoWidth(tempVideo.videoWidth * scaleFactor);
                     };
-                    video.src = objectUrl;
+                    tempVideo.src = objectUrl;
                 }
             } catch (error) {
                 return;
             }
         };
-
         loadMedia();
 
         return () => {
@@ -124,10 +126,13 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setSpread(0);
         setPanX(0);
         setPanY(0);
+
         const scaleFactor = 300 / nativeHeight;
         setVideoHeight(300);
         setVideoWidth(nativeWidth * scaleFactor);
+
         setIsCropDisabled(false);
+        setIsCropping(false);
     };
 
     const downloadVideo = async () => {
@@ -163,13 +168,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             return;
         }
 
-        const fileType = alertResult?.fileType || 'mp4';
-        const scale = alertResult?.scale || '1x';
-
-        const scaleFactor = scale === '2x' ? 2 : scale === '3x' ? 3 : 1;
-        const mimeType = 'video/mp4';
-
-        // Placeholder for video processing and downloading
+        alert("Download not yet implemented—this is where you'd finalize or re-encode further.");
     };
 
     const handleDragStart = (e) => {
@@ -177,17 +176,15 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         draggingRef.current = true;
         lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     };
-
     const handleDragEnd = () => {
         draggingRef.current = false;
     };
-
     const handleDragMove = (e) => {
         if (!draggingRef.current) return;
         const dx = e.clientX - lastMousePosRef.current.x;
         const dy = e.clientY - lastMousePosRef.current.y;
-        setPanX(prev => prev + dx);
-        setPanY(prev => prev + dy);
+        setPanX((prev) => prev + dx);
+        setPanY((prev) => prev + dy);
         lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -214,6 +211,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const sin = Math.sin(rad);
         const localDx = cos * dx + sin * dy;
         const localDy = -sin * dx + cos * dy;
+
         let newWidth = initialSizeRef.current.width;
         let newHeight = initialSizeRef.current.height;
         let newPanX = initialPosRef.current.x;
@@ -222,39 +220,39 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         if (maintainAspectRatio) {
             const ratio = aspectRatioRef.current;
             if (resizingCorner === 'bottom-right') {
-                newWidth = initialSizeRef.current.width + localDx;
+                newWidth += localDx;
                 newHeight = newWidth / ratio;
             } else if (resizingCorner === 'bottom-left') {
-                newWidth = initialSizeRef.current.width - localDx;
+                newWidth -= localDx;
                 newHeight = newWidth / ratio;
-                newPanX = initialPosRef.current.x + localDx;
+                newPanX += localDx;
             } else if (resizingCorner === 'top-right') {
-                newWidth = initialSizeRef.current.width + localDx;
+                newWidth += localDx;
                 newHeight = newWidth / ratio;
-                newPanY = initialPosRef.current.y + (initialSizeRef.current.height - newHeight);
+                newPanY += (initialSizeRef.current.height - newHeight);
             } else if (resizingCorner === 'top-left') {
-                newWidth = initialSizeRef.current.width - localDx;
+                newWidth -= localDx;
                 newHeight = newWidth / ratio;
-                newPanX = initialPosRef.current.x + localDx;
-                newPanY = initialPosRef.current.y + (initialSizeRef.current.height - newHeight);
+                newPanX += localDx;
+                newPanY += (initialSizeRef.current.height - newHeight);
             }
         } else {
             if (resizingCorner === 'bottom-right') {
-                newWidth = initialSizeRef.current.width + localDx;
-                newHeight = initialSizeRef.current.height + localDy;
+                newWidth += localDx;
+                newHeight += localDy;
             } else if (resizingCorner === 'bottom-left') {
-                newWidth = initialSizeRef.current.width - localDx;
-                newHeight = initialSizeRef.current.height + localDy;
-                newPanX = initialPosRef.current.x + localDx;
+                newWidth -= localDx;
+                newHeight += localDy;
+                newPanX += localDx;
             } else if (resizingCorner === 'top-right') {
-                newWidth = initialSizeRef.current.width + localDx;
-                newHeight = initialSizeRef.current.height - localDy;
-                newPanY = initialPosRef.current.y + localDy;
+                newWidth += localDx;
+                newHeight -= localDy;
+                newPanY += localDy;
             } else if (resizingCorner === 'top-left') {
-                newWidth = initialSizeRef.current.width - localDx;
-                newHeight = initialSizeRef.current.height - localDy;
-                newPanX = initialPosRef.current.x + localDx;
-                newPanY = initialPosRef.current.y + localDy;
+                newWidth -= localDx;
+                newHeight -= localDy;
+                newPanX += localDx;
+                newPanY += localDy;
             }
         }
 
@@ -306,6 +304,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
+
         if (cropResizingCorner.current === 'bottom-right') {
             width += dx;
             height += dy;
@@ -323,15 +322,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             width -= dx;
             height -= dy;
         }
-        if (circleCrop) {
-            height = width;
-        }
-        setCropRect({
-            x,
-            y,
-            width: Math.max(width, 10),
-            height: Math.max(height, 10),
-        });
+
+        width = Math.max(width, 10);
+        height = Math.max(height, 10);
+
+        setCropRect({ x, y, width, height });
     };
 
     useEffect(() => {
@@ -344,11 +339,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             window.removeEventListener('mouseup', onMouseUp);
         };
     }, []);
-
-    const cropRotatingRef = useRef(false);
-    const cropInitialRotation = useRef(0);
-    const cropRotationStartAngle = useRef(0);
-    const cropRotationCenter = useRef({ x: 0, y: 0 });
 
     const cropDraggingRef = useRef(false);
     const lastCropDragPosRef = useRef({ x: 0, y: 0 });
@@ -365,7 +355,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const dx = e.clientX - lastCropDragPosRef.current.x;
         const dy = e.clientY - lastCropDragPosRef.current.y;
         lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
-        setCropRect(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+        setCropRect((prev) => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
     };
 
     const handleCropMouseUp = () => {
@@ -382,6 +372,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             window.removeEventListener('mouseup', onMouseUp);
         };
     }, []);
+
+    const cropRotatingRef = useRef(false);
+    const cropInitialRotation = useRef(0);
+    const cropRotationStartAngle = useRef(0);
+    const cropRotationCenter = useRef({ x: 0, y: 0 });
 
     const handleCropRotationMouseDown = (e) => {
         e.stopPropagation();
@@ -419,21 +414,237 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
 
     const undoCrop = () => {
         if (cropHistory.length > 0) {
-            const previous = cropHistory[cropHistory.length - 1];
-            setCropHistory(prev => prev.slice(0, prev.length - 1));
-            setUrl(previous.url);
-            setPanX(previous.panX);
-            setPanY(previous.panY);
-            setVideoWidth(previous.videoWidth);
-            setVideoHeight(previous.videoHeight);
-            setNativeWidth(previous.nativeWidth);
-            setNativeHeight(previous.nativeHeight);
+            const prev = cropHistory[cropHistory.length - 1];
+            setCropHistory((old) => old.slice(0, old.length - 1));
+            setUrl(prev.url);
+            setPanX(prev.panX);
+            setPanY(prev.panY);
+            setVideoWidth(prev.videoWidth);
+            setVideoHeight(prev.videoHeight);
+            setNativeWidth(prev.nativeWidth);
+            setNativeHeight(prev.nativeHeight);
             setIsCropping(false);
         }
     };
 
+    const performCanvasVideoCrop = async () => {
+        setIsProcessingCrop(true);
+
+        const scaleX = nativeWidth / videoWidth;
+        const scaleY = nativeHeight / videoHeight;
+
+        let realCropX = Math.round(cropRect.x * scaleX);
+        let realCropY = Math.round(cropRect.y * scaleY);
+        let realCropW = Math.round(cropRect.width * scaleX);
+        let realCropH = Math.round(cropRect.height * scaleY);
+
+        if (realCropX < 0) realCropX = 0;
+        if (realCropY < 0) realCropY = 0;
+        if (realCropX + realCropW > nativeWidth) {
+            realCropW = nativeWidth - realCropX;
+        }
+        if (realCropY + realCropH > nativeHeight) {
+            realCropH = nativeHeight - realCropY;
+        }
+
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = realCropW;
+        offscreenCanvas.height = realCropH;
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+
+        const tempVideo = document.createElement('video');
+        tempVideo.src = url;
+        tempVideo.crossOrigin = 'anonymous';
+        tempVideo.controls = false;
+        tempVideo.style.position = 'fixed';
+        tempVideo.style.left = '-9999px';
+        tempVideo.style.top = '-9999px';
+        document.body.appendChild(tempVideo);
+
+        tempVideo.playbackRate = 1.0;
+
+        await new Promise((res) => {
+            tempVideo.onloadeddata = () => res();
+        });
+
+        tempVideo.currentTime = 0;
+        tempVideo.play();
+
+        const audioStream = tempVideo.captureStream();
+        const audioTracks = audioStream.getAudioTracks();
+
+        const fps = 30;
+        const canvasStream = offscreenCanvas.captureStream(fps);
+        const videoTracks = canvasStream.getVideoTracks();
+
+        const combinedStream = new MediaStream();
+        videoTracks.forEach(t => combinedStream.addTrack(t));
+        audioTracks.forEach(t => combinedStream.addTrack(t));
+
+        const mediaRecorder = new MediaRecorder(combinedStream, {
+            mimeType: 'video/webm; codecs=vp9'
+        });
+        const chunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+            }
+        };
+        let resolveDone;
+        const donePromise = new Promise((r) => (resolveDone = r));
+        mediaRecorder.onstop = () => resolveDone();
+        mediaRecorder.start();
+
+        let lastTime = performance.now();
+        const frameInterval = 1000 / fps;
+
+        const drawFrame = () => {
+            if (tempVideo.paused || tempVideo.ended) {
+                return;
+            }
+            const now = performance.now();
+            if (now - lastTime >= frameInterval) {
+                lastTime = now;
+                offscreenCtx.drawImage(
+                    tempVideo,
+                    realCropX,
+                    realCropY,
+                    realCropW,
+                    realCropH,
+                    0,
+                    0,
+                    realCropW,
+                    realCropH
+                );
+            }
+            requestAnimationFrame(drawFrame);
+        };
+        requestAnimationFrame(drawFrame);
+
+        await new Promise((resEnd) => {
+            tempVideo.onended = () => resEnd();
+        });
+
+        mediaRecorder.stop();
+        await donePromise;
+
+        const newBlob = new Blob(chunks, { type: 'video/webm' });
+        const newUrl = URL.createObjectURL(newBlob);
+
+        document.body.removeChild(tempVideo);
+
+        setCropHistory(prev => [
+            ...prev,
+            {
+                url,
+                panX,
+                panY,
+                videoWidth,
+                videoHeight,
+                nativeWidth,
+                nativeHeight
+            }
+        ]);
+
+        setUrl(newUrl);
+        setNativeWidth(realCropW);
+        setNativeHeight(realCropH);
+
+        const scaleFactor = 300 / realCropH;
+        setVideoHeight(300);
+        setVideoWidth(realCropW * scaleFactor);
+
+        setPanX(0);
+        setPanY(0);
+        setIsCropping(false);
+        setIsProcessingCrop(false);
+    };
+
+    const finalizeCrop = async () => {
+        if (mediaType !== 'video') {
+            alert("Non-video cropping not implemented in this snippet.");
+            return;
+        }
+        setCropHistory(prev => [
+            ...prev,
+            { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
+        ]);
+
+        await performCanvasVideoCrop();
+    };
+
+    const handleRewind15 = () => {
+        if (videoRef.current) {
+            videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 15);
+        }
+    };
+
+    const handlePlayVideo = () => {
+        if (!videoRef.current) return;
+        if (isPlaying) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+            setIsPlaying(false);
+        } else {
+            videoRef.current.play();
+            setIsPlaying(true);
+        }
+    };
+
+    const handlePauseVideo = () => {
+        if (videoRef.current) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    };
+
+    const handleToggleLoop = () => {
+        if (!videoRef.current) return;
+        const newVal = !videoRef.current.loop;
+        videoRef.current.loop = newVal;
+        setIsLooping(newVal);
+    };
+
+    const handleSkip15 = () => {
+        if (videoRef.current && videoRef.current.duration) {
+            videoRef.current.currentTime = Math.min(
+                videoRef.current.duration,
+                videoRef.current.currentTime + 15
+            );
+        }
+    };
+
+    const handleSetPlaybackRate = (rate) => {
+        if (videoRef.current) {
+            videoRef.current.playbackRate = rate;
+        }
+        setCurrentPlaybackRate(rate);
+    };
+
+    const handleViewFrames = () => {
+        console.log("View frames clicked (placeholder).");
+    };
+    const handleClipFromVideo = () => {
+        console.log("Clip from video clicked (placeholder).");
+    };
+    const handleStitchClips = () => {
+        console.log("Stitch clips clicked (placeholder).");
+    };
+    const handleInsertClip = () => {
+        console.log("Insert clip clicked (placeholder).");
+    };
+    const handleRemoveClip = () => {
+        console.log("Remove clip clicked (placeholder).");
+    };
+
     return (
         <div className="dinolabsIDEMediaContentWrapper">
+            {isProcessingCrop && (
+                <div className="dinolabsIDEMediaContentCropIndicator">
+                    <div className="loading-circle" />
+                </div>
+            )}
+
             <div className="dinoLabsIDEMediaToolBar">
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
@@ -443,12 +654,18 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         </label>
                         <div className="dinolabsIDEMediaCellFlexSupplement">
                             <Tippy content="Reset Video" theme="tooltip-light">
-                                <button onClick={resetVideo} className="dinolabsIDEMediaToolButtonHeader">
+                                <button
+                                    onClick={resetVideo}
+                                    className="dinolabsIDEMediaToolButtonHeader"
+                                >
                                     <FontAwesomeIcon icon={faArrowsRotate} />
                                 </button>
                             </Tippy>
                             <Tippy content="Download Video" theme="tooltip-light">
-                                <button onClick={downloadVideo} className="dinolabsIDEMediaToolButtonHeader">
+                                <button
+                                    onClick={downloadVideo}
+                                    className="dinolabsIDEMediaToolButtonHeader"
+                                >
                                     <FontAwesomeIcon icon={faDownload} />
                                 </button>
                             </Tippy>
@@ -464,8 +681,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 type="text"
                                 value={`X: ${panX}`}
                                 onChange={(e) => {
-                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                    setPanX(Number(newValue));
+                                    const val = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setPanX(Number(val));
                                 }}
                             />
                             <input
@@ -473,8 +690,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 type="text"
                                 value={`Y: ${panY}`}
                                 onChange={(e) => {
-                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                    setPanY(Number(newValue));
+                                    const val = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setPanY(Number(val));
                                 }}
                             />
                         </div>
@@ -482,50 +699,69 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <div className="dinolabsIDEMediaCellFlex">
                             <Tippy content="Zoom In" theme="tooltip-light">
-                                <button onClick={() => setZoom(prev => prev + 0.1)} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => setZoom((prev) => prev + 0.1)}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
                                 </button>
                             </Tippy>
                             <Tippy content="Zoom Out" theme="tooltip-light">
-                                <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => setZoom((prev) => Math.max(prev - 0.1, 0.1))}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
                                 </button>
                             </Tippy>
                             <Tippy content="Rotate Left" theme="tooltip-light">
-                                <button onClick={() => {
-                                    setRotation(prev => prev - 90);
-                                    setIsCropping(false);
-                                }} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => {
+                                        setRotation((r) => r - 90);
+                                        setIsCropping(false);
+                                    }}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faRotateLeft} />
                                 </button>
                             </Tippy>
                             <Tippy content="Rotate Right" theme="tooltip-light">
-                                <button onClick={() => {
-                                    setRotation(prev => prev + 90);
-                                    setIsCropping(false);
-                                }} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => {
+                                        setRotation((r) => r + 90);
+                                        setIsCropping(false);
+                                    }}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faRotateRight} />
                                 </button>
                             </Tippy>
                             <Tippy content="Flip Horizontally" theme="tooltip-light">
-                                <button onClick={() => {
-                                    setFlipX(prev => -prev);
-                                    setIsCropping(false);
-                                }} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => {
+                                        setFlipX((prev) => -prev);
+                                        setIsCropping(false);
+                                    }}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faLeftRight} />
                                 </button>
                             </Tippy>
                             <Tippy content="Flip Vertically" theme="tooltip-light">
-                                <button onClick={() => {
-                                    setFlipY(prev => -prev)
-                                    setIsCropping(false);
-                                }} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={() => {
+                                        setFlipY((prev) => -prev);
+                                        setIsCropping(false);
+                                    }}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faUpDown} />
                                 </button>
                             </Tippy>
                         </div>
                     </div>
                 </div>
+
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -539,9 +775,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 checked={maintainAspectRatio}
                                 onChange={(e) => setMaintainAspectRatio(e.target.checked)}
                             />
-                            <span>
-                                Preserve Aspect Ratio
-                            </span>
+                            <span>Preserve Aspect Ratio</span>
                         </label>
                     </div>
                     <div className="dinolabsIDEMediaCellFlexStack">
@@ -554,8 +788,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 type="text"
                                 value={`W: ${Math.round(videoWidth)}px`}
                                 onChange={(e) => {
-                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                    setVideoWidth(Number(newValue));
+                                    const val = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setVideoWidth(Number(val));
                                 }}
                             />
                             <input
@@ -563,8 +797,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 type="text"
                                 value={`H: ${Math.round(videoHeight)}px`}
                                 onChange={(e) => {
-                                    const newValue = e.target.value.replace(/[^0-9.-]/g, "");
-                                    setVideoHeight(Number(newValue));
+                                    const val = e.target.value.replace(/[^0-9.-]/g, "");
+                                    setVideoHeight(Number(val));
                                 }}
                             />
                         </div>
@@ -572,177 +806,122 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <div className="dinolabsIDEMediaCellFlex">
                             <Tippy content="Restore Width Based Aspect Ratio" theme="tooltip-light">
-                                <button onClick={restoreAspectRatioWidth} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={restoreAspectRatioWidth}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faArrowsLeftRightToLine} />
                                 </button>
                             </Tippy>
                             <Tippy content="Restore Height Based Aspect Ratio" theme="tooltip-light">
-                                <button onClick={restoreAspectRatioHeight} className="dinolabsIDEMediaToolButton">
+                                <button
+                                    onClick={restoreAspectRatioHeight}
+                                    className="dinolabsIDEMediaToolButton"
+                                >
                                     <FontAwesomeIcon icon={faArrowsUpToLine} />
                                 </button>
                             </Tippy>
                             <Tippy content="Crop Video" theme="tooltip-light">
                                 <button
-                                    onClick={() => {
-                                        if (isCropDisabled) {
-                                            return;
-                                        }
+                                    onClick={async () => {
+                                        if (isCropDisabled) return;
                                         if (isCropping) {
-                                            const video = document.createElement('video');
-                                            video.onloadeddata = () => {
-                                                const offscreenCanvas = document.createElement('canvas');
-                                                offscreenCanvas.width = nativeWidth;
-                                                offscreenCanvas.height = nativeHeight;
-                                                const offscreenCtx = offscreenCanvas.getContext('2d');
-                                                offscreenCtx.drawImage(video, 0, 0, nativeWidth, nativeHeight);
-
-                                                const scaleX = nativeWidth / videoWidth;
-                                                const scaleY = nativeHeight / videoHeight;
-                                                const rad = cropRotation * Math.PI / 180;
-
-                                                const cx = cropRect.x + cropRect.width / 2;
-                                                const cy = cropRect.y + cropRect.height / 2;
-
-                                                const corners = [
-                                                    { x: cropRect.x, y: cropRect.y },
-                                                    { x: cropRect.x + cropRect.width, y: cropRect.y },
-                                                    { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
-                                                    { x: cropRect.x, y: cropRect.y + cropRect.height }
-                                                ];
-
-                                                const rotatedCorners = corners.map(pt => {
-                                                    const dx = pt.x - cx;
-                                                    const dy = pt.y - cy;
-                                                    return {
-                                                        x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * scaleX,
-                                                        y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * scaleY
-                                                    };
-                                                });
-
-                                                const xs = rotatedCorners.map(pt => pt.x);
-                                                const ys = rotatedCorners.map(pt => pt.y);
-                                                const minX = Math.min(...xs);
-                                                const maxX = Math.max(...xs);
-                                                const minY = Math.min(...ys);
-                                                const maxY = Math.max(...ys);
-                                                const cropWidth = maxX - minX;
-                                                const cropHeight = maxY - minY;
-
-                                                const canvasCrop = document.createElement('canvas');
-                                                canvasCrop.width = cropWidth;
-                                                canvasCrop.height = cropHeight;
-                                                const ctxCrop = canvasCrop.getContext('2d');
-
-                                                ctxCrop.save();
-                                                ctxCrop.beginPath();
-                                                if (circleCrop) {
-                                                    const radius = Math.min(cropWidth, cropHeight) / 2;
-                                                    ctxCrop.arc(cropWidth / 2, cropHeight / 2, radius, 0, 2 * Math.PI);
-                                                } else {
-                                                    ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
-                                                    for (let i = 1; i < rotatedCorners.length; i++) {
-                                                        ctxCrop.lineTo(rotatedCorners[i].x - minX, rotatedCorners[i].y - minY);
-                                                    }
-                                                    ctxCrop.closePath();
-                                                }
-                                                ctxCrop.clip();
-
-                                                ctxCrop.drawImage(offscreenCanvas, -minX, -minY, nativeWidth, nativeHeight);
-                                                ctxCrop.restore();
-
-                                                const newDataUrl = canvasCrop.toDataURL();
-
-                                                setCropHistory(prev => [...prev, { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }]);
-
-                                                setUrl(newDataUrl);
-                                                setPanX(0);
-                                                setPanY(0);
-                                                setVideoWidth(cropRect.width);
-                                                setVideoHeight(cropRect.height);
-                                                setNativeWidth(cropWidth);
-                                                setNativeHeight(cropHeight);
-                                                setIsCropping(false);
-                                            };
-                                            video.src = url;
+                                            if (mediaType === 'video') {
+                                                await finalizeCrop();
+                                            } else {
+                                                alert("Non-video cropping not implemented.");
+                                            }
                                         } else {
-                                            setCropRect({ x: 0, y: 0, width: videoWidth, height: videoHeight });
+                                            setCropRect({
+                                                x: 0,
+                                                y: 0,
+                                                width: videoWidth,
+                                                height: videoHeight
+                                            });
                                             setIsCropping(true);
-                                            setCircleCrop(false);
                                         }
                                     }}
                                     disabled={isCropDisabled ? true : false}
-                                    style={{ "opacity": isCropDisabled ? "0.6" : "1.0", backgroundColor: isCropping ? "#5C2BE2" : "" }}
+                                    style={{
+                                        opacity: isCropDisabled ? "0.6" : "1.0",
+                                        backgroundColor: isCropping ? "#5C2BE2" : ""
+                                    }}
                                     className="dinolabsIDEMediaToolButton"
                                 >
                                     <FontAwesomeIcon icon={faCropSimple} />
                                 </button>
                             </Tippy>
-                            {isCropping && (
-                                <Tippy content="Circle Crop" theme="tooltip-light">
-                                    <button
-                                        onClick={() => {
-                                            setCircleCrop(prev => {
-                                                const newVal = !prev;
-                                                if (newVal) {
-                                                    setCropRect(prevRect => ({ ...prevRect, height: prevRect.width }));
-                                                }
-                                                return newVal;
-                                            })
-                                        }}
-                                        style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
-                                        className="dinolabsIDEMediaToolButton"
-                                    >
-                                        <FontAwesomeIcon icon={faCircle} />
-                                    </button>
-                                </Tippy>
-                            )}
                             <Tippy content="Undo Crop" theme="tooltip-light">
-                                <button onClick={undoCrop} className="dinolabsIDEMediaToolButton"
+                                <button
+                                    onClick={undoCrop}
+                                    className="dinolabsIDEMediaToolButton"
                                     disabled={isCropDisabled ? true : false}
-                                    style={{ "opacity": isCropDisabled ? "0.6" : "1.0" }}
+                                    style={{ opacity: isCropDisabled ? "0.6" : "1.0" }}
                                 >
                                     <FontAwesomeIcon icon={faSquareCaretLeft} />
                                 </button>
                             </Tippy>
                         </div>
                     </div>
+
                     {isCropping && (
                         <div className="dinolabsIDEMediaCellFlexStack">
                             <label className="dinolabsIDEMediaCellFlexTitle">
                                 Crop Presets
                             </label>
                             <div className="dinolabsIDEMediaCellFlex">
-                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width }))}>1:1</button>
-                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width * (3 / 4) }))}>4:3</button>
-                                <button className="dinolabsIDEMediaToolButtonText" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width * (9 / 16) }))}>16:9</button>
+                                <button
+                                    className="dinolabsIDEMediaToolButtonText"
+                                    onClick={() =>
+                                        setCropRect((prev) => ({
+                                            ...prev,
+                                            height: prev.width
+                                        }))
+                                    }
+                                >
+                                    1:1
+                                </button>
+                                <button
+                                    className="dinolabsIDEMediaToolButtonText"
+                                    onClick={() =>
+                                        setCropRect((prev) => ({
+                                            ...prev,
+                                            height: prev.width * (3 / 4)
+                                        }))
+                                    }
+                                >
+                                    4:3
+                                </button>
+                                <button
+                                    className="dinolabsIDEMediaToolButtonText"
+                                    onClick={() =>
+                                        setCropRect((prev) => ({
+                                            ...prev,
+                                            height: prev.width * (9 / 16)
+                                        }))
+                                    }
+                                >
+                                    16:9
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
+
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
                             <FontAwesomeIcon icon={faSwatchbook} />
                             Styles
                         </label>
-                        <label className="dinolabsIDEConfrmationCheck">
-                            <input
-                                type="checkbox"
-                                className="dinolabsIDESettingsCheckbox"
-                                checked={removeBackground}
-                                onChange={e => setRemoveBackground(e.target.checked)}
-                            />
-                            <span>
-                                Remove Background
-                            </span>
-                        </label>
                     </div>
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Opacity
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Opacity</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setOpacity(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setOpacity((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -755,17 +934,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setOpacity(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setOpacity(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setOpacity((prev) => Math.min(prev + 10, 100))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Hue
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Hue</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setHue(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setHue((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -778,17 +962,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setHue(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setHue(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setHue((prev) => Math.min(prev + 10, 360))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Saturation
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Saturation</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setSaturation(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSaturation((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -801,17 +990,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setSaturation(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setSaturation(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSaturation((prev) => Math.min(prev + 10, 360))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Brightness
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Brightness</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setBrightness(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setBrightness((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -824,17 +1018,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setBrightness(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setBrightness(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setBrightness((prev) => Math.min(prev + 10, 360))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Contrast
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Contrast</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setContrast(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setContrast((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -847,17 +1046,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setContrast(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setContrast(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setContrast((prev) => Math.min(prev + 10, 360))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Blur
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Blur</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setBlur(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setBlur((prev) => Math.max(prev - 1, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -870,17 +1074,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setBlur(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setBlur(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setBlur((prev) => prev + 1)}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Shadow
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Shadow</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSpread((prev) => Math.max(prev - 1, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -893,17 +1102,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setSpread(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setSpread(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSpread((prev) => prev + 1)}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Grayscale
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Grayscale</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setGrayscale((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -916,17 +1130,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setGrayscale(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setGrayscale((prev) => Math.min(prev + 10, 100))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
+
                     <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Sepia
-                        </label>
+                        <label className="dinolabsIDEMediaCellFlexTitle">Sepia</label>
                         <div className="dinolabsIDEMediaCellFlex">
-                            <button onClick={() => setSepia(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSepia((prev) => Math.max(prev - 10, 0))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <div className="dinolabsIDEMediaSliderWrapper">
@@ -939,34 +1158,25 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onChange={(e) => setSepia(Number(e.target.value))}
                                 />
                             </div>
-                            <button onClick={() => setSepia(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+                            <button
+                                onClick={() => setSepia((prev) => Math.min(prev + 10, 100))}
+                                className="dinolabsIDEMediaToolButton"
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                         </div>
                     </div>
                 </div>
-
             </div>
+
             <div
                 className="dinolabsIDEMediaContainer"
-                style={{
-                    cursor: 'grab',
-                }}
+                style={{ cursor: 'grab' }}
                 onMouseDown={handleDragStart}
                 onMouseMove={handleDragMove}
                 onMouseUp={handleDragEnd}
                 onMouseLeave={handleDragEnd}
             >
-                <div className="diolabsIDEMediaSupplementalButtonsFlexWrapper">
-                    {isCropping && (
-                        <div className="diolabsIDEMediaSupplementalButtonsFlex">
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width }))}>1:1</button>
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width * (3 / 4) }))}>4:3</button>
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({ ...prev, height: prev.width * (9 / 16) }))}>16:9</button>
-                        </div>
-                    )}
-                </div>
-
                 <div
                     className="dinolabsIDEImageResizer"
                     style={{
@@ -974,12 +1184,17 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         left: `calc(50% + ${panX}px)`,
                         width: `${videoWidth}px`,
                         height: `${videoHeight}px`,
-                        transform:
-                            `translate(-50%, -50%) scale(${flipX * zoom}, ${flipY * zoom}) rotate(${rotation}deg)`,
+                        transform: `
+                            translate(-50%, -50%)
+                            scale(${flipX * zoom}, ${flipY * zoom})
+                            rotate(${rotation}deg)
+                        `,
+                        overflow: 'visible'
                     }}
                 >
                     <video
                         src={url}
+                        ref={videoRef}
                         controls
                         draggable={false}
                         onDragStart={(e) => e.preventDefault()}
@@ -987,7 +1202,20 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         style={{
                             width: '100%',
                             height: '100%',
-                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                            filter: `
+                                hue-rotate(${hue}deg)
+                                saturate(${saturation}%)
+                                brightness(${brightness}%)
+                                contrast(${contrast}%)
+                                blur(${blur}px)
+                                grayscale(${grayscale}%)
+                                sepia(${sepia}%)
+                                ${
+                                    (spread)
+                                        ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`
+                                        : ''
+                                }
+                            `,
                             userSelect: 'none',
                             borderRadius: 'inherit',
                             opacity: opacity / 100
@@ -1017,19 +1245,19 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             />
                         </>
                     )}
+
                     {isCropping && (
                         <div
                             className="dinolabsIDEMediaCropRectangle"
                             style={{
                                 position: 'absolute',
                                 border: '0.4vh dashed rgba(31, 174, 245, 1)',
-                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                backgroundColor: 'rgba(0,0,0,0.3)',
                                 left: cropRect.x,
                                 top: cropRect.y,
                                 width: cropRect.width,
                                 height: cropRect.height,
                                 transform: `rotate(${cropRotation}deg)`,
-                                borderRadius: circleCrop ? '50%' : '0',
                                 zIndex: 10
                             }}
                             onMouseDown={handleCropMouseDown}
@@ -1078,111 +1306,160 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     )}
                 </div>
 
-
                 <div className="dinolabsIDEVideoInputBottomBar">
-
                     <>
                         <div className="dinolabsIDEVideoContentFlexBig">
                             <Tippy content="Rewind 15 Seconds" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonSupplementLeading">
+                                <button
+                                    className="dinolabsIDEVideoButtonSupplementLeading"
+                                    onClick={handleRewind15}
+                                >
                                     <FontAwesomeIcon icon={faBackward} />
                                 </button>
                             </Tippy>
                             <Tippy content="Play Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButton">
-                                    <FontAwesomeIcon icon={faPlay} /> {/*faStop*/}
+                                <button
+                                    className="dinolabsIDEVideoButton"
+                                    onClick={handlePlayVideo}
+                                    style={{ color: '#c0c0c0' }}
+                                >
+                                    <FontAwesomeIcon icon={isPlaying ? faMinus : faPlay} />
                                 </button>
                             </Tippy>
                             <Tippy content="Pause Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButton">
+                                <button
+                                    className="dinolabsIDEVideoButton"
+                                    onClick={handlePauseVideo}
+                                    style={{ color: !isPlaying ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     <FontAwesomeIcon icon={faPause} />
                                 </button>
                             </Tippy>
                             <Tippy content="Loop Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButton">
+                                <button
+                                    className="dinolabsIDEVideoButton"
+                                    onClick={handleToggleLoop}
+                                    style={{ color: isLooping ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     <FontAwesomeIcon icon={faRepeat} />
                                 </button>
                             </Tippy>
                             <Tippy content="Skip 15 Seconds" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonSupplementTrailing">
+                                <button
+                                    className="dinolabsIDEVideoButtonSupplementTrailing"
+                                    onClick={handleSkip15}
+                                >
                                     <FontAwesomeIcon icon={faForward} />
                                 </button>
                             </Tippy>
+
                             <Tippy content="0.5x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(0.5)}
+                                    style={{ color: currentPlaybackRate === 0.5 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     0.5x
                                 </button>
                             </Tippy>
                             <Tippy content="1.0x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(1.0)}
+                                    style={{ color: currentPlaybackRate === 1.0 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     1.0x
                                 </button>
                             </Tippy>
                             <Tippy content="1.5x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(1.5)}
+                                    style={{ color: currentPlaybackRate === 1.5 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     1.5x
                                 </button>
                             </Tippy>
                             <Tippy content="2.0x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(2.0)}
+                                    style={{ color: currentPlaybackRate === 2.0 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     2.0x
                                 </button>
                             </Tippy>
                             <Tippy content="2.5x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(2.5)}
+                                    style={{ color: currentPlaybackRate === 2.5 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     2.5x
                                 </button>
                             </Tippy>
                             <Tippy content="3.0x Playback" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonX">
+                                <button
+                                    className="dinolabsIDEVideoButtonX"
+                                    onClick={() => handleSetPlaybackRate(3.0)}
+                                    style={{ color: currentPlaybackRate === 3.0 ? '#5c2be2' : '#c0c0c0' }}
+                                >
                                     3.0x
                                 </button>
                             </Tippy>
                         </div>
 
-
-                        <div className="dinolabsIDEVideoContentFlexSmall" style={{ "justify-content": "flex-start" }}>
+                        <div
+                            className="dinolabsIDEVideoContentFlexSmall"
+                            style={{ justifyContent: "flex-start" }}
+                        >
                             <Tippy content="View Video Frames" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonHelper" style={{ "padding": 0 }}>
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    style={{ padding: 0 }}
+                                    onClick={handleViewFrames}
+                                >
                                     <FontAwesomeIcon icon={faFilm} />
                                 </button>
                             </Tippy>
                             <Tippy content="Clip From Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonHelper" style={{ "padding": 0 }}>
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    style={{ padding: 0 }}
+                                    onClick={handleClipFromVideo}
+                                >
                                     <FontAwesomeIcon icon={faScissors} />
                                 </button>
                             </Tippy>
                             <Tippy content="Stitch Clips" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonHelper" style={{ "padding": 0 }}>
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    style={{ padding: 0 }}
+                                    onClick={handleStitchClips}
+                                >
                                     <FontAwesomeIcon icon={faTape} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Insert Clip Into Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonHelper" style={{ "padding": 0 }}>
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    style={{ padding: 0 }}
+                                    onClick={handleInsertClip}
+                                >
                                     <FontAwesomeIcon icon={faSquarePlus} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Remove Clip From Video" theme="tooltip-light">
-                                <button className="dinolabsIDEVideoButtonHelper" style={{ "padding": 0 }}>
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    style={{ padding: 0 }}
+                                    onClick={handleRemoveClip}
+                                >
                                     <FontAwesomeIcon icon={faSquareMinus} />
                                 </button>
                             </Tippy>
                         </div>
-
-
-
                     </>
-
-
-                    {/*
-                    <label className="dinolabsIDEMediaModeIndicator">
-                        <span>
-                            {isCropping ? 'Cropping' : 'Idle'}
-                        </span>
-                    </label>
-                    */}
                 </div>
             </div>
         </div>

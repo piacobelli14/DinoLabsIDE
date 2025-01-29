@@ -32,6 +32,15 @@
         font-weight: 600;
         text-shadow: 0 0 1.2px white; 
     }
+
+    .loading-title-supplement {
+        font-size: 0.8vw;
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 0 0.6px white; 
+        opacity: 0.8;
+        font-style: italic;
+    }
 }
 
 @media (min-width: 700px) and (max-width: 1299px) {
@@ -136,6 +145,15 @@
         font-weight: 600;
         text-shadow: 0 0 1px white;
     }
+
+    .loading-title-supplement {
+        font-size: 1.6vw;
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 0 0.6px white; 
+        opacity: 0.8;
+        font-style: italic;
+    }
 }
 
 @media (max-width: 499px) {
@@ -171,5 +189,14 @@
         color: #ffffff;
         font-weight: 600;
         text-shadow: 0 0 0.2px white;
+    }
+
+    .loading-title-supplement {
+        font-size: 1.6vw;
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 0 0.6px white; 
+        opacity: 0.8;
+        font-style: italic;
     }
 }

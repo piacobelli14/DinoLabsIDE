@@ -74,7 +74,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
     const aspectRatioRef = useRef(1);
     const [grayscale, setGrayscale] = useState(0);
     const [sepia, setSepia] = useState(0);
-    const [removeBackground, setRemoveBackground] = useState(false);
     const [drawBrushSize, setDrawBrushSize] = useState(4);
     const [highlightBrushSize, setHighlightBrushSize] = useState(4);
     const [cropHistory, setCropHistory] = useState([]);
@@ -209,7 +208,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         const ctx = canvas.getContext('2d');
         
         let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-        if (spread && !removeBackground) {
+        if (spread) {
             filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
         }
         ctx.filter = filterString;
@@ -1114,18 +1113,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             <FontAwesomeIcon icon={faSwatchbook} />
                             Styles
                         </label>
-
-                        <label className="dinolabsIDEConfrmationCheck">
-                            <input
-                                type="checkbox"
-                                className="dinolabsIDESettingsCheckbox"
-                                checked={removeBackground} 
-                                onChange={e => setRemoveBackground(e.target.checked)}
-                            />
-                            <span>
-                                Remove Background
-                            </span>
-                        </label>
                     </div>
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <label className="dinolabsIDEMediaCellFlexTitle">
@@ -1462,16 +1449,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 onMouseUp={handleDragEnd}
                 onMouseLeave={handleDragEnd}
             >
-                <div className="diolabsIDEMediaSupplementalButtonsFlexWrapper"> 
-                    {isCropping && (
-                        <div className="diolabsIDEMediaSupplementalButtonsFlex">
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width}))}>1:1</button>
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (3/4)}))}>4:3</button>
-                            <button className="dinolabsIDEMediaToolButtonHeader" onClick={() => setCropRect(prev => ({...prev, height: prev.width * (9/16)}))}>16:9</button>
-                        </div>
-                    )}
-                </div>
-
                 <div
                     className="dinolabsIDEImageResizer"
                     style={{
@@ -1498,7 +1475,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         style={{
                             width: '100%',
                             height: '100%',
-                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(!removeBackground && spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
                             userSelect: 'none',
                             borderRadius: 'inherit',
                             opacity: opacity / 100
