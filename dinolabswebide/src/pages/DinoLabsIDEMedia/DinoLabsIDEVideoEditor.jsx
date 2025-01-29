@@ -16,7 +16,8 @@ import {
     faPlus, faRepeat, faRightLeft, faRotateLeft, faRotateRight, faRulerCombined, faScissors, faSquareCaretLeft,
     faSquareMinus,
     faSquarePlus,
-    faSwatchbook, faTabletScreenButton, faTape, faUpDown
+    faSwatchbook, faTabletScreenButton, faTape, faUpDown,
+    faCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 function DinoLabsIDEVideoEditor({ fileHandle }) {
@@ -53,6 +54,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const cropResizingCorner = useRef(null);
     const cropLastResizePosRef = useRef({ x: 0, y: 0 });
     const cropInitialRectRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+    const [circleCrop, setCircleCrop] = useState(false);
     const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
     const aspectRatioRef = useRef(1);
     const [grayscale, setGrayscale] = useState(0);
@@ -323,6 +325,10 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             height -= dy;
         }
 
+        if (circleCrop) {
+            height = width;
+        }
+
         width = Math.max(width, 10);
         height = Math.max(height, 10);
 
@@ -505,6 +511,16 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             const now = performance.now();
             if (now - lastTime >= frameInterval) {
                 lastTime = now;
+                offscreenCtx.save();
+                offscreenCtx.beginPath();
+                if (circleCrop) {
+                    const radius = Math.min(realCropW, realCropH) / 2;
+                    offscreenCtx.arc(realCropW / 2, realCropH / 2, radius, 0, 2 * Math.PI);
+                } else {
+                    offscreenCtx.rect(0, 0, realCropW, realCropH);
+                }
+                offscreenCtx.clip();
+
                 offscreenCtx.drawImage(
                     tempVideo,
                     realCropX,
@@ -516,6 +532,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     realCropW,
                     realCropH
                 );
+                offscreenCtx.restore();
             }
             requestAnimationFrame(drawFrame);
         };
@@ -851,6 +868,31 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faCropSimple} />
                                 </button>
                             </Tippy>
+
+                            {/* Circle crop toggle, only visible if cropping */}
+                            {isCropping && (
+                                <Tippy content="Circle Crop" theme="tooltip-light">
+                                    <button
+                                        onClick={() => {
+                                            setCircleCrop(prev => {
+                                                const newVal = !prev;
+                                                if (newVal) {
+                                                    setCropRect(prevRect => ({
+                                                        ...prevRect,
+                                                        height: prevRect.width
+                                                    }));
+                                                }
+                                                return newVal;
+                                            });
+                                        }}
+                                        style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
+                                        className="dinolabsIDEMediaToolButton"
+                                    >
+                                        <FontAwesomeIcon icon={faCircle} />
+                                    </button>
+                                </Tippy>
+                            )}
+
                             <Tippy content="Undo Crop" theme="tooltip-light">
                                 <button
                                     onClick={undoCrop}
@@ -1258,7 +1300,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 width: cropRect.width,
                                 height: cropRect.height,
                                 transform: `rotate(${cropRotation}deg)`,
-                                zIndex: 10
+                                zIndex: 10,
+                                borderRadius: circleCrop ? '50%' : '0'
                             }}
                             onMouseDown={handleCropMouseDown}
                         >
