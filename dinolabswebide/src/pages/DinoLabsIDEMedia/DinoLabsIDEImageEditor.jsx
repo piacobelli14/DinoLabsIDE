@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import "../../styles/mainStyles/DinoLabsIDEMedia.css";
 import "../../styles/helperStyles/Slider.css";
@@ -349,16 +347,12 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             } else if (resizingCorner === 'bottom-left') {
                 newWidth = initialSizeRef.current.width - localDx;
                 newHeight = newWidth / ratio;
-                newPanX = initialPosRef.current.x + localDx;
             } else if (resizingCorner === 'top-right') {
                 newWidth = initialSizeRef.current.width + localDx;
                 newHeight = newWidth / ratio;
-                newPanY = initialPosRef.current.y + (initialSizeRef.current.height - newHeight);
             } else if (resizingCorner === 'top-left') {
                 newWidth = initialSizeRef.current.width - localDx;
                 newHeight = newWidth / ratio;
-                newPanX = initialPosRef.current.x + localDx;
-                newPanY = initialPosRef.current.y + (initialSizeRef.current.height - newHeight);
             }
         } else {
             if (resizingCorner === 'bottom-right') {
@@ -367,16 +361,12 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             } else if (resizingCorner === 'bottom-left') {
                 newWidth = initialSizeRef.current.width - localDx;
                 newHeight = initialSizeRef.current.height + localDy;
-                newPanX = initialPosRef.current.x + localDx;
             } else if (resizingCorner === 'top-right') {
                 newWidth = initialSizeRef.current.width + localDx;
                 newHeight = initialSizeRef.current.height - localDy;
-                newPanY = initialPosRef.current.y + localDy;
             } else if (resizingCorner === 'top-left') {
                 newWidth = initialSizeRef.current.width - localDx;
                 newHeight = initialSizeRef.current.height - localDy;
-                newPanX = initialPosRef.current.x + localDx;
-                newPanY = initialPosRef.current.y + localDy;
             }
         }
 
@@ -449,13 +439,13 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         }
     
         if (circleCrop) {
-            height = width; 
+            height = width;
         }
     
         setCropRect({
             x,
             y,
-            width: Math.max(width, 10),  
+            width: Math.max(width, 10),
             height: Math.max(height, 10),
         });
     };
@@ -919,17 +909,17 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                 setPaths([]);
                                                 setUndonePaths([]);
                                                 setIsDrawColorOpen(false);
-                                                setIsHighlightColorOpen(false); 
-                                                setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
+                                                setIsHighlightColorOpen(false);
+                                                setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping');
                                             };
                                             img.src = url;
                                         } else {
                                             setCropRect({ x: 0, y: 0, width: imageWidth, height: imageHeight });
                                             setIsCropping(true);
-                                            setCircleCrop(false); 
+                                            setCircleCrop(false);
                                             setIsDrawColorOpen(false);
-                                            setIsHighlightColorOpen(false); 
-                                            setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping'); 
+                                            setIsHighlightColorOpen(false);
+                                            setActionMode(prev => prev === 'Cropping' ? 'Idle' : 'Cropping');
                                         }
                                     }}
                                     disabled={(isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? true : false}
@@ -1616,7 +1606,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 </div>
             </div>
         </div>
-    ); 
+    );
 }
 
 export default DinoLabsIDEImageEditor;

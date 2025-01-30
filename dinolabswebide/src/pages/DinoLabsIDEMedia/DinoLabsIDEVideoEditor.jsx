@@ -237,6 +237,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             aspectRatioRef.current = videoWidth / videoHeight;
         }
     };
+
     const handleGlobalMouseMove = (e) => {
         if (!resizingRef.current) return;
         const dx = e.clientX - lastResizePosRef.current.x;
@@ -260,16 +261,12 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             } else if (resizingCorner === 'bottom-left') {
                 newWidth -= localDx;
                 newHeight = newWidth / ratio;
-                newPanX += localDx;
             } else if (resizingCorner === 'top-right') {
                 newWidth += localDx;
                 newHeight = newWidth / ratio;
-                newPanY += (initialSizeRef.current.height - newHeight);
             } else if (resizingCorner === 'top-left') {
                 newWidth -= localDx;
                 newHeight = newWidth / ratio;
-                newPanX += localDx;
-                newPanY += (initialSizeRef.current.height - newHeight);
             }
         } else {
             if (resizingCorner === 'bottom-right') {
@@ -296,10 +293,12 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setPanX(newPanX);
         setPanY(newPanY);
     };
+
     const handleGlobalMouseUp = () => {
         resizingRef.current = false;
         setResizingCorner(null);
     };
+
     useEffect(() => {
         const onMouseMove = (e) => handleGlobalMouseMove(e);
         const onMouseUp = () => handleGlobalMouseUp();
@@ -1686,17 +1685,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             </button>
                         </Tippy>
                     </div>
-                    {/*}
-                    <label className="dinolabsIDEMediaModeIndicator">
-                        <span>
-                            {isCropping ? 'Cropping'
-                                : (actionMode === 'Drawing') ? 'Drawing'
-                                : (actionMode === 'Highlighting') ? 'Highlighting'
-                                : 'Idle'
-                            }
-                        </span>
-                    </label>
-                    */}
                 </div>
             </div>
         </div>
