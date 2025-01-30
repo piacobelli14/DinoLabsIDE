@@ -83,6 +83,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
     const [isHighlightColorOpen, setIsHighlightColorOpen] = useState(false);
     const [isCropDisabled, setIsCropDisabled] = useState(false);
     const [circleCrop, setCircleCrop] = useState(false);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         let objectUrl;
@@ -101,9 +102,21 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
               img.onload = () => {
                 setNativeWidth(img.naturalWidth);
                 setNativeHeight(img.naturalHeight);
-                const scaleFactor = 450 / img.naturalHeight;
-                setImageHeight(450);
-                setImageWidth(img.naturalWidth * scaleFactor);
+                const containerWidth = containerRef.current?.clientWidth || 800;
+                const containerHeight = containerRef.current?.clientHeight || 600;
+                const maxPossibleWidth = containerWidth * 0.7;
+                const maxPossibleHeight = containerHeight * 0.7;
+                let initWidth = img.naturalWidth;
+                let initHeight = img.naturalHeight;
+                const widthRatio = initWidth / maxPossibleWidth;
+                const heightRatio = initHeight / maxPossibleHeight;
+                if (widthRatio > 1 || heightRatio > 1) {
+                  const ratio = Math.max(widthRatio, heightRatio);
+                  initWidth /= ratio;
+                  initHeight /= ratio;
+                }
+                setImageWidth(initWidth);
+                setImageHeight(initHeight);
               };
               img.src = objectUrl;
             } 
@@ -120,12 +133,10 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
           }
         };
       }, [fileHandle]);
-      
 
     useEffect(() => {
         const normalizedRotation = rotation % 360;
         const isAtOriginalPosition = normalizedRotation === 0;
-
         if (isAtOriginalPosition && flipX === 1 && flipY === 1) {
             setIsCropDisabled(false);
         } else {
@@ -154,9 +165,21 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         setBorderBottomRightRadius(0);
         setPaths([]);
         setUndonePaths([]);
-        const scaleFactor = 450 / nativeHeight;
-        setImageHeight(450);
-        setImageWidth(nativeWidth * scaleFactor);
+        const containerWidth = containerRef.current?.clientWidth || 800;
+        const containerHeight = containerRef.current?.clientHeight || 600;
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = nativeWidth;
+        let initHeight = nativeHeight;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+          const ratio = Math.max(widthRatio, heightRatio);
+          initWidth /= ratio;
+          initHeight /= ratio;
+        }
+        setImageWidth(initWidth);
+        setImageHeight(initHeight);
         setIsCropDisabled(false);
     };
 
@@ -169,7 +192,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     name: 'fileType',
                     type: 'select',
                     label: 'Image Type',
-                    defaultValue: 'png',  
+                    defaultValue: 'png',
                     options: [
                         { label: '.png', value: 'png' },
                         { label: '.jpg', value: 'jpg' },
@@ -180,7 +203,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     name: 'scale',
                     type: 'select',
                     label: 'Scale',
-                    defaultValue: '1x',  
+                    defaultValue: '1x',
                     options: [
                         { label: '1x', value: '1x' },
                         { label: '2x', value: '2x' },
@@ -190,33 +213,26 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             ],
             showCancel: true
         });
-    
         if (!alertResult) {
             return;
         }
-    
-        const fileType = alertResult?.fileType || 'png'; 
-        const scale = alertResult?.scale || '1x';         
-    
+        const fileType = alertResult?.fileType || 'png';
+        const scale = alertResult?.scale || '1x';
         const scaleFactor = scale === '2x' ? 2 : scale === '3x' ? 3 : 1;
         const mimeType = (fileType === 'jpg' || fileType === 'jpeg') ? 'image/jpeg' : 'image/png';
-        
         const canvas = document.createElement('canvas');
         canvas.width = imageWidth * scaleFactor;
         canvas.height = imageHeight * scaleFactor;
         const ctx = canvas.getContext('2d');
-        
         let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
         if (spread) {
             filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
         }
         ctx.filter = filterString;
         ctx.globalAlpha = opacity / 100;
-    
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(rotation * Math.PI / 180);
         ctx.scale(flipX * zoom * scaleFactor, flipY * zoom * scaleFactor);
-    
         const roundedRect = new Path2D();
         if (circleCrop) {
             const radius = Math.min(imageWidth, imageHeight) / 2;
@@ -249,12 +265,10 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             roundedRect.quadraticCurveTo(-imageWidth / 2, -imageHeight / 2, -imageWidth / 2 + tl, -imageHeight / 2);
         }
         ctx.clip(roundedRect);
-    
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
             ctx.drawImage(img, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-    
             ctx.save();
             ctx.translate(-imageWidth / 2, -imageHeight / 2);
             paths.forEach(pathData => {
@@ -265,7 +279,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     const p = new Path2D(pathData.d);
                     ctx.stroke(p);
                 } catch (err) {
-                    return; 
+                    return;
                 }
             });
             if(tempPath) {
@@ -280,7 +294,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 }
             }
             ctx.restore();
-    
             const dataUrl = canvas.toDataURL(mimeType);
             const link = document.createElement('a');
             link.href = dataUrl;
@@ -338,7 +351,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         let newHeight = initialSizeRef.current.height;
         let newPanX = initialPosRef.current.x;
         let newPanY = initialPosRef.current.y;
-
         if (maintainAspectRatio) {
             const ratio = aspectRatioRef.current;
             if (resizingCorner === 'bottom-right') {
@@ -369,7 +381,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 newHeight = initialSizeRef.current.height - localDy;
             }
         }
-
         setImageWidth(Math.max(newWidth, 50));
         setImageHeight(Math.max(newHeight, 50));
         setPanX(newPanX);
@@ -415,11 +426,9 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
 
     const handleCropGlobalMouseMove = (e) => {
         if (!cropResizingRef.current) return;
-    
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-    
         if (cropResizingCorner.current === 'bottom-right') {
             width += dx;
             height += dy;
@@ -437,11 +446,9 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             width -= dx;
             height -= dy;
         }
-    
         if (circleCrop) {
             height = width;
         }
-    
         setCropRect({
             x,
             y,
@@ -449,7 +456,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             height: Math.max(height, 10),
         });
     };
-    
+
     useEffect(() => {
         const onMouseMove = (e) => handleCropGlobalMouseMove(e);
         const onMouseUp = () => { cropResizingRef.current = false; };
@@ -635,25 +642,20 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
     };
 
     return (
-
         <div className="dinolabsIDEMediaContentWrapper">
             <div className="dinoLabsIDEMediaToolBar">
-
                 <div className="dinolabsIDEMediaCellWrapper">
-
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
                             <FontAwesomeIcon icon={faTabletScreenButton} />
                             Layout
                         </label>
-
                         <div className="dinolabsIDEMediaCellFlexSupplement">
                             <Tippy content="Reset Image" theme="tooltip-light">
                                 <button onClick={resetImage} className="dinolabsIDEMediaToolButtonHeader">
                                     <FontAwesomeIcon icon={faArrowsRotate} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Download Image" theme="tooltip-light">
                                 <button onClick={downloadImage} className="dinolabsIDEMediaToolButtonHeader">
                                     <FontAwesomeIcon icon={faDownload} />
@@ -661,12 +663,10 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             </Tippy>
                         </div>
                     </div>
-
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <label className="dinolabsIDEMediaCellFlexTitle">
                             Position
                         </label>
-
                         <div className="dinolabsIDEMediaCellFlex">
                             <input
                                 className="dinolabsIDEMediaPositionInput"
@@ -677,7 +677,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     setPanX(Number(newValue));
                                 }}
                             />
-
                             <input
                                 className="dinolabsIDEMediaPositionInput"
                                 type="text"
@@ -689,7 +688,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             />
                         </div>
                     </div>
-
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <div className="dinolabsIDEMediaCellFlex">
                             <Tippy content="Zoom In" theme="tooltip-light">
@@ -697,13 +695,11 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Zoom Out" theme="tooltip-light">
                                 <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="dinolabsIDEMediaToolButton">
                                     <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Rotate Left" theme="tooltip-light">
                                 <button onClick={() => {
                                     setRotation(prev => prev - 90);
@@ -712,7 +708,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faRotateLeft} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Rotate Right" theme="tooltip-light">
                                 <button onClick={() => {
                                     setRotation(prev => prev + 90);
@@ -721,7 +716,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faRotateRight} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Flip Horizontally" theme="tooltip-light">
                                 <button onClick={() => {
                                     setFlipX(prev => -prev);
@@ -730,7 +724,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faLeftRight} />
                                 </button>
                             </Tippy>
-
                             <Tippy content="Flip Vertically" theme="tooltip-light">
                                 <button onClick={() => {
                                     setFlipY(prev => -prev)
@@ -740,10 +733,8 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                 </button>
                             </Tippy>
                         </div>
-
                     </div>
                 </div>
-
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -806,7 +797,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                         if (isCropDisabled) {
                                             return;
                                         }
-
                                         if (isCropping) {
                                             const img = new Image();
                                             img.onload = () => {
@@ -839,21 +829,17 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                     }
                                                 }
                                                 offscreenCtx.restore();
-                                                
                                                 const scaleX = nativeWidth / imageWidth;
                                                 const scaleY = nativeHeight / imageHeight;
                                                 const rad = cropRotation * Math.PI / 180;
-
                                                 const cx = cropRect.x + cropRect.width / 2;
                                                 const cy = cropRect.y + cropRect.height / 2;
-
                                                 const corners = [
                                                     { x: cropRect.x, y: cropRect.y },
                                                     { x: cropRect.x + cropRect.width, y: cropRect.y },
                                                     { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
                                                     { x: cropRect.x, y: cropRect.y + cropRect.height }
                                                 ];
-
                                                 const rotatedCorners = corners.map(pt => {
                                                     const dx = pt.x - cx;
                                                     const dy = pt.y - cy;
@@ -862,7 +848,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                         y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * scaleY
                                                     };
                                                 });
-
                                                 const xs = rotatedCorners.map(pt => pt.x);
                                                 const ys = rotatedCorners.map(pt => pt.y);
                                                 const minX = Math.min(...xs);
@@ -871,12 +856,10 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                 const maxY = Math.max(...ys);
                                                 const cropWidth = maxX - minX;
                                                 const cropHeight = maxY - minY;
-
                                                 const canvasCrop = document.createElement('canvas');
                                                 canvasCrop.width = cropWidth;
                                                 canvasCrop.height = cropHeight;
                                                 const ctxCrop = canvasCrop.getContext('2d');
-
                                                 ctxCrop.save();
                                                 ctxCrop.beginPath();
                                                 if(circleCrop) {
@@ -890,14 +873,10 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                     ctxCrop.closePath();
                                                 }
                                                 ctxCrop.clip();
-
                                                 ctxCrop.drawImage(offscreenCanvas, -minX, -minY, nativeWidth, nativeHeight);
                                                 ctxCrop.restore();
-
                                                 const newDataUrl = canvasCrop.toDataURL();
-
                                                 setCropHistory(prev => [...prev, { url, panX, panY, imageWidth, imageHeight, nativeWidth, nativeHeight, paths, undonePaths }]);
-
                                                 setUrl(newDataUrl);
                                                 setPanX(0);
                                                 setPanY(0);
@@ -929,7 +908,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     <FontAwesomeIcon icon={faCropSimple} />
                                 </button>
                             </Tippy>
-
                             {isCropping && (
                                 <Tippy content="Circle Crop" theme="tooltip-light">
                                     <button 
@@ -972,7 +950,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </div>
                     )}
                 </div>
-
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -992,8 +969,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             </Tippy>
                         </div>
                     </div>
-                    
-
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <label className="dinolabsIDEMediaCellFlexTitle">
                             Draw on Image
@@ -1028,7 +1003,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     }}
                                 />
                             </Tippy>
-
                             <div className="dinolabsIDEMediaBrushSizeFlex">
                                 {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
                                     <button key={opt.size}
@@ -1043,9 +1017,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                 ))}
                             </div>
                         </div>
-                        
                     </div>
-
                     <div className="dinolabsIDEMediaCellFlexStack">
                         <label className="dinolabsIDEMediaCellFlexTitle">
                             Highlight on Image
@@ -1080,7 +1052,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                     }}
                                 />
                             </Tippy>
-
                             <div className="dinolabsIDEMediaBrushSizeFlex">
                                 {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
                                     <button key={opt.size}
@@ -1097,7 +1068,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </div>
                     </div>
                 </div>
-
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -1313,7 +1283,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </div>
                     </div>
                 </div>
-
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -1390,7 +1359,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                             }}
                                         />
                                     </div>
-
                                     <div className="dinolabsIDECornerInputFlex">
                                         <input
                                             className="dinolabsIDEMediaPositionInput"
@@ -1420,15 +1388,13 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </div>
                     </div>
                 </div>
-
-                
             </div>
-
             <div
                 className="dinolabsIDEMediaContainer"
                 style={{
                     cursor: 'grab',
                 }}
+                ref={containerRef}
                 onMouseDown={(e) => {
                     if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
                         setFocusedTextId(null);
@@ -1472,8 +1438,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             opacity: opacity / 100
                         }}
                     />
-                    
-                    
                     {!isCropping && actionMode === 'Idle' && (
                         <>
                         <div
@@ -1594,7 +1558,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         )}
                     </svg>
                 </div>
-
                 <div className="dinolabsIDEVideoInputBottomBar"> 
                     <div> 
                     </div>

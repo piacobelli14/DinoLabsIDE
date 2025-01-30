@@ -88,6 +88,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const [currentPlaybackRate, setCurrentPlaybackRate] = useState(1.0);
     const [isLooping, setIsLooping] = useState(false);
     const [isProcessingCrop, setIsProcessingCrop] = useState(false);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         let objectUrl;
@@ -106,9 +107,21 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     tempVideo.onloadedmetadata = () => {
                         setNativeWidth(tempVideo.videoWidth);
                         setNativeHeight(tempVideo.videoHeight);
-                        const scaleFactor = 300 / tempVideo.videoHeight;
-                        setVideoHeight(300);
-                        setVideoWidth(tempVideo.videoWidth * scaleFactor);
+                        const containerWidth = containerRef.current?.clientWidth || 800;
+                        const containerHeight = containerRef.current?.clientHeight || 600;
+                        const maxPossibleWidth = containerWidth * 0.7;
+                        const maxPossibleHeight = containerHeight * 0.7;
+                        let initWidth = tempVideo.videoWidth;
+                        let initHeight = tempVideo.videoHeight;
+                        const widthRatio = initWidth / maxPossibleWidth;
+                        const heightRatio = initHeight / maxPossibleHeight;
+                        if (widthRatio > 1 || heightRatio > 1) {
+                            const ratio = Math.max(widthRatio, heightRatio);
+                            initWidth /= ratio;
+                            initHeight /= ratio;
+                        }
+                        setVideoWidth(initWidth);
+                        setVideoHeight(initHeight);
                     };
                     tempVideo.src = objectUrl;
                 }
@@ -140,7 +153,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setFlipY(1);
         setPanX(0);
         setPanY(0);
-
         setHue(0);
         setSaturation(100);
         setBrightness(100);
@@ -150,28 +162,35 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setSpread(0);
         setGrayscale(0);
         setSepia(0);
-
         setBorderRadius(0);
         setBorderTopLeftRadius(0);
         setBorderTopRightRadius(0);
         setBorderBottomLeftRadius(0);
         setBorderBottomRightRadius(0);
         setSyncCorners(false);
-
         setPaths([]);
         setUndonePaths([]);
         setTempPath(null);
         setActionMode('Idle');
-
-        const scaleFactor = 300 / nativeHeight;
-        setVideoHeight(300);
-        setVideoWidth(nativeWidth * scaleFactor);
-
+        const containerWidth = containerRef.current?.clientWidth || 800;
+        const containerHeight = containerRef.current?.clientHeight || 600;
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = nativeWidth;
+        let initHeight = nativeHeight;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+            const ratio = Math.max(widthRatio, heightRatio);
+            initWidth /= ratio;
+            initHeight /= ratio;
+        }
+        setVideoWidth(initWidth);
+        setVideoHeight(initHeight);
         setIsCropDisabled(false);
         setIsCropping(false);
         setCropRect({ x: 0, y: 0, width: 100, height: 100 });
         setCropRotation(0);
-
         setCircleCrop(false);
     };
 
@@ -201,7 +220,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             ],
             showCancel: true
         });
-
         if (!alertResult) return;
         alert("Download not yet implemented—would finalize or re-encode here.");
     };
@@ -212,9 +230,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         draggingRef.current = true;
         lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     };
+
     const handleDragEnd = () => {
         draggingRef.current = false;
     };
+
     const handleDragMove = (e) => {
         if (!draggingRef.current) return;
         const dx = e.clientX - lastMousePosRef.current.x;
@@ -247,12 +267,10 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const sin = Math.sin(rad);
         const localDx = cos * dx + sin * dy;
         const localDy = -sin * dx + cos * dy;
-
         let newWidth = initialSizeRef.current.width;
         let newHeight = initialSizeRef.current.height;
         let newPanX = initialPosRef.current.x;
         let newPanY = initialPosRef.current.y;
-
         if (maintainAspectRatio) {
             const ratio = aspectRatioRef.current;
             if (resizingCorner === 'bottom-right') {
@@ -287,7 +305,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 newPanY += localDy;
             }
         }
-
         setVideoWidth(Math.max(newWidth, 50));
         setVideoHeight(Math.max(newHeight, 50));
         setPanX(newPanX);
@@ -316,6 +333,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const newHeight = videoWidth * (nativeHeight / nativeWidth);
         setVideoHeight(newHeight);
     };
+
     const restoreAspectRatioHeight = () => {
         const newWidth = videoHeight * (nativeWidth / nativeHeight);
         setVideoWidth(newWidth);
@@ -329,12 +347,12 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         cropLastResizePosRef.current = { x: e.clientX, y: e.clientY };
         cropInitialRectRef.current = { ...cropRect };
     };
+
     const handleCropGlobalMouseMove = (e) => {
         if (!cropResizingRef.current) return;
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-
         if (cropResizingCorner.current === 'bottom-right') {
             width += dx;
             height += dy;
@@ -359,6 +377,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         height = Math.max(height, 10);
         setCropRect({ x, y, width, height });
     };
+
     useEffect(() => {
         const onMouseMove = (e) => handleCropGlobalMouseMove(e);
         const onMouseUp = () => { cropResizingRef.current = false; };
@@ -372,12 +391,14 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
 
     const cropDraggingRefLocal = useRef(false);
     const lastCropDragPosRef = useRef({ x: 0, y: 0 });
+
     const handleCropMouseDown = (e) => {
         e.stopPropagation();
         e.preventDefault();
         cropDraggingRefLocal.current = true;
         lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
     };
+
     const handleCropMouseMove = (e) => {
         if (!cropDraggingRefLocal.current) return;
         const dx = e.clientX - lastCropDragPosRef.current.x;
@@ -385,9 +406,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
         setCropRect(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
     };
+
     const handleCropMouseUp = () => {
         cropDraggingRefLocal.current = false;
     };
+
     useEffect(() => {
         const onMouseMove = (e) => handleCropMouseMove(e);
         const onMouseUp = () => handleCropMouseUp();
@@ -410,6 +433,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         cropRotationStartAngle.current = Math.atan2(dy, dx) * (180 / Math.PI);
         cropInitialRotation.current = cropRotation;
     };
+
     const handleCropGlobalMouseMoveRotation = (e) => {
         if (!cropRotatingRef.current) return;
         const dx = e.clientX - cropRotationCenter.current.x;
@@ -418,9 +442,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const deltaAngle = angle - cropRotationStartAngle.current;
         setCropRotation(cropInitialRotation.current + deltaAngle);
     };
+
     const handleCropGlobalMouseUpRotation = () => {
         cropRotatingRef.current = false;
     };
+
     useEffect(() => {
         window.addEventListener('mousemove', handleCropGlobalMouseMoveRotation);
         window.addEventListener('mouseup', handleCropGlobalMouseUpRotation);
@@ -453,6 +479,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const ctm = svg.getScreenCTM().inverse();
         return point.matrixTransform(ctm);
     };
+
     const handleSvgMouseDown = (e) => {
         if (actionMode === 'Drawing' || actionMode === 'Highlighting') {
             isDrawingRef.current = true;
@@ -461,6 +488,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setUndonePaths([]);
         }
     };
+
     const handleSvgMouseMove = (e) => {
         if (!isDrawingRef.current) return;
         if (actionMode === 'Drawing' || actionMode === 'Highlighting') {
@@ -483,6 +511,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }
         }
     };
+
     const handleSvgMouseUp = () => {
         if (!isDrawingRef.current) return;
         isDrawingRef.current = false;
@@ -505,6 +534,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setTempPath(null);
         currentPathPoints.current = [];
     };
+
     const undoStroke = () => {
         setPaths(prev => {
             if (prev.length === 0) return prev;
@@ -514,6 +544,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             return newPaths;
         });
     };
+
     const redoStroke = () => {
         setUndonePaths(prev => {
             if (prev.length === 0) return prev;
@@ -526,19 +557,16 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
 
     const performCanvasVideoCrop = async () => {
         setIsProcessingCrop(true);
-
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = nativeWidth;
         offscreenCanvas.height = nativeHeight;
         const offscreenCtx = offscreenCanvas.getContext('2d');
-
         let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
         if (spread) {
             filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
         }
         offscreenCtx.filter = filterString;
         offscreenCtx.globalAlpha = opacity / 100;
-
         const tempVideo = document.createElement('video');
         tempVideo.src = url;
         tempVideo.crossOrigin = 'anonymous';
@@ -547,25 +575,19 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         tempVideo.style.left = '-9999px';
         tempVideo.style.top = '-9999px';
         document.body.appendChild(tempVideo);
-
         await new Promise((res) => {
             tempVideo.onloadeddata = () => res();
         });
-
         tempVideo.currentTime = 0;
         tempVideo.play();
-
         const audioStream = tempVideo.captureStream();
         const audioTracks = audioStream.getAudioTracks();
-
         const fps = 30;
         const mainCanvasStream = offscreenCanvas.captureStream(fps);
         const videoTracks = mainCanvasStream.getVideoTracks();
-
         const combinedStream = new MediaStream();
         videoTracks.forEach(t => combinedStream.addTrack(t));
         audioTracks.forEach(t => combinedStream.addTrack(t));
-
         const mediaRecorder = new MediaRecorder(combinedStream, {
             mimeType: 'video/webm; codecs=vp9'
         });
@@ -579,12 +601,10 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const donePromise = new Promise((r) => (resolveDone = r));
         mediaRecorder.onstop = () => resolveDone();
         mediaRecorder.start();
-
         const intermediateCanvas = document.createElement('canvas');
         intermediateCanvas.width = nativeWidth;
         intermediateCanvas.height = nativeHeight;
         const icCtx = intermediateCanvas.getContext('2d');
-
         const finalCanvas = document.createElement('canvas');
         const rad = cropRotation * Math.PI / 180;
         const cx = cropRect.x + cropRect.width / 2;
@@ -611,17 +631,14 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const maxY = Math.max(...ys);
         const realCropW = maxX - minX;
         const realCropH = maxY - minY;
-
         finalCanvas.width = realCropW;
         finalCanvas.height = realCropH;
         const fcCtx = finalCanvas.getContext('2d');
-
         const finalStream = finalCanvas.captureStream(fps);
         const finalTracks = finalStream.getVideoTracks();
         const combinedFinal = new MediaStream();
         finalTracks.forEach(t => combinedFinal.addTrack(t));
         audioTracks.forEach(t => combinedFinal.addTrack(t));
-
         const finalRecorder = new MediaRecorder(combinedFinal, {
             mimeType: 'video/webm; codecs=vp9'
         });
@@ -635,10 +652,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const finalDonePromise = new Promise((r) => (resolveFinalDone = r));
         finalRecorder.onstop = () => resolveFinalDone();
         finalRecorder.start();
-
         let lastFrameTime = performance.now();
         const frameInterval = 1000 / fps;
-
         const drawFrame = () => {
             if (tempVideo.paused || tempVideo.ended) {
                 return;
@@ -646,14 +661,12 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             const now = performance.now();
             if (now - lastFrameTime >= frameInterval) {
                 lastFrameTime = now;
-
                 icCtx.save();
                 icCtx.clearRect(0, 0, nativeWidth, nativeHeight);
                 icCtx.filter = filterString;
                 icCtx.globalAlpha = opacity / 100;
                 icCtx.drawImage(tempVideo, 0, 0, nativeWidth, nativeHeight);
                 icCtx.restore();
-
                 icCtx.save();
                 paths.forEach(p => {
                     icCtx.strokeStyle = p.color;
@@ -674,7 +687,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     } catch {}
                 }
                 icCtx.restore();
-
                 fcCtx.save();
                 fcCtx.clearRect(0, 0, realCropW, realCropH);
                 fcCtx.beginPath();
@@ -710,48 +722,49 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     }
                 }
                 fcCtx.clip();
-
                 fcCtx.drawImage(
                     intermediateCanvas,
                     -minX, -minY
                 );
-
                 fcCtx.restore();
             }
             requestAnimationFrame(drawFrame);
         };
         requestAnimationFrame(drawFrame);
-
         await new Promise((resEnd) => {
             tempVideo.onended = () => resEnd();
         });
-
         finalRecorder.stop();
         await finalDonePromise;
-
         const mergedBlob = new Blob(finalChunks, { type: 'video/webm' });
         const newUrl = URL.createObjectURL(mergedBlob);
-
         document.body.removeChild(tempVideo);
-
         setCropHistory(prev => [
             ...prev,
             { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
         ]);
-
         setUrl(newUrl);
         setNativeWidth(realCropW);
         setNativeHeight(realCropH);
-
-        const scaleFactor = 300 / realCropH;
-        setVideoHeight(300);
-        setVideoWidth(realCropW * scaleFactor);
-
+        const containerWidth = containerRef.current?.clientWidth || 800;
+        const containerHeight = containerRef.current?.clientHeight || 600;
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = realCropW;
+        let initHeight = realCropH;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+            const ratio = Math.max(widthRatio, heightRatio);
+            initWidth /= ratio;
+            initHeight /= ratio;
+        }
+        setVideoWidth(initWidth);
+        setVideoHeight(initHeight);
         setPanX(0);
         setPanY(0);
         setIsCropping(false);
         setIsProcessingCrop(false);
-
         setPaths([]);
         setUndonePaths([]);
         setTempPath(null);
@@ -775,6 +788,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 15);
         }
     };
+
     const handlePlayVideo = () => {
         if (!videoRef.current) return;
         if (isPlaying) {
@@ -786,27 +800,35 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsPlaying(true);
         }
     };
+
     const handleToggleLoop = () => {
         if (!videoRef.current) return;
         const newVal = !videoRef.current.loop;
         videoRef.current.loop = newVal;
         setIsLooping(newVal);
     };
+
     const handleSkip15 = () => {
         if (videoRef.current && videoRef.current.duration) {
             videoRef.current.currentTime = Math.min(videoRef.current.duration, videoRef.current.currentTime + 15);
         }
     };
+
     const handleSetPlaybackRate = (rate) => {
         if (videoRef.current) {
             videoRef.current.playbackRate = rate;
         }
         setCurrentPlaybackRate(rate);
     };
+
     const handleViewFrames = () => { console.log("View frames clicked (placeholder)."); };
+
     const handleClipFromVideo = () => { console.log("Clip from video clicked (placeholder)."); };
+
     const handleStitchClips = () => { console.log("Stitch clips clicked (placeholder)."); };
+
     const handleInsertClip = () => { console.log("Insert clip clicked (placeholder)."); };
+
     const handleRemoveClip = () => { console.log("Remove clip clicked (placeholder)."); };
 
     useEffect(() => {
@@ -965,7 +987,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     onClick={async () => {
                                         if (actionMode === 'Drawing' || actionMode === 'Highlighting') return;
                                         if (isCropDisabled) return;
-
                                         if (isCropping) {
                                             if (mediaType === 'video') {
                                                 await finalizeCrop();
@@ -1452,6 +1473,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             <div
                 className="dinolabsIDEMediaContainer"
                 style={{ cursor: 'grab' }}
+                ref={containerRef}
                 onMouseDown={handleDragStart}
                 onMouseMove={handleDragMove}
                 onMouseUp={handleDragEnd}
