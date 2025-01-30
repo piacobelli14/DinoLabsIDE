@@ -793,7 +793,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         if (!videoRef.current) return;
         if (isPlaying) {
             videoRef.current.pause();
-            videoRef.current.currentTime = 0;
             setIsPlaying(false);
         } else {
             videoRef.current.play();
