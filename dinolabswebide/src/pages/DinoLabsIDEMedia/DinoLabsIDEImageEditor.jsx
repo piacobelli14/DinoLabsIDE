@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import "../../styles/mainStyles/DinoLabsIDEMedia.css";
 import "../../styles/helperStyles/Slider.css";
