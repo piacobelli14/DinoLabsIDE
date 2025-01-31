@@ -1389,175 +1389,184 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     </div>
                 </div>
             </div>
-            <div
-                className="dinolabsIDEMediaContainer"
-                style={{
-                    cursor: 'grab',
-                }}
-                ref={containerRef}
-                onMouseDown={(e) => {
-                    if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
-                        setFocusedTextId(null);
-                        setSelectedTextId(null);
-                    }
-                    handleDragStart(e);
-                }}
-                onMouseMove={handleDragMove}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-            >
+            <div className="dinolabsIDEMediaContainerWrapper">
+
                 <div
-                    className="dinolabsIDEImageResizer"
+                    className="dinolabsIDEMediaContainer"
                     style={{
-                        top: `calc(50% + ${panY}px)`,
-                        left: `calc(50% + ${panX}px)`,
-                        width: `${imageWidth}px`,
-                        height: `${imageHeight}px`,
-                        transform: `
-                        translate(-50%, -50%) 
-                        scale(${flipX * zoom}, ${flipY * zoom}) 
-                        rotate(${rotation}deg)
-                        `,
-                        borderRadius: syncCorners
-                            ? `${borderRadius}px`
-                            : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
+                        cursor: 'grab',
+                        height: "90%"
                     }}
+                    ref={containerRef}
+                    onMouseDown={(e) => {
+                        if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
+                            setFocusedTextId(null);
+                            setSelectedTextId(null);
+                        }
+                        handleDragStart(e);
+                    }}
+                    onMouseMove={handleDragMove}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
                 >
-                    <img
-                        src={url}
-                        alt="Media content"
-                        draggable={false}
-                        onDragStart={(e) => e.preventDefault()}
-                        className="dinolabsIDEMediaContent"
+                    <div
+                        className="dinolabsIDEImageResizer"
                         style={{
-                            width: '100%',
-                            height: '100%',
-                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
-                            userSelect: 'none',
-                            borderRadius: 'inherit',
-                            opacity: opacity / 100
+                            top: `calc(50% + ${panY}px)`,
+                            left: `calc(50% + ${panX}px)`,
+                            width: `${imageWidth}px`,
+                            height: `${imageHeight}px)`,
+                            transform: `
+                            translate(-50%, -50%) 
+                            scale(${zoom}, ${zoom}) 
+                            rotate(${rotation}deg)
+                            `,
+                            borderRadius: syncCorners
+                                ? `${borderRadius}px`
+                                : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
                         }}
-                    />
-                    {!isCropping && actionMode === 'Idle' && (
-                        <>
-                        <div
-                            className="dinolabsIDEMediaResizeHandle top-left"
-                            onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
-                            style={{ top: `-6px`, left: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle top-right"
-                            onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
-                            style={{ top: `-6px`, right: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle bottom-left"
-                            onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
-                            style={{ bottom: `-6px`, left: `-6px` }}
-                        />
-                        <div
-                            className="dinolabsIDEMediaResizeHandle bottom-right"
-                            onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
-                            style={{ bottom: `-6px`, right: `-6px` }}
-                        />
-                        </>
-                    )}
-                    {isCropping && (
-                        <div
-                            className="dinolabsIDEMediaCropRectangle"
+                    >
+                        <img
+                            src={url}
+                            alt="Media content"
+                            draggable={false}
+                            onDragStart={(e) => e.preventDefault()}
+                            className="dinolabsIDEMediaContent"
                             style={{
-                                position: 'absolute',
-                                border: '0.4vh dashed rgba(31, 174, 245, 1)',
-                                backgroundColor: 'rgba(0,0,0,0.6)',
-                                left: cropRect.x,
-                                top: cropRect.y,
-                                width: cropRect.width,
-                                height: cropRect.height,
-                                transform: `rotate(${cropRotation}deg)`,
-                                borderRadius: circleCrop ? '50%' : '0',
-                                zIndex: 10
+                                width: '100%',
+                                height: '100%',
+                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%) ${(spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`,
+                                userSelect: 'none',
+                                borderRadius: 'inherit',
+                                opacity: opacity / 100,
+                                transform: `scale(${flipX}, ${flipY})`
                             }}
-                            onMouseDown={handleCropMouseDown}
-                        >
+                        />
+                        {!isCropping && actionMode === 'Idle' && (
+                            <>
                             <div
                                 className="dinolabsIDEMediaResizeHandle top-left"
-                                style={{ pointerEvents: 'auto', top: `-8px`, left: `-8px` }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
+                                onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
+                                style={{ top: `-6px`, left: `-6px` }}
                             />
                             <div
                                 className="dinolabsIDEMediaResizeHandle top-right"
-                                style={{ pointerEvents: 'auto', top: `-8px`, right: `-8px` }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
+                                onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
+                                style={{ top: `-6px`, right: `-6px` }}
                             />
                             <div
                                 className="dinolabsIDEMediaResizeHandle bottom-left"
-                                style={{ pointerEvents: 'auto', bottom: `-8px`, left: `-8px` }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
+                                onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
+                                style={{ bottom: `-6px`, left: `-6px` }}
                             />
                             <div
                                 className="dinolabsIDEMediaResizeHandle bottom-right"
-                                style={{ pointerEvents: 'auto', bottom: `-8px`, right: `-8px` }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                                onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
+                                style={{ bottom: `-6px`, right: `-6px` }}
                             />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle top-left"
-                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDown}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle top-right"
-                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDown}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle bottom-left"
-                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDown}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle bottom-right"
-                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDown}
-                            />
-                        </div>
-                    )}
-                    <svg
-                        viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
-                            cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
-                            filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`
-                        }}
-                        onMouseDown={handleSvgMouseDown}
-                        onMouseMove={handleSvgMouseMove}
-                        onMouseUp={handleSvgMouseUp}
-                    >
-                        {paths.map((pathData, index) => (
-                            <path
-                                key={index}
-                                d={pathData.d}
-                                stroke={pathData.color}
-                                strokeWidth={pathData.width}
-                                fill="none"
-                                strokeLinecap="round"
-                            />
-                        ))}
-                        {tempPath && (
-                            <path
-                                d={tempPath.d}
-                                stroke={tempPath.color}
-                                strokeWidth={tempPath.width}
-                                fill="none"
-                                strokeLinecap="round"
-                            />
+                            </>
                         )}
-                    </svg>
+                        {isCropping && (
+                            <div
+                                className="dinolabsIDEMediaCropRectangle"
+                                style={{
+                                    position: 'absolute',
+                                    border: '0.4vh dashed rgba(31, 174, 245, 1)',
+                                    backgroundColor: 'rgba(0,0,0,0.6)',
+                                    left: cropRect.x,
+                                    top: cropRect.y,
+                                    width: cropRect.width,
+                                    height: cropRect.height,
+                                    transform: `rotate(${cropRotation}deg)`,
+                                    borderRadius: circleCrop ? '50%' : '0',
+                                    zIndex: 10
+                                }}
+                                onMouseDown={handleCropMouseDown}
+                            >
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-left"
+                                    style={{ pointerEvents: 'auto', top: `-8px`, left: `-8px` }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-right"
+                                    style={{ pointerEvents: 'auto', top: `-8px`, right: `-8px` }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-left"
+                                    style={{ pointerEvents: 'auto', bottom: `-8px`, left: `-8px` }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-right"
+                                    style={{ pointerEvents: 'auto', bottom: `-8px`, right: `-8px` }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDown}
+                                />
+                            </div>
+                        )}
+                        <svg
+                            viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
+                                cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
+                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`,
+                                transform: `scale(${flipX}, ${flipY})`,
+                                transformBox: 'fill-box',
+                                transformOrigin: 'center'
+                            }}
+                            onMouseDown={handleSvgMouseDown}
+                            onMouseMove={handleSvgMouseMove}
+                            onMouseUp={handleSvgMouseUp}
+                        >
+                            {paths.map((pathData, index) => (
+                                <path
+                                    key={index}
+                                    d={pathData.d}
+                                    stroke={pathData.color}
+                                    strokeWidth={pathData.width}
+                                    fill="none"
+                                    strokeLinecap="round"
+                                />
+                            ))}
+                            {tempPath && (
+                                <path
+                                    d={tempPath.d}
+                                    stroke={tempPath.color}
+                                    strokeWidth={tempPath.width}
+                                    fill="none"
+                                    strokeLinecap="round"
+                                />
+                            )}
+                        </svg>
+                    </div>
                 </div>
+
                 <div className="dinolabsIDEVideoInputBottomBar"> 
                     <div> 
                     </div>

@@ -21,6 +21,17 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 function DinoLabsIDEVideoEditor({ fileHandle }) {
+    function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = Math.floor(totalSeconds % 60);
+        return (
+            (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
+            String(m).padStart(2, '0') + ':' +
+            String(s).padStart(2, '0')
+        );
+    }
+
     const [url, setUrl] = useState(null);
     const [mediaType, setMediaType] = useState(null);
     const videoRef = useRef(null);
@@ -110,21 +121,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     tempVideo.onloadedmetadata = () => {
                         setNativeWidth(tempVideo.videoWidth);
                         setNativeHeight(tempVideo.videoHeight);
-                        const containerWidth = containerRef.current?.clientWidth || 800;
-                        const containerHeight = containerRef.current?.clientHeight || 600;
-                        const maxPossibleWidth = containerWidth * 0.7;
-                        const maxPossibleHeight = containerHeight * 0.7;
-                        let initWidth = tempVideo.videoWidth;
-                        let initHeight = tempVideo.videoHeight;
-                        const widthRatio = initWidth / maxPossibleWidth;
-                        const heightRatio = initHeight / maxPossibleHeight;
-                        if (widthRatio > 1 || heightRatio > 1) {
-                            const ratio = Math.max(widthRatio, heightRatio);
-                            initWidth /= ratio;
-                            initHeight /= ratio;
-                        }
-                        setVideoWidth(initWidth);
-                        setVideoHeight(initHeight);
+                        fitToContainer(false, tempVideo.videoWidth, tempVideo.videoHeight);
                     };
                     tempVideo.src = objectUrl;
                 }
@@ -139,6 +136,30 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         };
     }, [fileHandle]);
 
+    const fitToContainer = (frameBarOpen, realW = nativeWidth, realH = nativeHeight) => {
+        if (!containerRef.current) return;
+        const containerWidth = containerRef.current.clientWidth;
+        let containerHeight = containerRef.current.clientHeight;
+        if (frameBarOpen) {
+            containerHeight *= 0.85;
+        }
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = realW;
+        let initHeight = realH;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+            const ratio = Math.max(widthRatio, heightRatio);
+            initWidth /= ratio;
+            initHeight /= ratio;
+        }
+        setVideoWidth(initWidth);
+        setVideoHeight(initHeight);
+        setPanX(0);
+        setPanY(0);
+    };
+
     useEffect(() => {
         const normalizedRotation = rotation % 360;
         const isAtOriginalPosition = normalizedRotation === 0;
@@ -148,6 +169,18 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsCropDisabled(true);
         }
     }, [rotation, flipX, flipY]);
+
+    useEffect(() => {
+        if (showFrameBar) {
+            if (videoRef.current) {
+                videoRef.current.pause();
+                setIsPlaying(false);
+            }
+            fitToContainer(true);
+        } else {
+            fitToContainer(false);
+        }
+    }, [showFrameBar]);
 
     const resetVideo = () => {
         setZoom(1);
@@ -175,26 +208,12 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setUndonePaths([]);
         setTempPath(null);
         setActionMode('Idle');
-        const containerWidth = containerRef.current?.clientWidth || 800;
-        const containerHeight = containerRef.current?.clientHeight || 600;
-        const maxPossibleWidth = containerWidth * 0.7;
-        const maxPossibleHeight = containerHeight * 0.7;
-        let initWidth = nativeWidth;
-        let initHeight = nativeHeight;
-        const widthRatio = initWidth / maxPossibleWidth;
-        const heightRatio = initHeight / maxPossibleHeight;
-        if (widthRatio > 1 || heightRatio > 1) {
-            const ratio = Math.max(widthRatio, heightRatio);
-            initWidth /= ratio;
-            initHeight /= ratio;
-        }
-        setVideoWidth(initWidth);
-        setVideoHeight(initHeight);
-        setIsCropDisabled(false);
         setIsCropping(false);
         setCropRect({ x: 0, y: 0, width: 100, height: 100 });
         setCropRotation(0);
         setCircleCrop(false);
+        setIsCropDisabled(false);
+        fitToContainer(showFrameBar, nativeWidth, nativeHeight);
     };
 
     const downloadVideo = async () => {
@@ -430,7 +449,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         e.preventDefault();
         cropRotatingRef.current = true;
         const rect = e.currentTarget.parentElement.getBoundingClientRect();
-        cropRotationCenter.current = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+        cropRotationCenter.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
         const dx = e.clientX - cropRotationCenter.current.x;
         const dy = e.clientY - cropRotationCenter.current.y;
         cropRotationStartAngle.current = Math.atan2(dy, dx) * (180 / Math.PI);
@@ -558,221 +577,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         });
     };
 
-    const performCanvasVideoCrop = async () => {
-        setIsProcessingCrop(true);
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = nativeWidth;
-        offscreenCanvas.height = nativeHeight;
-        const offscreenCtx = offscreenCanvas.getContext('2d');
-        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-        if (spread) {
-            filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
-        }
-        offscreenCtx.filter = filterString;
-        offscreenCtx.globalAlpha = opacity / 100;
-        const tempVideo = document.createElement('video');
-        tempVideo.src = url;
-        tempVideo.crossOrigin = 'anonymous';
-        tempVideo.controls = false;
-        tempVideo.style.position = 'fixed';
-        tempVideo.style.left = '-9999px';
-        tempVideo.style.top = '-9999px';
-        document.body.appendChild(tempVideo);
-        await new Promise((res) => {
-            tempVideo.onloadeddata = () => res();
-        });
-        tempVideo.currentTime = 0;
-        tempVideo.play();
-        const audioStream = tempVideo.captureStream();
-        const audioTracks = audioStream.getAudioTracks();
-        const fps = 30;
-        const mainCanvasStream = offscreenCanvas.captureStream(fps);
-        const videoTracks = mainCanvasStream.getVideoTracks();
-        const combinedStream = new MediaStream();
-        videoTracks.forEach(t => combinedStream.addTrack(t));
-        audioTracks.forEach(t => combinedStream.addTrack(t));
-        const mediaRecorder = new MediaRecorder(combinedStream, {
-            mimeType: 'video/webm; codecs=vp9'
-        });
-        const chunks = [];
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) {
-                chunks.push(e.data);
-            }
-        };
-        let resolveDone;
-        const donePromise = new Promise((r) => (resolveDone = r));
-        mediaRecorder.onstop = () => resolveDone();
-        mediaRecorder.start();
-        const intermediateCanvas = document.createElement('canvas');
-        intermediateCanvas.width = nativeWidth;
-        intermediateCanvas.height = nativeHeight;
-        const icCtx = intermediateCanvas.getContext('2d');
-        const finalCanvas = document.createElement('canvas');
-        const rad = cropRotation * Math.PI / 180;
-        const cx = cropRect.x + cropRect.width / 2;
-        const cy = cropRect.y + cropRect.height / 2;
-        const corners = [
-            { x: cropRect.x, y: cropRect.y },
-            { x: cropRect.x + cropRect.width, y: cropRect.y },
-            { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
-            { x: cropRect.x, y: cropRect.y + cropRect.height }
-        ];
-        const rotatedCorners = corners.map(pt => {
-            const dx = pt.x - cx;
-            const dy = pt.y - cy;
-            return {
-                x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * (nativeWidth / videoWidth),
-                y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * (nativeHeight / videoHeight)
-            };
-        });
-        const xs = rotatedCorners.map(pt => pt.x);
-        const ys = rotatedCorners.map(pt => pt.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-        const realCropW = maxX - minX;
-        const realCropH = maxY - minY;
-        finalCanvas.width = realCropW;
-        finalCanvas.height = realCropH;
-        const fcCtx = finalCanvas.getContext('2d');
-        const finalStream = finalCanvas.captureStream(fps);
-        const finalTracks = finalStream.getVideoTracks();
-        const combinedFinal = new MediaStream();
-        finalTracks.forEach(t => combinedFinal.addTrack(t));
-        audioTracks.forEach(t => combinedFinal.addTrack(t));
-        const finalRecorder = new MediaRecorder(combinedFinal, {
-            mimeType: 'video/webm; codecs=vp9'
-        });
-        const finalChunks = [];
-        finalRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) {
-                finalChunks.push(e.data);
-            }
-        };
-        let resolveFinalDone;
-        const finalDonePromise = new Promise((r) => (resolveFinalDone = r));
-        finalRecorder.onstop = () => resolveFinalDone();
-        finalRecorder.start();
-        let lastFrameTime = performance.now();
-        const frameInterval = 1000 / fps;
-        const drawFrame = () => {
-            if (tempVideo.paused || tempVideo.ended) {
-                return;
-            }
-            const now = performance.now();
-            if (now - lastFrameTime >= frameInterval) {
-                lastFrameTime = now;
-                icCtx.save();
-                icCtx.clearRect(0, 0, nativeWidth, nativeHeight);
-                icCtx.filter = filterString;
-                icCtx.globalAlpha = opacity / 100;
-                icCtx.drawImage(tempVideo, 0, 0, nativeWidth, nativeHeight);
-                icCtx.restore();
-                icCtx.save();
-                paths.forEach(p => {
-                    icCtx.strokeStyle = p.color;
-                    icCtx.lineWidth = p.width;
-                    icCtx.lineCap = "round";
-                    try {
-                        const path2d = new Path2D(p.d);
-                        icCtx.stroke(path2d);
-                    } catch {}
-                });
-                if (tempPath) {
-                    icCtx.strokeStyle = tempPath.color;
-                    icCtx.lineWidth = tempPath.width;
-                    icCtx.lineCap = "round";
-                    try {
-                        const tmp = new Path2D(tempPath.d);
-                        icCtx.stroke(tmp);
-                    } catch {}
-                }
-                icCtx.restore();
-                fcCtx.save();
-                fcCtx.clearRect(0, 0, realCropW, realCropH);
-                fcCtx.beginPath();
-                if (circleCrop) {
-                    const radius = Math.min(realCropW, realCropH) / 2;
-                    fcCtx.arc(realCropW / 2, realCropH / 2, radius, 0, 2*Math.PI);
-                } else {
-                    if (syncCorners) {
-                        let r = Math.min(borderRadius, realCropW / 2, realCropH / 2);
-                        fcCtx.moveTo(r, 0);
-                        fcCtx.lineTo(realCropW - r, 0);
-                        fcCtx.quadraticCurveTo(realCropW, 0, realCropW, r);
-                        fcCtx.lineTo(realCropW, realCropH - r);
-                        fcCtx.quadraticCurveTo(realCropW, realCropH, realCropW - r, realCropH);
-                        fcCtx.lineTo(r, realCropH);
-                        fcCtx.quadraticCurveTo(0, realCropH, 0, realCropH - r);
-                        fcCtx.lineTo(0, r);
-                        fcCtx.quadraticCurveTo(0, 0, r, 0);
-                    } else {
-                        const tl = Math.min(borderTopLeftRadius, realCropW/2, realCropH/2);
-                        const tr = Math.min(borderTopRightRadius, realCropW/2, realCropH/2);
-                        const br = Math.min(borderBottomRightRadius, realCropW/2, realCropH/2);
-                        const bl = Math.min(borderBottomLeftRadius, realCropW/2, realCropH/2);
-                        fcCtx.moveTo(tl, 0);
-                        fcCtx.lineTo(realCropW - tr, 0);
-                        fcCtx.quadraticCurveTo(realCropW, 0, realCropW, tr);
-                        fcCtx.lineTo(realCropW, realCropH - br);
-                        fcCtx.quadraticCurveTo(realCropW, realCropH, realCropW - br, realCropH);
-                        fcCtx.lineTo(bl, realCropH);
-                        fcCtx.quadraticCurveTo(0, realCropH, 0, realCropH - bl);
-                        fcCtx.lineTo(0, tl);
-                        fcCtx.quadraticCurveTo(0, 0, tl, 0);
-                    }
-                }
-                fcCtx.clip();
-                fcCtx.drawImage(
-                    intermediateCanvas,
-                    -minX, -minY
-                );
-                fcCtx.restore();
-            }
-            requestAnimationFrame(drawFrame);
-        };
-        requestAnimationFrame(drawFrame);
-        await new Promise((resEnd) => {
-            tempVideo.onended = () => resEnd();
-        });
-        finalRecorder.stop();
-        await finalDonePromise;
-        const mergedBlob = new Blob(finalChunks, { type: 'video/webm' });
-        const newUrl = URL.createObjectURL(mergedBlob);
-        document.body.removeChild(tempVideo);
-        setCropHistory(prev => [
-            ...prev,
-            { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
-        ]);
-        setUrl(newUrl);
-        setNativeWidth(realCropW);
-        setNativeHeight(realCropH);
-        const containerWidth = containerRef.current?.clientWidth || 800;
-        const containerHeight = containerRef.current?.clientHeight || 600;
-        const maxPossibleWidth = containerWidth * 0.7;
-        const maxPossibleHeight = containerHeight * 0.7;
-        let initWidth = realCropW;
-        let initHeight = realCropH;
-        const widthRatio = initWidth / maxPossibleWidth;
-        const heightRatio = initHeight / maxPossibleHeight;
-        if (widthRatio > 1 || heightRatio > 1) {
-            const ratio = Math.max(widthRatio, heightRatio);
-            initWidth /= ratio;
-            initHeight /= ratio;
-        }
-        setVideoWidth(initWidth);
-        setVideoHeight(initHeight);
-        setPanX(0);
-        setPanY(0);
-        setIsCropping(false);
-        setIsProcessingCrop(false);
-        setPaths([]);
-        setUndonePaths([]);
-        setTempPath(null);
-        setActionMode('Idle');
-    };
+    async function performCanvasVideoCrop() {
+    }
 
     const finalizeCrop = async () => {
         if (mediaType !== 'video') {
@@ -826,15 +632,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     async function extractFramesFromVideo(videoElem, frameCount = 10) {
         const framesArray = [];
         if (!videoElem.duration) return framesArray;
-
         const oldPausedState = videoElem.paused;
         const oldTime = videoElem.currentTime;
-
         videoElem.pause();
-
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
         for (let i = 0; i < frameCount; i++) {
             const time = (videoElem.duration * i) / (frameCount - 1);
             videoElem.currentTime = time;
@@ -845,18 +647,74 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 };
                 videoElem.addEventListener("seeked", onSeeked);
             });
-            canvas.width = videoElem.videoWidth;
-            canvas.height = videoElem.videoHeight;
-            ctx.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            ctx.save();
+            ctx.filter = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)${spread ? ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`;
+            ctx.globalAlpha = opacity / 100;
+            if (syncCorners) {
+                const r = borderRadius;
+                ctx.beginPath();
+                ctx.moveTo(r, 0);
+                ctx.lineTo(canvas.width - r, 0);
+                ctx.quadraticCurveTo(canvas.width, 0, canvas.width, r);
+                ctx.lineTo(canvas.width, canvas.height - r);
+                ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - r, canvas.height);
+                ctx.lineTo(r, canvas.height);
+                ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - r);
+                ctx.lineTo(0, r);
+                ctx.quadraticCurveTo(0, 0, r, 0);
+                ctx.closePath();
+                ctx.clip();
+            } else {
+                const tl = borderTopLeftRadius;
+                const tr = borderTopRightRadius;
+                const br = borderBottomRightRadius;
+                const bl = borderBottomLeftRadius;
+                ctx.beginPath();
+                ctx.moveTo(tl, 0);
+                ctx.lineTo(canvas.width - tr, 0);
+                ctx.quadraticCurveTo(canvas.width, 0, canvas.width, tr);
+                ctx.lineTo(canvas.width, canvas.height - br);
+                ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - br, canvas.height);
+                ctx.lineTo(bl, canvas.height);
+                ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - bl);
+                ctx.lineTo(0, tl);
+                ctx.quadraticCurveTo(0, 0, tl, 0);
+                ctx.closePath();
+                ctx.clip();
+            }
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(rotation * Math.PI / 180);
+            ctx.scale(flipX, flipY);
+            ctx.drawImage(videoElem, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            ctx.restore();
+            ctx.save();
+            ctx.filter = "none";
+            ctx.globalAlpha = 1;
+            const scaleX = canvas.width / nativeWidth;
+            const scaleY = canvas.height / nativeHeight;
+            ctx.scale(scaleX, scaleY);
+            for (let p of paths) {
+                const path2d = new Path2D(p.d);
+                ctx.lineWidth = p.width;
+                ctx.strokeStyle = p.color;
+                ctx.stroke(path2d);
+            }
+            if (tempPath) {
+                const path2d = new Path2D(tempPath.d);
+                ctx.lineWidth = tempPath.width;
+                ctx.strokeStyle = tempPath.color;
+                ctx.stroke(path2d);
+            }
+            ctx.restore();
             const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
             framesArray.push({ time, dataUrl });
         }
-
         videoElem.currentTime = oldTime;
         if (!oldPausedState) {
             videoElem.play();
         }
-
         return framesArray;
     }
 
@@ -874,11 +732,15 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     };
 
     useEffect(() => {
-        if (showFrameBar && videoRef.current) {
-            videoRef.current.pause();
-            setIsPlaying(false);
+        if (showFrameBar && videoRef.current && !isProcessingCrop && !isCropping) {
+            (async () => {
+                setIsExtractingFrames(true);
+                const extracted = await extractFramesFromVideo(videoRef.current, 10);
+                setFrames(extracted);
+                setIsExtractingFrames(false);
+            })();
         }
-    }, [showFrameBar]);
+    }, [showFrameBar, url, isProcessingCrop, isCropping]);
 
     const handleClipFromVideo = () => { console.log("Clip from video clicked (placeholder)."); };
     const handleStitchClips = () => { console.log("Stitch clips clicked (placeholder)."); };
@@ -902,12 +764,18 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
 
     return (
         <div className="dinolabsIDEMediaContentWrapper">
-            {isProcessingCrop && (
+            {(isProcessingCrop || isExtractingFrames) && (
                 <div className="dinolabsIDEMediaContentCropIndicator">
                     <div className="loading-circle" />
                 </div>
             )}
-            <div className="dinoLabsIDEMediaToolBar">
+            <div 
+                className="dinoLabsIDEMediaToolBar" 
+                style={{
+                    pointerEvents: showFrameBar ? 'none' : 'auto',
+                    opacity: showFrameBar ? 0.4 : 1.0
+                }}
+            >
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
@@ -1422,299 +1290,219 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         </div>
                     </div>
                 </div>
-                <div className="dinolabsIDEMediaCellWrapper">
-                    <div className="dinolabsIDEMediaHeaderFlex">
-                        <label className="dinolabsIDEMediaCellTitle">
-                            <FontAwesomeIcon icon={faBorderTopLeft} />
-                            Corner Rounding
-                        </label>
-                        <label className="dinolabsIDEConfrmationCheck">
-                            <input
-                                type="checkbox"
-                                className="dinolabsIDESettingsCheckbox"
-                                checked={syncCorners}
-                                onChange={(e) => {
-                                    setSyncCorners(e.target.checked);
-                                    if (e.target.checked) {
-                                        const v = borderRadius || borderTopLeftRadius || 0;
-                                        const limited = Math.min(v, 100);
-                                        setBorderRadius(limited);
-                                        setBorderTopLeftRadius(limited);
-                                        setBorderTopRightRadius(limited);
-                                        setBorderBottomLeftRadius(limited);
-                                        setBorderBottomRightRadius(limited);
-                                    }
-                                }}
-                            />
-                            <span>Sync Corners</span>
-                        </label>
-                    </div>
-                    <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">Corner Radii</label>
-                        <div className="dinolabsIDEMediaCellFlex">
-                            {syncCorners ? (
-                                <input
-                                    className="dinolabsIDEMediaPositionInput"
-                                    type="text"
-                                    value={`Corner: ${borderRadius}px`}
-                                    onChange={(e) => {
-                                        const newVal = e.target.value.replace(/[^0-9]/g, "");
-                                        let val = Number(newVal);
-                                        val = Math.min(val, 100);
-                                        setBorderRadius(val);
-                                        setBorderTopLeftRadius(val);
-                                        setBorderTopRightRadius(val);
-                                        setBorderBottomLeftRadius(val);
-                                        setBorderBottomRightRadius(val);
-                                    }}
-                                />
-                            ) : (
-                                <div className="dinolabsIDECornerInputGridWrapper">
-                                    <div className="dinolabsIDECornerInputFlex">
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`TL: ${borderTopLeftRadius}px`}
-                                            onChange={(e) => {
-                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
-                                                let v = Number(nVal);
-                                                v = Math.min(v, 100);
-                                                setBorderTopLeftRadius(v);
-                                            }}
-                                        />
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`TR: ${borderTopRightRadius}px`}
-                                            onChange={(e) => {
-                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
-                                                let v = Number(nVal);
-                                                v = Math.min(v, 100);
-                                                setBorderTopRightRadius(v);
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="dinolabsIDECornerInputFlex">
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`BL: ${borderBottomLeftRadius}px`}
-                                            onChange={(e) => {
-                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
-                                                let v = Number(nVal);
-                                                v = Math.min(v, 100);
-                                                setBorderBottomLeftRadius(v);
-                                            }}
-                                        />
-                                        <input
-                                            className="dinolabsIDEMediaPositionInput"
-                                            type="text"
-                                            value={`BR: ${borderBottomRightRadius}px`}
-                                            onChange={(e) => {
-                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
-                                                let v = Number(nVal);
-                                                v = Math.min(v, 100);
-                                                setBorderBottomRightRadius(v);
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
             </div>
-            <div
-                className="dinolabsIDEMediaContainer"
-                style={{ cursor: 'grab' }}
-                ref={containerRef}
-                onMouseDown={handleDragStart}
-                onMouseMove={handleDragMove}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-            >
+
+            <div className="dinolabsIDEMediaContainerWrapper">
+
                 <div
-                    className="dinolabsIDEImageResizer"
-                    style={{
-                        top: `calc(50% + ${panY}px)`,
-                        left: `calc(50% + ${panX}px)`,
-                        width: `${videoWidth}px`,
-                        height: `${videoHeight}px`,
-                        transform: `translate(-50%, -50%) scale(${flipX * zoom}, ${flipY * zoom}) rotate(${rotation}deg)`,
-                        overflow: 'visible',
-                        borderRadius: syncCorners
-                            ? `${borderRadius}px`
-                            : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
-                    }}
+                    className="dinolabsIDEMediaContainer"
+                    style={{ cursor: 'grab', height: showFrameBar ? "75%" : "90%"  }}
+                    ref={containerRef}
+                    onMouseDown={handleDragStart}
+                    onMouseMove={handleDragMove}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
                 >
-                    <video
-                        src={url}
-                        ref={videoRef}
-                        controls
-                        draggable={false}
-                        onDragStart={(e) => e.preventDefault()}
-                        className="dinolabsIDEMediaContent"
+                    <div
+                        className="dinolabsIDEImageResizer"
                         style={{
-                            width: '100%',
-                            height: '100%',
-                            filter: `
-                                hue-rotate(${hue}deg)
-                                saturate(${saturation}%)
-                                brightness(${brightness}%)
-                                contrast(${contrast}%)
-                                blur(${blur}px)
-                                grayscale(${grayscale}%)
-                                sepia(${sepia}%)
-                                ${(spread) ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}
+                            top: `calc(50% + ${panY}px)`,
+                            left: `calc(50% + ${panX}px)`,
+                            width: `${videoWidth}px`,
+                            height: `${videoHeight}px`,
+                            transform: `
+                            translate(-50%, -50%) 
+                            scale(${zoom}, ${zoom}) 
+                            rotate(${rotation}deg)
                             `,
-                            userSelect: 'none',
-                            borderRadius: 'inherit',
-                            opacity: opacity / 100
+                            overflow: 'visible',
+                            borderRadius: syncCorners
+                                ? `${borderRadius}px`
+                                : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
                         }}
-                    />
-                    {!isCropping && (actionMode === 'Idle') && (
-                        <>
+                    >
+                        <video
+                            src={url}
+                            ref={videoRef}
+                            controls
+                            draggable={false}
+                            onDragStart={(e) => e.preventDefault()}
+                            className="dinolabsIDEMediaContent"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                filter: `
+                                    hue-rotate(${hue}deg)
+                                    saturate(${saturation}%)
+                                    brightness(${brightness}%)
+                                    contrast(${contrast}%)
+                                    blur(${blur}px)
+                                    grayscale(${grayscale}%)
+                                    sepia(${sepia}%)
+                                    ${spread ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}
+                                `,
+                                userSelect: 'none',
+                                borderRadius: 'inherit',
+                                opacity: opacity / 100,
+                                transform: `scale(${flipX}, ${flipY})`
+                            }}
+                        />
+                        {!isCropping && (actionMode === 'Idle') && (
+                            <>
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-left"
+                                    onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
+                                    style={{ top: '-6px', left: '-6px' }}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-right"
+                                    onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
+                                    style={{ top: '-6px', right: '-6px' }}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-left"
+                                    onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
+                                    style={{ bottom: '-6px', left: '-6px' }}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-right"
+                                    onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
+                                    style={{ bottom: '-6px', right: '-6px' }}
+                                />
+                            </>
+                        )}
+                        {isCropping && (
                             <div
-                                className="dinolabsIDEMediaResizeHandle top-left"
-                                onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
-                                style={{ top: '-6px', left: '-6px' }}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle top-right"
-                                onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
-                                style={{ top: '-6px', right: '-6px' }}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle bottom-left"
-                                onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
-                                style={{ bottom: '-6px', left: '-6px' }}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle bottom-right"
-                                onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
-                                style={{ bottom: '-6px', right: '-6px' }}
-                            />
-                        </>
-                    )}
-                    {isCropping && (
-                        <div
-                            className="dinolabsIDEMediaCropRectangle"
+                                className="dinolabsIDEMediaCropRectangle"
+                                style={{
+                                    position: 'absolute',
+                                    border: '0.4vh dashed rgba(31, 174, 245, 1)',
+                                    backgroundColor: 'rgba(0,0,0,0.3)',
+                                    left: cropRect.x,
+                                    top: cropRect.y,
+                                    width: cropRect.width,
+                                    height: cropRect.height,
+                                    transform: `rotate(${cropRotation}deg)`,
+                                    zIndex: 10,
+                                    borderRadius: circleCrop ? '50%' : '0'
+                                }}
+                                onMouseDown={handleCropMouseDown}
+                            >
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-left"
+                                    style={{ pointerEvents: 'auto', top: '-8px', left: '-8px' }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle top-right"
+                                    style={{ pointerEvents: 'auto', top: '-8px', right: '-8px' }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-left"
+                                    style={{ pointerEvents: 'auto', bottom: '-8px', left: '-8px' }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaResizeHandle bottom-right"
+                                    style={{ pointerEvents: 'auto', bottom: '-8px', right: '-8px' }}
+                                    onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDownHandler}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle top-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDownHandler}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-left"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDownHandler}
+                                />
+                                <div
+                                    className="dinolabsIDEMediaRotationHandle bottom-right"
+                                    style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
+                                    onMouseDown={handleCropRotationMouseDownHandler}
+                                />
+                            </div>
+                        )}
+                        <svg
+                            viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
                             style={{
                                 position: 'absolute',
-                                border: '0.4vh dashed rgba(31, 174, 245, 1)',
-                                backgroundColor: 'rgba(0,0,0,0.3)',
-                                left: cropRect.x,
-                                top: cropRect.y,
-                                width: cropRect.width,
-                                height: cropRect.height,
-                                transform: `rotate(${cropRotation}deg)`,
-                                zIndex: 10,
-                                borderRadius: circleCrop ? '50%' : '0'
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                pointerEvents: (actionMode !== 'Idle') ? 'auto' : 'none',
+                                cursor: (actionMode === 'Drawing') ? 'crosshair' : (actionMode === 'Highlighting') ? 'pointer' : 'default',
+                                filter: `
+                                    hue-rotate(${hue}deg)
+                                    saturate(${saturation}%)
+                                    brightness(${brightness}%)
+                                    contrast(${contrast}%)
+                                    blur(${blur}px)
+                                    grayscale(${grayscale}%)
+                                    sepia(${sepia}%)
+                                `,
+                                transform: `scale(${flipX}, ${flipY})`,
+                                transformBox: 'fill-box',
+                                transformOrigin: 'center'
                             }}
-                            onMouseDown={handleCropMouseDown}
+                            onMouseDown={handleSvgMouseDown}
+                            onMouseMove={handleSvgMouseMove}
+                            onMouseUp={handleSvgMouseUp}
                         >
-                            <div
-                                className="dinolabsIDEMediaResizeHandle top-left"
-                                style={{ pointerEvents: 'auto', top: '-8px', left: '-8px' }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('top-left', e)}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle top-right"
-                                style={{ pointerEvents: 'auto', top: '-8px', right: '-8px' }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('top-right', e)}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle bottom-left"
-                                style={{ pointerEvents: 'auto', bottom: '-8px', left: '-8px' }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-left', e)}
-                            />
-                            <div
-                                className="dinolabsIDEMediaResizeHandle bottom-right"
-                                style={{ pointerEvents: 'auto', bottom: '-8px', right: '-8px' }}
-                                onMouseDown={(e) => handleCropResizeMouseDown('bottom-right', e)}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle top-left"
-                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', left: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDownHandler}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle top-right"
-                                style={{ pointerEvents: 'auto', position: 'absolute', top: '-30px', right: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDownHandler}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle bottom-left"
-                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', left: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDownHandler}
-                            />
-                            <div
-                                className="dinolabsIDEMediaRotationHandle bottom-right"
-                                style={{ pointerEvents: 'auto', position: 'absolute', bottom: '-30px', right: '-30px' }}
-                                onMouseDown={handleCropRotationMouseDownHandler}
-                            />
-                        </div>
-                    )}
-                    <svg
-                        viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            pointerEvents: (actionMode !== 'Idle') ? 'auto' : 'none',
-                            cursor: (actionMode === 'Drawing') ? 'crosshair' : (actionMode === 'Highlighting') ? 'pointer' : 'default',
-                            filter: `
-                                hue-rotate(${hue}deg)
-                                saturate(${saturation}%)
-                                brightness(${brightness}%)
-                                contrast(${contrast}%)
-                                blur(${blur}px)
-                                grayscale(${grayscale}%)
-                                sepia(${sepia}%)
-                            `
-                        }}
-                        onMouseDown={handleSvgMouseDown}
-                        onMouseMove={handleSvgMouseMove}
-                        onMouseUp={handleSvgMouseUp}
-                    >
-                        {paths.map((p, idx) => (
-                            <path
-                                key={idx}
-                                d={p.d}
-                                stroke={p.color}
-                                strokeWidth={p.width}
-                                fill="none"
-                                strokeLinecap="round"
-                            />
-                        ))}
-                        {tempPath && (
-                            <path
-                                d={tempPath.d}
-                                stroke={tempPath.color}
-                                strokeWidth={tempPath.width}
-                                fill="none"
-                                strokeLinecap="round"
-                            />
-                        )}
-                    </svg>
+                            {paths.map((p, idx) => (
+                                <path
+                                    key={idx}
+                                    d={p.d}
+                                    stroke={p.color}
+                                    strokeWidth={p.width}
+                                    fill="none"
+                                    strokeLinecap="round"
+                                />
+                            ))}
+                            {tempPath && (
+                                <path
+                                    d={tempPath.d}
+                                    stroke={tempPath.color}
+                                    strokeWidth={tempPath.width}
+                                    fill="none"
+                                    strokeLinecap="round"
+                                />
+                            )}
+                        </svg>
+                    </div>
+
+
                 </div>
 
                 {showFrameBar && (
                     <div className="dinolabsIDEVideoInputBottomBarFrameSupplement">
                         {frames.map((frame, idx) => (
-                            <img
-                                key={idx}
-                                src={frame.dataUrl}
-                                alt={`Frame ${idx}`}
-                                className="dinolabsIDEVideoInputBottomBarFrameSupplementImage"
-                                onClick={() => {
-                                    if (videoRef.current) {
-                                        videoRef.current.currentTime = frame.time;
-                                    }
-                                }}
-                            />
+                            <div 
+                                key={idx} 
+                                className="dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper"
+                            >
+                                <img
+                                    src={frame.dataUrl}
+                                    alt={`Frame ${idx}`}
+                                    className="dinolabsIDEVideoInputBottomBarFrameSupplementImage"
+                                    onClick={() => {
+                                        if (videoRef.current) {
+                                            videoRef.current.currentTime = frame.time;
+                                        }
+                                    }}
+                                />
+                                <span className="dinolabsIDEVideoInputBottomBarFrameSupplementImageText">
+                                    {formatTime(frame.time)}
+                                </span>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -1779,7 +1567,14 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     </div>
                     <div className="dinolabsIDEVideoContentFlexSmall" style={{ justifyContent: "flex-start" }}>
                         <Tippy content="View Video Frames" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonHelper" style={{ padding:0 }} onClick={handleViewFrames}>
+                            <button 
+                                className="dinolabsIDEVideoButtonHelper" 
+                                style={{ 
+                                    padding: 0, 
+                                    color: showFrameBar ? '#5C2BE2' : '#c0c0c0' 
+                                }}
+                                onClick={handleViewFrames}
+                            >
                                 <FontAwesomeIcon icon={faFilm} />
                             </button>
                         </Tippy>
