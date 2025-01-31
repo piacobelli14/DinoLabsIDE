@@ -89,6 +89,9 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const [isLooping, setIsLooping] = useState(false);
     const [isProcessingCrop, setIsProcessingCrop] = useState(false);
     const containerRef = useRef(null);
+    const [showFrameBar, setShowFrameBar] = useState(false);
+    const [frames, setFrames] = useState([]);
+    const [isExtractingFrames, setIsExtractingFrames] = useState(false);
 
     useEffect(() => {
         let objectUrl;
@@ -820,14 +823,66 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setCurrentPlaybackRate(rate);
     };
 
-    const handleViewFrames = () => { console.log("View frames clicked (placeholder)."); };
+    async function extractFramesFromVideo(videoElem, frameCount = 10) {
+        const framesArray = [];
+        if (!videoElem.duration) return framesArray;
+
+        const oldPausedState = videoElem.paused;
+        const oldTime = videoElem.currentTime;
+
+        videoElem.pause();
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        for (let i = 0; i < frameCount; i++) {
+            const time = (videoElem.duration * i) / (frameCount - 1);
+            videoElem.currentTime = time;
+            await new Promise((resolve) => {
+                const onSeeked = () => {
+                    videoElem.removeEventListener("seeked", onSeeked);
+                    resolve();
+                };
+                videoElem.addEventListener("seeked", onSeeked);
+            });
+            canvas.width = videoElem.videoWidth;
+            canvas.height = videoElem.videoHeight;
+            ctx.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+            framesArray.push({ time, dataUrl });
+        }
+
+        videoElem.currentTime = oldTime;
+        if (!oldPausedState) {
+            videoElem.play();
+        }
+
+        return framesArray;
+    }
+
+    const handleViewFrames = async () => {
+        if (!videoRef.current) return;
+        if (frames.length === 0 && !showFrameBar) {
+            setIsExtractingFrames(true);
+            const extracted = await extractFramesFromVideo(videoRef.current, 10);
+            setFrames(extracted);
+            setIsExtractingFrames(false);
+            setShowFrameBar(true);
+        } else {
+            setShowFrameBar(prev => !prev);
+        }
+    };
+
+    useEffect(() => {
+        if (showFrameBar && videoRef.current) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    }, [showFrameBar]);
 
     const handleClipFromVideo = () => { console.log("Clip from video clicked (placeholder)."); };
-
     const handleStitchClips = () => { console.log("Stitch clips clicked (placeholder)."); };
-
     const handleInsertClip = () => { console.log("Insert clip clicked (placeholder)."); };
-
     const handleRemoveClip = () => { console.log("Remove clip clicked (placeholder)."); };
 
     useEffect(() => {
@@ -1645,25 +1700,64 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         )}
                     </svg>
                 </div>
+
+                {showFrameBar && (
+                    <div className="dinolabsIDEVideoInputBottomBarFrameSupplement">
+                        {frames.map((frame, idx) => (
+                            <img
+                                key={idx}
+                                src={frame.dataUrl}
+                                alt={`Frame ${idx}`}
+                                className="dinolabsIDEVideoInputBottomBarFrameSupplementImage"
+                                onClick={() => {
+                                    if (videoRef.current) {
+                                        videoRef.current.currentTime = frame.time;
+                                    }
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
+
                 <div className="dinolabsIDEVideoInputBottomBar">
                     <div className="dinolabsIDEVideoContentFlexBig">
                         <Tippy content="Rewind 15 Seconds" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonSupplementLeading" onClick={handleRewind15}>
+                            <button
+                                className="dinolabsIDEVideoButtonSupplementLeading"
+                                onClick={handleRewind15}
+                                disabled={showFrameBar}
+                                style={{ opacity: showFrameBar ? 0.5 : 1.0 }}
+                            >
                                 <FontAwesomeIcon icon={faBackward} />
                             </button>
                         </Tippy>
                         <Tippy content="Play Video" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButton" onClick={handlePlayVideo} style={{ color: '#c0c0c0' }}>
+                            <button
+                                className="dinolabsIDEVideoButton"
+                                onClick={handlePlayVideo}
+                                disabled={showFrameBar}
+                                style={{ color: '#c0c0c0', opacity: showFrameBar ? 0.5 : 1.0 }}
+                            >
                                 <FontAwesomeIcon icon={isPlaying ? faSquare : faPlay} />
                             </button>
                         </Tippy>
                         <Tippy content="Loop Video" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButton" onClick={handleToggleLoop} style={{ color: isLooping ? '#5c2be2' : '#c0c0c0' }}>
+                            <button
+                                className="dinolabsIDEVideoButton"
+                                onClick={handleToggleLoop}
+                                disabled={showFrameBar}
+                                style={{ color: isLooping ? '#5c2be2' : '#c0c0c0', opacity: showFrameBar ? 0.5 : 1.0 }}
+                            >
                                 <FontAwesomeIcon icon={faRepeat} />
                             </button>
                         </Tippy>
                         <Tippy content="Skip 15 Seconds" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonSupplementTrailing" onClick={handleSkip15}>
+                            <button
+                                className="dinolabsIDEVideoButtonSupplementTrailing"
+                                onClick={handleSkip15}
+                                disabled={showFrameBar}
+                                style={{ opacity: showFrameBar ? 0.5 : 1.0 }}
+                            >
                                 <FontAwesomeIcon icon={faForward} />
                             </button>
                         </Tippy>
@@ -1672,7 +1766,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 <button
                                     className="dinolabsIDEVideoButtonX"
                                     onClick={() => handleSetPlaybackRate(rate)}
-                                    style={{ color: currentPlaybackRate === rate ? '#5c2be2' : '#c0c0c0' }}
+                                    disabled={showFrameBar}
+                                    style={{
+                                        color: currentPlaybackRate === rate ? '#5c2be2' : '#c0c0c0',
+                                        opacity: showFrameBar ? 0.5 : 1.0
+                                    }}
                                 >
                                     {rate}x
                                 </button>
