@@ -14,22 +14,53 @@ import {
     faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus,
     faPause,
     faPlay,
-    faPlus, faRepeat, faRotateLeft, faRotateRight, faRulerCombined, faScissors, faSquare, faSquareCaretLeft,
+    faPlus, faRepeat, faRotateLeft, faRotateRight, faRulerCombined, faSave, faScissors, faSquare, faSquareCaretLeft,
     faSquareMinus,
     faSquarePlus,
     faSwatchbook, faTabletScreenButton, faTape, faUpDown
 } from '@fortawesome/free-solid-svg-icons';
 
+function formatFileSize(bytes) {
+    if (bytes == null) return "N/A";
+    if (bytes < 1024) return bytes + " B";
+    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+    else return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function formatTime(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
+    return (
+        (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
+        String(m).padStart(2, '0') + ':' +
+        String(s).padStart(2, '0')
+    );
+}
+
 function DinoLabsIDEVideoEditor({ fileHandle }) {
-    function formatTime(totalSeconds) {
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = Math.floor(totalSeconds % 60);
-        return (
-            (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
-            String(m).padStart(2, '0') + ':' +
-            String(s).padStart(2, '0')
-        );
+    function fitToContainer(frameBarOpen, realW = nativeWidth, realH = nativeHeight) {
+        if (!containerRef.current) return;
+        const containerWidth = containerRef.current.clientWidth;
+        let containerHeight = containerRef.current.clientHeight;
+        if (frameBarOpen) {
+            containerHeight *= 0.85;
+        }
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = realW;
+        let initHeight = realH;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+            const ratio = Math.max(widthRatio, heightRatio);
+            initWidth /= ratio;
+            initHeight /= ratio;
+        }
+        setVideoWidth(initWidth);
+        setVideoHeight(initHeight);
+        setPanX(0);
+        setPanY(0);
     }
 
     const [url, setUrl] = useState(null);
@@ -100,9 +131,25 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const [isLooping, setIsLooping] = useState(false);
     const [isProcessingCrop, setIsProcessingCrop] = useState(false);
     const containerRef = useRef(null);
-    const [showFrameBar, setShowFrameBar] = useState(false);
     const [frames, setFrames] = useState([]);
     const [isExtractingFrames, setIsExtractingFrames] = useState(false);
+    const [clipStartTime, setClipStartTime] = useState(null);
+    const [clipEndTime, setClipEndTime] = useState(null);
+    const [originalFileSize, setOriginalFileSize] = useState(null);
+    const [originalDuration, setOriginalDuration] = useState(null);
+    const [framesPanelMode, setFramesPanelMode] = useState('none');
+    const showFrameBar = framesPanelMode !== 'none';
+    const framesContainerRef = useRef(null);
+    const [clipOverlayLeft, setClipOverlayLeft] = useState(0);
+    const [clipOverlayRight, setClipOverlayRight] = useState(0);
+    const [isDraggingLeftHandle, setIsDraggingLeftHandle] = useState(false);
+    const [isDraggingRightHandle, setIsDraggingRightHandle] = useState(false);
+    const [draggedFrameIndex, setDraggedFrameIndex] = useState(null);
+    const [dropTargetIndex, setDropTargetIndex] = useState(null);
+    const [isRebuildingVideoFromFrames, setIsRebuildingVideoFromFrames] = useState(false);
+    const [frameInterval, setFrameInterval] = useState(1);
+    const [isClippingVideo, setIsClippingVideo] = useState(false);
+    const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
 
     useEffect(() => {
         let objectUrl;
@@ -113,52 +160,29 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     : fileHandle;
                 objectUrl = URL.createObjectURL(file);
                 setUrl(objectUrl);
-
+                setOriginalFileSize(file.size);
                 const extension = file.name.split('.').pop().toLowerCase();
-                if (['mp4', 'mkv', 'avi', 'mov'].includes(extension)) {
+                if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(extension)) {
                     setMediaType('video');
                     const tempVideo = document.createElement('video');
                     tempVideo.onloadedmetadata = () => {
                         setNativeWidth(tempVideo.videoWidth);
                         setNativeHeight(tempVideo.videoHeight);
                         fitToContainer(false, tempVideo.videoWidth, tempVideo.videoHeight);
+                        setOriginalDuration(tempVideo.duration);
                     };
                     tempVideo.src = objectUrl;
                 }
-            } catch (error) {}
+            } catch (error) {
+            }
         };
         loadMedia();
-
         return () => {
             if (objectUrl) {
                 URL.revokeObjectURL(objectUrl);
             }
         };
     }, [fileHandle]);
-
-    const fitToContainer = (frameBarOpen, realW = nativeWidth, realH = nativeHeight) => {
-        if (!containerRef.current) return;
-        const containerWidth = containerRef.current.clientWidth;
-        let containerHeight = containerRef.current.clientHeight;
-        if (frameBarOpen) {
-            containerHeight *= 0.85;
-        }
-        const maxPossibleWidth = containerWidth * 0.7;
-        const maxPossibleHeight = containerHeight * 0.7;
-        let initWidth = realW;
-        let initHeight = realH;
-        const widthRatio = initWidth / maxPossibleWidth;
-        const heightRatio = initHeight / maxPossibleHeight;
-        if (widthRatio > 1 || heightRatio > 1) {
-            const ratio = Math.max(widthRatio, heightRatio);
-            initWidth /= ratio;
-            initHeight /= ratio;
-        }
-        setVideoWidth(initWidth);
-        setVideoHeight(initHeight);
-        setPanX(0);
-        setPanY(0);
-    };
 
     useEffect(() => {
         const normalizedRotation = rotation % 360;
@@ -217,6 +241,9 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     };
 
     const downloadVideo = async () => {
+        const fileName = fileHandle?.name || 'download';
+        const originalExtension = fileName.split('.').pop().toLowerCase();
+        let baseName = fileName.replace(/\.[^/.]+$/, "");
         const alertResult = await showDialog({
             title: 'Select Video Type and Scale',
             message: 'Select the video type and scale.',
@@ -225,8 +252,14 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     name: 'fileType',
                     type: 'select',
                     label: 'Video Type',
-                    defaultValue: 'mp4',
-                    options: [{ label: '.mp4', value: 'mp4' }]
+                    defaultValue: ['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(originalExtension) ? originalExtension : 'mp4',
+                    options: [
+                        { label: '.mp4', value: 'mp4' },
+                        { label: '.mkv', value: 'mkv' },
+                        { label: '.avi', value: 'avi' },
+                        { label: '.mov', value: 'mov' },
+                        { label: '.webm', value: 'webm' }
+                    ]
                 },
                 {
                     name: 'scale',
@@ -243,7 +276,144 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             showCancel: true
         });
         if (!alertResult) return;
-        alert("Download not yet implemented—would finalize or re-encode here.");
+        setIsDownloadingVideo(true);
+        const fileType = alertResult.fileType;
+        let scaleFactor = 1;
+        if (alertResult.scale === '2x') scaleFactor = 2;
+        if (alertResult.scale === '3x') scaleFactor = 3;
+        const tempVideo = document.createElement('video');
+        tempVideo.src = url;
+        tempVideo.crossOrigin = 'anonymous';
+        tempVideo.style.position = 'fixed';
+        tempVideo.style.left = '-9999px';
+        tempVideo.style.top = '-9999px';
+        tempVideo.muted = true;
+        document.body.appendChild(tempVideo);
+        await new Promise((res) => {
+            tempVideo.onloadeddata = () => res();
+        });
+        tempVideo.currentTime = 0;
+        await new Promise((res) => {
+            tempVideo.onseeked = () => res();
+        });
+        const audioStream = tempVideo.captureStream();
+        const audioTracks = audioStream.getAudioTracks();
+        const fps = 30;
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = videoWidth * scaleFactor;
+        offscreenCanvas.height = videoHeight * scaleFactor;
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        const mainCanvasStream = offscreenCanvas.captureStream(fps);
+        const videoTracks = mainCanvasStream.getVideoTracks();
+        const combinedStream = new MediaStream();
+        videoTracks.forEach(t => combinedStream.addTrack(t));
+        audioTracks.forEach(t => combinedStream.addTrack(t));
+        const mediaRecorder = new MediaRecorder(combinedStream, {
+            mimeType: 'video/webm; codecs=vp9'
+        });
+        const chunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+            }
+        };
+        let resolveDone;
+        const donePromise = new Promise((r) => (resolveDone = r));
+        mediaRecorder.onstop = () => resolveDone();
+        mediaRecorder.start();
+        tempVideo.play();
+        let lastDrawTime = 0;
+        const frameInterval = 1000 / fps;
+        const drawFrame = async (timestamp) => {
+            if (!lastDrawTime) lastDrawTime = timestamp;
+            const elapsed = timestamp - lastDrawTime;
+            if (elapsed >= frameInterval) {
+                offscreenCtx.save();
+                offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
+                if (spread) {
+                    filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
+                }
+                offscreenCtx.filter = filterString;
+                offscreenCtx.globalAlpha = opacity / 100;
+                offscreenCtx.translate(offscreenCanvas.width / 2, offscreenCanvas.height / 2);
+                offscreenCtx.rotate(rotation * Math.PI / 180);
+                offscreenCtx.scale(flipX, flipY);
+                if (syncCorners) {
+                    const r = borderRadius * scaleFactor;
+                    offscreenCtx.beginPath();
+                    offscreenCtx.moveTo(-offscreenCanvas.width / 2 + r, -offscreenCanvas.height / 2);
+                    offscreenCtx.lineTo(offscreenCanvas.width / 2 - r, -offscreenCanvas.height / 2);
+                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + r);
+                    offscreenCtx.lineTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2 - r);
+                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2, offscreenCanvas.width / 2 - r, offscreenCanvas.height / 2);
+                    offscreenCtx.lineTo(-offscreenCanvas.width / 2 + r, offscreenCanvas.height / 2);
+                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, offscreenCanvas.height / 2, -offscreenCanvas.width / 2, offscreenCanvas.height / 2 - r);
+                    offscreenCtx.lineTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + r);
+                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2, -offscreenCanvas.width / 2 + r, -offscreenCanvas.height / 2);
+                    offscreenCtx.closePath();
+                    offscreenCtx.clip();
+                } else {
+                    const tl = borderTopLeftRadius * scaleFactor;
+                    const tr = borderTopRightRadius * scaleFactor;
+                    const br = borderBottomRightRadius * scaleFactor;
+                    const bl = borderBottomLeftRadius * scaleFactor;
+                    offscreenCtx.beginPath();
+                    offscreenCtx.moveTo(-offscreenCanvas.width / 2 + tl, -offscreenCanvas.height / 2);
+                    offscreenCtx.lineTo(offscreenCanvas.width / 2 - tr, -offscreenCanvas.height / 2);
+                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + tr);
+                    offscreenCtx.lineTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2 - br);
+                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2, offscreenCanvas.width / 2 - br, offscreenCanvas.height / 2);
+                    offscreenCtx.lineTo(-offscreenCanvas.width / 2 + bl, offscreenCanvas.height / 2);
+                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, offscreenCanvas.height / 2, -offscreenCanvas.width / 2, offscreenCanvas.height / 2 - bl);
+                    offscreenCtx.lineTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + tl);
+                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2, -offscreenCanvas.width / 2 + tl, -offscreenCanvas.height / 2);
+                    offscreenCtx.closePath();
+                    offscreenCtx.clip();
+                }
+                offscreenCtx.drawImage(tempVideo, -offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width, offscreenCanvas.height);
+                offscreenCtx.restore();
+                offscreenCtx.save();
+                offscreenCtx.filter = 'none';
+                offscreenCtx.globalAlpha = 1;
+                const scaleX = offscreenCanvas.width / nativeWidth;
+                const scaleY = offscreenCanvas.height / nativeHeight;
+                offscreenCtx.scale(scaleX, scaleY);
+                for (let p of paths) {
+                    const path2d = new Path2D(p.d);
+                    offscreenCtx.lineWidth = p.width;
+                    offscreenCtx.strokeStyle = p.color;
+                    offscreenCtx.lineCap = "round";
+                    offscreenCtx.stroke(path2d);
+                }
+                if (tempPath) {
+                    const path2d = new Path2D(tempPath.d);
+                    offscreenCtx.lineWidth = tempPath.width;
+                    offscreenCtx.strokeStyle = tempPath.color;
+                    offscreenCtx.lineCap = "round";
+                    offscreenCtx.stroke(path2d);
+                }
+                offscreenCtx.restore();
+                lastDrawTime = timestamp;
+            }
+            if (tempVideo.currentTime < tempVideo.duration - 0.1) {
+                requestAnimationFrame(drawFrame);
+            } else {
+                mediaRecorder.stop();
+            }
+        };
+        drawFrame();
+        await donePromise;
+        const finalBlob = new Blob(chunks, { type: 'video/webm' });
+        document.body.removeChild(tempVideo);
+        const downloadUrl = URL.createObjectURL(finalBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = baseName + '.' + fileType;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setIsDownloadingVideo(false);
     };
 
     const handleDragStart = (e) => {
@@ -375,26 +545,46 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-        if (cropResizingCorner.current === 'bottom-right') {
-            width += dx;
-            height += dy;
-        } else if (cropResizingCorner.current === 'bottom-left') {
-            x += dx;
-            width -= dx;
-            height += dy;
-        } else if (cropResizingCorner.current === 'top-right') {
-            y += dy;
-            width += dx;
-            height -= dy;
-        } else if (cropResizingCorner.current === 'top-left') {
-            x += dx;
-            y += dy;
-            width -= dx;
-            height -= dy;
-        }
+
         if (circleCrop) {
-            height = width;
+            const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += delta;
+                width -= delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += delta;
+                width += delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += delta;
+                y += delta;
+                width -= delta;
+                height = width;
+            }
+        } else {
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += dx;
+                width -= dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += dy;
+                width += dx;
+                height -= dy;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
+            }
         }
+        
         width = Math.max(width, 10);
         height = Math.max(height, 10);
         setCropRect({ x, y, width, height });
@@ -493,6 +683,222 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         }
     };
 
+    async function performCanvasVideoCrop() {
+        setIsProcessingCrop(true);
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = nativeWidth;
+        offscreenCanvas.height = nativeHeight;
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
+        if (spread) {
+            filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
+        }
+        offscreenCtx.filter = filterString;
+        offscreenCtx.globalAlpha = opacity / 100;
+        const tempVideo = document.createElement('video');
+        tempVideo.src = url;
+        tempVideo.crossOrigin = 'anonymous';
+        tempVideo.controls = false;
+        tempVideo.style.position = 'fixed';
+        tempVideo.style.left = '-9999px';
+        tempVideo.style.top = '-9999px';
+        document.body.appendChild(tempVideo);
+        await new Promise((res) => {
+            tempVideo.onloadeddata = () => res();
+        });
+        tempVideo.currentTime = 0;
+        await new Promise((res) => {
+            tempVideo.onseeked = () => res();
+        });
+        offscreenCtx.save();
+        offscreenCtx.drawImage(tempVideo, 0, 0, nativeWidth, nativeHeight);
+        offscreenCtx.restore();
+        tempVideo.play();
+        const audioStream = tempVideo.captureStream();
+        const audioTracks = audioStream.getAudioTracks();
+        const fps = 30;
+        const mainCanvasStream = offscreenCanvas.captureStream(fps);
+        const videoTracks = mainCanvasStream.getVideoTracks();
+        const combinedStream = new MediaStream();
+        videoTracks.forEach(t => combinedStream.addTrack(t));
+        audioTracks.forEach(t => combinedStream.addTrack(t));
+        const mediaRecorder = new MediaRecorder(combinedStream, {
+            mimeType: 'video/webm; codecs=vp9'
+        });
+        const chunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+            }
+        };
+        let resolveDone;
+        const donePromise = new Promise((r) => (resolveDone = r));
+        mediaRecorder.onstop = () => resolveDone();
+        mediaRecorder.start();
+        const intermediateCanvas = document.createElement('canvas');
+        intermediateCanvas.width = nativeWidth;
+        intermediateCanvas.height = nativeHeight;
+        const icCtx = intermediateCanvas.getContext('2d');
+        const finalCanvas = document.createElement('canvas');
+        let minX, minY, realCropW, realCropH;
+        const rad = cropRotation * Math.PI / 180;
+        const cx = cropRect.x + cropRect.width / 2;
+        const cy = cropRect.y + cropRect.height / 2;
+        const corners = [
+            { x: cropRect.x, y: cropRect.y },
+            { x: cropRect.x + cropRect.width, y: cropRect.y },
+            { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
+            { x: cropRect.x, y: cropRect.y + cropRect.height }
+        ];
+        const rotatedCorners = cropRotation % 360 !== 0
+            ? corners.map(pt => {
+                const dx = pt.x - cx;
+                const dy = pt.y - cy;
+                return {
+                    x: (cx + (dx * Math.cos(rad) - dy * Math.sin(rad))) * (nativeWidth / videoWidth),
+                    y: (cy + (dx * Math.sin(rad) + dy * Math.cos(rad))) * (nativeHeight / videoHeight)
+                };
+            })
+            : corners.map(pt => ({
+                x: pt.x * (nativeWidth / videoWidth),
+                y: pt.y * (nativeHeight / videoHeight)
+            }));
+        const xs = rotatedCorners.map(pt => pt.x);
+        const ys = rotatedCorners.map(pt => pt.y);
+        minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        realCropW = maxX - minX;
+        realCropH = maxY - minY;
+        finalCanvas.width = realCropW;
+        finalCanvas.height = realCropH;
+        const fcCtx = finalCanvas.getContext('2d');
+        const finalCanvasStream = finalCanvas.captureStream(fps);
+        const finalMediaRecorder = new MediaRecorder(finalCanvasStream, {
+            mimeType: 'video/webm; codecs=vp9'
+        });
+        const finalChunks = [];
+        finalMediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                finalChunks.push(e.data);
+            }
+        };
+        let resolveFinalDone;
+        const finalDonePromise = new Promise((r) => (resolveFinalDone = r));
+        finalMediaRecorder.onstop = () => resolveFinalDone();
+        finalMediaRecorder.start();
+        let lastDrawTime = 0;
+        const frameInterval = 1000 / fps;
+        const drawFrame = async (timestamp) => {
+            if (!lastDrawTime) lastDrawTime = timestamp;
+            const elapsed = timestamp - lastDrawTime;
+            if (elapsed >= frameInterval) {
+                icCtx.save();
+                icCtx.clearRect(0, 0, nativeWidth, nativeHeight);
+                icCtx.filter = filterString;
+                icCtx.globalAlpha = opacity / 100;
+                icCtx.drawImage(tempVideo, 0, 0, nativeWidth, nativeHeight);
+                icCtx.restore();
+                icCtx.save();
+                paths.forEach(p => {
+                    icCtx.strokeStyle = p.color;
+                    icCtx.lineWidth = p.width;
+                    icCtx.lineCap = "round";
+                    try {
+                        const path2d = new Path2D(p.d);
+                        icCtx.stroke(path2d);
+                    } catch {}
+                });
+                if (tempPath) {
+                    icCtx.strokeStyle = tempPath.color;
+                    icCtx.lineWidth = tempPath.width;
+                    icCtx.lineCap = "round";
+                    try {
+                        const tmp = new Path2D(tempPath.d);
+                        icCtx.stroke(tmp);
+                    } catch {}
+                }
+                icCtx.restore();
+                fcCtx.save();
+                fcCtx.clearRect(0, 0, realCropW, realCropH);
+                fcCtx.beginPath();
+                if (circleCrop && cropRotation % 360 === 0) {
+                    const radius = Math.min(realCropW, realCropH) / 2;
+                    fcCtx.arc(realCropW / 2, realCropH / 2, radius, 0, 2 * Math.PI);
+                } else if (circleCrop) {
+                    const centerX = realCropW / 2;
+                    const centerY = realCropH / 2;
+                    const radius = Math.min(realCropW, realCropH) / 2;
+                    fcCtx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
+                } else {
+                    fcCtx.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
+                    fcCtx.lineTo(rotatedCorners[1].x - minX, rotatedCorners[1].y - minY);
+                    fcCtx.lineTo(rotatedCorners[2].x - minX, rotatedCorners[2].y - minY);
+                    fcCtx.lineTo(rotatedCorners[3].x - minX, rotatedCorners[3].y - minY);
+                    fcCtx.closePath();
+                }
+                fcCtx.clip();
+                fcCtx.drawImage(intermediateCanvas, -minX, -minY);
+                fcCtx.restore();
+                lastDrawTime = timestamp;
+            }
+            if (tempVideo.currentTime < tempVideo.duration - 0.1) {
+                requestAnimationFrame(drawFrame);
+            } else {
+                finalMediaRecorder.stop();
+                mediaRecorder.stop();
+            }
+        };
+        drawFrame();
+        await finalDonePromise;
+        await donePromise;
+        const finalBlob = new Blob(finalChunks, { type: 'video/webm' });
+        const newUrl = URL.createObjectURL(finalBlob);
+        document.body.removeChild(tempVideo);
+        setCropHistory(prev => [
+            ...prev,
+            { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
+        ]);
+        setUrl(newUrl);
+        setNativeWidth(realCropW);
+        setNativeHeight(realCropH);
+        const containerWidth = containerRef.current?.clientWidth || 800;
+        const containerHeight = containerRef.current?.clientHeight || 600;
+        const maxPossibleWidth = containerWidth * 0.7;
+        const maxPossibleHeight = containerHeight * 0.7;
+        let initWidth = realCropW;
+        let initHeight = realCropH;
+        const widthRatio = initWidth / maxPossibleWidth;
+        const heightRatio = initHeight / maxPossibleHeight;
+        if (widthRatio > 1 || heightRatio > 1) {
+            const ratio = Math.max(widthRatio, heightRatio);
+            initWidth /= ratio;
+            initHeight /= ratio;
+        }
+        setVideoWidth(initWidth);
+        setVideoHeight(initHeight);
+        setPanX(0);
+        setPanY(0);
+        setIsCropping(false);
+        setIsProcessingCrop(false);
+        setPaths([]);
+        setUndonePaths([]);
+        setTempPath(null);
+        setActionMode('Idle');
+    }
+
+    const finalizeCrop = async () => {
+        if (mediaType !== 'video') {
+            return;
+        }
+        setCropHistory(prev => [
+            ...prev,
+            { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
+        ]);
+        await performCanvasVideoCrop();
+    };
+
     const getSvgPoint = (e) => {
         const svg = e.currentTarget;
         const point = svg.createSVGPoint();
@@ -577,21 +983,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         });
     };
 
-    async function performCanvasVideoCrop() {
-    }
-
-    const finalizeCrop = async () => {
-        if (mediaType !== 'video') {
-            alert("Non-video cropping not implemented in this snippet.");
-            return;
-        }
-        setCropHistory(prev => [
-            ...prev,
-            { url, panX, panY, videoWidth, videoHeight, nativeWidth, nativeHeight }
-        ]);
-        await performCanvasVideoCrop();
-    };
-
     const handleRewind15 = () => {
         if (videoRef.current) {
             videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 15);
@@ -629,7 +1020,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setCurrentPlaybackRate(rate);
     };
 
-    async function extractFramesFromVideo(videoElem, frameCount = 10) {
+    async function extractFramesFromVideo(videoElem, existingFrames = []) {
         const framesArray = [];
         if (!videoElem.duration) return framesArray;
         const oldPausedState = videoElem.paused;
@@ -637,9 +1028,15 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         videoElem.pause();
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        for (let i = 0; i < frameCount; i++) {
-            const time = (videoElem.duration * i) / (frameCount - 1);
-            videoElem.currentTime = time;
+        let framesCount = existingFrames.length;
+        if (framesCount === 0) {
+            const totalFrames = Math.floor(videoElem.duration / frameInterval);
+            framesCount = totalFrames + 1;
+        }
+        for (let i = 0; i < framesCount; i++) {
+            const captureTime = i * frameInterval;
+            if (captureTime > videoElem.duration) break;
+            videoElem.currentTime = captureTime;
             await new Promise((resolve) => {
                 const onSeeked = () => {
                     videoElem.removeEventListener("seeked", onSeeked);
@@ -699,17 +1096,19 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 const path2d = new Path2D(p.d);
                 ctx.lineWidth = p.width;
                 ctx.strokeStyle = p.color;
+                ctx.lineCap = "round";
                 ctx.stroke(path2d);
             }
             if (tempPath) {
                 const path2d = new Path2D(tempPath.d);
                 ctx.lineWidth = tempPath.width;
                 ctx.strokeStyle = tempPath.color;
+                ctx.lineCap = "round";
                 ctx.stroke(path2d);
             }
             ctx.restore();
             const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
-            framesArray.push({ time, dataUrl });
+            framesArray.push({ time: captureTime, dataUrl });
         }
         videoElem.currentTime = oldTime;
         if (!oldPausedState) {
@@ -718,34 +1117,270 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         return framesArray;
     }
 
-    const handleViewFrames = async () => {
-        if (!videoRef.current) return;
-        if (frames.length === 0 && !showFrameBar) {
-            setIsExtractingFrames(true);
-            const extracted = await extractFramesFromVideo(videoRef.current, 10);
-            setFrames(extracted);
-            setIsExtractingFrames(false);
-            setShowFrameBar(true);
-        } else {
-            setShowFrameBar(prev => !prev);
-        }
-    };
-
     useEffect(() => {
-        if (showFrameBar && videoRef.current && !isProcessingCrop && !isCropping) {
+        if (framesPanelMode !== 'none' && videoRef.current && !isProcessingCrop && !isCropping) {
             (async () => {
                 setIsExtractingFrames(true);
-                const extracted = await extractFramesFromVideo(videoRef.current, 10);
+                const extracted = await extractFramesFromVideo(videoRef.current, []);
                 setFrames(extracted);
                 setIsExtractingFrames(false);
             })();
         }
-    }, [showFrameBar, url, isProcessingCrop, isCropping]);
+    }, [framesPanelMode, url, isProcessingCrop, isCropping, frameInterval]);
 
-    const handleClipFromVideo = () => { console.log("Clip from video clicked (placeholder)."); };
-    const handleStitchClips = () => { console.log("Stitch clips clicked (placeholder)."); };
-    const handleInsertClip = () => { console.log("Insert clip clicked (placeholder)."); };
-    const handleRemoveClip = () => { console.log("Remove clip clicked (placeholder)."); };
+    const handleViewFrames = async () => {
+        if (!videoRef.current) return;
+        setFramesPanelMode(prev => (prev === 'view' ? 'none' : 'view'));
+    };
+
+    const handleClipFromVideo = () => {
+        setClipStartTime(null);
+        setClipEndTime(null);
+        setFramesPanelMode(prev => (prev === 'clip' ? 'none' : 'clip'));
+    };
+
+    const handleRearrangeFrames = () => {
+        setFramesPanelMode(prev => (prev === 'rearrange' ? 'none' : 'rearrange'));
+    };
+
+    const handleDragStartFrame = (e, index) => {
+        setDraggedFrameIndex(index);
+        setDropTargetIndex(null);
+    };
+
+    const handleDragOverFrame = (e, index) => {
+        e.preventDefault();
+        setDropTargetIndex(index);
+        if (framesContainerRef.current) {
+            const rect = framesContainerRef.current.getBoundingClientRect();
+            const threshold = 50;
+            if (e.clientX < rect.left + threshold) {
+                framesContainerRef.current.scrollLeft -= 10;
+            } else if (e.clientX > rect.right - threshold) {
+                framesContainerRef.current.scrollLeft += 10;
+            }
+        }
+    };
+
+    const handleDropFrame = (e, index) => {
+        e.preventDefault();
+        setFrames(prevFrames => {
+            const newFrames = [...prevFrames];
+            const [movedFrame] = newFrames.splice(draggedFrameIndex, 1);
+            newFrames.splice(index, 0, movedFrame);
+            return newFrames.map((frame, i) => ({
+                ...frame,
+                time: i
+            }));
+        });
+        setDraggedFrameIndex(null);
+        setDropTargetIndex(null);
+    };
+
+    const handleSaveRearrange = async () => {
+        try {
+            if (frames.length === 0) {
+                return;
+            }
+            setIsRebuildingVideoFromFrames(true);
+            const fps = 25;
+            const captureDurationPerFrame = 1.0;
+            const canvas = document.createElement("canvas");
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            const ctx = canvas.getContext("2d");
+            const stream = canvas.captureStream(fps);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: "video/webm;codecs=vp8",
+                videoBitsPerSecond: 2500000
+            });
+            const chunks = [];
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+            recorder.onstop = async () => {
+                const newBlob = new Blob(chunks, { type: 'video/webm' });
+                const newUrl = URL.createObjectURL(newBlob);
+                setUrl(newUrl);
+                if (videoRef.current) {
+                    videoRef.current.src = newUrl;
+                    videoRef.current.load();
+                    videoRef.current.currentTime = 0;
+                    videoRef.current.loop = true;
+                    videoRef.current.play();
+                    setIsPlaying(true);
+                    setIsLooping(true);
+                }
+                setIsRebuildingVideoFromFrames(false);
+                setFramesPanelMode('none');
+                setActionMode('Idle');
+            };
+            recorder.start();
+            for (let i = 0; i < frames.length; i++) {
+                await new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        setTimeout(resolve, captureDurationPerFrame * 1000);
+                    };
+                    img.src = frames[i].dataUrl;
+                });
+            }
+            recorder.stop();
+        } catch (err) {
+            setIsRebuildingVideoFromFrames(false);
+        }
+    };
+
+    async function clipVideo(start, end) {
+        const videoElem = document.createElement("video");
+        videoElem.src = url;
+        await new Promise(r => {
+            videoElem.onloadedmetadata = r;
+        });
+        videoElem.currentTime = start;
+        await new Promise(r => {
+            const onSeeked = () => {
+                videoElem.removeEventListener("seeked", onSeeked);
+                r();
+            };
+            videoElem.addEventListener("seeked", onSeeked);
+        });
+        videoElem.muted = true;
+        videoElem.playbackRate = 1;
+        const stream = videoElem.captureStream();
+        const recorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp8',
+            videoBitsPerSecond: 2500000
+        });
+        const chunks = [];
+        return new Promise((resolve) => {
+            recorder.ondataavailable = e => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+            recorder.onstop = async () => {
+                const newBlob = new Blob(chunks, { type: 'video/webm' });
+                const newUrl = URL.createObjectURL(newBlob);
+                resolve(newUrl);
+            };
+            recorder.start();
+            videoElem.play();
+            const checkTime = () => {
+                if (videoElem.currentTime >= end) {
+                    setTimeout(() => {
+                        recorder.stop();
+                        videoElem.pause();
+                    }, 50);
+                    return;
+                }
+                requestAnimationFrame(checkTime);
+            };
+            requestAnimationFrame(checkTime);
+        });
+    }
+
+    const handleSaveClip = async () => {
+        if (clipStartTime !== null && clipEndTime !== null && clipEndTime > clipStartTime) {
+            setIsClippingVideo(true);
+            const newUrl = await clipVideo(clipStartTime, clipEndTime);
+            setIsClippingVideo(false);
+            setUrl(newUrl);
+            if (videoRef.current) {
+                videoRef.current.src = newUrl;
+                videoRef.current.load();
+                videoRef.current.currentTime = 0;
+                videoRef.current.loop = true;
+                videoRef.current.play();
+                setIsPlaying(true);
+                setIsLooping(true);
+            }
+            setClipStartTime(null);
+            setClipEndTime(null);
+            setFramesPanelMode('none');
+            setActionMode('Idle');
+        }
+    };
+
+    useEffect(() => {
+        if (framesContainerRef.current && frames.length > 0 && framesPanelMode === 'clip') {
+            const containerRect = framesContainerRef.current.getBoundingClientRect();
+            const framesEls = framesContainerRef.current.querySelectorAll('.dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper');
+            let includedTimes = [];
+            framesEls.forEach((frameEl, idx) => {
+                const frameRect = frameEl.getBoundingClientRect();
+                const localLeft = (frameRect.left - containerRect.left) + framesContainerRef.current.scrollLeft;
+                const localRight = localLeft + frameRect.width;
+                if (localRight >= clipOverlayLeft && localLeft <= clipOverlayRight) {
+                    includedTimes.push(frames[idx].time);
+                }
+            });
+            if (includedTimes.length > 0) {
+                const minT = Math.min(...includedTimes);
+                const maxT = Math.max(...includedTimes);
+                setClipStartTime(minT);
+                setClipEndTime(maxT);
+            } else {
+                setClipStartTime(null);
+                setClipEndTime(null);
+            }
+        }
+    }, [clipOverlayLeft, clipOverlayRight, frames, framesPanelMode]);
+
+    useEffect(() => {
+        if (framesPanelMode === 'clip' && framesContainerRef.current) {
+            setTimeout(() => {
+                setClipOverlayLeft(0);
+                setClipOverlayRight(framesContainerRef.current.scrollWidth);
+            }, 0);
+        }
+    }, [framesPanelMode, frames]);
+
+    useEffect(() => {
+        function onMouseMove(e) {
+            if (!framesContainerRef.current) return;
+            const rect = framesContainerRef.current.getBoundingClientRect();
+            let x = (e.clientX - rect.left) + framesContainerRef.current.scrollLeft;
+            const maxWidth = framesContainerRef.current.scrollWidth;
+            const threshold = 50;
+            if (e.clientX < rect.left + threshold) {
+                framesContainerRef.current.scrollLeft -= 10;
+            } else if (e.clientX > rect.right - threshold) {
+                framesContainerRef.current.scrollLeft += 10;
+            }
+            x = Math.max(0, Math.min(x, maxWidth));
+            if (isDraggingLeftHandle) {
+                setClipOverlayLeft(Math.min(x, clipOverlayRight));
+            }
+            if (isDraggingRightHandle) {
+                setClipOverlayRight(Math.max(x, clipOverlayLeft));
+            }
+        }
+        function onMouseUp() {
+            setIsDraggingLeftHandle(false);
+            setIsDraggingRightHandle(false);
+        }
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+        };
+    }, [isDraggingLeftHandle, isDraggingRightHandle, clipOverlayLeft, clipOverlayRight]);
+
+    const handleMouseDownLeft = (e) => {
+        e.preventDefault();
+        setIsDraggingLeftHandle(true);
+    };
+
+    const handleMouseDownRight = (e) => {
+        e.preventDefault();
+        setIsDraggingRightHandle(true);
+    };
 
     useEffect(() => {
         if (videoRef.current) {
@@ -764,7 +1399,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
 
     return (
         <div className="dinolabsIDEMediaContentWrapper">
-            {(isProcessingCrop || isExtractingFrames) && (
+            {(isProcessingCrop || isExtractingFrames || isRebuildingVideoFromFrames || isClippingVideo || isDownloadingVideo) && (
                 <div className="dinolabsIDEMediaContentCropIndicator">
                     <div className="loading-circle" />
                 </div>
@@ -913,7 +1548,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                             if (mediaType === 'video') {
                                                 await finalizeCrop();
                                             } else {
-                                                alert("Non-video cropping not implemented.");
+                                                return;
                                             }
                                         } else {
                                             setCropRect({ x: 0, y: 0, width: videoWidth, height: videoHeight });
@@ -1290,13 +1925,117 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         </div>
                     </div>
                 </div>
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faBorderTopLeft} />
+                            Corner Rounding
+                        </label>
+                        <label className="dinolabsIDEConfrmationCheck">
+                            <input
+                                type="checkbox"
+                                className="dinolabsIDESettingsCheckbox"
+                                checked={syncCorners}
+                                onChange={(e) => {
+                                    setSyncCorners(e.target.checked);
+                                    if (e.target.checked) {
+                                        const v = borderRadius || borderTopLeftRadius || 0;
+                                        const limited = Math.min(v, 100);
+                                        setBorderRadius(limited);
+                                        setBorderTopLeftRadius(limited);
+                                        setBorderTopRightRadius(limited);
+                                        setBorderBottomLeftRadius(limited);
+                                        setBorderBottomRightRadius(limited);
+                                    }
+                                }}
+                            />
+                            <span>Sync Corners</span>
+                        </label>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">Corner Radii</label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            {syncCorners ? (
+                                <input
+                                    className="dinolabsIDEMediaPositionInput"
+                                    type="text"
+                                    value={`Corner: ${borderRadius}px`}
+                                    onChange={(e) => {
+                                        const newVal = e.target.value.replace(/[^0-9]/g, "");
+                                        let val = Number(newVal);
+                                        val = Math.min(val, 100);
+                                        setBorderRadius(val);
+                                        setBorderTopLeftRadius(val);
+                                        setBorderTopRightRadius(val);
+                                        setBorderBottomLeftRadius(val);
+                                        setBorderBottomRightRadius(val);
+                                    }}
+                                />
+                            ) : (
+                                <div className="dinolabsIDECornerInputGridWrapper">
+                                    <div className="dinolabsIDECornerInputFlex">
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`TL: ${borderTopLeftRadius}px`}
+                                            onChange={(e) => {
+                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let v = Number(nVal);
+                                                v = Math.min(v, 100);
+                                                setBorderTopLeftRadius(v);
+                                            }}
+                                        />
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`TR: ${borderTopRightRadius}px`}
+                                            onChange={(e) => {
+                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let v = Number(nVal);
+                                                v = Math.min(v, 100);
+                                                setBorderTopRightRadius(v);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="dinolabsIDECornerInputFlex">
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`BL: ${borderBottomLeftRadius}px`}
+                                            onChange={(e) => {
+                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let v = Number(nVal);
+                                                v = Math.min(v, 100);
+                                                setBorderBottomLeftRadius(v);
+                                            }}
+                                        />
+                                        <input
+                                            className="dinolabsIDEMediaPositionInput"
+                                            type="text"
+                                            value={`BR: ${borderBottomRightRadius}px`}
+                                            onChange={(e) => {
+                                                const nVal = e.target.value.replace(/[^0-9]/g, "");
+                                                let v = Number(nVal);
+                                                v = Math.min(v, 100);
+                                                setBorderBottomRightRadius(v);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-
             <div className="dinolabsIDEMediaContainerWrapper">
-
                 <div
                     className="dinolabsIDEMediaContainer"
-                    style={{ cursor: 'grab', height: showFrameBar ? "75%" : "90%"  }}
+                    style={{ 
+                        cursor: 'grab', 
+                        height: showFrameBar ? "70%" : "90%",  
+                        minHeight: showFrameBar ? "70%" : "90%",
+                        maxHeight: showFrameBar ? "70%" : "90%",
+                    }}
                     ref={containerRef}
                     onMouseDown={handleDragStart}
                     onMouseMove={handleDragMove}
@@ -1478,16 +2217,46 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             )}
                         </svg>
                     </div>
-
-
                 </div>
-
                 {showFrameBar && (
-                    <div className="dinolabsIDEVideoInputBottomBarFrameSupplement">
+                    <div className="dinolabsIDEVideoInputBottomBarFrameSupplement" ref={framesContainerRef}>
+                        {framesPanelMode === 'clip' && (
+                            <>
+                                <div
+                                    className="dinolabsIDEClipSliderTrack"
+                                    style={{
+                                        left: `${clipOverlayLeft}px`,
+                                        width: `${clipOverlayRight - clipOverlayLeft}px`,
+                                    }}
+                                />
+                                <div
+                                    className="dinolabsIDEClipSliderBar"
+                                    style={{ left: `${clipOverlayLeft - 5}px` }}
+                                    onMouseDown={handleMouseDownLeft}
+                                />
+                                <div
+                                    className="dinolabsIDEClipSliderBar"
+                                    style={{ left: `${clipOverlayRight - 5}px` }}
+                                    onMouseDown={handleMouseDownRight}
+                                />
+                            </>
+                        )}
                         {frames.map((frame, idx) => (
-                            <div 
-                                key={idx} 
+                            <div
+                                key={idx}
                                 className="dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper"
+                                draggable={framesPanelMode === 'rearrange'}
+                                onDragStart={framesPanelMode === 'rearrange' ? (e) => handleDragStartFrame(e, idx) : undefined}
+                                onDragOver={framesPanelMode === 'rearrange' ? (e) => handleDragOverFrame(e, idx) : undefined}
+                                onDrop={framesPanelMode === 'rearrange' ? (e) => handleDropFrame(e, idx) : undefined}
+                                style={{
+                                    border: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
+                                        ? '0.2vh dashed rgba(31, 174, 245, 1)'
+                                        : 'none', 
+                                    backgroundColor: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
+                                        ? 'rgba(255,255,255,0.05)'
+                                        : 'rgba(255,255,255,0.0)', 
+                                }}
                             >
                                 <img
                                     src={frame.dataUrl}
@@ -1506,7 +2275,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         ))}
                     </div>
                 )}
-
                 <div className="dinolabsIDEVideoInputBottomBar">
                     <div className="dinolabsIDEVideoContentFlexBig">
                         <Tippy content="Rewind 15 Seconds" theme="tooltip-light">
@@ -1569,9 +2337,10 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                         <Tippy content="View Video Frames" theme="tooltip-light">
                             <button 
                                 className="dinolabsIDEVideoButtonHelper" 
+                                disabled={isCropping ? true : false}
                                 style={{ 
-                                    padding: 0, 
-                                    color: showFrameBar ? '#5C2BE2' : '#c0c0c0' 
+                                    color: framesPanelMode === 'view' ? '#5C2BE2' : '#c0c0c0',
+                                    opacity: isCropping ? '0.6' : '1.0'
                                 }}
                                 onClick={handleViewFrames}
                             >
@@ -1579,25 +2348,58 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             </button>
                         </Tippy>
                         <Tippy content="Clip From Video" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonHelper" style={{ padding:0 }} onClick={handleClipFromVideo}>
+                            <button
+                                className="dinolabsIDEVideoButtonHelper"
+                                disabled={isCropping ? true : false}
+                                style={{
+                                    color: framesPanelMode === 'clip' ? '#5C2BE2' : '#c0c0c0',
+                                    opacity: isCropping ? '0.6' : '1.0'
+                                }}
+                                onClick={handleClipFromVideo}
+                            >
                                 <FontAwesomeIcon icon={faScissors} />
                             </button>
                         </Tippy>
-                        <Tippy content="Stitch Clips" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonHelper" style={{ padding:0 }} onClick={handleStitchClips}>
+                        {(framesPanelMode === 'clip' && clipStartTime !== null && clipEndTime !== null && clipEndTime > clipStartTime) && (
+                            <Tippy content="Save Clipped Video" theme="tooltip-light">
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    disabled={isCropping ? true : false}
+                                    style={{
+                                        opacity: isCropping ? '0.6' : '1.0'
+                                    }}
+                                    onClick={handleSaveClip}
+                                >
+                                    <FontAwesomeIcon icon={faSave}/>
+                                </button>
+                            </Tippy>
+                        )}
+                        <Tippy content="Rearrange Frames" theme="tooltip-light">
+                            <button 
+                                className="dinolabsIDEVideoButtonHelper" 
+                                disabled={isCropping ? true : false}
+                                style={{
+                                    opacity: isCropping ? '0.6' : '1.0'
+                                }}
+                                onClick={handleRearrangeFrames}
+                            >
                                 <FontAwesomeIcon icon={faTape} />
                             </button>
                         </Tippy>
-                        <Tippy content="Insert Clip Into Video" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonHelper" style={{ padding:0 }} onClick={handleInsertClip}>
-                                <FontAwesomeIcon icon={faSquarePlus} />
-                            </button>
-                        </Tippy>
-                        <Tippy content="Remove Clip From Video" theme="tooltip-light">
-                            <button className="dinolabsIDEVideoButtonHelper" style={{ padding:0 }} onClick={handleRemoveClip}>
-                                <FontAwesomeIcon icon={faSquareMinus} />
-                            </button>
-                        </Tippy>
+                        {(framesPanelMode === 'rearrange') && (
+                            <Tippy content="Save Reorganized Video" theme="tooltip-light">
+                                <button 
+                                    className="dinolabsIDEVideoButtonHelper" 
+                                    disabled={isCropping ? true : false}
+                                    style={{
+                                        opacity: isCropping ? '0.6' : '1.0'
+                                    }}
+                                    onClick={handleSaveRearrange}
+                                >
+                                    <FontAwesomeIcon icon={faSave}/>
+                                </button>
+                            </Tippy>
+                        )}
                     </div>
                 </div>
             </div>

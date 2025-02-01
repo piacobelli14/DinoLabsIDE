@@ -126,6 +126,7 @@ const extensionToImageMap = {
   mkv: "videoExtension.svg",
   avi: "videoExtension.svg",
   mov: "videoExtension.svg",
+  webm: "videoExtension.svg",
   zip: "archiveExtensions.svg",
   rar: "archiveExtensions.svg",
   tar: "archiveExtensions.svg",
@@ -154,7 +155,7 @@ const textExtensions = {
 
 const mediaExtensions = {
   image: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp'],
-  video: ['mp4', 'mkv', 'avi', 'mov'],
+  video: ['mp4', 'mkv', 'avi', 'mov', 'webm'],
   audio: ['mp3', 'wav', 'flac']
 };
 
@@ -2268,7 +2269,7 @@ const DinoLabsIDE = () => {
                                     {(['png', 'jpg', 'jpeg'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEImageEditor fileHandle={tab.fileHandle} />
                                     )}
-                                    {(['mp4', 'mkv', 'avi', 'mov'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                    {(['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEVideoEditor fileHandle={tab.fileHandle} />
                                     )}
                                     {(['mp3', 'wav', 'flac'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (

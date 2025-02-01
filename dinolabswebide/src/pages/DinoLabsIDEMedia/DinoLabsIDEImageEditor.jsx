@@ -429,26 +429,46 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-        if (cropResizingCorner.current === 'bottom-right') {
-            width += dx;
-            height += dy;
-        } else if (cropResizingCorner.current === 'bottom-left') {
-            x += dx;
-            width -= dx;
-            height += dy;
-        } else if (cropResizingCorner.current === 'top-right') {
-            y += dy;
-            width += dx;
-            height -= dy;
-        } else if (cropResizingCorner.current === 'top-left') {
-            x += dx;
-            y += dy;
-            width -= dx;
-            height -= dy;
-        }
+        
         if (circleCrop) {
-            height = width;
+            const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += delta;
+                width -= delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += delta;
+                width += delta;
+                height = width;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += delta;
+                y += delta;
+                width -= delta;
+                height = width;
+            }
+        } else {
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += dx;
+                width -= dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += dy;
+                width += dx;
+                height -= dy;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
+            }
         }
+        
         setCropRect({
             x,
             y,
