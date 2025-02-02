@@ -1581,7 +1581,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </svg>
                     </div>
                 </div>
-
+                {/*
                 <div className="dinolabsIDEVideoInputBottomBar"> 
                     <div> 
                     </div>
@@ -1591,6 +1591,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </span>
                     </label>
                 </div>
+                */}
             </div>
         </div>
     );
