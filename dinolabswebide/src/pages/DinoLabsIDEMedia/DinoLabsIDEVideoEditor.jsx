@@ -303,13 +303,53 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         offscreenCanvas.width = videoWidth * scaleFactor;
         offscreenCanvas.height = videoHeight * scaleFactor;
         const offscreenCtx = offscreenCanvas.getContext('2d');
-        const mainCanvasStream = offscreenCanvas.captureStream(fps);
-        const videoTracks = mainCanvasStream.getVideoTracks();
+        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
+        if (spread) {
+            filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
+        }
+        offscreenCtx.filter = filterString;
+        offscreenCtx.globalAlpha = opacity / 100;
+        offscreenCtx.translate(offscreenCanvas.width / 2, offscreenCanvas.height / 2);
+        offscreenCtx.rotate(rotation * Math.PI / 180);
+        offscreenCtx.scale(flipX * scaleFactor, flipY * scaleFactor);
+        const roundedRect = new Path2D();
+        if (circleCrop) {
+            const radius = Math.min(videoWidth, videoHeight) / 2;
+            roundedRect.arc(0, 0, radius, 0, 2 * Math.PI);
+        } else if (syncCorners) {
+            let radius = borderRadius;
+            radius = Math.min(radius, videoWidth/2, videoHeight/2);
+            roundedRect.moveTo(-videoWidth / 2 + radius, -videoHeight / 2);
+            roundedRect.lineTo(videoWidth / 2 - radius, -videoHeight / 2);
+            roundedRect.quadraticCurveTo(videoWidth / 2, -videoHeight / 2, videoWidth / 2, -videoHeight / 2 + radius);
+            roundedRect.lineTo(videoWidth / 2, videoHeight / 2 - radius);
+            roundedRect.quadraticCurveTo(videoWidth / 2, videoHeight / 2, videoWidth / 2 - radius, videoHeight / 2);
+            roundedRect.lineTo(-videoWidth / 2 + radius, videoHeight / 2);
+            roundedRect.quadraticCurveTo(-videoWidth / 2, videoHeight / 2, -videoWidth / 2, videoHeight / 2 - radius);
+            roundedRect.lineTo(-videoWidth / 2, -videoHeight / 2 + radius);
+            roundedRect.quadraticCurveTo(-videoWidth / 2, -videoHeight / 2, -videoWidth / 2 + radius, -videoHeight / 2);
+        } else {
+            const tl = Math.min(borderTopLeftRadius, videoWidth/2, videoHeight/2);
+            const tr = Math.min(borderTopRightRadius, videoWidth/2, videoHeight/2);
+            const br = Math.min(borderBottomRightRadius, videoWidth/2, videoHeight/2);
+            const bl = Math.min(borderBottomLeftRadius, videoWidth/2, videoHeight/2);
+            roundedRect.moveTo(-videoWidth / 2 + tl, -videoHeight / 2);
+            roundedRect.lineTo(videoWidth / 2 - tr, -videoHeight / 2);
+            roundedRect.quadraticCurveTo(videoWidth / 2, -videoHeight / 2, videoWidth / 2, -videoHeight / 2 + tr);
+            roundedRect.lineTo(videoWidth / 2, videoHeight / 2 - br);
+            roundedRect.quadraticCurveTo(videoWidth / 2, videoHeight / 2, videoWidth / 2 - br, videoHeight / 2);
+            roundedRect.lineTo(-videoWidth / 2 + bl, videoHeight / 2);
+            roundedRect.quadraticCurveTo(-videoWidth / 2, videoHeight / 2, -videoWidth / 2, videoHeight / 2 - bl);
+            roundedRect.lineTo(-videoWidth / 2, -videoHeight / 2 + tl);
+            roundedRect.quadraticCurveTo(-videoWidth / 2, -videoHeight / 2, -videoWidth / 2 + tl, -videoHeight / 2);
+        }
+        offscreenCtx.clip(roundedRect);
+        const recordedStream = offscreenCanvas.captureStream(fps);
         const combinedStream = new MediaStream();
-        videoTracks.forEach(t => combinedStream.addTrack(t));
-        audioTracks.forEach(t => combinedStream.addTrack(t));
+        recordedStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
+        audioTracks.forEach(track => combinedStream.addTrack(track));
         const mediaRecorder = new MediaRecorder(combinedStream, {
-            mimeType: 'video/webm; codecs=vp9'
+            mimeType: 'video/webm;codecs=vp9'
         });
         const chunks = [];
         mediaRecorder.ondataavailable = (e) => {
@@ -324,74 +364,35 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         tempVideo.play();
         let lastDrawTime = 0;
         const frameInterval = 1000 / fps;
-        const drawFrame = async (timestamp) => {
-            if (!lastDrawTime) lastDrawTime = timestamp;
+        function drawFrame(timestamp) {
+            if (!lastDrawTime) {
+                lastDrawTime = timestamp;
+            }
             const elapsed = timestamp - lastDrawTime;
             if (elapsed >= frameInterval) {
                 offscreenCtx.save();
-                offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-                let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-                if (spread) {
-                    filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
-                }
-                offscreenCtx.filter = filterString;
-                offscreenCtx.globalAlpha = opacity / 100;
-                offscreenCtx.translate(offscreenCanvas.width / 2, offscreenCanvas.height / 2);
-                offscreenCtx.rotate(rotation * Math.PI / 180);
-                offscreenCtx.scale(flipX, flipY);
-                if (syncCorners) {
-                    const r = borderRadius * scaleFactor;
-                    offscreenCtx.beginPath();
-                    offscreenCtx.moveTo(-offscreenCanvas.width / 2 + r, -offscreenCanvas.height / 2);
-                    offscreenCtx.lineTo(offscreenCanvas.width / 2 - r, -offscreenCanvas.height / 2);
-                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + r);
-                    offscreenCtx.lineTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2 - r);
-                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2, offscreenCanvas.width / 2 - r, offscreenCanvas.height / 2);
-                    offscreenCtx.lineTo(-offscreenCanvas.width / 2 + r, offscreenCanvas.height / 2);
-                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, offscreenCanvas.height / 2, -offscreenCanvas.width / 2, offscreenCanvas.height / 2 - r);
-                    offscreenCtx.lineTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + r);
-                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2, -offscreenCanvas.width / 2 + r, -offscreenCanvas.height / 2);
-                    offscreenCtx.closePath();
-                    offscreenCtx.clip();
-                } else {
-                    const tl = borderTopLeftRadius * scaleFactor;
-                    const tr = borderTopRightRadius * scaleFactor;
-                    const br = borderBottomRightRadius * scaleFactor;
-                    const bl = borderBottomLeftRadius * scaleFactor;
-                    offscreenCtx.beginPath();
-                    offscreenCtx.moveTo(-offscreenCanvas.width / 2 + tl, -offscreenCanvas.height / 2);
-                    offscreenCtx.lineTo(offscreenCanvas.width / 2 - tr, -offscreenCanvas.height / 2);
-                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + tr);
-                    offscreenCtx.lineTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2 - br);
-                    offscreenCtx.quadraticCurveTo(offscreenCanvas.width / 2, offscreenCanvas.height / 2, offscreenCanvas.width / 2 - br, offscreenCanvas.height / 2);
-                    offscreenCtx.lineTo(-offscreenCanvas.width / 2 + bl, offscreenCanvas.height / 2);
-                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, offscreenCanvas.height / 2, -offscreenCanvas.width / 2, offscreenCanvas.height / 2 - bl);
-                    offscreenCtx.lineTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2 + tl);
-                    offscreenCtx.quadraticCurveTo(-offscreenCanvas.width / 2, -offscreenCanvas.height / 2, -offscreenCanvas.width / 2 + tl, -offscreenCanvas.height / 2);
-                    offscreenCtx.closePath();
-                    offscreenCtx.clip();
-                }
-                offscreenCtx.drawImage(tempVideo, -offscreenCanvas.width / 2, -offscreenCanvas.height / 2, offscreenCanvas.width, offscreenCanvas.height);
+                offscreenCtx.clearRect(-videoWidth / 2, -videoHeight / 2, videoWidth, videoHeight);
+                offscreenCtx.drawImage(tempVideo, -videoWidth / 2, -videoHeight / 2, videoWidth, videoHeight);
                 offscreenCtx.restore();
                 offscreenCtx.save();
-                offscreenCtx.filter = 'none';
-                offscreenCtx.globalAlpha = 1;
-                const scaleX = offscreenCanvas.width / nativeWidth;
-                const scaleY = offscreenCanvas.height / nativeHeight;
-                offscreenCtx.scale(scaleX, scaleY);
-                for (let p of paths) {
-                    const path2d = new Path2D(p.d);
-                    offscreenCtx.lineWidth = p.width;
+                offscreenCtx.translate(-videoWidth / 2, -videoHeight / 2);
+                paths.forEach(p => {
                     offscreenCtx.strokeStyle = p.color;
+                    offscreenCtx.lineWidth = p.width;
                     offscreenCtx.lineCap = "round";
-                    offscreenCtx.stroke(path2d);
-                }
+                    try {
+                        const path2d = new Path2D(p.d);
+                        offscreenCtx.stroke(path2d);
+                    } catch {}
+                });
                 if (tempPath) {
-                    const path2d = new Path2D(tempPath.d);
-                    offscreenCtx.lineWidth = tempPath.width;
                     offscreenCtx.strokeStyle = tempPath.color;
+                    offscreenCtx.lineWidth = tempPath.width;
                     offscreenCtx.lineCap = "round";
-                    offscreenCtx.stroke(path2d);
+                    try {
+                        const tmp = new Path2D(tempPath.d);
+                        offscreenCtx.stroke(tmp);
+                    } catch {}
                 }
                 offscreenCtx.restore();
                 lastDrawTime = timestamp;
@@ -401,8 +402,8 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             } else {
                 mediaRecorder.stop();
             }
-        };
-        drawFrame();
+        }
+        requestAnimationFrame(drawFrame);
         await donePromise;
         const finalBlob = new Blob(chunks, { type: 'video/webm' });
         document.body.removeChild(tempVideo);
@@ -471,12 +472,16 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             } else if (resizingCorner === 'bottom-left') {
                 newWidth -= localDx;
                 newHeight = newWidth / ratio;
+                newPanX += localDx;
             } else if (resizingCorner === 'top-right') {
                 newWidth += localDx;
                 newHeight = newWidth / ratio;
+                newPanY += localDy;
             } else if (resizingCorner === 'top-left') {
                 newWidth -= localDx;
                 newHeight = newWidth / ratio;
+                newPanX += localDx;
+                newPanY += localDy;
             }
         } else {
             if (resizingCorner === 'bottom-right') {
@@ -545,25 +550,23 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         const dx = e.clientX - cropLastResizePosRef.current.x;
         const dy = e.clientY - cropLastResizePosRef.current.y;
         let { x, y, width, height } = cropInitialRectRef.current;
-
         if (circleCrop) {
-            const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
             if (cropResizingCorner.current === 'bottom-right') {
-                width += delta;
-                height = width;
+                width += dx;
+                height += dy;
             } else if (cropResizingCorner.current === 'bottom-left') {
-                x += delta;
-                width -= delta;
-                height = width;
+                x += dx;
+                width -= dx;
+                height += dy;
             } else if (cropResizingCorner.current === 'top-right') {
-                y += delta;
-                width += delta;
-                height = width;
+                y += dy;
+                width += dx;
+                height -= dy;
             } else if (cropResizingCorner.current === 'top-left') {
-                x += delta;
-                y += delta;
-                width -= delta;
-                height = width;
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
             }
         } else {
             if (cropResizingCorner.current === 'bottom-right') {
@@ -584,7 +587,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 height -= dy;
             }
         }
-        
         width = Math.max(width, 10);
         height = Math.max(height, 10);
         setCropRect({ x, y, width, height });
@@ -824,13 +826,15 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 fcCtx.clearRect(0, 0, realCropW, realCropH);
                 fcCtx.beginPath();
                 if (circleCrop && cropRotation % 360 === 0) {
-                    const radius = Math.min(realCropW, realCropH) / 2;
-                    fcCtx.arc(realCropW / 2, realCropH / 2, radius, 0, 2 * Math.PI);
+                    const rx = realCropW / 2;
+                    const ry = realCropH / 2;
+                    fcCtx.ellipse(realCropW / 2, realCropH / 2, rx, ry, 0, 0, 2 * Math.PI);
                 } else if (circleCrop) {
                     const centerX = realCropW / 2;
                     const centerY = realCropH / 2;
-                    const radius = Math.min(realCropW, realCropH) / 2;
-                    fcCtx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
+                    const rx = realCropW / 2;
+                    const ry = realCropH / 2;
+                    fcCtx.ellipse(centerX, centerY, rx, ry, 0, 0, 2 * Math.PI);
                 } else {
                     fcCtx.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
                     fcCtx.lineTo(rotatedCorners[1].x - minX, rotatedCorners[1].y - minY);
@@ -1571,13 +1575,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 <Tippy content="Circle Crop" theme="tooltip-light">
                                     <button
                                         onClick={() => {
-                                            setCircleCrop(prev => {
-                                                const newVal = !prev;
-                                                if (newVal) {
-                                                    setCropRect(pr => ({...pr, height: pr.width}));
-                                                }
-                                                return newVal;
-                                            });
+                                            setCircleCrop(prev => !prev);
                                         }}
                                         style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
                                         className="dinolabsIDEMediaToolButton"

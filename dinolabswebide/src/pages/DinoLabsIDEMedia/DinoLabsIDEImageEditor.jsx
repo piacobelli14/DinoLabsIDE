@@ -431,23 +431,22 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         let { x, y, width, height } = cropInitialRectRef.current;
         
         if (circleCrop) {
-            const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
             if (cropResizingCorner.current === 'bottom-right') {
-                width += delta;
-                height = width;
+                width += dx;
+                height += dy;
             } else if (cropResizingCorner.current === 'bottom-left') {
-                x += delta;
-                width -= delta;
-                height = width;
+                x += dx;
+                width -= dx;
+                height += dy;
             } else if (cropResizingCorner.current === 'top-right') {
-                y += delta;
-                width += delta;
-                height = width;
+                y += dy;
+                width += dx;
+                height -= dy;
             } else if (cropResizingCorner.current === 'top-left') {
-                x += delta;
-                y += delta;
-                width -= delta;
-                height = width;
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
             }
         } else {
             if (cropResizingCorner.current === 'bottom-right') {
@@ -883,8 +882,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                 ctxCrop.save();
                                                 ctxCrop.beginPath();
                                                 if(circleCrop) {
-                                                    const radius = Math.min(cropWidth, cropHeight) / 2;
-                                                    ctxCrop.arc(cropWidth/2, cropHeight/2, radius, 0, 2*Math.PI);
+                                                    ctxCrop.ellipse(cropWidth/2, cropHeight/2, cropWidth/2, cropHeight/2, 0, 0, 2*Math.PI);
                                                 } else {
                                                     ctxCrop.moveTo(rotatedCorners[0].x - minX, rotatedCorners[0].y - minY);
                                                     for (let i = 1; i < rotatedCorners.length; i++) {
@@ -934,9 +932,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                         onClick={() => {
                                         setCircleCrop(prev => {
                                             const newVal = !prev;
-                                            if(newVal) {
-                                                setCropRect(prevRect => ({...prevRect, height: prevRect.width}));
-                                            }
                                             return newVal;
                                         })
                                         }}
