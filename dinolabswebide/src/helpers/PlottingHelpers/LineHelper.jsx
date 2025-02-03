@@ -320,7 +320,7 @@ const ManagerLinePlot = ({
       ...grid,
       left: plotType !== "getStartedPageUsagePlot" ? grid.left : 12,
       right: plotType !== "getStartedPageUsagePlot" ? grid.right : 12,
-      top: plotType !== "getStartedPageUsagePlot" ? grid.top : 0
+      top: plotType !== "getStartedPageUsagePlot" ? grid.top : 8
     }
   };
 
