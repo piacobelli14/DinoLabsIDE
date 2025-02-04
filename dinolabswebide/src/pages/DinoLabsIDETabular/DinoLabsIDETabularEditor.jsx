@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { VariableSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { showDialog } from "../DinoLabsIDEAlert.jsx";
-import "../../styles/mainStyles/TabularEditorStyles/DinoLabsIDETabularEditor.css";
+import "../../../styles/mainStyles/DinoLabsIDEContent.css";
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 
 function sumRange(arr, from, to) {
     let total = 0;
@@ -426,6 +427,8 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     function startResizingCol(colIndex, e) {
         e.stopPropagation();
         e.preventDefault();
+        setActiveCell({ row: null, col: null });
+        setSelection(null);
         setResizing({
             active: true,
             type: 'col',
@@ -607,6 +610,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 );
             }
         }
+        const cellIsActive = activeCell.row === rowIndex && activeCell.col === columnIndex;
         const val = tableDataRef.current[key] || '';
         const inputRef = useRef(null);
         useEffect(() => {
@@ -618,7 +622,11 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }, [activeCell, rowIndex, columnIndex]);
         return (
             <div
-                style={{ ...style }}
+                style={{ 
+                    ...style,  
+                    outline: cellIsActive ? '0.2vh solid #008000' : '0.2vh solid transparent',
+                    backgroundColor: cellIsActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.0)'
+                }}
                 className="dinolabsIDETableCell"
                 onMouseDown={e => handleCellMouseDown(rowIndex, columnIndex, e)}
                 onMouseUp={e => handleCellMouseUp(rowIndex, columnIndex, e)}
@@ -709,176 +717,180 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     );
 
     return (
-        <div
-            className="dinolabsIDETableWrapper"
-            onSelectStart={e => e.preventDefault()}
-            onMouseDown={e => {
-                if (e.target.tagName !== 'INPUT') {
-                    e.preventDefault();
-                    if (window.getSelection) window.getSelection().removeAllRanges();
-                }
-            }}
-            onDragStart={e => {
-                if (e.target.tagName !== 'INPUT') {
-                    e.preventDefault();
-                }
-            }}
-        >
-            {loading && (
-                <div className="dinolabsIDETableLoadingMessage">
-                    Loading...
-                </div>
-            )}
-            {error && (
-                <div className="dinolabsIDETableErrorMessage">
-                    {error}
-                </div>
-            )}
-            <div
-                className="dinolabsIDETableCornerHeader"
-                onMouseDown={e => {
-                    if (
-                        selection &&
-                        selection.top === 0 &&
-                        selection.left === 0 &&
-                        selection.bottom === DATA_ROW_COUNT - 1 &&
-                        selection.right === DATA_COL_COUNT - 1
-                    ) {
-                        setSelection(null);
-                    } else {
-                        setSelection({
-                            top: 0,
-                            left: 0,
-                            bottom: DATA_ROW_COUNT - 1,
-                            right: DATA_COL_COUNT - 1
-                        });
-                    }
-                    e.preventDefault();
-                }}
-            />
-            <div
-                ref={columnHeaderRef}
-                onMouseMove={handleColumnHeaderMouseMove}
-                onMouseUp={handleColumnHeaderMouseUp}
-                className="dinolabsIDETableColumnHeaderContainer"
-            >
-                <div
-                    className="dinolabsIDETableColumnHeaderContent"
-                    style={{ width: sumRange(colWidths, 0, DATA_COL_COUNT) }}
+        <div className="dinolabsIDETableWrapper">
+             <div
+                    className="dinolabsIDETableWrapper"
+                    onSelectStart={e => e.preventDefault()}
+                    onMouseDown={e => {
+                        if (e.target.tagName !== 'INPUT') {
+                            e.preventDefault();
+                            if (window.getSelection) window.getSelection().removeAllRanges();
+                        }
+                    }}
+                    onDragStart={e => {
+                        if (e.target.tagName !== 'INPUT') {
+                            e.preventDefault();
+                        }
+                    }}
                 >
-                    {Array.from({ length: DATA_COL_COUNT }).map((_, colIndex) => {
-                        const leftOffset = sumRange(colWidths, 0, colIndex);
-                        const width = colWidths[colIndex];
-                        const label = getColumnLabel(colIndex);
-                        return (
-                            <div
-                                key={colIndex}
-                                className="dinolabsIDETableColumnHeaderCell"
-                                style={{
-                                    left: leftOffset,
-                                    width: width,
-                                    backgroundColor:
-                                        selection &&
-                                            colIndex >= selection.left &&
-                                            colIndex <= selection.right
-                                            ? '#444'
-                                            : '#333'
-                                }}
-                                onMouseDown={e => {
-                                    setHeaderDrag({ type: 'col', start: colIndex, current: colIndex });
-                                    e.preventDefault();
-                                }}
-                            >
-                                {label}
-                                <div
-                                    className="dinolabsIDETableColumnHeaderResizeHandle"
-                                    onMouseDown={e => startResizingCol(colIndex, e)}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-            <div
-                ref={rowHeaderRef}
-                onMouseMove={handleRowHeaderMouseMove}
-                onMouseUp={handleRowHeaderMouseUp}
-                className="dinolabsIDETableRowHeaderContainer"
-            >
-                <div
-                    className="dinolabsIDETableRowHeaderContent"
-                    style={{ height: sumRange(rowHeights, 0, DATA_ROW_COUNT) }}
-                >
-                    {Array.from({ length: DATA_ROW_COUNT }).map((_, rowIndex) => {
-                        const topOffset = sumRange(rowHeights, 0, rowIndex);
-                        const height = rowHeights[rowIndex];
-                        return (
-                            <div
-                                key={rowIndex}
-                                className="dinolabsIDETableRowHeaderCell"
-                                style={{
-                                    top: topOffset,
-                                    height: height,
-                                    backgroundColor:
-                                        selection &&
-                                            rowIndex >= selection.top &&
-                                            rowIndex <= selection.bottom
-                                            ? '#3a3a3a'
-                                            : '#2c2c2c'
-                                }}
-                                onMouseDown={e => {
-                                    setHeaderDrag({ type: 'row', start: rowIndex, current: rowIndex });
-                                    e.preventDefault();
-                                }}
-                            >
-                                {rowIndex + 1}
-                                <div
-                                    className="dinolabsIDETableRowHeaderResizeHandle"
-                                    onMouseDown={e => startResizingRow(rowIndex, e)}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-            <div ref={gridContainerRef} className="dinolabsIDETableGridContainer">
-                <AutoSizer>
-                    {({ width, height }) => (
-                        <Grid
-                            ref={dataGridRef}
-                            columnCount={DATA_COL_COUNT}
-                            rowCount={DATA_ROW_COUNT}
-                            columnWidth={index => colWidths[index]}
-                            rowHeight={index => rowHeights[index]}
-                            width={width}
-                            height={height}
-                            onScroll={({ scrollLeft: sl, scrollTop: st }) => {
-                                if (columnHeaderRef.current && columnHeaderRef.current.firstChild) {
-                                    columnHeaderRef.current.firstChild.style.transform = `translateX(${-sl}px)`;
-                                }
-                                if (rowHeaderRef.current && rowHeaderRef.current.firstChild) {
-                                    rowHeaderRef.current.firstChild.style.transform = `translateY(${-st}px)`;
-                                }
-                                setScrollLeft(sl);
-                                setScrollTop(st);
-                            }}
-                        >
-                            {renderDataCell}
-                        </Grid>
+                    {loading && (
+                        <div className="dinolabsIDETableLoadingMessage">
+                            Loading...
+                        </div>
                     )}
-                </AutoSizer>
-                {selection && (
-                    <div style={{ position: 'absolute', top: 0, left: 0 }}>
+                    {error && (
+                        <div className="dinolabsIDETableErrorMessage">
+                            {error}
+                        </div>
+                    )}
+                    <div
+                        className="dinolabsIDETableCornerHeader"
+                        onMouseDown={e => {
+                            if (
+                                selection &&
+                                selection.top === 0 &&
+                                selection.left === 0 &&
+                                selection.bottom === DATA_ROW_COUNT - 1 &&
+                                selection.right === DATA_COL_COUNT - 1
+                            ) {
+                                setSelection(null);
+                            } else {
+                                setSelection({
+                                    top: 0,
+                                    left: 0,
+                                    bottom: DATA_ROW_COUNT - 1,
+                                    right: DATA_COL_COUNT - 1
+                                });
+                            }
+                            e.preventDefault();
+                        }}
+                    />
+                    <div
+                        ref={columnHeaderRef}
+                        onMouseMove={handleColumnHeaderMouseMove}
+                        onMouseUp={handleColumnHeaderMouseUp}
+                        className="dinolabsIDETableColumnHeaderContainer"
+                    >
                         <div
-                            className="dinolabsIDETableSelectionOverlay"
-                            style={overlayDynamicStyle}
-                            onMouseDown={handleSelectionDragMouseDown}
+                            className="dinolabsIDETableColumnHeaderContent"
+                            style={{ width: sumRange(colWidths, 0, DATA_COL_COUNT) }}
                         >
-                            {selectionHandles}
+                            {Array.from({ length: DATA_COL_COUNT }).map((_, colIndex) => {
+                                const leftOffset = sumRange(colWidths, 0, colIndex);
+                                const width = colWidths[colIndex];
+                                const label = getColumnLabel(colIndex);
+                                return (
+                                    <div
+                                        key={colIndex}
+                                        className="dinolabsIDETableColumnHeaderCell"
+                                        style={{
+                                            left: leftOffset,
+                                            width: width,
+                                            backgroundColor:
+                                                selection &&
+                                                    colIndex >= selection.left &&
+                                                    colIndex <= selection.right
+                                                    ? '#444'
+                                                    : '#333'
+                                        }}
+                                        onMouseDown={e => {
+                                            setHeaderDrag({ type: 'col', start: colIndex, current: colIndex });
+                                            setSelection({ top: 0, left: colIndex, bottom: DATA_ROW_COUNT - 1, right: colIndex });
+                                            e.preventDefault();
+                                        }}
+                                    >
+                                        {label}
+                                        <div
+                                            className="dinolabsIDETableColumnHeaderResizeHandle"
+                                            onMouseDown={e => startResizingCol(colIndex, e)}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                )}
-            </div>
+                    <div
+                        ref={rowHeaderRef}
+                        onMouseMove={handleRowHeaderMouseMove}
+                        onMouseUp={handleRowHeaderMouseUp}
+                        className="dinolabsIDETableRowHeaderContainer"
+                    >
+                        <div
+                            className="dinolabsIDETableRowHeaderContent"
+                            style={{ height: sumRange(rowHeights, 0, DATA_ROW_COUNT) }}
+                        >
+                            {Array.from({ length: DATA_ROW_COUNT }).map((_, rowIndex) => {
+                                const topOffset = sumRange(rowHeights, 0, rowIndex);
+                                const height = rowHeights[rowIndex];
+                                return (
+                                    <div
+                                        key={rowIndex}
+                                        className="dinolabsIDETableRowHeaderCell"
+                                        style={{
+                                            top: topOffset,
+                                            height: height,
+                                            backgroundColor:
+                                                selection &&
+                                                    rowIndex >= selection.top &&
+                                                    rowIndex <= selection.bottom
+                                                    ? '#3a3a3a'
+                                                    : '#2c2c2c'
+                                        }}
+                                        onMouseDown={e => {
+                                            setHeaderDrag({ type: 'row', start: rowIndex, current: rowIndex });
+                                            setSelection({ top: rowIndex, left: 0, bottom: rowIndex, right: DATA_COL_COUNT - 1 });
+                                            e.preventDefault();
+                                        }}
+                                    >
+                                        {rowIndex + 1}
+                                        <div
+                                            className="dinolabsIDETableRowHeaderResizeHandle"
+                                            onMouseDown={e => startResizingRow(rowIndex, e)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <div ref={gridContainerRef} className="dinolabsIDETableGridContainer">
+                        <AutoSizer>
+                            {({ width, height }) => (
+                                <Grid
+                                    ref={dataGridRef}
+                                    columnCount={DATA_COL_COUNT}
+                                    rowCount={DATA_ROW_COUNT}
+                                    columnWidth={index => colWidths[index]}
+                                    rowHeight={index => rowHeights[index]}
+                                    width={width}
+                                    height={height}
+                                    onScroll={({ scrollLeft: sl, scrollTop: st }) => {
+                                        if (columnHeaderRef.current && columnHeaderRef.current.firstChild) {
+                                            columnHeaderRef.current.firstChild.style.transform = `translateX(${-sl}px)`;
+                                        }
+                                        if (rowHeaderRef.current && rowHeaderRef.current.firstChild) {
+                                            rowHeaderRef.current.firstChild.style.transform = `translateY(${-st}px)`;
+                                        }
+                                        setScrollLeft(sl);
+                                        setScrollTop(st);
+                                    }}
+                                >
+                                    {renderDataCell}
+                                </Grid>
+                            )}
+                        </AutoSizer>
+                        {selection && (
+                            <div style={{ position: 'absolute', top: 0, left: 0 }}>
+                                <div
+                                    className="dinolabsIDETableSelectionOverlay"
+                                    style={overlayDynamicStyle}
+                                    onMouseDown={handleSelectionDragMouseDown}
+                                >
+                                    {selectionHandles}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
         </div>
     );
 }

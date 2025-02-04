@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import "../../../styles/mainStyles/TextEditorStyles/DinoLabsIDERichTextEditor.css";
+import "../../../styles/mainStyles/DinoLabsIDEContent.css";
+import "../../../styles/mainStyles/DinoLabsIDE.css";
 import "../../../styles/helperStyles/Checkbox.css";
 import DinoLabsIDEColorPicker from "../../DinoLabsIDEColorPicker.jsx";
 import { showDialog } from "../../DinoLabsIDEAlert.jsx";
@@ -1089,7 +1090,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
 
     return (
-        <div className="dinolabsIDETextWrapper">
+        <div className="dinolabsIDEWrapper">
             <input
                 type="file"
                 accept="image/*"
@@ -1213,10 +1214,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 handleRemoveFormatting={handleRemoveFormatting}
                 setShowSearchPanel={setShowSearchPanel}
             />
-            <div className="dinolabsIDETextEditorWrapper">
+            <div className="dinolabsIDEEditorWrapper">
                 {showSearchPanel && (
                     <div
-                        className="dinolabsIDETextEditingSearchBoxWrapper"
+                        className="dinolabsIDEEditingSearchBoxWrapper"
                         ref={searchPanelRef}
                         style={{
                             top: panelPos.y,
@@ -1224,8 +1225,8 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         }}
                         onMouseDown={handlePanelMouseDown}
                     >
-                        <div className="dinolabsIDETextEditngSearchBarWrapper">
-                            <label className="dinolabsIDETextEditingSearchLabel">
+                        <div className="dinolabsIDEEditngSearchBarWrapper">
+                            <label className="dinolabsIDEEditingSearchLabel">
                                 Search:
                                 <span>
                                     <input
@@ -1239,29 +1240,29 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 </span>
                             </label>
                             <input
-                                className="dinolabsIDETextEditingSearchInput"
+                                className="dinolabsIDEEditingSearchInput"
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onMouseDown={(e) => e.stopPropagation()}
                             />
-                            <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper">
+                            <div className="dinolabsIDEEditingSearchOperationsButtonWrapper">
                                 <button
-                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    className="dinolabsIDEEditingSearchOperationsButton"
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={() => highlightAll(searchTerm)}
                                 >
                                     Search
                                 </button>
                                 <button
-                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    className="dinolabsIDEEditingSearchOperationsButton"
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={goToPrevious}
                                 >
                                     Prev
                                 </button>
                                 <button
-                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    className="dinolabsIDEEditingSearchOperationsButton"
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={goToNext}
                                 >
@@ -1270,27 +1271,27 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             </div>
                         </div>
 
-                        <div className="dinolabsIDETextEditngSearchBarWrapper">
-                            <label className="dinolabsIDETextEditingSearchLabel">
+                        <div className="dinolabsIDEEditngSearchBarWrapper">
+                            <label className="dinolabsIDEEditingSearchLabel">
                                 Replace:
                             </label>
                             <input
-                                className="dinolabsIDETextEditingSearchInput"
+                                className="dinolabsIDEEditingSearchInput"
                                 type="text"
                                 value={replaceTerm}
                                 onChange={(e) => setReplaceTerm(e.target.value)}
                                 onMouseDown={(e) => e.stopPropagation()}
                             />
-                            <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper">
+                            <div className="dinolabsIDEEditingSearchOperationsButtonWrapper">
                                 <button
-                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    className="dinolabsIDEEditingSearchOperationsButton"
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={replaceCurrent}
                                 >
                                     Replace
                                 </button>
                                 <button
-                                    className="dinolabsIDETextEditingSearchOperationsButton"
+                                    className="dinolabsIDEEditingSearchOperationsButton"
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={replaceAll}
                                 >
@@ -1299,9 +1300,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             </div>
                         </div>
 
-                        <div className="dinolabsIDETextEditingSearchOperationsButtonWrapper" style={{"justify-content": "center"}}>
+                        <div className="dinolabsIDEEditingSearchOperationsButtonWrapper" style={{"justify-content": "center"}}>
                             <button
-                                className="dinolabsIDETextEditingSearchOperationsButton"
+                                className="dinolabsIDEEditingSearchOperationsButton"
                                 onMouseDown={(e) => e.stopPropagation()}
                                 onClick={() => {
                                     setShowSearchPanel(false);
@@ -1314,11 +1315,11 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </div>
                     </div>
                 )}
-                <div className="dinolabsIDETextTipMargin"/>
-                <div className="dinolabsIDeTextEditorStack">
-                    <div className="dinoLabsTextEditorTopBar"></div>
+                <div className="dinolabsIDETipMargin"/>
+                <div className="dinolabsIDeEditorStack">
+                    <div className="dinoLabsEditorTopBar"></div>
                     <div
-                        className="dinolabsIDETextEditor"
+                        className="dinolabsIDEEditor"
                         ref={editorRef}
                         contentEditable
                         suppressContentEditableWarning
@@ -1330,17 +1331,17 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                     />
 
                     <div
-                        className="dinolabsIDETextVirtualizationWrapper"
+                        className="dinolabsIDEVirtualizationWrapper"
                         ref={virtualContainerRef}
                         onScroll={handleVirtualScroll}
                     >
-                        <div className="dinolabsIDETextVirtualizationContent" style={{ height: `${totalHeight}px` }}>
+                        <div className="dinolabsIDEVirtualizationContent" style={{ height: `${totalHeight}px` }}>
                             {renderedParagraphs.map((paragraph, i) => {
                                 const actualIndex = visibleStartIndex + i;
                                 return (
                                     <div
                                         key={actualIndex}
-                                        className="dinolabsIDETextVirtualizationContent"
+                                        className="dinolabsIDEVirtualizationContent"
                                         style={{
                                             top: `${(actualIndex) * paragraphHeight}px`,
                                             height: `${paragraphHeight}px`
@@ -1354,9 +1355,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </div>
                     </div>
 
-                    <div className="dinoLabsTextEditorBottomBar"></div>
+                    <div className="dinoLabsEditorBottomBar"></div>
                 </div>
-                <div className="dinolabsIDETextCommentMargin"></div>
+                <div className="dinolabsIDECommentMargin"></div>
             </div>
         </div>
     );

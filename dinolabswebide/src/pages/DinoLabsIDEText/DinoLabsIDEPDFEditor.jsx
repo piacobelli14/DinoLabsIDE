@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import "../../styles/mainStyles/TextEditorStyles/DinoLabsIDEPDFEditor.css";
 import DinoLabsIDEColorPicker from '../DinoLabsIDEColorPicker.jsx';
 import { showDialog } from "../DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";

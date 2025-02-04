@@ -1,4 +1,5 @@
 import React from "react";
+import "../../../styles/mainStyles/DinoLabsIDEContent.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEColorPicker from "../../DinoLabsIDEColorPicker.jsx";
@@ -46,12 +47,12 @@ import {
 
 export default function DinoLabsIDERichTextEditorToolbar(props) {
     return (
-        <div className="dinolabsIDETextToolBar">
-            <div className="dinolabsIDETextTitleWrapper">
-                <FontAwesomeIcon icon={faPenToSquare} className="dinolabsIDETextFileIcon" />
+        <div className="dinolabsIDEToolBar">
+            <div className="dinolabsIDETitleWrapper">
+                <FontAwesomeIcon icon={faPenToSquare} className="dinolabsIDEContentFileIcon" />
                 <div className="dinolabsIDEFileNameStack">
-                    <label className="dinolasIDETextFileNameInput">{props.fileName}</label>
-                    <div className="dinolabsIDETextOperationsButtonsWrapper">
+                    <label className="dinolasIDEFileNameInput">{props.fileName}</label>
+                    <div className="dinolabsIDEOperationsButtonsWrapper">
                         <Tippy
                             visible={props.openModal === "file"}
                             onClickOutside={() => props.closeAllMenus()}
@@ -61,11 +62,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "file" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuVertical"
+                                        className="dinolabsIDEEditingContextMenuVertical"
                                         ref={props.fileModalRef}
                                     >
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.saveChanges}
                                         >
                                             <span>
@@ -76,7 +77,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.handleDownload}
                                         >
                                             <span>
@@ -85,7 +86,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.handlePrint}
                                         >
                                             <span>
@@ -98,7 +99,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextOperationsButton"
+                                className="dinolabsIDEOperationsButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -118,11 +119,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "edit" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuVertical"
+                                        className="dinolabsIDEEditingContextMenuVertical"
                                         ref={props.editModalRef}
                                     >
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("undo")}
                                         >
                                             <span>
@@ -131,7 +132,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("redo")}
                                         >
                                             <span>
@@ -140,7 +141,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("cut")}
                                         >
                                             <span>
@@ -149,7 +150,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("copy")}
                                         >
                                             <span>
@@ -158,7 +159,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.handlePaste}
                                         >
                                             <span>
@@ -167,7 +168,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.handleSelectAll}
                                         >
                                             <span>
@@ -176,7 +177,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => {
                                                 props.closeAllMenus();
                                                 props.setShowSearchPanel(true);
@@ -192,7 +193,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextOperationsButton"
+                                className="dinolabsIDEOperationsButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -212,11 +213,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "insert" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuVertical"
+                                        className="dinolabsIDEEditingContextMenuVertical"
                                         ref={props.insertModalRef}
                                     >
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("insertUnorderedList")}
                                         >
                                             <span>
@@ -225,7 +226,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("insertOrderedList")}
                                         >
                                             <span>
@@ -245,15 +246,15 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             interactive
                                             className="context-menu-tippy-vertical"
                                             content={
-                                                <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                    <div className="dinolabsIDETextEditingTableGrid">
+                                                <div className="dinolabsIDEEditingTableGridWrapper">
+                                                    <div className="dinolabsIDEEditingTableGrid">
                                                         {Array.from({ length: 80 }).map((_, idx) => {
                                                             const row = Math.floor(idx / 10) + 1;
                                                             const col = (idx % 10) + 1;
                                                             const active = row <= props.tableRows && col <= props.tableCols;
                                                             return (
                                                                 <div
-                                                                    className="dinolabsIDETextEditingTableGridCells"
+                                                                    className="dinolabsIDEEditingTableGridCells"
                                                                     key={idx}
                                                                     onMouseOver={() => {
                                                                         props.setTableRows(row);
@@ -267,12 +268,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             );
                                                         })}
                                                     </div>
-                                                    <div className="dinolabsIDETextEditingGridLabel">
+                                                    <div className="dinolabsIDEEditingGridLabel">
                                                         {props.tableCols} x {props.tableRows}
                                                     </div>
-                                                    <div className="dinolabsIDETextEditingGridOperationsFlex">
+                                                    <div className="dinolabsIDEEditingGridOperationsFlex">
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy theme="tooltip-light" content="Font Color" placement="bottom">
@@ -293,10 +294,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faFont} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={props.storeSelection}
                                                                             onClick={() => {
                                                                                 props.setIsTableFontColorOpen(prev => !prev);
@@ -311,7 +312,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                 </Tippy>
                                                             </Tippy>
                                                         </div>
-                                                        <div className="dinolabsIDETextEditingInputWrapper">
+                                                        <div className="dinolabsIDEEditingInputWrapper">
                                                             <Tippy  theme="tooltip-light" content="Background Color" placement="bottom">
                                                                 <Tippy
                                                                     content={
@@ -330,10 +331,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faDroplet} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={props.storeSelection}
                                                                             onClick={() => {
                                                                                 props.setIsTableBackgroundColorOpen(prev => !prev);
@@ -348,7 +349,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                 </Tippy>
                                                             </Tippy>
                                                         </div>
-                                                        <div className="dinolabsIDETextEditingInputWrapper">
+                                                        <div className="dinolabsIDEEditingInputWrapper">
                                                             <Tippy  theme="tooltip-light" content="Border Color" placement="bottom">
                                                                 <Tippy
                                                                     content={
@@ -367,10 +368,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faBorderStyle} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={props.storeSelection}
                                                                             onClick={() => {
                                                                                 props.setIsTableBorderColorOpen(prev => !prev);
@@ -386,14 +387,14 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             </Tippy>
                                                         </div>
                                                     </div>
-                                                    <div className="dinolabsIDETextEditingGridOperationsFlex">
+                                                    <div className="dinolabsIDEEditingGridOperationsFlex">
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy content="Border Width" placement="bottom">
                                                                 <select
-                                                                    className="dinolabsIDETextEditingSelect"
+                                                                    className="dinolabsIDEEditingSelect"
                                                                     style={{ border: "none" }}
                                                                     value={props.tableBorderWidth}
                                                                     onMouseDown={props.storeSelection}
@@ -415,7 +416,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             }
                                         >
                                             <button
-                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => {
                                                     props.setOpenTablePicker(prev => !prev);
@@ -445,7 +446,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             interactive
                                             className="context-menu-tippy-vertical"
                                             content={
-                                                <div className="dinolabsIDETextEditingContextMenuVertical">
+                                                <div className="dinolabsIDEEditingContextMenuVertical">
                                                     <Tippy
                                                         visible={props.openMathPicker}
                                                         onClickOutside={() => props.setOpenMathPicker(false)}
@@ -453,12 +454,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         interactive
                                                         className="context-menu-tippy-vertical"
                                                         content={
-                                                            <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                                <div className="dinolabsIDETextEditingTableGrid">
+                                                            <div className="dinolabsIDEEditingTableGridWrapper">
+                                                                <div className="dinolabsIDEEditingTableGrid">
                                                                     {props.mathSymbols.map(symbol => (
                                                                         <div
                                                                             key={symbol}
-                                                                            className="dinolabsIDETextEditingTableGridCells"
+                                                                            className="dinolabsIDEEditingTableGridCells"
                                                                             onMouseDown={e => e.preventDefault()}
                                                                             onClick={() => props.insertSpecialCharacter(symbol)}
                                                                         >
@@ -470,7 +471,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         }
                                                     >
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => {
                                                                 props.setOpenMathPicker(prev => !prev);
@@ -490,12 +491,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         interactive
                                                         className="context-menu-tippy-vertical"
                                                         content={
-                                                            <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                                <div className="dinolabsIDETextEditingTableGrid">
+                                                            <div className="dinolabsIDEEditingTableGridWrapper">
+                                                                <div className="dinolabsIDEEditingTableGrid">
                                                                     {props.latinSymbols.map(symbol => (
                                                                         <div
                                                                             key={symbol}
-                                                                            className="dinolabsIDETextEditingTableGridCells"
+                                                                            className="dinolabsIDEEditingTableGridCells"
                                                                             onMouseDown={e => e.preventDefault()}
                                                                             onClick={() => props.insertSpecialCharacter(symbol)}
                                                                         >
@@ -507,7 +508,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         }
                                                     >
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => {
                                                                 props.setOpenLatinPicker(prev => !prev);
@@ -527,12 +528,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         interactive
                                                         className="context-menu-tippy-vertical"
                                                         content={
-                                                            <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                                <div className="dinolabsIDETextEditingTableGrid">
+                                                            <div className="dinolabsIDEEditingTableGridWrapper">
+                                                                <div className="dinolabsIDEEditingTableGrid">
                                                                     {props.greekSymbols.map(symbol => (
                                                                         <div
                                                                             key={symbol}
-                                                                            className="dinolabsIDETextEditingTableGridCells"
+                                                                            className="dinolabsIDEEditingTableGridCells"
                                                                             onMouseDown={e => e.preventDefault()}
                                                                             onClick={() => props.insertSpecialCharacter(symbol)}
                                                                         >
@@ -544,7 +545,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         }
                                                     >
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => {
                                                                 props.setOpenGreekPicker(prev => !prev);
@@ -564,12 +565,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         interactive
                                                         className="context-menu-tippy-vertical"
                                                         content={
-                                                            <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                                <div className="dinolabsIDETextEditingTableGrid">
+                                                            <div className="dinolabsIDEEditingTableGridWrapper">
+                                                                <div className="dinolabsIDEEditingTableGrid">
                                                                     {props.punctuationSymbols.map(symbol => (
                                                                         <div
                                                                             key={symbol}
-                                                                            className="dinolabsIDETextEditingTableGridCells"
+                                                                            className="dinolabsIDEEditingTableGridCells"
                                                                             onMouseDown={e => e.preventDefault()}
                                                                             onClick={() => props.insertSpecialCharacter(symbol)}
                                                                         >
@@ -581,7 +582,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                         }
                                                     >
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => {
                                                                 props.setOpenPunctuationPicker(prev => !prev);
@@ -598,7 +599,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             }
                                         >
                                             <button
-                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => {
                                                     props.setOpenSpecialCharPicker(prev => !prev);
@@ -617,7 +618,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </button>
                                         </Tippy>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onMouseDown={e => e.preventDefault()}
                                             onClick={() => {
                                                 props.imageInputRef.current.click();
@@ -642,10 +643,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             interactive
                                             className="context-menu-tippy-vertical"
                                             content={
-                                                <div className="dinolabsIDETextEditingTableGridWrapper">
-                                                    <div className="dinolabsIDETextEditingGridOperationsStack">
+                                                <div className="dinolabsIDEEditingTableGridWrapper">
+                                                    <div className="dinolabsIDEEditingGridOperationsStack">
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             style={{ paddingLeft: 0, paddingRight: 0 }}
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => props.insertFormElement("checkbox")}
@@ -653,7 +654,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             <span>Insert Checkbox</span>
                                                         </button>
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             style={{ paddingLeft: 0, paddingRight: 0 }}
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => props.insertFormElement("text")}
@@ -661,7 +662,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             <span>Insert Text Input</span>
                                                         </button>
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             style={{ paddingLeft: 0, paddingRight: 0 }}
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => props.insertFormElement("number")}
@@ -669,7 +670,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             <span>Insert Number Input</span>
                                                         </button>
                                                         <button
-                                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                             style={{ paddingLeft: 0, paddingRight: 0 }}
                                                             onMouseDown={e => e.preventDefault()}
                                                             onClick={() => props.insertFormElement("date")}
@@ -677,9 +678,9 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             <span>Insert Date Picker</span>
                                                         </button>
                                                     </div>
-                                                    <div className="dinolabsIDETextEditingGridOperationsFlex">
+                                                    <div className="dinolabsIDEEditingGridOperationsFlex">
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy   theme="tooltip-light" content="Font Color" placement="bottom">
@@ -700,10 +701,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faFont} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={e => {
                                                                                 e.preventDefault();
                                                                                 props.storeSelection();
@@ -721,7 +722,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                 </Tippy>
                                                             </Tippy>
                                                         </div>
-                                                        <div className="dinolabsIDETextEditingInputWrapper">
+                                                        <div className="dinolabsIDEEditingInputWrapper">
                                                             <Tippy  theme="tooltip-light" content="Background Color" placement="bottom">
                                                                 <Tippy
                                                                     content={
@@ -742,10 +743,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faDroplet} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={e => {
                                                                                 e.preventDefault();
                                                                                 props.storeSelection();
@@ -763,7 +764,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                 </Tippy>
                                                             </Tippy>
                                                         </div>
-                                                        <div className="dinolabsIDETextEditingInputWrapper">
+                                                        <div className="dinolabsIDEEditingInputWrapper">
                                                             <Tippy  theme="tooltip-light" content="Border Color" placement="bottom">
                                                                 <Tippy
                                                                     content={
@@ -782,10 +783,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                                     placement="right"
                                                                     className="color-picker-tippy"
                                                                 >
-                                                                    <div className="dinolabsIDETextColorWrapper">
+                                                                    <div className="dinolabsIDEColorWrapper">
                                                                         <FontAwesomeIcon icon={faBorderStyle} />
                                                                         <label
-                                                                            className="dinolabsIDETextColorPicker"
+                                                                            className="dinolabsIDEColorPicker"
                                                                             onMouseDown={e => {
                                                                                 e.preventDefault();
                                                                                 props.storeSelection();
@@ -804,14 +805,14 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             </Tippy>
                                                         </div>
                                                     </div>
-                                                    <div className="dinolabsIDETextEditingGridOperationsFlex">
+                                                    <div className="dinolabsIDEEditingGridOperationsFlex">
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy content="Border Width" placement="bottom">
                                                                 <select
-                                                                    className="dinolabsIDETextEditingSelect"
+                                                                    className="dinolabsIDEEditingSelect"
                                                                     style={{ border: "none" }}
                                                                     value={props.formElementBorderWidth}
                                                                     onMouseDown={props.storeSelection}
@@ -829,12 +830,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             </Tippy>
                                                         </div>
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy content="Font Size" placement="bottom" theme="tooltip-light">
                                                                 <select
-                                                                    className="dinolabsIDETextEditingSelect"
+                                                                    className="dinolabsIDEEditingSelect"
                                                                     style={{ border: "none" }}
                                                                     value={props.formElementFontSize}
                                                                     onMouseDown={props.storeSelection}
@@ -855,12 +856,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                             </Tippy>
                                                         </div>
                                                         <div
-                                                            className="dinolabsIDETextEditingInputWrapper"
+                                                            className="dinolabsIDEEditingInputWrapper"
                                                             style={{ border: "none" }}
                                                         >
                                                             <Tippy content="Font Weight" placement="bottom" theme="tooltip-light">
                                                                 <select
-                                                                    className="dinolabsIDETextEditingSelect"
+                                                                    className="dinolabsIDEEditingSelect"
                                                                     style={{ border: "none" }}
                                                                     value={props.formElementFontWeight}
                                                                     onMouseDown={props.storeSelection}
@@ -882,7 +883,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             }
                                         >
                                             <button
-                                                className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                                className="dinolabsIDEEditingContextMenuButtonWrapper"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => {
                                                     props.setOpenFormElementsPicker(prev => !prev);
@@ -904,7 +905,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextOperationsButton"
+                                className="dinolabsIDEOperationsButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -924,11 +925,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "format" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuVertical"
+                                        className="dinolabsIDEEditingContextMenuVertical"
                                         ref={props.formatModalRef}
                                     >
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.handleAlign("justifyLeft")}
                                         >
                                             <span>
@@ -937,7 +938,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.handleAlign("justifyCenter")}
                                         >
                                             <span>
@@ -946,7 +947,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.handleAlign("justifyRight")}
                                         >
                                             <span>
@@ -955,7 +956,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.handleAlign("justifyFull")}
                                         >
                                             <span>
@@ -964,7 +965,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("indent")}
                                         >
                                             <span>
@@ -973,7 +974,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             </span>
                                         </button>
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={() => props.execCommand("outdent")}
                                         >
                                             <span>
@@ -986,7 +987,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextOperationsButton"
+                                className="dinolabsIDEOperationsButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -1006,11 +1007,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "tools" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuVertical"
+                                        className="dinolabsIDEEditingContextMenuVertical"
                                         ref={props.toolsModalRef}
                                     >
                                         <button
-                                            className="dinolabsIDETextEditingContextMenuButtonWrapper"
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
                                             onClick={props.handleWordCount}
                                         >
                                             <span>Word Count</span>
@@ -1020,7 +1021,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextOperationsButton"
+                                className="dinolabsIDEOperationsButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -1034,11 +1035,11 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                     </div>
                 </div>
             </div>
-            <div className="dinolabsIDETextEditingButtonsWrapper">
-                <div className="dinolabsIDETextEditingInputWrapper" style={{ borderLeft: "none" }}>
+            <div className="dinolabsIDEEditingButtonsWrapper">
+                <div className="dinolabsIDEEditingInputWrapper" style={{ borderLeft: "none" }}>
                     <Tippy content="Decrease Font Size" placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={props.decreaseFontSize}
                         >
@@ -1046,13 +1047,13 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </button>
                     </Tippy>
                     <input
-                        className="dinolabsIDETextEditingInput"
+                        className="dinolabsIDEEditingInput"
                         value={`${props.currentFontSize}px`}
                         readOnly
                     />
                     <Tippy content="Increase Font Size" placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={props.increaseFontSize}
                         >
@@ -1060,10 +1061,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </button>
                     </Tippy>
                 </div>
-                <div className="dinolabsIDETextEditingInputWrapper">
+                <div className="dinolabsIDEEditingInputWrapper">
                     <Tippy content="Change Font Style" placement="bottom" theme="tooltip-light">
                         <select
-                            className="dinolabsIDETextEditingSelect"
+                            className="dinolabsIDEEditingSelect"
                             value={props.fontStyle}
                             onMouseDown={props.storeSelection}
                             onChange={props.handleFontStyleChange}
@@ -1075,10 +1076,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </select>
                     </Tippy>
                 </div>
-                <div className="dinolabsIDETextEditingInputWrapper">
+                <div className="dinolabsIDEEditingInputWrapper">
                     <Tippy content="Change Font Type" placement="bottom" theme="tooltip-light">
                         <select
-                            className="dinolabsIDETextEditingSelect"
+                            className="dinolabsIDEEditingSelect"
                             value={props.fontType}
                             onMouseDown={props.storeSelection}
                             onChange={props.handleFontTypeChange}
@@ -1091,37 +1092,37 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </select>
                     </Tippy>
                 </div>
-                <div className="dinolabsIDETextEditingInputWrapper">
-                    <Tippy content="Bold Text" placement="bottom" theme="tooltip-light">
+                <div className="dinolabsIDEEditingInputWrapper">
+                    <Tippy content="Bold " placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => props.execCommand("bold")}
                         >
                             <FontAwesomeIcon icon={faBold} />
                         </button>
                     </Tippy>
-                    <Tippy content="Italicize Text" placement="bottom" theme="tooltip-light">
+                    <Tippy content="Italicize " placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => props.execCommand("italic")}
                         >
                             <FontAwesomeIcon icon={faItalic} />
                         </button>
                     </Tippy>
-                    <Tippy content="Underline Text" placement="bottom" theme="tooltip-light">
+                    <Tippy content="Underline " placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => props.execCommand("underline")}
                         >
                             <FontAwesomeIcon icon={faUnderline} />
                         </button>
                     </Tippy>
-                    <Tippy content="Strikethrough Text" placement="bottom" theme="tooltip-light">
+                    <Tippy content="Strikethrough " placement="bottom" theme="tooltip-light">
                         <button
-                            className="dinolabsIDETextEditingButton"
+                            className="dinolabsIDEEditingButton"
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => props.execCommand("strikeThrough")}
                         >
@@ -1129,7 +1130,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </button>
                     </Tippy>
                 </div>
-                <div className="dinolabsIDETextEditingInputWrapper">
+                <div className="dinolabsIDEEditingInputWrapper">
                     <Tippy content="Alignment Options" placement="bottom" theme="tooltip-light">
                         <Tippy
                             visible={props.openModal === "align"}
@@ -1140,12 +1141,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "align" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuHorizontal"
+                                        className="dinolabsIDEEditingContextMenuHorizontal"
                                         ref={props.alignModalRef}
                                     >
                                         <Tippy content="Align Left" placement="bottom">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleAlign("justifyLeft")}
                                             >
@@ -1154,7 +1155,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Align Center" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleAlign("justifyCenter")}
                                             >
@@ -1163,7 +1164,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Align Right" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleAlign("justifyRight")}
                                             >
@@ -1172,7 +1173,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Justify Full" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleAlign("justifyFull")}
                                             >
@@ -1181,7 +1182,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Indent" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.execCommand("indent")}
                                             >
@@ -1190,7 +1191,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Outdent" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.execCommand("outdent")}
                                             >
@@ -1202,7 +1203,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextEditingButton"
+                                className="dinolabsIDEEditingButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -1224,12 +1225,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "lineSpacing" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuHorizontal"
+                                        className="dinolabsIDEEditingContextMenuHorizontal"
                                         ref={props.lineSpacingModalRef}
                                     >
                                         <Tippy content="1x" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleLineSpacing("1")}
                                             >
@@ -1238,7 +1239,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="1.5x" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleLineSpacing("1.5")}
                                             >
@@ -1247,7 +1248,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="2x" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleLineSpacing("2")}
                                             >
@@ -1256,7 +1257,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="2.5x" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleLineSpacing("2.5")}
                                             >
@@ -1265,7 +1266,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="3x" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.handleLineSpacing("3")}
                                             >
@@ -1277,7 +1278,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextEditingButton"
+                                className="dinolabsIDEEditingButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -1299,12 +1300,12 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "lists" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuHorizontal"
+                                        className="dinolabsIDEEditingContextMenuHorizontal"
                                         ref={props.listModalRef}
                                     >
                                         <Tippy content="Bullet List" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.execCommand("insertUnorderedList")}
                                             >
@@ -1313,7 +1314,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                         </Tippy>
                                         <Tippy content="Numbered List" placement="bottom" theme="tooltip-light">
                                             <button
-                                                className="dinolabsIDETextEditingButton"
+                                                className="dinolabsIDEEditingButton"
                                                 onMouseDown={e => e.preventDefault()}
                                                 onClick={() => props.execCommand("insertOrderedList")}
                                             >
@@ -1325,7 +1326,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextEditingButton"
+                                className="dinolabsIDEEditingButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
@@ -1338,7 +1339,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                         </Tippy>
                     </Tippy>
                 </div>
-                <div className="dinolabsIDETextEditingInputWrapper">
+                <div className="dinolabsIDEEditingInputWrapper">
                     <Tippy content="More Options" placement="bottom" theme="tooltip-light">
                         <Tippy
                             visible={props.openModal === "more"}
@@ -1351,38 +1352,38 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             content={
                                 props.openModal === "more" && (
                                     <div
-                                        className="dinolabsIDETextEditingContextMenuHorizontal"
+                                        className="dinolabsIDEEditingContextMenuHorizontal"
                                         ref={props.moreModalRef}
                                     >
                                         <div
-                                            className="dinolabsIDETextEditingInputWrapper"
+                                            className="dinolabsIDEEditingInputWrapper"
                                             style={{ border: "none" }}
                                         >
-                                            <Tippy content="Text Color" placement="bottom" theme="tooltip-light">
+                                            <Tippy content=" Color" placement="bottom" theme="tooltip-light">
                                                 <Tippy
                                                     content={
                                                         <DinoLabsIDEColorPicker
                                                             color={props.textColor}
                                                             onChange={color => {
                                                                 props.restoreSelection();
-                                                                props.handleTextColorChange(color);
+                                                                props.handleColorChange(color);
                                                             }}
                                                         />
                                                     }
-                                                    visible={props.isTextColorOpen}
-                                                    onClickOutside={() => props.setIsTextColorOpen(false)}
+                                                    visible={props.isColorOpen}
+                                                    onClickOutside={() => props.setIsColorOpen(false)}
                                                     interactive
                                                     placement="right"
                                                     className="color-picker-tippy"
                                                 >
-                                                    <div className="dinolabsIDETextColorWrapper">
+                                                    <div className="dinolabsIDEColorWrapper">
                                                         <FontAwesomeIcon icon={faDroplet} />
                                                         <label
-                                                            className="dinolabsIDETextColorPicker"
+                                                            className="dinolabsIDEColorPicker"
                                                             onMouseDown={props.storeSelection}
                                                             onClick={() => {
-                                                                props.setIsTextColorOpen(prev => !prev);
-                                                                props.setIsTextHighlightColorOpen(false);
+                                                                props.setIsColorOpen(prev => !prev);
+                                                                props.setIsHighlightColorOpen(false);
                                                             }}
                                                             style={{
                                                                 backgroundColor: props.textColor
@@ -1392,32 +1393,32 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                 </Tippy>
                                             </Tippy>
                                         </div>
-                                        <div className="dinolabsIDETextEditingInputWrapper">
-                                            <Tippy content="Text Highlight Color" placement="bottom" theme="tooltip-light">
+                                        <div className="dinolabsIDEEditingInputWrapper">
+                                            <Tippy content=" Highlight Color" placement="bottom" theme="tooltip-light">
                                                 <Tippy
                                                     content={
                                                         <DinoLabsIDEColorPicker
                                                             color={props.textHighlightColor}
                                                             onChange={color => {
                                                                 props.restoreSelection();
-                                                                props.handleTextHighlightColorChange(color);
+                                                                props.handleHighlightColorChange(color);
                                                             }}
                                                         />
                                                     }
-                                                    visible={props.isTextHighlightColorOpen}
-                                                    onClickOutside={() => props.setIsTextHighlightColorOpen(false)}
+                                                    visible={props.isHighlightColorOpen}
+                                                    onClickOutside={() => props.setIsHighlightColorOpen(false)}
                                                     interactive
                                                     placement="right"
                                                     className="color-picker-tippy"
                                                 >
-                                                    <div className="dinolabsIDETextColorWrapper">
+                                                    <div className="dinolabsIDEColorWrapper">
                                                         <FontAwesomeIcon icon={faHighlighter} />
                                                         <label
-                                                            className="dinolabsIDETextColorPicker"
+                                                            className="dinolabsIDEColorPicker"
                                                             onMouseDown={props.storeSelection}
                                                             onClick={() => {
-                                                                props.setIsTextHighlightColorOpen(prev => !prev);
-                                                                props.setIsTextColorOpen(false);
+                                                                props.setIsHighlightColorOpen(prev => !prev);
+                                                                props.setIsColorOpen(false);
                                                             }}
                                                             style={{
                                                                 backgroundColor: props.textHighlightColor
@@ -1427,10 +1428,10 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                                 </Tippy>
                                             </Tippy>
                                         </div>
-                                        <div className="dinolabsIDETextEditingInputWrapper">
+                                        <div className="dinolabsIDEEditingInputWrapper">
                                             <Tippy content="Remove Formatting" placement="bottom" theme="tooltip-light">
                                                 <button
-                                                    className="dinolabsIDETextEditingButton"
+                                                    className="dinolabsIDEEditingButton"
                                                     onMouseDown={e => e.preventDefault()}
                                                     onClick={props.handleRemoveFormatting}
                                                 >
@@ -1443,7 +1444,7 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                             }
                         >
                             <button
-                                className="dinolabsIDETextEditingButton"
+                                className="dinolabsIDEEditingButton"
                                 onMouseDown={e => {
                                     e.preventDefault();
                                     props.storeSelection();
