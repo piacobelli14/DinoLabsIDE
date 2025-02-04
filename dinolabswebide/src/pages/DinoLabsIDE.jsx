@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
+import DinoLabsIDETabularEditor from "./DinoLabsIDETabular/DinoLabsIDETabularEditor.jsx"; 
 import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor/DinoLabsIDERichTextEditor.jsx"; 
 import DinoLabsIDEPDFEditor from "./DinoLabsIDEText/DinoLabsIDEPDFEditor.jsx"; 
 import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
@@ -158,6 +159,10 @@ const mediaExtensions = {
   video: ['mp4', 'mkv', 'avi', 'mov', 'webm'],
   audio: ['mp3', 'wav', 'flac']
 };
+
+const tabularExtensions = {
+  tabular: ['csv']
+}; 
 
 const getFileIcon = (filename) => {
   let extension;
@@ -2288,6 +2293,10 @@ const DinoLabsIDE = () => {
 
                                     {(['pdf'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEPDFEditor fileHandle={tab.fileHandle} />
+                                    )}
+
+                                    {(['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDETabularEditor fileHandle={tab.fileHandle} />
                                     )}
 
                                     {([
