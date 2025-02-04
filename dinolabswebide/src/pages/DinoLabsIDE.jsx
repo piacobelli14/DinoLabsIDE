@@ -3,7 +3,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDETabularEditor from "./DinoLabsIDETabular/DinoLabsIDETabularEditor.jsx"; 
-import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor/DinoLabsIDERichTextEditor.jsx"; 
+import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor.jsx"; 
 import DinoLabsIDEPDFEditor from "./DinoLabsIDEText/DinoLabsIDEPDFEditor.jsx"; 
 import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
 import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor.jsx"; 

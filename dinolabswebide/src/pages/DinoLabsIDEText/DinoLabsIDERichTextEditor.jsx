@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import "../../../styles/mainStyles/DinoLabsIDEContent.css";
-import "../../../styles/mainStyles/DinoLabsIDE.css";
-import "../../../styles/helperStyles/Checkbox.css";
-import DinoLabsIDEColorPicker from "../../DinoLabsIDEColorPicker.jsx";
-import { showDialog } from "../../DinoLabsIDEAlert.jsx";
+import "../../styles/mainStyles/DinoLabsIDEContent.css";
+import "../../styles/mainStyles/DinoLabsIDE.css";
+import "../../styles/helperStyles/Checkbox.css";
+import DinoLabsIDEColorPicker from "../DinoLabsIDEColorPicker.jsx";
+import { showDialog } from "../DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,7 +53,7 @@ import {
     faXmarkSquare,
     faArrowRightFromBracket
 } from "@fortawesome/free-solid-svg-icons";
-import DinoLabsIDERichTextEditorToolbar from "./DinoLabsIDERichTextEditorToolbar";
+import DinoLabsIDERichTextEditorToolbar from "./DinoLabsIDERichTextEditorToolbar.jsx";
 
 const styleMap = {
     H1: { fontSize: "32px", fontWeight: "bold" },
@@ -1090,7 +1090,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
 
     return (
-        <div className="dinolabsIDEWrapper">
+        <div className="dinolabsIDEContentWrapper">
             <input
                 type="file"
                 accept="image/*"

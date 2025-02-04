@@ -1,8 +1,8 @@
 import React from "react";
-import "../../../styles/mainStyles/DinoLabsIDEContent.css";
+import "../../styles/mainStyles/DinoLabsIDEContent.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-import DinoLabsIDEColorPicker from "../../DinoLabsIDEColorPicker.jsx";
+import DinoLabsIDEColorPicker from "../DinoLabsIDEColorPicker.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faAlignCenter,
