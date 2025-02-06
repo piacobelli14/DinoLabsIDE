@@ -3,6 +3,8 @@ import "../../styles/mainStyles/DinoLabsIDEContent.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import DinoLabsIDEColorPicker from "../DinoLabsIDEColorPicker.jsx";
 import {
     faSave,
     faDownload,
@@ -17,7 +19,18 @@ import {
     faPenToSquare,
     faAlignLeft,
     faAlignCenter,
-    faAlignRight
+    faAlignRight,
+    faMinus,
+    faPlus,
+    faBarsStaggered,
+    faBold,
+    faItalic,
+    faUnderline,
+    faStrikethrough,
+    faEraser,
+    faDroplet,
+    faHighlighter,
+    faEllipsisV
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDETabularEditorToolbar({
@@ -44,7 +57,27 @@ export default function DinoLabsIDETabularEditorToolbar({
     toolsModalRef,
     toolsButtonRef,
     handleAlign,
-    handleWordCount
+    handleWordCount,
+    decreaseZoom,
+    increaseZoom,
+    currentZoom,
+    fontType,
+    handleFontTypeChange,
+    execCommand,
+    isColorOpen,
+    setIsColorOpen,
+    isHighlightColorOpen,
+    setIsHighlightColorOpen,
+    handleColorChange,
+    textColor,
+    handleHighlightColorChange,
+    textHighlightColor,
+    handleRemoveFormatting,
+    alignModalRef,
+    alignButtonRef,
+    moreModalRef,
+    moreButtonRef,
+    restoreSelection
 }) {
     const callActionAndBlur = (action) => {
         action();
@@ -320,6 +353,227 @@ export default function DinoLabsIDETabularEditorToolbar({
                     </div>
                 </div>
             </div>
+            <div className="dinolabsIDEEditingButtonsWrapper">
+                    <div className="dinolabsIDEEditingInputWrapper" style={{ borderLeft: "none" }}>
+                        <Tippy content="Decrease Zoom" placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={decreaseZoom}
+                            >
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                        </Tippy>
+                        <input
+                            className="dinolabsIDEEditingInput"
+                            value={`${currentZoom}%`}
+                            readOnly
+                        />
+                        <Tippy content="Increase Zoom" placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={increaseZoom}
+                            >
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Change Font Type" placement="bottom" theme="tooltip-light">
+                            <select
+                                className="dinolabsIDEEditingSelect"
+                                value={fontType}
+                                onMouseDown={storeSelection}
+                                onChange={handleFontTypeChange}
+                            >
+                                <option value="Arial">Arial</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Georgia">Georgia</option>
+                            </select>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Bold " placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => execCommand("bold")}
+                            >
+                                <FontAwesomeIcon icon={faBold} />
+                            </button>
+                        </Tippy>
+                        <Tippy content="Italicize " placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => execCommand("italic")}
+                            >
+                                <FontAwesomeIcon icon={faItalic} />
+                            </button>
+                        </Tippy>
+                        <Tippy content="Underline " placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => execCommand("underline")}
+                            >
+                                <FontAwesomeIcon icon={faUnderline} />
+                            </button>
+                        </Tippy>
+                        <Tippy content="Strikethrough " placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => execCommand("strikeThrough")}
+                            >
+                                <FontAwesomeIcon icon={faStrikethrough} />
+                            </button>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Alignment Options" placement="bottom" theme="tooltip-light">
+                            <Tippy
+                                visible={openModal === "align"}
+                                onClickOutside={() => closeAllMenus()}
+                                placement="bottom"
+                                interactive
+                                className="context-menu-tippy-horizontal"
+                                content={
+                                    openModal === "align" && (
+                                        <div
+                                            className="dinolabsIDEEditingContextMenuHorizontal"
+                                            ref={alignModalRef}
+                                        >
+                                            <Tippy content="Align Left" placement="bottom">
+                                                <button
+                                                    className="dinolabsIDEEditingButton"
+                                                    onMouseDown={e => e.preventDefault()}
+                                                    onClick={() => handleAlign("justifyLeft")}
+                                                >
+                                                    <FontAwesomeIcon icon={faAlignLeft} />
+                                                </button>
+                                            </Tippy>
+                                            <Tippy content="Align Center" placement="bottom" theme="tooltip-light">
+                                                <button
+                                                    className="dinolabsIDEEditingButton"
+                                                    onMouseDown={e => e.preventDefault()}
+                                                    onClick={() => handleAlign("justifyCenter")}
+                                                >
+                                                    <FontAwesomeIcon icon={faAlignCenter} />
+                                                </button>
+                                            </Tippy>
+                                            <Tippy content="Align Right" placement="bottom" theme="tooltip-light">
+                                                <button
+                                                    className="dinolabsIDEEditingButton"
+                                                    onMouseDown={e => e.preventDefault()}
+                                                    onClick={() => handleAlign("justifyRight")}
+                                                >
+                                                    <FontAwesomeIcon icon={faAlignRight} />
+                                                </button>
+                                            </Tippy>
+                                        </div>
+                                    )
+                                }
+                            >
+                                <button
+                                    className="dinolabsIDEEditingButton"
+                                    onMouseDown={e => {
+                                        e.preventDefault();
+                                        storeSelection();
+                                    }}
+                                    onClick={() => toggleModal("align")}
+                                    ref={alignButtonRef}
+                                >
+                                    <FontAwesomeIcon icon={faBarsStaggered} />
+                                </button>
+                            </Tippy>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Text Color" placement="bottom" theme="tooltip-light">
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={textColor}
+                                        onChange={color => {
+                                            restoreSelection();
+                                            handleColorChange(color);
+                                        }}
+                                    />
+                                }
+                                visible={isColorOpen}
+                                onClickOutside={() => setIsColorOpen(false)}
+                                interactive
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <div className="dinolabsIDEColorWrapper">
+                                    <FontAwesomeIcon icon={faDroplet} />
+                                    <label
+                                        className="dinolabsIDEColorPicker"
+                                        onMouseDown={storeSelection}
+                                        onClick={() => {
+                                            setIsColorOpen(prev => !prev);
+                                            setIsHighlightColorOpen(false);
+                                        }}
+                                        style={{
+                                            backgroundColor: textColor
+                                        }}
+                                    />
+                                </div>
+                            </Tippy>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Highlight Color" placement="bottom" theme="tooltip-light">
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={textHighlightColor}
+                                        onChange={color => {
+                                            restoreSelection();
+                                            handleHighlightColorChange(color);
+                                        }}
+                                    />
+                                }
+                                visible={isHighlightColorOpen}
+                                onClickOutside={() => setIsHighlightColorOpen(false)}
+                                interactive
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <div className="dinolabsIDEColorWrapper">
+                                    <FontAwesomeIcon icon={faHighlighter} />
+                                    <label
+                                        className="dinolabsIDEColorPicker"
+                                        onMouseDown={storeSelection}
+                                        onClick={() => {
+                                            setIsHighlightColorOpen(prev => !prev);
+                                            setIsColorOpen(false);
+                                        }}
+                                        style={{
+                                            backgroundColor: textHighlightColor
+                                        }}
+                                    />
+                                </div>
+                            </Tippy>
+                        </Tippy>
+                    </div>
+                    <div className="dinolabsIDEEditingInputWrapper">
+                        <Tippy content="Remove Formatting" placement="bottom" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEEditingButton"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={handleRemoveFormatting}
+                            >
+                                <FontAwesomeIcon icon={faEraser} />
+                            </button>
+                        </Tippy>
+                    </div>
+                </div>
         </div>
     );
 }

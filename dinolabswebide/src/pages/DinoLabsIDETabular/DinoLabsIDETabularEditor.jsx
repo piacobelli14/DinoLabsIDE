@@ -110,6 +110,119 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const columnHeaderRef = useRef(null);
     const rowHeaderRef = useRef(null);
     const [headerDrag, setHeaderDrag] = useState(null);
+    const [pageZoom, setPageZoom] = useState(100);
+    const [fontType, setFontType] = useState("Arial");
+    const [textColor, setTextColor] = useState("#f5f5f5");
+    const [textHighlightColor, setTextHighlightColor] = useState("transparent");
+    const [isColorOpen, setIsColorOpen] = useState(false);
+    const [isHighlightColorOpen, setIsHighlightColorOpen] = useState(false);
+    const alignModalRef = useRef(null);
+    const alignButtonRef = useRef(null);
+    const moreModalRef = useRef(null);
+    const moreButtonRef = useRef(null);
+
+    const decreaseZoom = () => setPageZoom(prev => Math.max(prev - 10, 10));
+    const increaseZoom = () => setPageZoom(prev => prev + 10);
+
+    const handleFontTypeChange = (e) => {
+        const newFontType = e.target.value;
+        setFontType(newFontType);
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prevFormats) => {
+            const newFormats = { ...prevFormats };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    const current = newFormats[key] || {};
+                    newFormats[key] = { ...current, fontFamily: newFontType };
+                }
+            }
+            return newFormats;
+        });
+    };
+
+    const execCommand = (command) => {
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prev) => {
+            const newFormats = { ...prev };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    const current = newFormats[key] || {};
+                    switch (command) {
+                        case "bold":
+                            newFormats[key] = { ...current, fontWeight: current.fontWeight === "bold" ? "normal" : "bold" };
+                            break;
+                        case "italic":
+                            newFormats[key] = { ...current, fontStyle: current.fontStyle === "italic" ? "normal" : "italic" };
+                            break;
+                        case "underline":
+                            newFormats[key] = { ...current, textDecoration: current.textDecoration === "underline" ? "none" : "underline" };
+                            break;
+                        case "strikeThrough":
+                            newFormats[key] = { ...current, textDecoration: current.textDecoration === "line-through" ? "none" : "line-through" };
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return newFormats;
+        });
+    };
+
+    const handleColorChange = (color) => {
+        setTextColor(color);
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prevFormats) => {
+             const newFormats = { ...prevFormats };
+             for (let r = sel.top; r <= sel.bottom; r++) {
+                 for (let c = sel.left; c <= sel.right; c++) {
+                     const key = `${r},${c}`;
+                     const current = newFormats[key] || {};
+                     newFormats[key] = { ...current, color: color };
+                 }
+             }
+             return newFormats;
+        });
+    };
+
+    const handleHighlightColorChange = (color) => {
+        setTextHighlightColor(color);
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prevFormats) => {
+             const newFormats = { ...prevFormats };
+             for (let r = sel.top; r <= sel.bottom; r++) {
+                 for (let c = sel.left; c <= sel.right; c++) {
+                     const key = `${r},${c}`;
+                     const current = newFormats[key] || {};
+                     newFormats[key] = { ...current, backgroundColor: color };
+                 }
+             }
+             return newFormats;
+        });
+    };
+
+    const handleRemoveFormatting = () => {
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prev) => {
+            const newFormats = { ...prev };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    newFormats[key] = {};
+                }
+            }
+            return newFormats;
+        });
+    };
+
+    const restoreSelection = () => {
+        if (storedSelectionRef.current) {
+            setSelection(storedSelectionRef.current);
+            storedSelectionRef.current = null;
+        }
+    };
 
     useEffect(() => {
         async function loadFile() {
@@ -211,7 +324,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     if (selection) {
                         setKeybindLoading(true);
                         try {
-                            await handlePaste();
+                            await Promise.resolve(handlePaste());
                         } finally {
                             setKeybindLoading(false);
                         }
@@ -653,14 +766,26 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     function handleCellMouseUp(rowIndex, colIndex, e) {
         setCellDrag((prev) => {
             if (prev.active && !prev.selecting) {
-                setSelection({
-                    top: rowIndex,
-                    left: colIndex,
-                    bottom: rowIndex,
-                    right: colIndex
-                });
-                setActiveCell({ row: rowIndex, col: colIndex });
-                setCellEditingValue(tableDataRef.current[`${rowIndex},${colIndex}`] || "");
+                if (
+                    selection &&
+                    rowIndex >= selection.top &&
+                    rowIndex <= selection.bottom &&
+                    colIndex >= selection.left &&
+                    colIndex <= selection.right
+                ) {
+                    setSelection(null);
+                    setActiveCell({ row: null, col: null });
+                    setCellEditingValue("");
+                } else {
+                    setSelection({
+                        top: rowIndex,
+                        left: colIndex,
+                        bottom: rowIndex,
+                        right: colIndex
+                    });
+                    setActiveCell({ row: rowIndex, col: colIndex });
+                    setCellEditingValue(tableDataRef.current[`${rowIndex},${colIndex}`] || "");
+                }
             }
             return {
                 active: false,
@@ -800,17 +925,17 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             activeCell.row === rowIndex && activeCell.col === columnIndex;
         const isSelected = isCellInSelection(rowIndex, columnIndex);
         const searchHighlightStatus = isCellHighlightedBySearch(rowIndex, columnIndex);
-        let backgroundColor = "transparent";
+        const cellFormat = cellFormats[key] || {};
+        let backgroundColor = cellFormat.backgroundColor || "transparent";
         if (searchHighlightStatus === "matched") {
             backgroundColor = "rgba(255,255,0,0.2)";
         } else if (searchHighlightStatus === "current") {
             backgroundColor = "rgba(255,255,0,0.5)";
-        } else if (isSelected && !cellIsActive) {
+        } else if (!cellFormat.backgroundColor && isSelected && !cellIsActive) {
             backgroundColor = "rgba(255,255,255,0.1)";
         }
         const outline = cellIsActive ? "0.2vh solid #008000" : "0.2vh solid transparent";
         const cellValue = tableDataRef.current[key] || "";
-        const cellFormat = cellFormats[key] || {};
         return (
             <div
                 style={{
@@ -1274,7 +1399,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             className="dinolabsIDEContentWrapper"
             onClick={(e) => {
                 if (e.detail > 1) return;
-                if (activeCell.row !== null || activeCell.col !== null) {
+                if (activeCell.row === null && activeCell.col === null && selection) {
+                    setSelection(null);
+                } else if (activeCell.row !== null || activeCell.col !== null) {
                     const cell = e.target.closest(".dinolabsIDETableCell");
                     const input = e.target.closest(".dinolabsIDETableCellInput");
                     if (!cell && !input) {
@@ -1313,211 +1440,236 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 toolsButtonRef={toolsButtonRef}
                 handleAlign={handleAlign}
                 handleWordCount={handleWordCount}
+                decreaseZoom={decreaseZoom}
+                increaseZoom={increaseZoom}
+                currentZoom={pageZoom}
+                fontType={fontType}
+                handleFontTypeChange={handleFontTypeChange}
+                execCommand={execCommand}
+                isColorOpen={isColorOpen}
+                setIsColorOpen={setIsColorOpen}
+                isHighlightColorOpen={isHighlightColorOpen}
+                setIsHighlightColorOpen={setIsHighlightColorOpen}
+                handleColorChange={handleColorChange}
+                textColor={textColor}
+                handleHighlightColorChange={handleHighlightColorChange}
+                textHighlightColor={textHighlightColor}
+                handleRemoveFormatting={handleRemoveFormatting}
+                alignModalRef={alignModalRef}
+                alignButtonRef={alignButtonRef}
+                moreModalRef={moreModalRef}
+                moreButtonRef={moreButtonRef}
+                restoreSelection={restoreSelection}
             />
-            <div
-                className="dinolabsIDETableWrapper"
-                onSelectStart={(e) => e.preventDefault()}
-                onMouseDown={(e) => {
-                    if (e.target.tagName !== "INPUT") {
-                        if (window.getSelection) {
-                            window.getSelection().removeAllRanges();
-                        }
-                    }
-                }}
-                onMouseDownCapture={(e) => {
-                    if (e.target.tagName !== "INPUT") {
-                        if (window.getSelection) {
-                            window.getSelection().removeAllRanges();
-                        }
-                    }
-                }}
-                onDragStart={(e) => {
-                    if (e.target.tagName !== "INPUT") {
-                        e.preventDefault();
-                    }
-                }}
-            >
-                {loading && <div className="dinolabsIDETableLoadingMessage">Loading...</div>}
-                {error && <div className="dinolabsIDETableErrorMessage">{error}</div>}
-                <div
-                    className="dinolabsIDETableCornerHeader"
-                    style={{ zIndex: 10 }}
-                    onMouseDown={(e) => {
-                        commitActiveCellIfNeeded();
-                        if (
-                            selection &&
-                            selection.top === 0 &&
-                            selection.left === 0 &&
-                            selection.bottom === DATA_ROW_COUNT - 1 &&
-                            selection.right === DATA_COL_COUNT - 1
-                        ) {
-                            setSelection(null);
-                        } else {
-                            setSelection({
-                                top: 0,
-                                left: 0,
-                                bottom: DATA_ROW_COUNT - 1,
-                                right: DATA_COL_COUNT - 1
-                            });
-                        }
-                        e.preventDefault();
-                    }}
-                />
-                <div
-                    ref={columnHeaderRef}
-                    style={{ zIndex: 10 }}
-                    onMouseMove={handleColumnHeaderMouseMove}
-                    onMouseUp={handleColumnHeaderMouseUp}
-                    className="dinolabsIDETableColumnHeaderContainer"
-                >
+            <div className="dinolabsIDETableWrapperContainer" style={{ position: "relative", width: "100%", height: "100%" }}>
+                <div style={{ width: `${100 * 100 / pageZoom}%`, height: `${100 * 100 / pageZoom}%` }}>
                     <div
-                        className="dinolabsIDETableColumnHeaderContent"
-                        style={{ width: sumRange(colWidths, 0, DATA_COL_COUNT) }}
+                        className="dinolabsIDETableWrapper"
+                        style={{ transform: `scale(${pageZoom / 100})`, transformOrigin: "top left" }}
+                        onSelectStart={(e) => e.preventDefault()}
+                        onMouseDown={(e) => {
+                            if (e.target.tagName !== "INPUT") {
+                                if (window.getSelection) {
+                                    window.getSelection().removeAllRanges();
+                                }
+                            }
+                        }}
+                        onMouseDownCapture={(e) => {
+                            if (e.target.tagName !== "INPUT") {
+                                if (window.getSelection) {
+                                    window.getSelection().removeAllRanges();
+                                }
+                            }
+                        }}
+                        onDragStart={(e) => {
+                            if (e.target.tagName !== "INPUT") {
+                                e.preventDefault();
+                            }
+                        }}
                     >
-                        {Array.from({ length: DATA_COL_COUNT }).map((_, colIndex) => {
-                            const leftOffset = sumRange(colWidths, 0, colIndex);
-                            const width = colWidths[colIndex];
-                            const label = getColumnLabel(colIndex);
-                            const isSelectedHeader =
-                                selection &&
-                                colIndex >= selection.left &&
-                                colIndex <= selection.right &&
-                                selection.top === 0 &&
-                                selection.bottom === DATA_ROW_COUNT - 1;
-                            return (
-                                <div
-                                    key={colIndex}
-                                    className="dinolabsIDETableColumnHeaderCell"
-                                    style={{
-                                        left: leftOffset,
-                                        width: width,
-                                        backgroundColor: isSelectedHeader ? "#444" : "#333"
-                                    }}
-                                    onMouseDown={(e) => handleColumnHeaderMouseDown(e, colIndex)}
-                                >
-                                    {label}
-                                    <div
-                                        className="dinolabsIDETableColumnHeaderResizeHandle"
-                                        onMouseDown={(e) => startResizingCol(colIndex, e)}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-                <div
-                    ref={rowHeaderRef}
-                    style={{ zIndex: 10 }}
-                    onMouseMove={handleRowHeaderMouseMove}
-                    onMouseUp={handleRowHeaderMouseUp}
-                    className="dinolabsIDETableRowHeaderContainer"
-                >
-                    <div
-                        className="dinolabsIDETableRowHeaderContent"
-                        style={{ height: sumRange(rowHeights, 0, DATA_ROW_COUNT) }}
-                    >
-                        {Array.from({ length: DATA_ROW_COUNT }).map((_, rowIndex) => {
-                            const topOffset = sumRange(rowHeights, 0, rowIndex);
-                            const height = rowHeights[rowIndex];
-                            const isSelectedRow =
-                                selection &&
-                                rowIndex >= selection.top &&
-                                rowIndex <= selection.bottom &&
-                                selection.left === 0 &&
-                                selection.right === DATA_COL_COUNT - 1;
-                            return (
-                                <div
-                                    key={rowIndex}
-                                    className="dinolabsIDETableRowHeaderCell"
-                                    style={{
-                                        top: topOffset,
-                                        height: height,
-                                        backgroundColor: isSelectedRow ? "#3a3a3a" : "#2c2c2c"
-                                    }}
-                                    onMouseDown={(e) => handleRowHeaderMouseDown(e, rowIndex)}
-                                >
-                                    {rowIndex + 1}
-                                    <div
-                                        className="dinolabsIDETableRowHeaderResizeHandle"
-                                        onMouseDown={(e) => startResizingRow(rowIndex, e)}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-                <div ref={gridContainerRef} className="dinolabsIDETableGridContainer">
-                    <AutoSizer>
-                        {({ width, height }) => (
-                            <Grid
-                                ref={dataGridRef}
-                                columnCount={DATA_COL_COUNT}
-                                rowCount={DATA_ROW_COUNT}
-                                columnWidth={(index) => colWidths[index]}
-                                rowHeight={(index) => rowHeights[index]}
-                                width={width}
-                                height={height}
-                                onScroll={({ scrollLeft: sl, scrollTop: st }) => {
-                                    if (
-                                        columnHeaderRef.current &&
-                                        columnHeaderRef.current.firstChild
-                                    ) {
-                                        columnHeaderRef.current.firstChild.style.transform =
-                                            `translateX(${-sl}px)`;
-                                    }
-                                    if (
-                                        rowHeaderRef.current &&
-                                        rowHeaderRef.current.firstChild
-                                    ) {
-                                        rowHeaderRef.current.firstChild.style.transform =
-                                            `translateY(${-st}px)`;
-                                    }
-                                    scrollPos.current.left = sl;
-                                    scrollPos.current.top = st;
-                                    if (selection && selectionOverlayRef.current) {
-                                        const newTop =
-                                            sumRange(rowHeights, 0, selection.top) - st;
-                                        const newLeft =
-                                            sumRange(colWidths, 0, selection.left) - sl;
-                                        selectionOverlayRef.current.style.top = `${newTop}px`;
-                                        selectionOverlayRef.current.style.left = `${newLeft}px`;
-                                    }
-                                }}
-                            >
-                                {renderDataCell}
-                            </Grid>
-                        )}
-                    </AutoSizer>
-                    {selection && (
-                        <div style={{ position: "absolute", top: 0, left: 0 }}>
+                        {loading && <div className="dinolabsIDETableLoadingMessage">Loading...</div>}
+                        {error && <div className="dinolabsIDETableErrorMessage">{error}</div>}
+                        <div
+                            className="dinolabsIDETableCornerHeader"
+                            style={{ zIndex: 10 }}
+                            onMouseDown={(e) => {
+                                commitActiveCellIfNeeded();
+                                if (
+                                    selection &&
+                                    selection.top === 0 &&
+                                    selection.left === 0 &&
+                                    selection.bottom === DATA_ROW_COUNT - 1 &&
+                                    selection.right === DATA_COL_COUNT - 1
+                                ) {
+                                    setSelection(null);
+                                } else {
+                                    setSelection({
+                                        top: 0,
+                                        left: 0,
+                                        bottom: DATA_ROW_COUNT - 1,
+                                        right: DATA_COL_COUNT - 1
+                                    });
+                                }
+                                e.preventDefault();
+                            }}
+                        />
+                        <div
+                            ref={columnHeaderRef}
+                            style={{ zIndex: 10 }}
+                            onMouseMove={handleColumnHeaderMouseMove}
+                            onMouseUp={handleColumnHeaderMouseUp}
+                            className="dinolabsIDETableColumnHeaderContainer"
+                        >
                             <div
-                                ref={selectionOverlayRef}
-                                className="dinolabsIDETableSelectionOverlay"
-                                style={{ ...overlayDynamicStyle, zIndex: 0 }}
+                                className="dinolabsIDETableColumnHeaderContent"
+                                style={{ width: sumRange(colWidths, 0, DATA_COL_COUNT) }}
                             >
-                                <div
-                                    className="dinolabsIDETableSelectionHandleTop"
-                                    onMouseDown={(e) => startSelectionResize("top", e)}
-                                />
-                                <div
-                                    className="dinolabsIDETableSelectionHandleBottom"
-                                    onMouseDown={(e) => startSelectionResize("bottom", e)}
-                                />
-                                <div
-                                    className="dinolabsIDETableSelectionHandleLeft"
-                                    onMouseDown={(e) => startSelectionResize("left", e)}
-                                />
-                                <div
-                                    className="dinolabsIDETableSelectionHandleRight"
-                                    onMouseDown={(e) => startSelectionResize("right", e)}
-                                />
-                                <div
-                                    className="dinolabsIDETableSelectionHandleBottomRight"
-                                    onMouseDown={(e) => startSelectionResize("bottom-right", e)}
-                                />
+                                {Array.from({ length: DATA_COL_COUNT }).map((_, colIndex) => {
+                                    const leftOffset = sumRange(colWidths, 0, colIndex);
+                                    const width = colWidths[colIndex];
+                                    const label = getColumnLabel(colIndex);
+                                    const isSelectedHeader =
+                                        selection &&
+                                        colIndex >= selection.left &&
+                                        colIndex <= selection.right &&
+                                        selection.top === 0 &&
+                                        selection.bottom === DATA_ROW_COUNT - 1;
+                                    return (
+                                        <div
+                                            key={colIndex}
+                                            className="dinolabsIDETableColumnHeaderCell"
+                                            style={{
+                                                left: leftOffset,
+                                                width: width,
+                                                backgroundColor: isSelectedHeader ? "#444" : "#333"
+                                            }}
+                                            onMouseDown={(e) => handleColumnHeaderMouseDown(e, colIndex)}
+                                        >
+                                            {label}
+                                            <div
+                                                className="dinolabsIDETableColumnHeaderResizeHandle"
+                                                onMouseDown={(e) => startResizingCol(colIndex, e)}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
-                    )}
+                        <div
+                            ref={rowHeaderRef}
+                            style={{ zIndex: 10 }}
+                            onMouseMove={handleRowHeaderMouseMove}
+                            onMouseUp={handleRowHeaderMouseUp}
+                            className="dinolabsIDETableRowHeaderContainer"
+                        >
+                            <div
+                                className="dinolabsIDETableRowHeaderContent"
+                                style={{ height: sumRange(rowHeights, 0, DATA_ROW_COUNT) }}
+                            >
+                                {Array.from({ length: DATA_ROW_COUNT }).map((_, rowIndex) => {
+                                    const topOffset = sumRange(rowHeights, 0, rowIndex);
+                                    const height = rowHeights[rowIndex];
+                                    const isSelectedRow =
+                                        selection &&
+                                        rowIndex >= selection.top &&
+                                        rowIndex <= selection.bottom &&
+                                        selection.left === 0 &&
+                                        selection.right === DATA_COL_COUNT - 1;
+                                    return (
+                                        <div
+                                            key={rowIndex}
+                                            className="dinolabsIDETableRowHeaderCell"
+                                            style={{
+                                                top: topOffset,
+                                                height: height,
+                                                backgroundColor: isSelectedRow ? "#3a3a3a" : "#2c2c2c"
+                                            }}
+                                            onMouseDown={(e) => handleRowHeaderMouseDown(e, rowIndex)}
+                                        >
+                                            {rowIndex + 1}
+                                            <div
+                                                className="dinolabsIDETableRowHeaderResizeHandle"
+                                                onMouseDown={(e) => startResizingRow(rowIndex, e)}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div ref={gridContainerRef} className="dinolabsIDETableGridContainer">
+                            <AutoSizer>
+                                {({ width, height }) => (
+                                    <Grid
+                                        ref={dataGridRef}
+                                        columnCount={DATA_COL_COUNT}
+                                        rowCount={DATA_ROW_COUNT}
+                                        columnWidth={(index) => colWidths[index]}
+                                        rowHeight={(index) => rowHeights[index]}
+                                        width={width}
+                                        height={height}
+                                        onScroll={({ scrollLeft: sl, scrollTop: st }) => {
+                                            if (
+                                                columnHeaderRef.current &&
+                                                columnHeaderRef.current.firstChild
+                                            ) {
+                                                columnHeaderRef.current.firstChild.style.transform =
+                                                    `translateX(${-sl}px)`;
+                                            }
+                                            if (
+                                                rowHeaderRef.current &&
+                                                rowHeaderRef.current.firstChild
+                                            ) {
+                                                rowHeaderRef.current.firstChild.style.transform =
+                                                    `translateY(${-st}px)`;
+                                            }
+                                            scrollPos.current.left = sl;
+                                            scrollPos.current.top = st;
+                                            if (selection && selectionOverlayRef.current) {
+                                                const newTop =
+                                                    sumRange(rowHeights, 0, selection.top) - st;
+                                                const newLeft =
+                                                    sumRange(colWidths, 0, selection.left) - sl;
+                                                selectionOverlayRef.current.style.top = `${newTop}px`;
+                                                selectionOverlayRef.current.style.left = `${newLeft}px`;
+                                            }
+                                        }}
+                                    >
+                                        {renderDataCell}
+                                    </Grid>
+                                )}
+                            </AutoSizer>
+                            {selection && (
+                                <div style={{ position: "absolute", top: 0, left: 0 }}>
+                                    <div
+                                        ref={selectionOverlayRef}
+                                        className="dinolabsIDETableSelectionOverlay"
+                                        style={{ ...overlayDynamicStyle, zIndex: 0 }}
+                                    >
+                                        <div
+                                            className="dinolabsIDETableSelectionHandleTop"
+                                            onMouseDown={(e) => startSelectionResize("top", e)}
+                                        />
+                                        <div
+                                            className="dinolabsIDETableSelectionHandleBottom"
+                                            onMouseDown={(e) => startSelectionResize("bottom", e)}
+                                        />
+                                        <div
+                                            className="dinolabsIDETableSelectionHandleLeft"
+                                            onMouseDown={(e) => startSelectionResize("left", e)}
+                                        />
+                                        <div
+                                            className="dinolabsIDETableSelectionHandleRight"
+                                            onMouseDown={(e) => startSelectionResize("right", e)}
+                                        />
+                                        <div
+                                            className="dinolabsIDETableSelectionHandleBottomRight"
+                                            onMouseDown={(e) => startSelectionResize("bottom-right", e)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
             {showSearchPanel && (
@@ -1609,7 +1761,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                 setCurrentResultIndex(-1);
                             }}
                         >
-                            <FontAwesomeIcon icon={faArrowRightFromBracket} style={{transform: "scaleX(-1)"}}/>
+                            <FontAwesomeIcon icon={faArrowRightFromBracket} style={{ transform: "scaleX(-1)" }} />
                             Close Search
                         </button>
                     </div>
