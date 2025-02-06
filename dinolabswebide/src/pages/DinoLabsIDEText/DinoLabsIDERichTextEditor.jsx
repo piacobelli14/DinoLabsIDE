@@ -7,52 +7,7 @@ import { showDialog } from "../DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faAlignCenter,
-    faAlignJustify,
-    faAlignLeft,
-    faAlignRight,
-    faArrowUpWideShort,
-    faBarsStaggered,
-    faBold,
-    faCaretRight,
-    faDownload,
-    faDroplet,
-    faEllipsisV,
-    faEraser,
-    faFont,
-    faHighlighter,
-    faIndent,
-    faItalic,
-    faListNumeric,
-    faListUl,
-    faMinus,
-    faOutdent,
-    faPenToSquare,
-    faPlus,
-    faStrikethrough,
-    faUnderline,
-    faUndo,
-    faRedo,
-    faCut,
-    faCopy,
-    faPaste,
-    faArrowPointer,
-    faTable,
-    faBorderStyle,
-    faIcons,
-    faICursor,
-    faImage,
-    faBorderTopLeft,
-    faArrowsDownToLine,
-    faXmark,
-    faArrowLeft,
-    faClose,
-    faArrowUpRightFromSquare,
-    faLeftLong,
-    faXmarkSquare,
-    faArrowRightFromBracket
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import DinoLabsIDERichTextEditorToolbar from "./DinoLabsIDERichTextEditorToolbar.jsx";
 
 const styleMap = {
