@@ -1,4 +1,3 @@
-
 import React, {
     useState,
     useEffect,
@@ -39,37 +38,41 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     useEffect(() => {
         tableDataRef.current = tableData;
     }, [tableData]);
-
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [keybindLoading, setKeybindLoading] = useState(false);
-
     const DATA_ROW_COUNT = 1000;
     const DATA_COL_COUNT = 100;
-
     const [activeCell, setActiveCell] = useState({ row: null, col: null });
     const [cellEditingValue, setCellEditingValue] = useState("");
-
     const [undoStack, setUndoStack] = useState([]);
     const [redoStack, setRedoStack] = useState([]);
     const [clipboardData, setClipboardData] = useState(null);
-
     const [openMenu, setOpenMenu] = useState(null);
-
+    const [openModal, setOpenModal] = useState(null);
+    const toggleModal = (modalName) => {
+        setOpenModal((prev) => (prev === modalName ? null : modalName));
+    };
+    const formatModalRef = useRef(null);
+    const formatButtonRef = useRef(null);
+    const toolsModalRef = useRef(null);
+    const toolsButtonRef = useRef(null);
+    const storedSelectionRef = useRef(null);
+    const storeSelection = () => {
+        storedSelectionRef.current = selection;
+    };
+    const [cellFormats, setCellFormats] = useState({});
     const [saveStatus, setSaveStatus] = useState("idle");
-
     const [showSearchPanel, setShowSearchPanel] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [replaceTerm, setReplaceTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [currentResultIndex, setCurrentResultIndex] = useState(-1);
     const [caseSensitive, setCaseSensitive] = useState(false);
-
     const [searchPanelPos, setSearchPanelPos] = useState({ x: 100, y: 100 });
     const [searchPanelDragging, setSearchPanelDragging] = useState(false);
     const [searchPanelOffset, setSearchPanelOffset] = useState({ x: 0, y: 0 });
     const searchPanelRef = useRef(null);
-
     const [selection, setSelection] = useState(null);
     const [cellDrag, setCellDrag] = useState({
         active: false,
@@ -79,7 +82,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         startY: 0,
         selecting: false
     });
-
     const [selectionResize, setSelectionResize] = useState({
         active: false,
         handle: null,
@@ -87,7 +89,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         startY: 0,
         initialSelection: null
     });
-
     const [resizing, setResizing] = useState({
         active: false,
         type: null,
@@ -95,7 +96,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         startPos: 0,
         startSize: 0
     });
-
     const DEFAULT_ROW_HEIGHT = 24;
     const DEFAULT_COL_WIDTH = 120;
     const [rowHeights, setRowHeights] = useState(
@@ -104,7 +104,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const [colWidths, setColWidths] = useState(
         Array.from({ length: DATA_COL_COUNT }, () => DEFAULT_COL_WIDTH)
     );
-
     const gridContainerRef = useRef(null);
     const dataGridRef = useRef(null);
     const scrollPos = useRef({ left: 0, top: 0 });
@@ -747,6 +746,54 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         });
     }
 
+    const handleAlign = (alignCommand) => {
+        const alignMap = {
+            justifyLeft: "left",
+            justifyCenter: "center",
+            justifyRight: "right"
+        };
+        const textAlign = alignMap[alignCommand];
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        setCellFormats((prev) => {
+            const newFormats = { ...prev };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    newFormats[key] = { ...(newFormats[key] || {}), textAlign };
+                }
+            }
+            return newFormats;
+        });
+        setOpenModal(null);
+    };
+
+    const handleWordCount = async () => {
+        let count = 0;
+        if (selection || storedSelectionRef.current) {
+            const sel = selection || storedSelectionRef.current;
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    if (tableData[key] && tableData[key].trim() !== "") {
+                        count++;
+                    }
+                }
+            }
+            await showDialog({
+                title: "Cell Count",
+                message: `Non-empty cells in selection: ${count}`
+            });
+        } else {
+            Object.values(tableData).forEach((value) => {
+                if (value.trim() !== "") count++;
+            });
+            await showDialog({
+                title: "Cell Count",
+                message: `Non-empty cells in table: ${count}`
+            });
+        }
+    };
+
     const renderDataCell = ({ rowIndex, columnIndex, style }) => {
         const key = `${rowIndex},${columnIndex}`;
         const cellIsActive =
@@ -763,6 +810,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }
         const outline = cellIsActive ? "0.2vh solid #008000" : "0.2vh solid transparent";
         const cellValue = tableDataRef.current[key] || "";
+        const cellFormat = cellFormats[key] || {};
         return (
             <div
                 style={{
@@ -844,7 +892,8 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                             MozUserSelect: "none",
                             width: "100%",
                             height: "100%",
-                            cursor: "default"
+                            cursor: "default",
+                            ...cellFormat
                         }}
                     >
                         {cellValue}
@@ -1254,11 +1303,28 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 onPaste={handlePaste}
                 onSelectAll={handleSelectAll}
                 onSearchReplace={() => setShowSearchPanel(true)}
+                openModal={openModal}
+                toggleModal={toggleModal}
+                closeAllMenus={() => { setOpenMenu(null); setOpenModal(null); }}
+                storeSelection={storeSelection}
+                formatModalRef={formatModalRef}
+                formatButtonRef={formatButtonRef}
+                toolsModalRef={toolsModalRef}
+                toolsButtonRef={toolsButtonRef}
+                handleAlign={handleAlign}
+                handleWordCount={handleWordCount}
             />
             <div
                 className="dinolabsIDETableWrapper"
                 onSelectStart={(e) => e.preventDefault()}
                 onMouseDown={(e) => {
+                    if (e.target.tagName !== "INPUT") {
+                        if (window.getSelection) {
+                            window.getSelection().removeAllRanges();
+                        }
+                    }
+                }}
+                onMouseDownCapture={(e) => {
                     if (e.target.tagName !== "INPUT") {
                         if (window.getSelection) {
                             window.getSelection().removeAllRanges();
@@ -1543,7 +1609,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                 setCurrentResultIndex(-1);
                             }}
                         >
-                            <FontAwesomeIcon icon={faArrowRightFromBracket} style={{"transform": "scaleX(-1)"}}/>
+                            <FontAwesomeIcon icon={faArrowRightFromBracket} style={{transform: "scaleX(-1)"}}/>
                             Close Search
                         </button>
                     </div>

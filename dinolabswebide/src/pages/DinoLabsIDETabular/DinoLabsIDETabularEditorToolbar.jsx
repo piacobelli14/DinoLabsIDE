@@ -14,7 +14,10 @@ import {
     faPaste,
     faArrowPointer,
     faSearch,
-    faPenToSquare
+    faPenToSquare,
+    faAlignLeft,
+    faAlignCenter,
+    faAlignRight
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDETabularEditorToolbar({
@@ -31,7 +34,17 @@ export default function DinoLabsIDETabularEditorToolbar({
     onSelectAll,
     onSearchReplace,
     openMenu,
-    setOpenMenu
+    setOpenMenu,
+    openModal,
+    toggleModal,
+    closeAllMenus,
+    storeSelection,
+    formatModalRef,
+    formatButtonRef,
+    toolsModalRef,
+    toolsButtonRef,
+    handleAlign,
+    handleWordCount
 }) {
     const callActionAndBlur = (action) => {
         action();
@@ -46,8 +59,9 @@ export default function DinoLabsIDETabularEditorToolbar({
         setOpenMenu((prev) => (prev === menuName ? null : menuName));
     };
 
-    const closeAllMenus = () => {
+    const closeAllMenusInternal = () => {
         setOpenMenu(null);
+        closeAllMenus();
     };
 
     return (
@@ -61,7 +75,7 @@ export default function DinoLabsIDETabularEditorToolbar({
                     <div className="dinolabsIDEOperationsButtonsWrapper">
                         <Tippy
                             visible={openMenu === "file"}
-                            onClickOutside={() => closeAllMenus()}
+                            onClickOutside={() => closeAllMenusInternal()}
                             placement="bottom"
                             interactive
                             trigger="manual"
@@ -117,7 +131,7 @@ export default function DinoLabsIDETabularEditorToolbar({
                         </Tippy>
                         <Tippy
                             visible={openMenu === "edit"}
-                            onClickOutside={() => closeAllMenus()}
+                            onClickOutside={() => closeAllMenusInternal()}
                             placement="bottom"
                             interactive
                             trigger="manual"
@@ -211,6 +225,96 @@ export default function DinoLabsIDETabularEditorToolbar({
                                 onClick={() => toggleMenu("edit")}
                             >
                                 Edit
+                            </button>
+                        </Tippy>
+
+                        <Tippy
+                            visible={openModal === "format"}
+                            onClickOutside={() => closeAllMenusInternal()}
+                            placement="bottom"
+                            interactive
+                            className="context-menu-tippy-vertical"
+                            content={
+                                openModal === "format" && (
+                                    <div
+                                        className="dinolabsIDEEditingContextMenuVertical"
+                                        ref={formatModalRef}
+                                    >
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onClick={() => handleAlign("justifyLeft")}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faAlignLeft} />
+                                                Align Left
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onClick={() => handleAlign("justifyCenter")}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faAlignCenter} />
+                                                Align Center
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onClick={() => handleAlign("justifyRight")}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faAlignRight} />
+                                                Align Right
+                                            </span>
+                                        </button>
+                                    </div>
+                                )
+                            }
+                        >
+                            <button
+                                className="dinolabsIDEOperationsButton"
+                                onMouseDown={e => {
+                                    e.preventDefault();
+                                    storeSelection();
+                                }}
+                                onClick={() => toggleModal("format")}
+                                ref={formatButtonRef}
+                            >
+                                Format
+                            </button>
+                        </Tippy>
+                        <Tippy
+                            visible={openModal === "tools"}
+                            onClickOutside={() => closeAllMenusInternal()}
+                            placement="bottom"
+                            interactive
+                            className="context-menu-tippy-vertical"
+                            content={
+                                openModal === "tools" && (
+                                    <div
+                                        className="dinolabsIDEEditingContextMenuVertical"
+                                        ref={toolsModalRef}
+                                    >
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onClick={handleWordCount}
+                                        >
+                                            <span>Cell Count</span>
+                                        </button>
+                                    </div>
+                                )
+                            }
+                        >
+                            <button
+                                className="dinolabsIDEOperationsButton"
+                                onMouseDown={e => {
+                                    e.preventDefault();
+                                    storeSelection();
+                                }}
+                                onClick={() => toggleModal("tools")}
+                                ref={toolsButtonRef}
+                            >
+                                Tools
                             </button>
                         </Tippy>
                     </div>
