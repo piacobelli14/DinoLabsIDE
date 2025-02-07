@@ -30,6 +30,7 @@ function encodeWav(audioBuffer) {
     const samples = audioBuffer.length * numChannels * 2;
     const buffer = new ArrayBuffer(44 + samples);
     const view = new DataView(buffer);
+
     writeString(view, 0, "RIFF");
     view.setUint32(4, 36 + samples, true);
     writeString(view, 8, "WAVE");
@@ -43,6 +44,7 @@ function encodeWav(audioBuffer) {
     view.setUint16(34, 16, true);
     writeString(view, 36, "data");
     view.setUint32(40, samples, true);
+
     let offset = 44;
     const channelData = [];
     for (let c = 0; c < numChannels; c++) {
@@ -57,6 +59,7 @@ function encodeWav(audioBuffer) {
             offset += 2;
         }
     }
+
     return new Blob([buffer], { type: "audio/wav" });
 }
 
@@ -70,6 +73,7 @@ function createReverbImpulseResponse(audioCtx, duration, decay, reverse) {
     const sampleRate = audioCtx.sampleRate;
     const length = sampleRate * duration;
     const impulse = audioCtx.createBuffer(2, length, sampleRate);
+
     for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
         const impulseChannelData = impulse.getChannelData(channel);
         for (let i = 0; i < length; i++) {
@@ -100,6 +104,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
     const stereoRightSetupRef = useRef(null);
     const phaseScopeCanvasRef = useRef(null);
     const phaseScopeSetupRef = useRef(null);
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLooping, setIsLooping] = useState(true);
     const [currentPlaybackRate, setCurrentPlaybackRate] = useState(1.0);
@@ -107,6 +112,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
     const [audioDuration, setAudioDuration] = useState(0);
     const [waveformData, setWaveformData] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
+
     const [bass, setBass] = useState(0);
     const [mid, setMid] = useState(0);
     const [treble, setTreble] = useState(0);
@@ -115,6 +121,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
     const [echo, setEcho] = useState(0);
     const [reverb, setReverb] = useState(0);
     const [pitchShift, setPitchShift] = useState(0);
+
     const [attack, setAttack] = useState(5.0);
     const [decay, setDecay] = useState(5.0);
     const [sustain, setSustain] = useState(0.1);
@@ -132,6 +139,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 setOriginalFileSize(file.size);
                 const objectUrl = URL.createObjectURL(file);
                 setUrl(objectUrl);
+
                 const arrayBuffer = await file.arrayBuffer();
                 const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                     1,
@@ -139,6 +147,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                     44100
                 );
                 const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+
                 const rawData = audioBuffer.getChannelData(0);
                 const samples = 1000;
                 const blockSize = Math.floor(rawData.length / samples);
@@ -151,6 +160,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                     filteredData.push(sum / blockSize);
                 }
                 setWaveformData(filteredData);
+
                 return () => {
                     URL.revokeObjectURL(objectUrl);
                 };
@@ -249,28 +259,48 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         const ctx = canvas.getContext("2d");
         const maxVal = Math.max(...waveformData);
         let animationFrameId;
+    
         function drawWaveform() {
             const rect = canvas.getBoundingClientRect();
             const width = rect.width;
             const height = rect.height;
             const dpr = window.devicePixelRatio || 1;
+            const centerY = height / 2;
+            const scaleFactor = 0.6; 
+    
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, width, height);
-            ctx.beginPath();
+    
             const sliceWidth = width / waveformData.length;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+
             for (let i = 0; i < waveformData.length; i++) {
                 const amplitude = waveformData[i] / maxVal;
-                const scaled = amplitude * (height / 2);
-                const y = (height / 1.2) - scaled;
+                const scaled = amplitude * centerY * scaleFactor;
                 const x = i * sliceWidth;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                const y = centerY - scaled;
+                ctx.lineTo(x, y);
             }
+    
+            for (let i = waveformData.length - 1; i >= 0; i--) {
+                const amplitude = waveformData[i] / maxVal;
+                const scaled = amplitude * centerY * scaleFactor;
+                const x = i * sliceWidth;
+                const y = centerY + scaled;
+                ctx.lineTo(x, y);
+            }
+    
+            ctx.closePath();
+            ctx.fillStyle = "rgba(0, 255, 215, 0.4)";
+            ctx.fill();
+    
             ctx.strokeStyle = "rgba(0, 255, 215, 1)";
             ctx.lineWidth = 1;
             ctx.stroke();
+    
             if (audioRef.current) {
                 const progress = audioRef.current.currentTime / audioDuration;
                 const xPos = progress * width;
@@ -281,8 +311,10 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
+    
             animationFrameId = requestAnimationFrame(drawWaveform);
         }
+    
         drawWaveform();
         return () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -292,6 +324,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
     useEffect(() => {
         if (!audioRef.current || audioDuration <= 0) return;
         if (spectrogramSetupRef.current) return;
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let source;
         try {
@@ -299,89 +332,116 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         } catch (err) {
             return;
         }
+
         if (!reverbBufferRef.current) {
             reverbBufferRef.current = createReverbImpulseResponse(audioCtx, 5, 3, false);
         }
+
         const analyserMaster = audioCtx.createAnalyser();
         analyserMaster.fftSize = 2048;
         analyserMaster.smoothingTimeConstant = 0.9;
+
         const envelopeGainNode = audioCtx.createGain();
         envelopeGainNode.gain.value = 0.0001;
+
         analyserMaster.connect(audioCtx.destination);
+
         const bassFilter = audioCtx.createBiquadFilter();
         bassFilter.type = "lowshelf";
         bassFilter.frequency.value = 200;
         bassFilter.gain.value = 0;
+
         const midFilter = audioCtx.createBiquadFilter();
         midFilter.type = "peaking";
         midFilter.frequency.value = 1000;
         midFilter.gain.value = 0;
         midFilter.Q.value = 1;
+
         const trebleFilter = audioCtx.createBiquadFilter();
         trebleFilter.type = "highshelf";
         trebleFilter.frequency.value = 3000;
         trebleFilter.gain.value = 0;
+
         const bandStopFilter = audioCtx.createBiquadFilter();
         bandStopFilter.type = "peaking";
         bandStopFilter.gain.value = -30;
         bandStopFilter.frequency.value = 1200;
         bandStopFilter.Q.value = 4;
+
         const vocalFilter = audioCtx.createBiquadFilter();
         vocalFilter.type = "bandpass";
         vocalFilter.frequency.value = 1200;
         vocalFilter.Q.value = 4;
+
         const vocalGainNode = audioCtx.createGain();
         vocalGainNode.gain.value = 1;
+
         const preEffectMix = audioCtx.createGain();
+
         source.connect(bassFilter);
         bassFilter.connect(midFilter);
         midFilter.connect(trebleFilter);
         trebleFilter.connect(bandStopFilter);
         bandStopFilter.connect(preEffectMix);
+
         trebleFilter.connect(vocalFilter);
         vocalFilter.connect(vocalGainNode);
         vocalGainNode.connect(preEffectMix);
+
         const finalMix = audioCtx.createGain();
         preEffectMix.connect(finalMix);
+
         const delayNode = audioCtx.createDelay();
         delayNode.delayTime.value = 0.3;
+
         const delayFeedbackGain = audioCtx.createGain();
         delayFeedbackGain.gain.value = 0;
         delayNode.connect(delayFeedbackGain);
         delayFeedbackGain.connect(delayNode);
+
         const echoMixGain = audioCtx.createGain();
         echoMixGain.gain.value = 0;
         preEffectMix.connect(delayNode);
         delayNode.connect(echoMixGain);
         echoMixGain.connect(finalMix);
+
         const convolverNode = audioCtx.createConvolver();
         convolverNode.buffer = reverbBufferRef.current;
+
         const reverbMixGain = audioCtx.createGain();
         reverbMixGain.gain.value = 0;
         preEffectMix.connect(convolverNode);
         convolverNode.connect(reverbMixGain);
         reverbMixGain.connect(finalMix);
+
         finalMix.connect(envelopeGainNode);
         envelopeGainNode.connect(analyserMaster);
+
         const freqAnalyser = audioCtx.createAnalyser();
         freqAnalyser.fftSize = 2048;
         freqAnalyser.smoothingTimeConstant = 0.9;
         source.connect(freqAnalyser);
+
         const loudnessAnalyser = audioCtx.createAnalyser();
         loudnessAnalyser.fftSize = 1024;
         source.connect(loudnessAnalyser);
+
         const oscAnalyser = audioCtx.createAnalyser();
         oscAnalyser.fftSize = 1024;
         oscAnalyser.smoothingTimeConstant = 0.9;
         source.connect(oscAnalyser);
+
         const channelSplitter = audioCtx.createChannelSplitter(2);
         source.connect(channelSplitter);
+
         const leftAnalyser = audioCtx.createAnalyser();
         leftAnalyser.fftSize = 1024;
         const rightAnalyser = audioCtx.createAnalyser();
         rightAnalyser.fftSize = 1024;
+
         channelSplitter.connect(leftAnalyser, 0);
         channelSplitter.connect(rightAnalyser, 1);
+
         spectrogramSetupRef.current = {
             audioCtx,
             source,
@@ -407,6 +467,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             convolverNode,
             reverbMixGain
         };
+
         return () => {
             try {
                 if (source) source.disconnect();
@@ -444,10 +505,12 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!spectrogramSetupRef.current) return;
         const { audioCtx, envelopeGainNode } = spectrogramSetupRef.current;
         if (!audioCtx || !envelopeGainNode) return;
+
         const now = audioCtx.currentTime;
         envelopeGainNode.gain.cancelScheduledValues(now);
         envelopeGainNode.gain.setValueAtTime(0.0001, now);
         envelopeGainNode.gain.exponentialRampToValueAtTime(1, now + attack);
+
         const endOfDecay = now + attack + decay;
         let sustainLevel = sustain;
         if (sustainLevel < 0.0001) sustainLevel = 0.0001;
@@ -458,6 +521,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!spectrogramSetupRef.current) return;
         const { audioCtx, envelopeGainNode } = spectrogramSetupRef.current;
         if (!audioCtx || !envelopeGainNode) return;
+
         const now = audioCtx.currentTime;
         envelopeGainNode.gain.cancelScheduledValues(now);
         const currentVal = envelopeGainNode.gain.value < 0.0001
@@ -516,23 +580,30 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (frequencyBarsSetupRef.current) return;
+
         const freqAnalyser = spectrogramSetupRef.current.freqAnalyser;
         if (!freqAnalyser) return;
+
         const canvas = frequencyBarsCanvasRef.current;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         const bufferLength = freqAnalyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         let animationFrameId;
+
         function drawFrequencyBars() {
             freqAnalyser.getByteFrequencyData(dataArray);
+
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
             const barWidth = rect.width / bufferLength;
+
             for (let i = 0; i < bufferLength; i++) {
                 const magnitude = dataArray[i] / 255;
                 const barHeight = magnitude * rect.height;
@@ -544,10 +615,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                     barHeight
                 );
             }
+
             animationFrameId = requestAnimationFrame(drawFrequencyBars);
         }
+
         drawFrequencyBars();
         frequencyBarsSetupRef.current = { animationFrameId };
+
         return () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             frequencyBarsSetupRef.current = null;
@@ -558,41 +632,53 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (oscilloscopeSetupRef.current) return;
+
         const oscAnalyser = spectrogramSetupRef.current.oscAnalyser;
         if (!oscAnalyser) return;
+
         const canvas = oscilloscopeCanvasRef.current;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         const bufferLength = oscAnalyser.fftSize;
         const dataArray = new Uint8Array(bufferLength);
+
         const handleDraw = () => {
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
+
             const thresholds = [0.25, 0.5, 0.75];
             ctx.lineWidth = 1;
             ctx.setLineDash([2, 2]);
             ctx.strokeStyle = "rgba(83, 232, 209, 0.3)";
+
             thresholds.forEach((t) => {
                 const yPos = rect.height / 2 - t * (rect.height / 2);
                 ctx.beginPath();
                 ctx.moveTo(0, yPos);
                 ctx.lineTo(rect.width, yPos);
                 ctx.stroke();
+
                 const yNeg = rect.height / 2 + t * (rect.height / 2);
                 ctx.beginPath();
                 ctx.moveTo(0, yNeg);
                 ctx.lineTo(rect.width, yNeg);
                 ctx.stroke();
             });
+
             ctx.setLineDash([]);
+
             oscAnalyser.getByteTimeDomainData(dataArray);
+
             ctx.beginPath();
             const sliceWidth = rect.width / bufferLength;
             let x = 0;
+
             for (let i = 0; i < bufferLength; i++) {
                 const v = (dataArray[i] - 128) / 128;
                 const y = (v * rect.height) / 2 + rect.height / 2;
@@ -600,14 +686,18 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 else ctx.lineTo(x, y);
                 x += sliceWidth;
             }
+
             ctx.lineTo(rect.width, rect.height / 2);
             ctx.strokeStyle = "rgba(83, 232, 209, 1.0)";
             ctx.lineWidth = 1;
             ctx.stroke();
+
             requestAnimationFrame(handleDraw);
         };
+
         handleDraw();
         oscilloscopeSetupRef.current = { running: true };
+
         return () => {
             oscilloscopeSetupRef.current = null;
         };
@@ -617,20 +707,26 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (loudnessSetupRef.current) return;
+
         const loudnessAnalyser = spectrogramSetupRef.current.loudnessAnalyser;
         if (!loudnessAnalyser) return;
+
         const dataArray = new Uint8Array(loudnessAnalyser.fftSize);
         const canvas = loudnessCanvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
+
         const totalBars = 20;
+
         const drawLoudness = () => {
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             loudnessAnalyser.getByteTimeDomainData(dataArray);
+
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
                 const val = dataArray[i] - 128;
@@ -638,9 +734,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             }
             let rms = (Math.sqrt(sum / dataArray.length) / 128) * 4;
             if (rms > 1) rms = 1;
+
             const activeBars = Math.floor(rms * totalBars);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
+
             const barHeight = rect.height / totalBars;
+
             for (let i = 0; i < totalBars; i++) {
                 const y = rect.height - (i + 1) * barHeight;
                 if (i < activeBars) {
@@ -652,10 +752,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 }
                 ctx.fillRect(0, y, rect.width, barHeight - 1);
             }
+
             requestAnimationFrame(drawLoudness);
         };
+
         drawLoudness();
         loudnessSetupRef.current = { running: true };
+
         return () => {
             loudnessSetupRef.current = null;
         };
@@ -665,20 +768,26 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (stereoLeftSetupRef.current) return;
+
         const { leftAnalyser } = spectrogramSetupRef.current;
         if (!leftAnalyser) return;
+
         const canvas = stereoLeftCanvasRef.current;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         const dataArray = new Uint8Array(leftAnalyser.fftSize);
         const totalBars = 20;
+
         const drawLeftMeter = () => {
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             leftAnalyser.getByteTimeDomainData(dataArray);
+
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
                 const val = dataArray[i] - 128;
@@ -686,9 +795,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             }
             let rmsLeft = (Math.sqrt(sum / dataArray.length) / 128) * 4;
             if (rmsLeft > 1) rmsLeft = 1;
+
             const activeBarsLeft = Math.floor(rmsLeft * totalBars);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
+
             const barHeight = rect.height / totalBars;
+
             for (let i = 0; i < totalBars; i++) {
                 const y = rect.height - (i + 1) * barHeight;
                 if (i < activeBarsLeft) {
@@ -700,10 +813,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 }
                 ctx.fillRect(0, y, rect.width, barHeight - 1);
             }
+
             requestAnimationFrame(drawLeftMeter);
         };
+
         drawLeftMeter();
         stereoLeftSetupRef.current = { running: true };
+
         return () => {
             stereoLeftSetupRef.current = null;
         };
@@ -713,20 +829,26 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (stereoRightSetupRef.current) return;
+
         const { rightAnalyser } = spectrogramSetupRef.current;
         if (!rightAnalyser) return;
+
         const canvas = stereoRightCanvasRef.current;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         const dataArray = new Uint8Array(rightAnalyser.fftSize);
         const totalBars = 20;
+
         const drawRightMeter = () => {
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             rightAnalyser.getByteTimeDomainData(dataArray);
+
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
                 const val = dataArray[i] - 128;
@@ -734,9 +856,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             }
             let rmsRight = (Math.sqrt(sum / dataArray.length) / 128) * 4;
             if (rmsRight > 1) rmsRight = 1;
+
             const activeBarsRight = Math.floor(rmsRight * totalBars);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
+
             const barHeight = rect.height / totalBars;
+
             for (let i = 0; i < totalBars; i++) {
                 const y = rect.height - (i + 1) * barHeight;
                 if (i < activeBarsRight) {
@@ -748,10 +874,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 }
                 ctx.fillRect(0, y, rect.width, barHeight - 1);
             }
+
             requestAnimationFrame(drawRightMeter);
         };
+
         drawRightMeter();
         stereoRightSetupRef.current = { running: true };
+
         return () => {
             stereoRightSetupRef.current = null;
         };
@@ -761,23 +890,30 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         if (!audioRef.current || audioDuration <= 0) return;
         if (!spectrogramSetupRef.current) return;
         if (phaseScopeSetupRef.current) return;
+
         const { leftAnalyser, rightAnalyser } = spectrogramSetupRef.current;
         if (!leftAnalyser || !rightAnalyser) return;
+
         const canvas = phaseScopeCanvasRef.current;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         const bufferLength = leftAnalyser.fftSize;
         const leftData = new Uint8Array(bufferLength);
         const rightData = new Uint8Array(bufferLength);
+
         const drawPhaseScope = () => {
             leftAnalyser.getByteTimeDomainData(leftData);
             rightAnalyser.getByteTimeDomainData(rightData);
+
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
+
             ctx.clearRect(0, 0, rect.width, rect.height);
+
             ctx.strokeStyle = "rgba(100, 100, 100, 0.2)";
             ctx.beginPath();
             ctx.moveTo(0, rect.height / 2);
@@ -785,6 +921,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             ctx.moveTo(rect.width / 2, 0);
             ctx.lineTo(rect.width / 2, rect.height);
             ctx.stroke();
+
             ctx.fillStyle = "rgba(0, 255, 215, 0.7)";
             for (let i = 0; i < bufferLength; i += 2) {
                 const xVal = (leftData[i] - 128) / 128;
@@ -793,10 +930,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 const yPos = yVal * (rect.height / 2) + rect.height / 2;
                 ctx.fillRect(xPos, yPos, 1.5, 1.5);
             }
+
             requestAnimationFrame(drawPhaseScope);
         };
+
         drawPhaseScope();
         phaseScopeSetupRef.current = { running: true };
+
         return () => {
             phaseScopeSetupRef.current = null;
         };
@@ -823,26 +963,32 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
             showCancel: true
         });
         if (!alertResult) return;
+
         const fileType = alertResult.fileType;
         const finalName = baseName + "." + fileType;
+
         if (!spectrogramSetupRef.current) return;
         const liveCtx = spectrogramSetupRef.current.audioCtx;
         if (!liveCtx) return;
-        const durationSeconds = audioRef.current?.duration || 10; 
+
+        const durationSeconds = audioRef.current?.duration || 10;
         const sampleRate = liveCtx.sampleRate || 44100;
         const offlineCtx = new OfflineAudioContext(
             2,
             Math.ceil(durationSeconds * sampleRate),
             sampleRate
         );
+
         const file =
             typeof fileHandle.getFile === "function"
                 ? await fileHandle.getFile()
                 : fileHandle;
         const fileArrayBuffer = await file.arrayBuffer();
         const audioBuffer = await offlineCtx.decodeAudioData(fileArrayBuffer);
+
         const source = offlineCtx.createBufferSource();
         source.buffer = audioBuffer;
+
         let convBuffer = reverbBufferRef.current;
         if (!convBuffer) {
             convBuffer = createReverbImpulseResponse(offlineCtx, 5, 3, false);
@@ -851,65 +997,84 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
         convolverNode.buffer = convBuffer;
         const reverbMixGain = offlineCtx.createGain();
         reverbMixGain.gain.value = reverb / 100;
+
         const envelopeGainNode = offlineCtx.createGain();
         envelopeGainNode.gain.value = 1;
+
         const bassFilter = offlineCtx.createBiquadFilter();
         bassFilter.type = "lowshelf";
         bassFilter.frequency.value = 200;
         bassFilter.gain.value = bass;
+
         const midFilter = offlineCtx.createBiquadFilter();
         midFilter.type = "peaking";
         midFilter.frequency.value = 1000;
         midFilter.gain.value = mid;
         midFilter.Q.value = 1;
+
         const trebleFilter = offlineCtx.createBiquadFilter();
         trebleFilter.type = "highshelf";
         trebleFilter.frequency.value = 3000;
         trebleFilter.gain.value = treble;
+
         const bandStopFilter = offlineCtx.createBiquadFilter();
         bandStopFilter.type = "peaking";
         bandStopFilter.gain.value = -30;
         bandStopFilter.frequency.value = 1200;
         bandStopFilter.Q.value = vocalIsolation;
+
         const vocalFilter = offlineCtx.createBiquadFilter();
         vocalFilter.type = "bandpass";
         vocalFilter.frequency.value = 1200;
         vocalFilter.Q.value = vocalIsolation;
+
         const vocalGainNode = offlineCtx.createGain();
         vocalGainNode.gain.value = Math.pow(10, vocalBoost / 20);
+
         const preEffectMix = offlineCtx.createGain();
         const finalMix = offlineCtx.createGain();
+
         const delayNode = offlineCtx.createDelay();
         delayNode.delayTime.value = 0.3;
+
         const delayFeedbackGain = offlineCtx.createGain();
         delayFeedbackGain.gain.value = echo / 100;
         delayNode.connect(delayFeedbackGain);
         delayFeedbackGain.connect(delayNode);
+
         const echoMixGain = offlineCtx.createGain();
         echoMixGain.gain.value = echo / 100;
+
         source.connect(bassFilter);
         bassFilter.connect(midFilter);
         midFilter.connect(trebleFilter);
         trebleFilter.connect(bandStopFilter);
         bandStopFilter.connect(preEffectMix);
+
         trebleFilter.connect(vocalFilter);
         vocalFilter.connect(vocalGainNode);
         vocalGainNode.connect(preEffectMix);
+
         preEffectMix.connect(finalMix);
+
         preEffectMix.connect(delayNode);
         delayNode.connect(echoMixGain);
         echoMixGain.connect(finalMix);
+
         preEffectMix.connect(convolverNode);
         convolverNode.connect(reverbMixGain);
         reverbMixGain.connect(finalMix);
+
         finalMix.connect(envelopeGainNode);
         envelopeGainNode.connect(offlineCtx.destination);
+
         envelopeGainNode.gain.setValueAtTime(0.0001, 0);
         envelopeGainNode.gain.exponentialRampToValueAtTime(1, attack);
         envelopeGainNode.gain.exponentialRampToValueAtTime(
             Math.max(sustain, 0.0001),
             attack + decay
         );
+
         const totalDur = audioBuffer.duration;
         const fadeStart = totalDur - release;
         if (fadeStart > attack + decay) {
@@ -922,10 +1087,13 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                 fadeStart + release
             );
         }
+
         source.playbackRate.value = Math.pow(2, pitchShift / 12);
         source.start(0);
+
         const renderedBuffer = await offlineCtx.startRendering();
         const wavBlob = encodeWav(renderedBuffer);
+
         const downloadUrl = URL.createObjectURL(wavBlob);
         const a = document.createElement("a");
         a.href = downloadUrl;
@@ -1401,7 +1569,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                             <canvas
                                 className="dinolabsIDEAudioWaveformDisplayBig"
                                 ref={oscilloscopeCanvasRef}
-                                style={{ "background-color": "#111" }}
+                                style={{ "background-color": "#111", "border-top": "none" }}
                             />
                         </Tippy>
 
@@ -1410,14 +1578,14 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                                 <canvas
                                     className="dinolabsIDEAudioWaveformDisplaySmall"
                                     ref={frequencyBarsCanvasRef}
-                                    style={{ width: "95%", height: "100%", "background-color": "#111" }}
+                                    style={{ width: "95%", height: "100%", "background-color": "#111", "border-top": "none" }}
                                 />
                             </Tippy>
                             <Tippy content="Loudness Meter" theme="tooltip-light">
                                 <canvas
                                     className="dinolabsIDEAudioWaveformDisplaySmall"
                                     ref={loudnessCanvasRef}
-                                    style={{ width: "5%", height: "100%", "background-color": "#111" }}
+                                    style={{ width: "5%", height: "100%", "background-color": "#111", "border-top": "none", "border-left": "none" }}
                                 />
                             </Tippy>
                         </div>
@@ -1426,21 +1594,21 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
                                 <canvas
                                     className="dinolabsIDEAudioWaveformDisplaySmall"
                                     ref={phaseScopeCanvasRef}
-                                    style={{ width: "90%", height: "100%", "background-color": "#111" }}
+                                    style={{ width: "90%", height: "100%", "background-color": "#111", "border-top": "none" }}
                                 />
                             </Tippy>
                             <Tippy content="Stereo Left Channel" theme="tooltip-light">
                                 <canvas
                                     className="dinolabsIDEAudioWaveformDisplaySmall"
                                     ref={stereoLeftCanvasRef}
-                                    style={{ width: "5%", height: "100%", "background-color": "#111" }}
+                                    style={{ width: "5%", height: "100%", "background-color": "#111", "border-top": "none", "border-left": "none" }}
                                 />
                             </Tippy>
                             <Tippy content="Stereo Right Channel" theme="tooltip-light">
                                 <canvas
                                     className="dinolabsIDEAudioWaveformDisplaySmall"
                                     ref={stereoRightCanvasRef}
-                                    style={{ width: "5%", height: "100%", "background-color": "#111" }}
+                                    style={{ width: "5%", height: "100%", "background-color": "#111", "border-top": "none", "border-left": "none" }}
                                 />
                             </Tippy>
                         </div>
