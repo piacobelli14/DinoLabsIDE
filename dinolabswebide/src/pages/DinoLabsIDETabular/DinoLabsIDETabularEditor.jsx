@@ -83,6 +83,17 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         startY: 0,
         selecting: false
     });
+    const [selectionDrag, setSelectionDrag] = useState({
+        active: false,
+        startX: 0,
+        startY: 0,
+        offsetX: 0,
+        offsetY: 0,
+        originalSelection: null,
+        originalOverlayTop: 0,
+        originalOverlayLeft: 0,
+        block: null
+    });
     const [selectionResize, setSelectionResize] = useState({
         active: false,
         handle: null,
@@ -123,6 +134,28 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const moreModalRef = useRef(null);
     const moreButtonRef = useRef(null);
 
+    function moveSelection(originalSelection, rowOffset, colOffset, block, data) {
+        const numRows = originalSelection.bottom - originalSelection.top + 1;
+        const numCols = originalSelection.right - originalSelection.left + 1;
+        let rowIndices = Array.from({ length: numRows }, (_, i) => i);
+        let colIndices = Array.from({ length: numCols }, (_, j) => j);
+        if (rowOffset > 0) rowIndices.reverse();
+        if (colOffset > 0) colIndices.reverse();
+        for (const i of rowIndices) {
+            for (const j of colIndices) {
+                const destR = originalSelection.top + i + rowOffset;
+                const destC = originalSelection.left + j + colOffset;
+                data[`${destR},${destC}`] = block[i][j];
+            }
+        }
+        return {
+            top: originalSelection.top + rowOffset,
+            left: originalSelection.left + colOffset,
+            bottom: originalSelection.bottom + rowOffset,
+            right: originalSelection.right + colOffset
+        };
+    }
+
     function inlineAllStyles(element) {
         const computedStyle = window.getComputedStyle(element);
         let styleString = "";
@@ -134,6 +167,25 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         for (let i = 0; i < element.children.length; i++) {
             inlineAllStyles(element.children[i]);
         }
+    }
+
+    function captureContainerHTML() {
+        const container = tableWrapperContainerRef.current;
+        if (!container) return "";
+        const clonedContainer = container.cloneNode(true);
+        inlineAllStyles(clonedContainer);
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <title>${fileHandle && fileHandle.name ? fileHandle.name : "Untitled"}</title>
+            </head>
+            <body>
+            ${clonedContainer.outerHTML}
+            </body>
+            </html>
+        `;
     }
 
     useEffect(() => {
@@ -977,13 +1029,23 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }
         const outline = cellIsActive ? "0.2vh solid #008000" : "0.2vh solid transparent";
         const cellValue = tableDataRef.current[key] || "";
+        let cellStyle = { ...style, outline, backgroundColor };
+        if (
+            selectionDrag.active &&
+            selectionDrag.originalSelection &&
+            rowIndex >= selectionDrag.originalSelection.top &&
+            rowIndex <= selectionDrag.originalSelection.bottom &&
+            columnIndex >= selectionDrag.originalSelection.left &&
+            columnIndex <= selectionDrag.originalSelection.right
+        ) {
+            cellStyle = {
+                ...cellStyle,
+                transform: `translate(${selectionDrag.offsetX}px, ${selectionDrag.offsetY}px)`
+            };
+        }
         return (
             <div
-                style={{
-                    ...style,
-                    outline,
-                    backgroundColor
-                }}
+                style={cellStyle}
                 className="dinolabsIDETableCell"
                 onMouseDown={(e) => handleCellMouseDown(rowIndex, columnIndex, e)}
                 onMouseUp={(e) => handleCellMouseUp(rowIndex, columnIndex, e)}
@@ -1068,6 +1130,123 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             </div>
         );
     };
+
+    function handleSelectionMouseDown(e) {
+        if (
+            e.target.classList.contains("dinolabsIDETableSelectionHandleTop") ||
+            e.target.classList.contains("dinolabsIDETableSelectionHandleBottom") ||
+            e.target.classList.contains("dinolabsIDETableSelectionHandleLeft") ||
+            e.target.classList.contains("dinolabsIDETableSelectionHandleRight") ||
+            e.target.classList.contains("dinolabsIDETableSelectionHandleBottomRight")
+        ) {
+            return;
+        }
+        e.stopPropagation();
+        e.preventDefault();
+        if (!selection) return;
+        const containerRect = gridContainerRef.current.getBoundingClientRect();
+        const originalOverlayTop = sumRange(rowHeights, 0, selection.top) - scrollPos.current.top;
+        const originalOverlayLeft = sumRange(colWidths, 0, selection.left) - scrollPos.current.left;
+        const snapshot = [];
+        for (let r = selection.top; r <= selection.bottom; r++) {
+            const rowData = [];
+            for (let c = selection.left; c <= selection.right; c++) {
+                const key = `${r},${c}`;
+                rowData.push(tableDataRef.current[key] ?? "");
+            }
+            snapshot.push(rowData);
+        }
+        setSelectionDrag({
+            active: true,
+            startX: e.clientX,
+            startY: e.clientY,
+            offsetX: 0,
+            offsetY: 0,
+            originalSelection: selection,
+            originalOverlayTop,
+            originalOverlayLeft,
+            block: snapshot
+        });
+    }
+
+    useEffect(() => {
+        function onMouseMove(e) {
+            setSelectionDrag(prev => {
+                if (!prev.active) return prev;
+                const offsetX = e.clientX - prev.startX;
+                const offsetY = e.clientY - prev.startY;
+                return { ...prev, offsetX, offsetY };
+            });
+        }
+        function onMouseUp(e) {
+            setSelectionDrag(prev => {
+                if (!prev.active) return prev;
+                const offsetX = e.clientX - prev.startX;
+                const offsetY = e.clientY - prev.startY;
+                const colOffset = Math.round(offsetX / DEFAULT_COL_WIDTH);
+                const rowOffset = Math.round(offsetY / DEFAULT_ROW_HEIGHT);
+                let newSelection = {
+                    top: prev.originalSelection.top + rowOffset,
+                    left: prev.originalSelection.left + colOffset,
+                    bottom: prev.originalSelection.bottom + rowOffset,
+                    right: prev.originalSelection.right + colOffset
+                };
+                if (newSelection.top < 0) {
+                    const diff = -newSelection.top;
+                    newSelection.top = 0;
+                    newSelection.bottom += diff;
+                }
+                if (newSelection.left < 0) {
+                    const diff = -newSelection.left;
+                    newSelection.left = 0;
+                    newSelection.right += diff;
+                }
+                if (newSelection.bottom >= DATA_ROW_COUNT) {
+                    const diff = newSelection.bottom - (DATA_ROW_COUNT - 1);
+                    newSelection.bottom = DATA_ROW_COUNT - 1;
+                    newSelection.top -= diff;
+                }
+                if (newSelection.right >= DATA_COL_COUNT) {
+                    const diff = newSelection.right - (DATA_COL_COUNT - 1);
+                    newSelection.right = DATA_COL_COUNT - 1;
+                    newSelection.left -= diff;
+                }
+                let newData = { ...tableDataRef.current };
+                for (let r = prev.originalSelection.top; r <= prev.originalSelection.bottom; r++) {
+                    for (let c = prev.originalSelection.left; c <= prev.originalSelection.right; c++) {
+                        delete newData[`${r},${c}`];
+                    }
+                }
+                const numRows = prev.originalSelection.bottom - prev.originalSelection.top + 1;
+                const numCols = prev.originalSelection.right - prev.originalSelection.left + 1;
+                let rowIndices = Array.from({ length: numRows }, (_, i) => i);
+                let colIndices = Array.from({ length: numCols }, (_, j) => j);
+                if (rowOffset > 0) rowIndices.reverse();
+                if (colOffset > 0) colIndices.reverse();
+                newSelection = moveSelection(prev.originalSelection, rowOffset, colOffset, prev.block, newData);
+                pushToUndoStack(tableDataRef.current);
+                setTableData(newData);
+                setSelection(newSelection);
+                return {
+                    active: false,
+                    startX: 0,
+                    startY: 0,
+                    offsetX: 0,
+                    offsetY: 0,
+                    originalSelection: null,
+                    originalOverlayTop: 0,
+                    originalOverlayLeft: 0,
+                    block: null
+                };
+            });
+        }
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+        };
+    }, [rowHeights, colWidths, DATA_ROW_COUNT, DATA_COL_COUNT]);
 
     useEffect(() => {
         function onWindowMouseMove(e) {
@@ -1699,7 +1878,13 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                     <div
                                         ref={selectionOverlayRef}
                                         className="dinolabsIDETableSelectionOverlay"
-                                        style={{ ...overlayDynamicStyle, zIndex: 0 }}
+                                        onMouseDown={handleSelectionMouseDown}
+                                        style={{ 
+                                            ...overlayDynamicStyle, 
+                                            zIndex: 0,
+                                            cursor: selectionDrag.active ? "grabbing" : "grab",
+                                            transform: selectionDrag.active ? `translate(${selectionDrag.offsetX}px, ${selectionDrag.offsetY}px)` : "none"
+                                        }}
                                     >
                                         <div
                                             className="dinolabsIDETableSelectionHandleTop"
