@@ -1402,7 +1402,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     };
 
     return (
-        <div className="dinolabsIDEMediaContentWrapper">
+        <div className="dinolabsIDEMediaWrapper">
             {(isProcessingCrop || isExtractingFrames || isRebuildingVideoFromFrames || isClippingVideo || isDownloadingVideo) && (
                 <div className="dinolabsIDEMediaContentCropIndicator">
                     <div className="loading-circle" />

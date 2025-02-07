@@ -1129,7 +1129,7 @@ function DinoLabsIDEAudioEditor({ fileHandle }) {
     };
 
     return (
-        <div className="dinolabsIDEMediaContentWrapper">
+        <div className="dinolabsIDEMediaWrapper">
             <div className="dinoLabsIDEMediaToolBar">
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">

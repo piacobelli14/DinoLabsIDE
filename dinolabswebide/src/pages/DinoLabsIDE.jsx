@@ -17,6 +17,7 @@ import "../styles/mainStyles/MirrorThemes/DarkTheme.css";
 import "../styles/mainStyles/MirrorThemes/LightTheme.css";
 import "../styles/helperStyles/Tooltip.css";
 import "../styles/helperStyles/LoadingSpinner.css";
+import "../styles/helperStyles/highlightKill.css";
 import useAuth from "../UseAuth";
 import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
 import DoughnutPlot from "../helpers/PlottingHelpers/DoughnutHelper.jsx";
@@ -2285,18 +2286,20 @@ const DinoLabsIDE = () => {
                                   <>
                                     {(['txt', 'md'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDERichTextEditor 
-                                        fileHandle={tab.fileHandle}
-                                        onEdit={handleEdit}        
-                                        onSave={handleSave}        
+                                        fileHandle={tab.fileHandle} 
+                                        keyBinds={keyBinds}    
+                                      />
+                                    )}
+
+                                    {(['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                      <DinoLabsIDETabularEditor 
+                                        fileHandle={tab.fileHandle} 
+                                        keyBinds={keyBinds}
                                       />
                                     )}
 
                                     {(['pdf'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEPDFEditor fileHandle={tab.fileHandle} />
-                                    )}
-
-                                    {(['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
-                                      <DinoLabsIDETabularEditor fileHandle={tab.fileHandle} />
                                     )}
 
                                     {([

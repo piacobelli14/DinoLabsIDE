@@ -913,4 +913,10 @@
     .dinolabsIDERowColumnOperationsButton:focus {
         opacity: 1.0; 
     }
+
+    .dinolabsIDETableWrapperContainer {
+        position: relative; 
+        width: 100%; 
+        height: 100%; 
+    }
 }

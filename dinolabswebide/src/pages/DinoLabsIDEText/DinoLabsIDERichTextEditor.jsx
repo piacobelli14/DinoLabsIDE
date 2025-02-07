@@ -42,7 +42,7 @@ const mathSymbols = [
     "⎕", "⎖", "⎗", "⎘", "⎙", "⎚", "⎛", "⎜", "⎝", "⎞", "⎟", "⎠", "⎡", "⎢", "⎣", "⎤", "⎥", "⎦",
     "⎧", "⎨", "⎩", "⎪", "⎫", "⎬", "⎭", "⎮", "⎯", "⎰", "⎱", "⎲", "⎳", "⎴", "⎵", "⎶", "⎷", "⎸",
     "⎹", "⎺", "⎻", "⎼", "⎽", "⎾", "⎿"
-]; 
+];
 
 const latinSymbols = [
     "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï", "Ñ", "Ò", "Ó", "Ô",
@@ -60,7 +60,7 @@ const punctuationSymbols = [
     "…", "—", "–", "‘", "’", "“", "”", "«", "»", "¡", "¿", "§", "¶", "•", "†", "‡"
 ];
 
-export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
+export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
     const [virtualizedParagraphs, setVirtualizedParagraphs] = useState([]);
     const virtualContainerRef = useRef(null);
     const [visibleStartIndex, setVisibleStartIndex] = useState(0);
@@ -86,7 +86,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     const imageInputRef = useRef(null);
     const [initialHTML, setInitialHTML] = useState("<p>Loading...</p>");
     const [error, setError] = useState(null);
-    const [fileName, setFileName] = useState(fileHandle.name);
+    const [fileName, setFileName] = useState(fileHandle?.name || "Untitled");
     const [openModal, setOpenModal] = useState(null);
     const [currentFontSize, setCurrentFontSize] = useState(16);
     const [fontStyle, setFontStyle] = useState("P");
@@ -327,14 +327,13 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
 
     async function saveChanges(updatedHtml) {
         setSaveStatus("saving");
-        const ext = (fileHandle.name || "").split(".").pop().toLowerCase();
+        const ext = (fileHandle?.name || "").split(".").pop().toLowerCase();
         let dataToWrite;
         if (ext === "txt" || ext === "md") {
             dataToWrite = editorRef.current.innerText;
         } else {
             dataToWrite = updatedHtml;
         }
-        onSave(updatedHtml);
         if (fileHandle) {
             try {
                 const writable = await fileHandle.createWritable();
@@ -617,10 +616,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
         }
     }
 
-    function handlePrint() {
-        window.print();
-    }
-
     function handleSelectAll() {
         if (!editorRef.current) return;
         const range = document.createRange();
@@ -636,6 +631,16 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
             const text = await navigator.clipboard.readText();
             document.execCommand("insertText", false, text);
         } catch {}
+    }
+
+    function handleCut() {
+        restoreSelection();
+        document.execCommand("cut");
+    }
+
+    function handleCopy() {
+        restoreSelection();
+        document.execCommand("copy");
     }
 
     function insertTable(rows, cols) {
@@ -788,16 +793,52 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }
 
     function handleKeyDown(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
-            e.preventDefault();
-            setShowSearchPanel(true);
-            return;
+        const isMac = navigator.platform.toUpperCase().includes("MAC");
+        const mod = isMac ? e.metaKey : e.ctrlKey;
+        if (mod && keyBinds) {
+            const key = e.key.toLowerCase();
+            if (key === keyBinds.search?.toLowerCase()) {
+                e.preventDefault();
+                setShowSearchPanel(true);
+                return;
+            }
+            if (key === keyBinds.save?.toLowerCase()) {
+                e.preventDefault();
+                saveChanges(editorRef.current.innerHTML);
+                return;
+            }
+            if (key === keyBinds.selectAll?.toLowerCase()) {
+                e.preventDefault();
+                handleSelectAll();
+                return;
+            }
+            if (key === keyBinds.cut?.toLowerCase()) {
+                e.preventDefault();
+                handleCut();
+                return;
+            }
+            if (key === keyBinds.copy?.toLowerCase()) {
+                e.preventDefault();
+                handleCopy();
+                return;
+            }
+            if (key === keyBinds.paste?.toLowerCase()) {
+                e.preventDefault();
+                handlePaste();
+                return;
+            }
+            if (key === keyBinds.undo?.toLowerCase()) {
+                e.preventDefault();
+                document.execCommand("undo", false, null);
+                return;
+            }
+            if (key === keyBinds.redo?.toLowerCase()) {
+                e.preventDefault();
+                document.execCommand("redo", false, null);
+                return;
+            }
         }
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-            e.preventDefault();
-            saveChanges(editorRef.current.innerHTML);
-            return;
-        }
+
         if (e.key === "Tab") {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -1154,7 +1195,6 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                 handlePaste={handlePaste}
                 handleSelectAll={handleSelectAll}
                 handleDownload={handleDownload}
-                handlePrint={handlePrint}
                 storeSelection={storeSelection}
                 toggleModal={toggleModal}
                 closeAllMenus={closeAllMenus}
@@ -1199,7 +1239,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                         type="checkbox"
                                         checked={caseSensitive}
                                         onChange={(e) => setCaseSensitive(e.target.checked)}
-                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onMouseDown={(ev) => ev.stopPropagation()}
                                     />
                                     Case Sensitive
                                 </span>
@@ -1209,26 +1249,26 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onMouseDown={(ev) => ev.stopPropagation()}
                             />
                             <div className="dinolabsIDEEditingSearchOperationsButtonWrapper">
                                 <button
                                     className="dinolabsIDEEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(ev) => ev.stopPropagation()}
                                     onClick={() => highlightAll(searchTerm)}
                                 >
                                     Search
                                 </button>
                                 <button
                                     className="dinolabsIDEEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(ev) => ev.stopPropagation()}
                                     onClick={goToPrevious}
                                 >
                                     Prev
                                 </button>
                                 <button
                                     className="dinolabsIDEEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(ev) => ev.stopPropagation()}
                                     onClick={goToNext}
                                 >
                                     Next
@@ -1245,19 +1285,19 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                 type="text"
                                 value={replaceTerm}
                                 onChange={(e) => setReplaceTerm(e.target.value)}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onMouseDown={(ev) => ev.stopPropagation()}
                             />
                             <div className="dinolabsIDEEditingSearchOperationsButtonWrapper">
                                 <button
                                     className="dinolabsIDEEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(ev) => ev.stopPropagation()}
                                     onClick={replaceCurrent}
                                 >
                                     Replace
                                 </button>
                                 <button
                                     className="dinolabsIDEEditingSearchOperationsButton"
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(ev) => ev.stopPropagation()}
                                     onClick={replaceAll}
                                 >
                                     Replace All
@@ -1265,24 +1305,30 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                             </div>
                         </div>
 
-                        <div className="dinolabsIDEEditingSearchOperationsButtonWrapper" style={{"justify-content": "center"}}>
+                        <div
+                            className="dinolabsIDEEditingSearchOperationsButtonWrapper"
+                            style={{ justifyContent: "center" }}
+                        >
                             <button
                                 className="dinolabsIDEEditingSearchOperationsButton"
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onMouseDown={(ev) => ev.stopPropagation()}
                                 onClick={() => {
                                     setShowSearchPanel(false);
                                     removeHighlights();
                                 }}
                             >
-                                <FontAwesomeIcon icon={faArrowRightFromBracket} style={{"transform": "scaleX(-1)"}}/>
+                                <FontAwesomeIcon
+                                    icon={faArrowRightFromBracket}
+                                    style={{ transform: "scaleX(-1)" }}
+                                />
                                 Close Search
                             </button>
                         </div>
                     </div>
                 )}
-                <div className="dinolabsIDETipMargin"/>
+                <div className="dinolabsIDETipMargin" />
                 <div className="dinolabsIDeEditorStack">
-                    <div className="dinoLabsEditorTopBar"></div>
+                    <div className="dinoLabsEditorTopBar" />
                     <div
                         className="dinolabsIDEEditor"
                         ref={editorRef}
@@ -1300,7 +1346,10 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         ref={virtualContainerRef}
                         onScroll={handleVirtualScroll}
                     >
-                        <div className="dinolabsIDEVirtualizationContent" style={{ height: `${totalHeight}px` }}>
+                        <div
+                            className="dinolabsIDEVirtualizationContent"
+                            style={{ height: `${totalHeight}px` }}
+                        >
                             {renderedParagraphs.map((paragraph, i) => {
                                 const actualIndex = visibleStartIndex + i;
                                 return (
@@ -1308,8 +1357,8 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                                         key={actualIndex}
                                         className="dinolabsIDEVirtualizationContent"
                                         style={{
-                                            top: `${(actualIndex) * paragraphHeight}px`,
-                                            height: `${paragraphHeight}px`
+                                            top: `${actualIndex * paragraphHeight}px`,
+                                            height: `${paragraphHeight}px`,
                                         }}
                                         contentEditable={true}
                                     >
@@ -1320,9 +1369,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
                         </div>
                     </div>
 
-                    <div className="dinoLabsEditorBottomBar"></div>
+                    <div className="dinoLabsEditorBottomBar" />
                 </div>
-                <div className="dinolabsIDECommentMargin"></div>
+                <div className="dinolabsIDECommentMargin" />
             </div>
         </div>
     );

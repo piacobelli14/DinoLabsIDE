@@ -8,7 +8,6 @@ import DinoLabsIDEColorPicker from "../DinoLabsIDEColorPicker.jsx";
 import {
     faSave,
     faDownload,
-    faPrint,
     faUndo,
     faRedo,
     faCut,
@@ -38,7 +37,6 @@ export default function DinoLabsIDETabularEditorToolbar({
     saveStatus,
     onSave,
     onDownload,
-    onPrint,
     onUndo,
     onRedo,
     onCut,
@@ -138,17 +136,6 @@ export default function DinoLabsIDETabularEditorToolbar({
                                             <span>
                                                 <FontAwesomeIcon icon={faDownload} />
                                                 Download
-                                            </span>
-                                        </button>
-                                        <button
-                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
-                                            onMouseDown={() => {
-                                                callActionAndBlur(onPrint);
-                                            }}
-                                        >
-                                            <span>
-                                                <FontAwesomeIcon icon={faPrint} />
-                                                Print
                                             </span>
                                         </button>
                                     </div>

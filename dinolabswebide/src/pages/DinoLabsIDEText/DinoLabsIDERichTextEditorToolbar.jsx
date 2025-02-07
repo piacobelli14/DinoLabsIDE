@@ -41,7 +41,6 @@ import {
     faICursor,
     faImage,
     faSearch,
-    faPrint,
     faSave
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -83,15 +82,6 @@ export default function DinoLabsIDERichTextEditorToolbar(props) {
                                             <span>
                                                 <FontAwesomeIcon icon={faDownload} />
                                                 Download
-                                            </span>
-                                        </button>
-                                        <button
-                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
-                                            onClick={props.handlePrint}
-                                        >
-                                            <span>
-                                                <FontAwesomeIcon icon={faPrint} />
-                                                Print
                                             </span>
                                         </button>
                                     </div>

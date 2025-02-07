@@ -1,4 +1,3 @@
-
 import React, {
     useState,
     useEffect,
@@ -49,7 +48,7 @@ function getColumnLabel(colIndex) {
     return label;
 }
 
-export default function PinnedHeadersSheet({ fileHandle }) {
+export default function PinnedHeadersSheet({ fileHandle, keyBinds }) {
     const [tableData, setTableData] = useState({});
     const tableDataRef = useRef(tableData);
     useEffect(() => {
@@ -508,103 +507,90 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     async function handleGlobalKeyDown(e) {
         const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
         const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-        if (cmdOrCtrl) {
-            const key = e.key.toLowerCase();
-            switch (key) {
-                case "s":
-                    e.preventDefault();
+
+        if (cmdOrCtrl && keyBinds) {
+            const k = e.key.toLowerCase();
+            if (k === keyBinds.search?.toLowerCase()) {
+                e.preventDefault();
+                commitActiveCellIfNeeded();
+                setShowSearchPanel(true);
+                return;
+            }
+            if (k === keyBinds.save?.toLowerCase()) {
+                e.preventDefault();
+                setKeybindLoading(true);
+                try {
+                    await Promise.resolve(handleSave());
+                } finally {
+                    setKeybindLoading(false);
+                }
+                return;
+            }
+            if (k === keyBinds.selectAll?.toLowerCase()) {
+                e.preventDefault();
+                setKeybindLoading(true);
+                try {
+                    await Promise.resolve(handleSelectAll());
+                } finally {
+                    setKeybindLoading(false);
+                }
+                return;
+            }
+            if (k === keyBinds.cut?.toLowerCase()) {
+                e.preventDefault();
+                if (selection) {
                     setKeybindLoading(true);
                     try {
-                        await Promise.resolve(handleSave());
+                        await Promise.resolve(handleCut());
                     } finally {
                         setKeybindLoading(false);
                     }
-                    break;
-                case "p":
-                    e.preventDefault();
+                }
+                return;
+            }
+            if (k === keyBinds.copy?.toLowerCase()) {
+                e.preventDefault();
+                if (selection) {
                     setKeybindLoading(true);
                     try {
-                        await Promise.resolve(handlePrint());
+                        await Promise.resolve(handleCopy());
                     } finally {
                         setKeybindLoading(false);
                     }
-                    break;
-                case "a":
-                    e.preventDefault();
+                }
+                return;
+            }
+            if (k === keyBinds.paste?.toLowerCase()) {
+                e.preventDefault();
+                if (selection) {
                     setKeybindLoading(true);
                     try {
-                        await Promise.resolve(handleSelectAll());
+                        await Promise.resolve(handlePaste());
                     } finally {
                         setKeybindLoading(false);
                     }
-                    break;
-                case "x":
-                    e.preventDefault();
-                    if (selection) {
-                        setKeybindLoading(true);
-                        try {
-                            await Promise.resolve(handleCut());
-                        } finally {
-                            setKeybindLoading(false);
-                        }
-                    }
-                    break;
-                case "c":
-                    e.preventDefault();
-                    if (selection) {
-                        setKeybindLoading(true);
-                        try {
-                            await Promise.resolve(handleCopy());
-                        } finally {
-                            setKeybindLoading(false);
-                        }
-                    }
-                    break;
-                case "v":
-                    e.preventDefault();
-                    if (selection) {
-                        setKeybindLoading(true);
-                        try {
-                            await Promise.resolve(handlePaste());
-                        } finally {
-                            setKeybindLoading(false);
-                        }
-                    }
-                    break;
-                case "z":
-                    e.preventDefault();
-                    setKeybindLoading(true);
-                    try {
-                        if (e.shiftKey) {
-                            await Promise.resolve(handleRedo());
-                        } else {
-                            await Promise.resolve(handleUndo());
-                        }
-                    } finally {
-                        setKeybindLoading(false);
-                    }
-                    break;
-                case "y":
-                    e.preventDefault();
-                    setKeybindLoading(true);
-                    try {
-                        await Promise.resolve(handleRedo());
-                    } finally {
-                        setKeybindLoading(false);
-                    }
-                    break;
-                case "f":
-                    e.preventDefault();
-                    setKeybindLoading(true);
-                    try {
-                        commitActiveCellIfNeeded();
-                        setShowSearchPanel(true);
-                    } finally {
-                        setKeybindLoading(false);
-                    }
-                    break;
-                default:
-                    break;
+                }
+                return;
+            }
+            if (k === keyBinds.undo?.toLowerCase()) {
+                e.preventDefault();
+                setKeybindLoading(true);
+                try {
+                    await Promise.resolve(handleUndo());
+                } finally {
+                    setKeybindLoading(false);
+                }
+                return;
+            }
+            if (k === keyBinds.redo?.toLowerCase()) {
+                e.preventDefault();
+                setKeybindLoading(true);
+                try {
+                    await Promise.resolve(handleRedo());
+                } finally {
+                    setKeybindLoading(false);
+                }
+                return;
             }
         }
     }
@@ -722,10 +708,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         link.download = fileName;
         link.click();
         URL.revokeObjectURL(url);
-    }
-
-    function handlePrint() {
-        window.print();
     }
 
     function handleCut() {
@@ -2088,7 +2070,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     setOpenMenu={setOpenMenu}
                     onSave={handleSave}
                     onDownload={handleDownload}
-                    onPrint={handlePrint}
                     onUndo={handleUndo}
                     onRedo={handleRedo}
                     onCut={handleCut}
@@ -2137,7 +2118,6 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             <div
                 className="dinolabsIDETableWrapperContainer"
                 ref={tableWrapperContainerRef}
-                style={{ position: "relative", width: "100%", height: "100%" }}
             >
                 <div
                     style={{
