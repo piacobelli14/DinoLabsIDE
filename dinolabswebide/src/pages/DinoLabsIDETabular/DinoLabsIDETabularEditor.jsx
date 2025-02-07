@@ -74,6 +74,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const [searchPanelOffset, setSearchPanelOffset] = useState({ x: 0, y: 0 });
     const searchPanelRef = useRef(null);
     const [selection, setSelection] = useState(null);
+    const [skipClear, setSkipClear] = useState(false);
     const [cellDrag, setCellDrag] = useState({
         active: false,
         startRow: null,
@@ -105,6 +106,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         Array.from({ length: DATA_COL_COUNT }, () => DEFAULT_COL_WIDTH)
     );
     const gridContainerRef = useRef(null);
+    const tableWrapperContainerRef = useRef(null);
     const dataGridRef = useRef(null);
     const scrollPos = useRef({ left: 0, top: 0 });
     const columnHeaderRef = useRef(null);
@@ -120,6 +122,29 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const alignButtonRef = useRef(null);
     const moreModalRef = useRef(null);
     const moreButtonRef = useRef(null);
+
+    function inlineAllStyles(element) {
+        const computedStyle = window.getComputedStyle(element);
+        let styleString = "";
+        for (let i = 0; i < computedStyle.length; i++) {
+            const prop = computedStyle[i];
+            styleString += `${prop}: ${computedStyle.getPropertyValue(prop)}; `;
+        }
+        element.setAttribute("style", styleString);
+        for (let i = 0; i < element.children.length; i++) {
+            inlineAllStyles(element.children[i]);
+        }
+    }
+
+    useEffect(() => {
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+        };
+        document.addEventListener('contextmenu', handleContextMenu);
+        return () => {
+            document.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, []);
 
     const decreaseZoom = () => setPageZoom(prev => Math.max(prev - 10, 10));
     const increaseZoom = () => setPageZoom(prev => prev + 10);
@@ -437,24 +462,40 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         return lines.join("\r\n");
     }
 
+    async function handleDownload() {
+        setOpenMenu(null);
+        const result = await showDialog({
+            title: "Download as...",
+            message: "Select a file type to download this file as.",
+            inputs: [
+                {
+                    name: "fileType",
+                    type: "select",
+                    options: [
+                        { label: "CSV (.csv)", value: "csv" }
+                    ],
+                },
+            ],
+            showCancel: true,
+        });
+        if (result) {
+            const fileName =
+                fileHandle && fileHandle.name
+                    ? fileHandle.name.replace(/\.[^/.]+$/, "")
+                    : "Untitled";
+            const content = generateCSV(tableDataRef.current);
+            const blob = new Blob([content], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            linkDownload(url, fileName + ".csv");
+        }
+    }
+
     function linkDownload(url, fileName) {
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName;
         link.click();
         URL.revokeObjectURL(url);
-    }
-
-    function handleDownload() {
-        setOpenMenu(null);
-        const content = generateCSV(tableDataRef.current);
-        const blob = new Blob([content], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const baseName =
-            fileHandle && fileHandle.name
-                ? fileHandle.name.replace(/\.[^/.]+$/, "")
-                : "Untitled";
-        linkDownload(url, baseName + ".csv");
     }
 
     function handlePrint() {
@@ -1181,10 +1222,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }
     }
 
-    function handleColumnHeaderMouseUp() {
-        if (headerDrag && headerDrag.type === "col") {
-            setHeaderDrag(null);
-        }
+    function handleColumnHeaderMouseUp(e) {
+        e.stopPropagation();
+        setHeaderDrag(null);
+        setSkipClear(true);
     }
 
     function handleRowHeaderMouseMove(e) {
@@ -1202,10 +1243,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }
     }
 
-    function handleRowHeaderMouseUp() {
-        if (headerDrag && headerDrag.type === "row") {
-            setHeaderDrag(null);
-        }
+    function handleRowHeaderMouseUp(e) {
+        e.stopPropagation();
+        setHeaderDrag(null);
+        setSkipClear(true);
     }
 
     const handleColumnHeaderMouseDown = (e, colIndex) => {
@@ -1398,6 +1439,19 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         <div
             className="dinolabsIDEContentWrapper"
             onClick={(e) => {
+                if (skipClear) {
+                    setSkipClear(false);
+                    return;
+                }
+                if (
+                    e.target.closest('.toolbar-wrapper') ||
+                    e.target.closest('.dinolabsIDEEditingSearchBoxWrapper')
+                ) return;
+                if (
+                    e.target.closest('.dinolabsIDETableColumnHeaderCell') ||
+                    e.target.closest('.dinolabsIDETableRowHeaderCell') ||
+                    e.target.closest('.dinolabsIDETableCornerHeader')
+                ) return;
                 if (e.detail > 1) return;
                 if (activeCell.row === null && activeCell.col === null && selection) {
                     setSelection(null);
@@ -1413,55 +1467,57 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             <style>
                 {`@keyframes spin {0% { transform: rotate(0deg); }100% { transform: rotate(360deg); }}`}
             </style>
-            <DinoLabsIDETabularEditorToolbar
-                fileName={
-                    fileHandle && fileHandle.name ? fileHandle.name : "Untitled Table"
-                }
-                saveStatus={saveStatus}
-                openMenu={openMenu}
-                setOpenMenu={setOpenMenu}
-                onSave={handleSave}
-                onDownload={handleDownload}
-                onPrint={handlePrint}
-                onUndo={handleUndo}
-                onRedo={handleRedo}
-                onCut={handleCut}
-                onCopy={handleCopy}
-                onPaste={handlePaste}
-                onSelectAll={handleSelectAll}
-                onSearchReplace={() => setShowSearchPanel(true)}
-                openModal={openModal}
-                toggleModal={toggleModal}
-                closeAllMenus={() => { setOpenMenu(null); setOpenModal(null); }}
-                storeSelection={storeSelection}
-                formatModalRef={formatModalRef}
-                formatButtonRef={formatButtonRef}
-                toolsModalRef={toolsModalRef}
-                toolsButtonRef={toolsButtonRef}
-                handleAlign={handleAlign}
-                handleWordCount={handleWordCount}
-                decreaseZoom={decreaseZoom}
-                increaseZoom={increaseZoom}
-                currentZoom={pageZoom}
-                fontType={fontType}
-                handleFontTypeChange={handleFontTypeChange}
-                execCommand={execCommand}
-                isColorOpen={isColorOpen}
-                setIsColorOpen={setIsColorOpen}
-                isHighlightColorOpen={isHighlightColorOpen}
-                setIsHighlightColorOpen={setIsHighlightColorOpen}
-                handleColorChange={handleColorChange}
-                textColor={textColor}
-                handleHighlightColorChange={handleHighlightColorChange}
-                textHighlightColor={textHighlightColor}
-                handleRemoveFormatting={handleRemoveFormatting}
-                alignModalRef={alignModalRef}
-                alignButtonRef={alignButtonRef}
-                moreModalRef={moreModalRef}
-                moreButtonRef={moreButtonRef}
-                restoreSelection={restoreSelection}
-            />
-            <div className="dinolabsIDETableWrapperContainer" style={{ position: "relative", width: "100%", height: "100%" }}>
+            <div className="toolbar-wrapper">
+                <DinoLabsIDETabularEditorToolbar
+                    fileName={
+                        fileHandle && fileHandle.name ? fileHandle.name : "Untitled Table"
+                    }
+                    saveStatus={saveStatus}
+                    openMenu={openMenu}
+                    setOpenMenu={setOpenMenu}
+                    onSave={handleSave}
+                    onDownload={handleDownload}
+                    onPrint={handlePrint}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onCut={handleCut}
+                    onCopy={handleCopy}
+                    onPaste={handlePaste}
+                    onSelectAll={handleSelectAll}
+                    onSearchReplace={() => setShowSearchPanel(true)}
+                    openModal={openModal}
+                    toggleModal={toggleModal}
+                    closeAllMenus={() => { setOpenMenu(null); setOpenModal(null); }}
+                    storeSelection={storeSelection}
+                    formatModalRef={formatModalRef}
+                    formatButtonRef={formatButtonRef}
+                    toolsModalRef={toolsModalRef}
+                    toolsButtonRef={toolsButtonRef}
+                    handleAlign={handleAlign}
+                    handleWordCount={handleWordCount}
+                    decreaseZoom={decreaseZoom}
+                    increaseZoom={increaseZoom}
+                    currentZoom={pageZoom}
+                    fontType={fontType}
+                    handleFontTypeChange={handleFontTypeChange}
+                    execCommand={execCommand}
+                    isColorOpen={isColorOpen}
+                    setIsColorOpen={setIsColorOpen}
+                    isHighlightColorOpen={isHighlightColorOpen}
+                    setIsHighlightColorOpen={setIsHighlightColorOpen}
+                    handleColorChange={handleColorChange}
+                    textColor={textColor}
+                    handleHighlightColorChange={handleHighlightColorChange}
+                    textHighlightColor={textHighlightColor}
+                    handleRemoveFormatting={handleRemoveFormatting}
+                    alignModalRef={alignModalRef}
+                    alignButtonRef={alignButtonRef}
+                    moreModalRef={moreModalRef}
+                    moreButtonRef={moreButtonRef}
+                    restoreSelection={restoreSelection}
+                />
+            </div>
+            <div className="dinolabsIDETableWrapperContainer" ref={tableWrapperContainerRef} style={{ position: "relative", width: "100%", height: "100%" }}>
                 <div style={{ width: `${100 * 100 / pageZoom}%`, height: `${100 * 100 / pageZoom}%` }}>
                     <div
                         className="dinolabsIDETableWrapper"

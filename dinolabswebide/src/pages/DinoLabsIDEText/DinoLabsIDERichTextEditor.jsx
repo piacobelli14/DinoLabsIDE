@@ -159,6 +159,16 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, onSave }) {
     }, []);
 
     useEffect(() => {
+        const disableContextMenu = (e) => {
+            e.preventDefault();
+        };
+        document.addEventListener("contextmenu", disableContextMenu);
+        return () => {
+            document.removeEventListener("contextmenu", disableContextMenu);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!fileHandle) return;
         (async () => {
             try {
