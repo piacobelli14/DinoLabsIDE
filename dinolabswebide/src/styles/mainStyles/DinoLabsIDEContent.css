@@ -6,7 +6,7 @@
         border: none;
         box-shadow: none;
         box-sizing: border-box;
-        z-index: 3;
+        z-index: 1;
     }
 
     .context-menu-tippy-horizontal {
@@ -870,5 +870,47 @@
         background-color: limegreen;
         cursor: nwse-resize;
         pointer-events: auto;
+    }
+
+    .dinolabsIDERowColumnOperationsButtonWrapper {
+        position: absolute; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1vw; 
+        z-index: 1;
+        bottom: 1vw; 
+        right: 1vw;  
+    }
+
+    .dinolabsIDERowColumnOperationsButton {
+        background-color: #c0c0c0; 
+        padding: 0.6vw 1vw;
+        font-size: 1vw; 
+        font-weight: 600; 
+        color: #222222; 
+        border: 0.2vh solid #222222; 
+        border-radius: 0.2vw; 
+        box-shadow: 0 0 20px black; 
+        display: flex;
+        justify-content: center; 
+        align-items: center;
+        gap: 0.4vw; 
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        cursor: pointer;
+        z-index: 0; 
+    }
+
+    .dinolabsIDERowColumnOperationsButton svg {
+        font-size: 1.4vw;
+    }
+
+    .dinolabsIDERowColumnOperationsButton:hover {
+        opacity: 0.6; 
+        transform: scale(1.1);
+    }
+
+    .dinolabsIDERowColumnOperationsButton:focus {
+        opacity: 1.0; 
     }
 }

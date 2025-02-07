@@ -3,7 +3,8 @@ import React, {
     useEffect,
     useRef,
     useCallback,
-    useLayoutEffect
+    useLayoutEffect,
+    useMemo
 } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -11,12 +12,27 @@ import "../../styles/mainStyles/DinoLabsIDEContent.css";
 import DinoLabsIDETabularEditorToolbar from "./DinoLabsIDETabularEditorToolbar";
 import { showDialog } from "../DinoLabsIDEAlert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import {
+    faArrowRightFromBracket,
+    faSquareMinus,
+    faSquarePlus
+} from "@fortawesome/free-solid-svg-icons";
+
+const MAX_ROWS = 100000;
+const MAX_COLS = 5000;
 
 function sumRange(arr, from, to) {
     let total = 0;
     for (let i = from; i < to; i++) {
         total += arr[i] || 0;
+    }
+    return total;
+}
+
+function sumEffectiveRange(arr, from, to, defaultValue) {
+    let total = 0;
+    for (let i = from; i < to; i++) {
+        total += i < arr.length ? arr[i] : defaultValue;
     }
     return total;
 }
@@ -41,8 +57,8 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [keybindLoading, setKeybindLoading] = useState(false);
-    const DATA_ROW_COUNT = 1000;
-    const DATA_COL_COUNT = 100;
+    const [numRows, setNumRows] = useState(1000);
+    const [numCols, setNumCols] = useState(100);
     const [activeCell, setActiveCell] = useState({ row: null, col: null });
     const [cellEditingValue, setCellEditingValue] = useState("");
     const [undoStack, setUndoStack] = useState([]);
@@ -51,7 +67,15 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const [openMenu, setOpenMenu] = useState(null);
     const [openModal, setOpenModal] = useState(null);
     const toggleModal = (modalName) => {
-        setOpenModal((prev) => (prev === modalName ? null : modalName));
+        setOpenModal((prev) => {
+            const newModalState = prev === modalName ? null : modalName;
+            if (newModalState !== null) {
+                setOpenMenu(null);
+                setIsColorOpen(false);
+                setIsHighlightColorOpen(false);
+            }
+            return newModalState;
+        });
     };
     const formatModalRef = useRef(null);
     const formatButtonRef = useRef(null);
@@ -94,28 +118,76 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         originalOverlayLeft: 0,
         block: null
     });
-    const [selectionResize, setSelectionResize] = useState({
-        active: false,
-        handle: null,
-        startX: 0,
-        startY: 0,
-        initialSelection: null
-    });
-    const [resizing, setResizing] = useState({
-        active: false,
-        type: null,
-        index: null,
-        startPos: 0,
-        startSize: 0
-    });
     const DEFAULT_ROW_HEIGHT = 24;
     const DEFAULT_COL_WIDTH = 120;
     const [rowHeights, setRowHeights] = useState(
-        Array.from({ length: DATA_ROW_COUNT }, () => DEFAULT_ROW_HEIGHT)
+        Array.from({ length: numRows }, () => DEFAULT_ROW_HEIGHT)
     );
     const [colWidths, setColWidths] = useState(
-        Array.from({ length: DATA_COL_COUNT }, () => DEFAULT_COL_WIDTH)
+        Array.from({ length: numCols }, () => DEFAULT_COL_WIDTH)
     );
+    useEffect(() => {
+        setRowHeights(Array.from({ length: numRows }, () => DEFAULT_ROW_HEIGHT));
+    }, [numRows]);
+    useEffect(() => {
+        setColWidths(Array.from({ length: numCols }, () => DEFAULT_COL_WIDTH));
+    }, [numCols]);
+    const cachedRowHeightsRef = useRef([]);
+    const rowHeightsCumulative = useMemo(() => {
+        if (cachedRowHeightsRef.current.length === 0) {
+            let cumulative = [0];
+            for (let i = 0; i < rowHeights.length; i++) {
+                cumulative.push(cumulative[i] + rowHeights[i]);
+            }
+            cachedRowHeightsRef.current = cumulative;
+            return cumulative;
+        }
+        if (cachedRowHeightsRef.current.length === rowHeights.length + 1) {
+            return cachedRowHeightsRef.current;
+        }
+        if (rowHeights.length + 1 > cachedRowHeightsRef.current.length) {
+            let cumulative = cachedRowHeightsRef.current.slice();
+            for (let i = cumulative.length - 1; i < rowHeights.length; i++) {
+                cumulative.push(cumulative[i] + rowHeights[i]);
+            }
+            cachedRowHeightsRef.current = cumulative;
+            return cumulative;
+        }
+        let cumulative = [0];
+        for (let i = 0; i < rowHeights.length; i++) {
+            cumulative.push(cumulative[i] + rowHeights[i]);
+        }
+        cachedRowHeightsRef.current = cumulative;
+        return cumulative;
+    }, [rowHeights]);
+    const cachedColWidthsRef = useRef([]);
+    const colWidthsCumulative = useMemo(() => {
+        if (cachedColWidthsRef.current.length === 0) {
+            let cumulative = [0];
+            for (let i = 0; i < colWidths.length; i++) {
+                cumulative.push(cumulative[i] + colWidths[i]);
+            }
+            cachedColWidthsRef.current = cumulative;
+            return cumulative;
+        }
+        if (cachedColWidthsRef.current.length === colWidths.length + 1) {
+            return cachedColWidthsRef.current;
+        }
+        if (colWidths.length + 1 > cachedColWidthsRef.current.length) {
+            let cumulative = cachedColWidthsRef.current.slice();
+            for (let i = cumulative.length - 1; i < colWidths.length; i++) {
+                cumulative.push(cumulative[i] + colWidths[i]);
+            }
+            cachedColWidthsRef.current = cumulative;
+            return cumulative;
+        }
+        let cumulative = [0];
+        for (let i = 0; i < colWidths.length; i++) {
+            cumulative.push(cumulative[i] + colWidths[i]);
+        }
+        cachedColWidthsRef.current = cumulative;
+        return cumulative;
+    }, [colWidths]);
     const gridContainerRef = useRef(null);
     const tableWrapperContainerRef = useRef(null);
     const dataGridRef = useRef(null);
@@ -134,11 +206,25 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     const moreModalRef = useRef(null);
     const moreButtonRef = useRef(null);
 
+    const addRow = useCallback(() => {
+        if (numRows < MAX_ROWS) {
+            setNumRows((prev) => prev + 1);
+            setRowHeights((prev) => [...prev, DEFAULT_ROW_HEIGHT]);
+        }
+    }, [numRows]);
+
+    const addColumn = useCallback(() => {
+        if (numCols < MAX_COLS) {
+            setNumCols((prev) => prev + 1);
+            setColWidths((prev) => [...prev, DEFAULT_COL_WIDTH]);
+        }
+    }, [numCols]);
+
     function moveSelection(originalSelection, rowOffset, colOffset, block, data) {
-        const numRows = originalSelection.bottom - originalSelection.top + 1;
-        const numCols = originalSelection.right - originalSelection.left + 1;
-        let rowIndices = Array.from({ length: numRows }, (_, i) => i);
-        let colIndices = Array.from({ length: numCols }, (_, j) => j);
+        const numRowsSel = originalSelection.bottom - originalSelection.top + 1;
+        const numColsSel = originalSelection.right - originalSelection.left + 1;
+        let rowIndices = Array.from({ length: numRowsSel }, (_, i) => i);
+        let colIndices = Array.from({ length: numColsSel }, (_, j) => j);
         if (rowOffset > 0) rowIndices.reverse();
         if (colOffset > 0) colIndices.reverse();
         for (const i of rowIndices) {
@@ -175,36 +261,43 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         const clonedContainer = container.cloneNode(true);
         inlineAllStyles(clonedContainer);
         return `
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <meta charset="UTF-8">
-            <title>${fileHandle && fileHandle.name ? fileHandle.name : "Untitled"}</title>
-            </head>
-            <body>
-            ${clonedContainer.outerHTML}
-            </body>
-            </html>
-        `;
+              <!DOCTYPE html>
+              <html>
+              <head>
+              <meta charset="UTF-8">
+              <title>${
+            fileHandle && fileHandle.name ? fileHandle.name : "Untitled"
+        }</title>
+              </head>
+              <body>
+              ${clonedContainer.outerHTML}
+              </body>
+              </html>
+          `;
     }
 
     useEffect(() => {
         const handleContextMenu = (e) => {
             e.preventDefault();
         };
-        document.addEventListener('contextmenu', handleContextMenu);
+        document.addEventListener("contextmenu", handleContextMenu);
         return () => {
-            document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener("contextmenu", handleContextMenu);
         };
     }, []);
 
-    const decreaseZoom = () => setPageZoom(prev => Math.max(prev - 10, 10));
-    const increaseZoom = () => setPageZoom(prev => prev + 10);
+    const decreaseZoom = () => setPageZoom((prev) => Math.max(prev - 10, 10));
+    const increaseZoom = () => setPageZoom((prev) => prev + 10);
 
     const handleFontTypeChange = (e) => {
         const newFontType = e.target.value;
         setFontType(newFontType);
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prevFormats) => {
             const newFormats = { ...prevFormats };
             for (let r = sel.top; r <= sel.bottom; r++) {
@@ -219,7 +312,12 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     };
 
     const execCommand = (command) => {
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prev) => {
             const newFormats = { ...prev };
             for (let r = sel.top; r <= sel.bottom; r++) {
@@ -228,16 +326,36 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     const current = newFormats[key] || {};
                     switch (command) {
                         case "bold":
-                            newFormats[key] = { ...current, fontWeight: current.fontWeight === "bold" ? "normal" : "bold" };
+                            newFormats[key] = {
+                                ...current,
+                                fontWeight:
+                                    current.fontWeight === "bold" ? "normal" : "bold"
+                            };
                             break;
                         case "italic":
-                            newFormats[key] = { ...current, fontStyle: current.fontStyle === "italic" ? "normal" : "italic" };
+                            newFormats[key] = {
+                                ...current,
+                                fontStyle:
+                                    current.fontStyle === "italic" ? "normal" : "italic"
+                            };
                             break;
                         case "underline":
-                            newFormats[key] = { ...current, textDecoration: current.textDecoration === "underline" ? "none" : "underline" };
+                            newFormats[key] = {
+                                ...current,
+                                textDecoration:
+                                    current.textDecoration === "underline"
+                                        ? "none"
+                                        : "underline"
+                            };
                             break;
                         case "strikeThrough":
-                            newFormats[key] = { ...current, textDecoration: current.textDecoration === "line-through" ? "none" : "line-through" };
+                            newFormats[key] = {
+                                ...current,
+                                textDecoration:
+                                    current.textDecoration === "line-through"
+                                        ? "none"
+                                        : "line-through"
+                            };
                             break;
                         default:
                             break;
@@ -250,38 +368,53 @@ export default function PinnedHeadersSheet({ fileHandle }) {
 
     const handleColorChange = (color) => {
         setTextColor(color);
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prevFormats) => {
-             const newFormats = { ...prevFormats };
-             for (let r = sel.top; r <= sel.bottom; r++) {
-                 for (let c = sel.left; c <= sel.right; c++) {
-                     const key = `${r},${c}`;
-                     const current = newFormats[key] || {};
-                     newFormats[key] = { ...current, color: color };
-                 }
-             }
-             return newFormats;
+            const newFormats = { ...prevFormats };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    const current = newFormats[key] || {};
+                    newFormats[key] = { ...current, color };
+                }
+            }
+            return newFormats;
         });
     };
 
     const handleHighlightColorChange = (color) => {
         setTextHighlightColor(color);
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prevFormats) => {
-             const newFormats = { ...prevFormats };
-             for (let r = sel.top; r <= sel.bottom; r++) {
-                 for (let c = sel.left; c <= sel.right; c++) {
-                     const key = `${r},${c}`;
-                     const current = newFormats[key] || {};
-                     newFormats[key] = { ...current, backgroundColor: color };
-                 }
-             }
-             return newFormats;
+            const newFormats = { ...prevFormats };
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    const current = newFormats[key] || {};
+                    newFormats[key] = { ...current, backgroundColor: color };
+                }
+            }
+            return newFormats;
         });
     };
 
     const handleRemoveFormatting = () => {
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prev) => {
             const newFormats = { ...prev };
             for (let r = sel.top; r <= sel.bottom; r++) {
@@ -317,17 +450,47 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     throw new Error(`Unsupported file type: .${ext}`);
                 }
                 const text = await file.text();
-                const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+                let lines = text.split(/\r?\n/);
+                while (lines.length && !lines[lines.length - 1].trim()) {
+                    lines.pop();
+                }
                 const data = {};
+                let maxColsFound = 0;
                 lines.forEach((line, r) => {
                     const cells = line.split(",");
+                    if (cells.length > maxColsFound) maxColsFound = cells.length;
                     cells.forEach((cell, c) => {
                         if (cell.trim()) {
                             data[`${r},${c}`] = cell.trim();
                         }
                     });
                 });
+                let finalRows = lines.length;
+                let finalCols = maxColsFound;
+                let alertMessage = "";
+                if (finalRows > MAX_ROWS) {
+                    finalRows = MAX_ROWS;
+                    alertMessage += `Row count exceeds limit and will be truncated to ${MAX_ROWS} rows. `;
+                }
+                if (finalCols > MAX_COLS) {
+                    finalCols = MAX_COLS;
+                    alertMessage += `Column count exceeds limit and will be truncated to ${MAX_COLS} columns.`;
+                }
+                if (alertMessage) {
+                    await showDialog({
+                        title: "Data Truncation Alert",
+                        message: alertMessage
+                    });
+                    Object.keys(data).forEach((key) => {
+                        const [r, c] = key.split(",").map(Number);
+                        if (r >= finalRows || c >= finalCols) {
+                            delete data[key];
+                        }
+                    });
+                }
                 setTableData(data);
+                setNumRows(finalRows);
+                setNumCols(finalCols);
             } catch (e) {
                 setError(e.message);
             } finally {
@@ -433,6 +596,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     e.preventDefault();
                     setKeybindLoading(true);
                     try {
+                        commitActiveCellIfNeeded();
                         setShowSearchPanel(true);
                     } finally {
                         setKeybindLoading(false);
@@ -504,17 +668,28 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             if (c > maxCol) maxCol = c;
         });
         let lines = [];
+        let lastNonEmptyRow = -1;
         for (let r = 0; r <= maxRow; r++) {
             let rowCells = [];
+            let rowHasContent = false;
             for (let c = 0; c <= maxCol; c++) {
-                rowCells.push(data[`${r},${c}`] || "");
+                const value = data[`${r},${c}`] || "";
+                if (value !== "") {
+                    rowHasContent = true;
+                }
+                rowCells.push(value);
+            }
+            if (rowHasContent) {
+                lastNonEmptyRow = r;
             }
             lines.push(rowCells.join(","));
         }
+        lines = lines.slice(0, lastNonEmptyRow + 1);
         return lines.join("\r\n");
     }
 
     async function handleDownload() {
+        closeAllPopouts();
         setOpenMenu(null);
         const result = await showDialog({
             title: "Download as...",
@@ -523,12 +698,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 {
                     name: "fileType",
                     type: "select",
-                    options: [
-                        { label: "CSV (.csv)", value: "csv" }
-                    ],
-                },
+                    options: [{ label: "CSV (.csv)", value: "csv" }]
+                }
             ],
-            showCancel: true,
+            showCancel: true
         });
         if (result) {
             const fileName =
@@ -590,6 +763,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     }
 
     async function handlePaste() {
+        closeAllPopouts();
         commitActiveCellIfNeeded();
         if (!selection || !clipboardData) return;
         const newData = { ...tableDataRef.current };
@@ -674,8 +848,8 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         setSelection({
             top: 0,
             left: 0,
-            bottom: DATA_ROW_COUNT - 1,
-            right: DATA_COL_COUNT - 1
+            bottom: numRows - 1,
+            right: numCols - 1
         });
     }
 
@@ -728,7 +902,8 @@ export default function PinnedHeadersSheet({ fileHandle }) {
 
     function replaceCurrent() {
         commitActiveCellIfNeeded();
-        if (currentResultIndex < 0 || currentResultIndex >= searchResults.length) return;
+        if (currentResultIndex < 0 || currentResultIndex >= searchResults.length)
+            return;
         const result = searchResults[currentResultIndex];
         const oldVal = tableDataRef.current[`${result.row},${result.col}`] || "";
         const before = oldVal.slice(0, result.indexInCell);
@@ -832,15 +1007,20 @@ export default function PinnedHeadersSheet({ fileHandle }) {
 
     function handleCellMouseDown(rowIndex, colIndex, e) {
         if (e.button !== 0) return;
-        if (e.shiftKey && activeCell.row !== null && activeCell.col !== null) {
+        if (e.shiftKey) {
+            const anchor = selection
+                ? { row: selection.top, col: selection.left }
+                : (activeCell.row !== null && activeCell.col !== null
+                    ? { row: activeCell.row, col: activeCell.col }
+                    : { row: rowIndex, col: colIndex });
             setSelection({
-                top: Math.min(activeCell.row, rowIndex),
-                left: Math.min(activeCell.col, colIndex),
-                bottom: Math.max(activeCell.row, rowIndex),
-                right: Math.max(activeCell.col, colIndex)
+                top: Math.min(anchor.row, rowIndex),
+                left: Math.min(anchor.col, colIndex),
+                bottom: Math.max(anchor.row, rowIndex),
+                right: Math.max(anchor.col, colIndex)
             });
-            setActiveCell({ row: rowIndex, col: colIndex });
-            setCellEditingValue(tableDataRef.current[`${rowIndex},${colIndex}`] || "");
+            setActiveCell({ row: null, col: null });
+            setCellEditingValue("");
             return;
         }
         if (!(activeCell.row === rowIndex && activeCell.col === colIndex)) {
@@ -877,7 +1057,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                         right: colIndex
                     });
                     setActiveCell({ row: rowIndex, col: colIndex });
-                    setCellEditingValue(tableDataRef.current[`${rowIndex},${colIndex}`] || "");
+                    setCellEditingValue(
+                        tableDataRef.current[`${rowIndex},${colIndex}`] || ""
+                    );
                 }
             }
             return {
@@ -935,8 +1117,12 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     function moveActiveCellHorizontally(offset) {
         if (activeCell.row === null || activeCell.col === null) return;
         let newCol = activeCell.col + offset;
+        if (newCol >= numCols && offset > 0 && numCols < MAX_COLS) {
+            addColumn();
+            newCol = numCols;
+        }
         if (newCol < 0) newCol = 0;
-        if (newCol >= DATA_COL_COUNT) newCol = DATA_COL_COUNT - 1;
+        else if (newCol >= numCols) newCol = numCols - 1;
         setActiveCell({ row: activeCell.row, col: newCol });
         const newKey = `${activeCell.row},${newCol}`;
         setCellEditingValue(tableDataRef.current[newKey] || "");
@@ -951,8 +1137,12 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     function moveActiveCellVertically(offset) {
         if (activeCell.row === null || activeCell.col === null) return;
         let newRow = activeCell.row + offset;
+        if (newRow >= numRows && offset > 0 && numRows < MAX_ROWS) {
+            addRow();
+            newRow = numRows;
+        }
         if (newRow < 0) newRow = 0;
-        if (newRow >= DATA_ROW_COUNT) newRow = DATA_ROW_COUNT - 1;
+        else if (newRow >= numRows) newRow = numRows - 1;
         setActiveCell({ row: newRow, col: activeCell.col });
         const newKey = `${newRow},${activeCell.col}`;
         setCellEditingValue(tableDataRef.current[newKey] || "");
@@ -971,7 +1161,12 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             justifyRight: "right"
         };
         const textAlign = alignMap[alignCommand];
-        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: DATA_ROW_COUNT - 1, right: DATA_COL_COUNT - 1 };
+        const sel = selection || storedSelectionRef.current || {
+            top: 0,
+            left: 0,
+            bottom: numRows - 1,
+            right: numCols - 1
+        };
         setCellFormats((prev) => {
             const newFormats = { ...prev };
             for (let r = sel.top; r <= sel.bottom; r++) {
@@ -986,6 +1181,11 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     };
 
     const handleWordCount = async () => {
+        closeAllPopouts();
+        setOpenMenu(null);
+        setOpenModal(null);
+        setIsColorOpen(false);
+        setIsHighlightColorOpen(false);
         let count = 0;
         if (selection || storedSelectionRef.current) {
             const sel = selection || storedSelectionRef.current;
@@ -1012,8 +1212,120 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         }
     };
 
-    const renderDataCell = ({ rowIndex, columnIndex, style }) => {
+    const closeAllPopouts = () => {
+        setOpenMenu(null);
+        setOpenModal(null);
+        setIsColorOpen(false);
+        setIsHighlightColorOpen(false);
+    };
+
+    const [autoSizerDims, setAutoSizerDims] = useState({ width: 0, height: 0 });
+    const minNeededCols = useMemo(() => {
+        if (!autoSizerDims.width) return 0;
+        return Math.ceil(autoSizerDims.width / DEFAULT_COL_WIDTH);
+    }, [autoSizerDims.width]);
+    const minNeededRows = useMemo(() => {
+        if (!autoSizerDims.height) return 0;
+        return Math.ceil(autoSizerDims.height / DEFAULT_ROW_HEIGHT);
+    }, [autoSizerDims.height]);
+    const effectiveCols = Math.max(numCols, minNeededCols);
+    const effectiveRows = Math.max(numRows, minNeededRows);
+
+    const getRowHeight = (index) => {
+        if (index < rowHeights.length) return rowHeights[index];
+        return DEFAULT_ROW_HEIGHT;
+    };
+
+    const getColWidth = (index) => {
+        if (index < colWidths.length) return colWidths[index];
+        return DEFAULT_COL_WIDTH;
+    };
+
+    const expandIfNeeded = useCallback(
+        (scrollLeft, scrollTop, viewWidth, viewHeight) => {
+            const bottomEdge = scrollTop + viewHeight;
+            const rightEdge = scrollLeft + viewWidth;
+            const totalHeight = rowHeightsCumulative[numRows];
+            const totalWidth = colWidthsCumulative[numCols];
+            if (bottomEdge > totalHeight && numRows < MAX_ROWS) {
+                const extraRowsNeeded = Math.ceil(
+                    (bottomEdge - totalHeight) / DEFAULT_ROW_HEIGHT
+                );
+                const rowsToAdd = Math.min(extraRowsNeeded, MAX_ROWS - numRows);
+                setNumRows((prev) => prev + rowsToAdd);
+                setRowHeights((prev) => [
+                    ...prev,
+                    ...Array.from({ length: rowsToAdd }, () => DEFAULT_ROW_HEIGHT)
+                ]);
+            }
+            if (rightEdge > totalWidth && numCols < MAX_COLS) {
+                const extraColsNeeded = Math.ceil(
+                    (rightEdge - totalWidth) / DEFAULT_COL_WIDTH
+                );
+                const colsToAdd = Math.min(extraColsNeeded, MAX_COLS - numCols);
+                setNumCols((prev) => prev + colsToAdd);
+                setColWidths((prev) => [
+                    ...prev,
+                    ...Array.from({ length: colsToAdd }, () => DEFAULT_COL_WIDTH)
+                ]);
+            }
+        },
+        [numRows, numCols, rowHeightsCumulative, colWidthsCumulative]
+    );
+
+    const itemData = useMemo(
+        () => ({
+            tableDataRef,
+            cellFormats,
+            activeCell,
+            cellEditingValue,
+            selection,
+            searchResults,
+            currentResultIndex,
+            selectionDrag,
+            handleCellMouseDown,
+            handleCellMouseUp,
+            handleCellDoubleClick,
+            onCellValueChange,
+            handleCellBlur,
+            moveActiveCellHorizontally,
+            moveActiveCellVertically,
+            isCellInSelection,
+            isCellHighlightedBySearch
+        }),
+        [
+            tableDataRef,
+            cellFormats,
+            activeCell,
+            cellEditingValue,
+            selection,
+            searchResults,
+            currentResultIndex,
+            selectionDrag
+        ]
+    );
+
+    const Cell = React.memo(function Cell({ columnIndex, rowIndex, style, data }) {
+        const {
+            tableDataRef,
+            cellFormats,
+            activeCell,
+            cellEditingValue,
+            selectionDrag,
+            searchResults,
+            currentResultIndex,
+            handleCellMouseDown,
+            handleCellMouseUp,
+            handleCellDoubleClick,
+            onCellValueChange,
+            handleCellBlur,
+            moveActiveCellHorizontally,
+            moveActiveCellVertically,
+            isCellInSelection,
+            isCellHighlightedBySearch
+        } = data;
         const key = `${rowIndex},${columnIndex}`;
+        const prevCellVal = tableDataRef.current[key] || "";
         const cellIsActive =
             activeCell.row === rowIndex && activeCell.col === columnIndex;
         const isSelected = isCellInSelection(rowIndex, columnIndex);
@@ -1027,7 +1339,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         } else if (!cellFormat.backgroundColor && isSelected && !cellIsActive) {
             backgroundColor = "rgba(255,255,255,0.1)";
         }
-        const outline = cellIsActive ? "0.2vh solid #008000" : "0.2vh solid transparent";
+        const outline = cellIsActive
+            ? "0.2vh solid #008000"
+            : "0.2vh solid transparent";
         const cellValue = tableDataRef.current[key] || "";
         let cellStyle = { ...style, outline, backgroundColor };
         if (
@@ -1061,7 +1375,19 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                         onKeyDown={(e) => {
                             if (e.ctrlKey || e.metaKey) {
                                 const k = e.key.toLowerCase();
-                                if (["s","p","a","x","c","v","z","y","f"].includes(k)) {
+                                if (
+                                    [
+                                        "s",
+                                        "p",
+                                        "a",
+                                        "x",
+                                        "c",
+                                        "v",
+                                        "z",
+                                        "y",
+                                        "f"
+                                    ].includes(k)
+                                ) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.target.blur();
@@ -1069,7 +1395,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                 }
                             }
                             if (e.key === "Enter") {
+                                e.preventDefault();
                                 e.target.blur();
+                                moveActiveCellVertically(1);
                             } else if (e.key === "Tab") {
                                 e.preventDefault();
                                 e.target.blur();
@@ -1129,7 +1457,104 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 )}
             </div>
         );
-    };
+    },
+    (prevProps, nextProps) => {
+        const key = `${prevProps.rowIndex},${prevProps.columnIndex}`;
+        const prevValue = prevProps.data.tableDataRef.current[key] || "";
+        const nextValue = nextProps.data.tableDataRef.current[key] || "";
+        if (prevValue !== nextValue) return false;
+        if (prevProps.rowIndex !== nextProps.rowIndex) return false;
+        if (prevProps.columnIndex !== nextProps.columnIndex) return false;
+        if (prevProps.style.width !== nextProps.style.width) return false;
+        if (prevProps.style.height !== nextProps.style.height) return false;
+        if (prevProps.style.left !== nextProps.style.left) return false;
+        if (prevProps.style.top !== nextProps.style.top) return false;
+        const prevData = prevProps.data;
+        const nextData = nextProps.data;
+        const wasActive =
+            prevData.activeCell.row === prevProps.rowIndex &&
+            prevData.activeCell.col === prevProps.columnIndex;
+        const isActive =
+            nextData.activeCell.row === nextProps.rowIndex &&
+            nextData.activeCell.col === nextProps.columnIndex;
+        if (wasActive !== isActive) return false;
+        const prevSelected = prevData.isCellInSelection(
+            prevProps.rowIndex,
+            prevProps.columnIndex
+        );
+        const nextSelected = nextData.isCellInSelection(
+            nextProps.rowIndex,
+            nextProps.columnIndex
+        );
+        if (prevSelected !== nextSelected) return false;
+        const prevHighlight = prevData.isCellHighlightedBySearch(
+            prevProps.rowIndex,
+            prevProps.columnIndex
+        );
+        const nextHighlight = nextData.isCellHighlightedBySearch(
+            nextProps.rowIndex,
+            nextProps.columnIndex
+        );
+        if (prevHighlight !== nextHighlight) return false;
+        if (
+            prevData.selectionDrag.active !== nextData.selectionDrag.active ||
+            prevData.selectionDrag.offsetX !== nextData.selectionDrag.offsetX ||
+            prevData.selectionDrag.offsetY !== nextData.selectionDrag.offsetY
+        ) {
+            const inSelectionBefore =
+                prevData.selectionDrag.originalSelection &&
+                prevProps.rowIndex >=
+                prevData.selectionDrag.originalSelection.top &&
+                prevProps.rowIndex <=
+                prevData.selectionDrag.originalSelection.bottom &&
+                prevProps.columnIndex >=
+                prevData.selectionDrag.originalSelection.left &&
+                prevProps.columnIndex <=
+                prevData.selectionDrag.originalSelection.right;
+            const inSelectionNow =
+                nextData.selectionDrag.originalSelection &&
+                nextProps.rowIndex >=
+                nextData.selectionDrag.originalSelection.top &&
+                nextProps.rowIndex <=
+                nextData.selectionDrag.originalSelection.bottom &&
+                nextProps.columnIndex >=
+                nextData.selectionDrag.originalSelection.left &&
+                nextProps.columnIndex <=
+                nextData.selectionDrag.originalSelection.right;
+            if (inSelectionBefore || inSelectionNow) {
+                if (inSelectionBefore !== inSelectionNow) {
+                    return false;
+                }
+                if (prevData.selectionDrag.offsetX !== nextData.selectionDrag.offsetX) {
+                    return false;
+                }
+                if (prevData.selectionDrag.offsetY !== nextData.selectionDrag.offsetY) {
+                    return false;
+                }
+            }
+        }
+        const prevFormat = prevData.cellFormats[key] || {};
+        const nextFormat = nextData.cellFormats[key] || {};
+        if (
+            prevFormat.fontStyle !== nextFormat.fontStyle ||
+            prevFormat.fontWeight !== nextFormat.fontWeight ||
+            prevFormat.textDecoration !== nextFormat.textDecoration ||
+            prevFormat.textAlign !== nextFormat.textAlign ||
+            prevFormat.backgroundColor !== nextFormat.backgroundColor ||
+            prevFormat.color !== nextFormat.color ||
+            prevFormat.fontFamily !== nextFormat.fontFamily
+        ) {
+            return false;
+        }
+        if (isActive) {
+            if (prevData.cellEditingValue !== nextData.cellEditingValue) return false;
+        }
+        return true;
+    });
+
+    function cellRenderer(props) {
+        return <Cell {...props} data={itemData} />;
+    }
 
     function handleSelectionMouseDown(e) {
         if (
@@ -1145,8 +1570,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         e.preventDefault();
         if (!selection) return;
         const containerRect = gridContainerRef.current.getBoundingClientRect();
-        const originalOverlayTop = sumRange(rowHeights, 0, selection.top) - scrollPos.current.top;
-        const originalOverlayLeft = sumRange(colWidths, 0, selection.left) - scrollPos.current.left;
+        const originalOverlayTop =
+            rowHeightsCumulative[selection.top] - scrollPos.current.top;
+        const originalOverlayLeft =
+            colWidthsCumulative[selection.left] - scrollPos.current.left;
         const snapshot = [];
         for (let r = selection.top; r <= selection.bottom; r++) {
             const rowData = [];
@@ -1169,17 +1596,22 @@ export default function PinnedHeadersSheet({ fileHandle }) {
         });
     }
 
+    const selectionDragFrameRef = useRef(null);
     useEffect(() => {
         function onMouseMove(e) {
-            setSelectionDrag(prev => {
-                if (!prev.active) return prev;
-                const offsetX = e.clientX - prev.startX;
-                const offsetY = e.clientY - prev.startY;
-                return { ...prev, offsetX, offsetY };
+            if (selectionDragFrameRef.current !== null) return;
+            selectionDragFrameRef.current = requestAnimationFrame(() => {
+                setSelectionDrag((prev) => {
+                    if (!prev.active) return prev;
+                    const offsetX = e.clientX - prev.startX;
+                    const offsetY = e.clientY - prev.startY;
+                    return { ...prev, offsetX, offsetY };
+                });
+                selectionDragFrameRef.current = null;
             });
         }
         function onMouseUp(e) {
-            setSelectionDrag(prev => {
+            setSelectionDrag((prev) => {
                 if (!prev.active) return prev;
                 const offsetX = e.clientX - prev.startX;
                 const offsetY = e.clientY - prev.startY;
@@ -1201,29 +1633,45 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     newSelection.left = 0;
                     newSelection.right += diff;
                 }
-                if (newSelection.bottom >= DATA_ROW_COUNT) {
-                    const diff = newSelection.bottom - (DATA_ROW_COUNT - 1);
-                    newSelection.bottom = DATA_ROW_COUNT - 1;
+                if (newSelection.bottom >= numRows) {
+                    const diff = newSelection.bottom - (numRows - 1);
+                    newSelection.bottom = numRows - 1;
                     newSelection.top -= diff;
                 }
-                if (newSelection.right >= DATA_COL_COUNT) {
-                    const diff = newSelection.right - (DATA_COL_COUNT - 1);
-                    newSelection.right = DATA_COL_COUNT - 1;
+                if (newSelection.right >= numCols) {
+                    const diff = newSelection.right - (numCols - 1);
+                    newSelection.right = numCols - 1;
                     newSelection.left -= diff;
                 }
                 let newData = { ...tableDataRef.current };
-                for (let r = prev.originalSelection.top; r <= prev.originalSelection.bottom; r++) {
-                    for (let c = prev.originalSelection.left; c <= prev.originalSelection.right; c++) {
+                for (
+                    let r = prev.originalSelection.top;
+                    r <= prev.originalSelection.bottom;
+                    r++
+                ) {
+                    for (
+                        let c = prev.originalSelection.left;
+                        c <= prev.originalSelection.right;
+                        c++
+                    ) {
                         delete newData[`${r},${c}`];
                     }
                 }
-                const numRows = prev.originalSelection.bottom - prev.originalSelection.top + 1;
-                const numCols = prev.originalSelection.right - prev.originalSelection.left + 1;
-                let rowIndices = Array.from({ length: numRows }, (_, i) => i);
-                let colIndices = Array.from({ length: numCols }, (_, j) => j);
+                const numRowsSel =
+                    prev.originalSelection.bottom - prev.originalSelection.top + 1;
+                const numColsSel =
+                    prev.originalSelection.right - prev.originalSelection.left + 1;
+                let rowIndices = Array.from({ length: numRowsSel }, (_, i) => i);
+                let colIndices = Array.from({ length: numColsSel }, (_, j) => j);
                 if (rowOffset > 0) rowIndices.reverse();
                 if (colOffset > 0) colIndices.reverse();
-                newSelection = moveSelection(prev.originalSelection, rowOffset, colOffset, prev.block, newData);
+                newSelection = moveSelection(
+                    prev.originalSelection,
+                    rowOffset,
+                    colOffset,
+                    prev.block,
+                    newData
+                );
                 pushToUndoStack(tableDataRef.current);
                 setTableData(newData);
                 setSelection(newSelection);
@@ -1246,35 +1694,40 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
         };
-    }, [rowHeights, colWidths, DATA_ROW_COUNT, DATA_COL_COUNT]);
+    }, [rowHeights, colWidths, numRows, numCols]);
 
+    const mouseMoveFrameRef = useRef(null);
     useEffect(() => {
         function onWindowMouseMove(e) {
-            setCellDrag((current) => {
-                if (!current.active) return current;
-                const dx = e.clientX - current.startX;
-                const dy = e.clientY - current.startY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (!current.selecting && distance > 5) {
-                    return { ...current, selecting: true };
-                }
-                if (current.selecting) {
-                    const containerRect = gridContainerRef.current.getBoundingClientRect();
-                    const relativeX =
-                        e.clientX - containerRect.left + scrollPos.current.left;
-                    const relativeY =
-                        e.clientY - containerRect.top + scrollPos.current.top;
-                    const currentRow = getRowIndexFromPosition(relativeY);
-                    const currentCol = getColIndexFromPosition(relativeX);
-                    const newSelection = {
-                        top: Math.min(current.startRow, currentRow),
-                        left: Math.min(current.startCol, currentCol),
-                        bottom: Math.max(current.startRow, currentRow),
-                        right: Math.max(current.startCol, currentCol)
-                    };
-                    setSelection(newSelection);
-                }
-                return current;
+            if (mouseMoveFrameRef.current !== null) return;
+            mouseMoveFrameRef.current = requestAnimationFrame(() => {
+                setCellDrag((current) => {
+                    if (!current.active) return current;
+                    const dx = e.clientX - current.startX;
+                    const dy = e.clientY - current.startY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (!current.selecting && distance > 5) {
+                        return { ...current, selecting: true };
+                    }
+                    if (current.selecting) {
+                        const containerRect = gridContainerRef.current.getBoundingClientRect();
+                        const relativeX =
+                            e.clientX - containerRect.left + scrollPos.current.left;
+                        const relativeY =
+                            e.clientY - containerRect.top + scrollPos.current.top;
+                        const currentRow = getRowIndexFromPosition(relativeY);
+                        const currentCol = getColIndexFromPosition(relativeX);
+                        const newSelection = {
+                            top: Math.min(current.startRow, currentRow),
+                            left: Math.min(current.startCol, currentCol),
+                            bottom: Math.max(current.startRow, currentRow),
+                            right: Math.max(current.startCol, currentCol)
+                        };
+                        setSelection(newSelection);
+                    }
+                    return current;
+                });
+                mouseMoveFrameRef.current = null;
             });
         }
         function onWindowMouseUp() {
@@ -1296,97 +1749,34 @@ export default function PinnedHeadersSheet({ fileHandle }) {
     }, [rowHeights, colWidths]);
 
     function getRowIndexFromPosition(y) {
-        let cumulative = 0;
-        for (let i = 0; i < rowHeights.length; i++) {
-            cumulative += rowHeights[i];
-            if (y < cumulative) return i;
+        let low = 0;
+        let high = rowHeightsCumulative.length - 1;
+        while (low < high) {
+            let mid = Math.floor((low + high) / 2);
+            if (rowHeightsCumulative[mid] <= y) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
         }
-        return rowHeights.length - 1;
+        return Math.max(0, low - 1);
     }
 
     function getColIndexFromPosition(x) {
-        let cumulative = 0;
-        for (let i = 0; i < colWidths.length; i++) {
-            cumulative += colWidths[i];
-            if (x < cumulative) return i;
-        }
-        return colWidths.length - 1;
-    }
-
-    const onGlobalMouseMove = useCallback(
-        (e) => {
-            if (!resizing.active) return;
-            const { type, index, startPos, startSize } = resizing;
-            const delta = type === "row" ? e.clientY - startPos : e.clientX - startPos;
-            let newSize = startSize + delta;
-            if (newSize < 10) newSize = 10;
-            if (type === "row") {
-                setRowHeights((prev) => {
-                    const copy = [...prev];
-                    copy[index] = newSize;
-                    return copy;
-                });
-                dataGridRef.current?.resetAfterRowIndex(index);
+        let low = 0;
+        let high = colWidthsCumulative.length - 1;
+        while (low < high) {
+            let mid = Math.floor((low + high) / 2);
+            if (colWidthsCumulative[mid] <= x) {
+                low = mid + 1;
             } else {
-                setColWidths((prev) => {
-                    const copy = [...prev];
-                    copy[index] = newSize;
-                    return copy;
-                });
-                dataGridRef.current?.resetAfterColumnIndex(index);
+                high = mid;
             }
-        },
-        [resizing]
-    );
-
-    const onGlobalMouseUpResizing = useCallback(() => {
-        if (resizing.active) {
-            setResizing({
-                active: false,
-                type: null,
-                index: null,
-                startPos: 0,
-                startSize: 0
-            });
         }
-    }, [resizing]);
-
-    useEffect(() => {
-        window.addEventListener("mousemove", onGlobalMouseMove);
-        window.addEventListener("mouseup", onGlobalMouseUpResizing);
-        return () => {
-            window.removeEventListener("mousemove", onGlobalMouseMove);
-            window.removeEventListener("mouseup", onGlobalMouseUpResizing);
-        };
-    }, [onGlobalMouseMove, onGlobalMouseUpResizing]);
-
-    function startResizingRow(rowIndex, e) {
-        e.stopPropagation();
-        e.preventDefault();
-        commitActiveCellIfNeeded();
-        setResizing({
-            active: true,
-            type: "row",
-            index: rowIndex,
-            startPos: e.clientY,
-            startSize: rowHeights[rowIndex]
-        });
+        return Math.max(0, low - 1);
     }
 
-    function startResizingCol(colIndex, e) {
-        e.stopPropagation();
-        e.preventDefault();
-        commitActiveCellIfNeeded();
-        setResizing({
-            active: true,
-            type: "col",
-            index: colIndex,
-            startPos: e.clientX,
-            startSize: colWidths[colIndex]
-        });
-    }
-
-    function handleColumnHeaderMouseMove(e) {
+    const handleColumnHeaderMouseMove = (e) => {
         if (headerDrag && headerDrag.type === "col" && columnHeaderRef.current) {
             const rect = columnHeaderRef.current.getBoundingClientRect();
             const x = e.clientX - rect.left + scrollPos.current.left;
@@ -1395,19 +1785,19 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 const newDrag = { ...prev, current: col };
                 const left = Math.min(newDrag.start, newDrag.current);
                 const right = Math.max(newDrag.start, newDrag.current);
-                setSelection({ top: 0, left, bottom: DATA_ROW_COUNT - 1, right });
+                setSelection({ top: 0, left, bottom: numRows - 1, right });
                 return newDrag;
             });
         }
-    }
+    };
 
-    function handleColumnHeaderMouseUp(e) {
+    const handleColumnHeaderMouseUp = (e) => {
         e.stopPropagation();
         setHeaderDrag(null);
         setSkipClear(true);
-    }
+    };
 
-    function handleRowHeaderMouseMove(e) {
+    const handleRowHeaderMouseMove = (e) => {
         if (headerDrag && headerDrag.type === "row" && rowHeaderRef.current) {
             const rect = rowHeaderRef.current.getBoundingClientRect();
             const y = e.clientY - rect.top + scrollPos.current.top;
@@ -1416,27 +1806,42 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 const newDrag = { ...prev, current: row };
                 const top = Math.min(newDrag.start, newDrag.current);
                 const bottom = Math.max(newDrag.start, newDrag.current);
-                setSelection({ top, left: 0, bottom, right: DATA_COL_COUNT - 1 });
+                setSelection({ top, left: 0, bottom, right: numCols - 1 });
                 return newDrag;
             });
         }
-    }
+    };
 
-    function handleRowHeaderMouseUp(e) {
+    const handleRowHeaderMouseUp = (e) => {
         e.stopPropagation();
         setHeaderDrag(null);
         setSkipClear(true);
-    }
+    };
 
     const handleColumnHeaderMouseDown = (e, colIndex) => {
         commitActiveCellIfNeeded();
-        if (e.shiftKey && selection && selection.top === 0 && selection.bottom === DATA_ROW_COUNT - 1) {
+        if (colIndex >= numCols) {
+            setNumCols(colIndex + 1);
+            setColWidths((prev) => {
+                const newWidths = [...prev];
+                for (let i = newWidths.length; i <= colIndex; i++) {
+                    newWidths.push(DEFAULT_COL_WIDTH);
+                }
+                return newWidths;
+            });
+        }
+        if (
+            e.shiftKey &&
+            selection &&
+            selection.top === 0 &&
+            selection.bottom === numRows - 1
+        ) {
             const newLeft = Math.min(selection.left, colIndex);
             const newRight = Math.max(selection.right, colIndex);
             setSelection({
                 top: 0,
                 left: newLeft,
-                bottom: DATA_ROW_COUNT - 1,
+                bottom: numRows - 1,
                 right: newRight
             });
             setHeaderDrag({
@@ -1453,7 +1858,7 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             setSelection({
                 top: 0,
                 left: colIndex,
-                bottom: DATA_ROW_COUNT - 1,
+                bottom: numRows - 1,
                 right: colIndex
             });
         }
@@ -1462,14 +1867,29 @@ export default function PinnedHeadersSheet({ fileHandle }) {
 
     const handleRowHeaderMouseDown = (e, rowIndex) => {
         commitActiveCellIfNeeded();
-        if (e.shiftKey && selection && selection.left === 0 && selection.right === DATA_COL_COUNT - 1) {
+        if (rowIndex >= numRows) {
+            setNumRows(rowIndex + 1);
+            setRowHeights((prev) => {
+                const newHeights = [...prev];
+                for (let i = newHeights.length; i <= rowIndex; i++) {
+                    newHeights.push(DEFAULT_ROW_HEIGHT);
+                }
+                return newHeights;
+            });
+        }
+        if (
+            e.shiftKey &&
+            selection &&
+            selection.left === 0 &&
+            selection.right === numCols - 1
+        ) {
             const newTop = Math.min(selection.top, rowIndex);
             const newBottom = Math.max(selection.bottom, rowIndex);
             setSelection({
                 top: newTop,
                 left: 0,
                 bottom: newBottom,
-                right: DATA_COL_COUNT - 1
+                right: numCols - 1
             });
             setHeaderDrag({
                 type: "row",
@@ -1486,20 +1906,26 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                 top: rowIndex,
                 left: 0,
                 bottom: rowIndex,
-                right: DATA_COL_COUNT - 1
+                right: numCols - 1
             });
         }
         e.preventDefault();
     };
 
+    const [selectionResize, setSelectionResize] = useState({
+        active: false,
+        handle: null,
+        startX: 0,
+        startY: 0,
+        initialSelection: null
+    });
+
     useEffect(() => {
         if (!selectionResize.active) return;
         function onSelectionResizeMouseMove(e) {
             const containerRect = gridContainerRef.current.getBoundingClientRect();
-            const relativeX =
-                e.clientX - containerRect.left + scrollPos.current.left;
-            const relativeY =
-                e.clientY - containerRect.top + scrollPos.current.top;
+            const relativeX = e.clientX - containerRect.left + scrollPos.current.left;
+            const relativeY = e.clientY - containerRect.top + scrollPos.current.top;
             let { top, left, bottom, right } = selectionResize.initialSelection;
             switch (selectionResize.handle) {
                 case "top": {
@@ -1597,22 +2023,22 @@ export default function PinnedHeadersSheet({ fileHandle }) {
 
     useLayoutEffect(() => {
         if (selection && selectionOverlayRef.current) {
-            const newTop = sumRange(rowHeights, 0, selection.top) - scrollPos.current.top;
-            const newLeft = sumRange(colWidths, 0, selection.left) - scrollPos.current.left;
+            const newTop =
+                rowHeightsCumulative[selection.top] - scrollPos.current.top;
+            const newLeft =
+                colWidthsCumulative[selection.left] - scrollPos.current.left;
             Object.assign(selectionOverlayRef.current.style, {
                 top: newTop + "px",
                 left: newLeft + "px",
-                width: sumRange(colWidths, selection.left, selection.right + 1) + "px",
-                height: sumRange(rowHeights, selection.top, selection.bottom + 1) + "px"
+                width:
+                    colWidthsCumulative[selection.right + 1] -
+                    colWidthsCumulative[selection.left] + "px",
+                height:
+                    rowHeightsCumulative[selection.bottom + 1] -
+                    rowHeightsCumulative[selection.top] + "px"
             });
         }
-    }, [selection, rowHeights, colWidths]);
-
-    useEffect(() => {
-        if (dataGridRef.current) {
-            dataGridRef.current.resetAfterRowIndex(0, true);
-        }
-    }, [tableData]);
+    }, [selection, rowHeightsCumulative, colWidthsCumulative]);
 
     return (
         <div
@@ -1623,14 +2049,16 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     return;
                 }
                 if (
-                    e.target.closest('.toolbar-wrapper') ||
-                    e.target.closest('.dinolabsIDEEditingSearchBoxWrapper')
-                ) return;
+                    e.target.closest(".toolbar-wrapper") ||
+                    e.target.closest(".dinolabsIDEEditingSearchBoxWrapper")
+                )
+                    return;
                 if (
-                    e.target.closest('.dinolabsIDETableColumnHeaderCell') ||
-                    e.target.closest('.dinolabsIDETableRowHeaderCell') ||
-                    e.target.closest('.dinolabsIDETableCornerHeader')
-                ) return;
+                    e.target.closest(".dinolabsIDETableColumnHeaderCell") ||
+                    e.target.closest(".dinolabsIDETableRowHeaderCell") ||
+                    e.target.closest(".dinolabsIDETableCornerHeader")
+                )
+                    return;
                 if (e.detail > 1) return;
                 if (activeCell.row === null && activeCell.col === null && selection) {
                     setSelection(null);
@@ -1644,7 +2072,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
             }}
         >
             <style>
-                {`@keyframes spin {0% { transform: rotate(0deg); }100% { transform: rotate(360deg); }}`}
+                {`@keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                  }`}
             </style>
             <div className="toolbar-wrapper">
                 <DinoLabsIDETabularEditorToolbar
@@ -1663,10 +2094,16 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     onCopy={handleCopy}
                     onPaste={handlePaste}
                     onSelectAll={handleSelectAll}
-                    onSearchReplace={() => setShowSearchPanel(true)}
+                    onSearchReplace={() => {
+                        commitActiveCellIfNeeded();
+                        setShowSearchPanel(true);
+                    }}
                     openModal={openModal}
                     toggleModal={toggleModal}
-                    closeAllMenus={() => { setOpenMenu(null); setOpenModal(null); }}
+                    closeAllMenus={() => {
+                        setOpenMenu(null);
+                        setOpenModal(null);
+                    }}
                     storeSelection={storeSelection}
                     formatModalRef={formatModalRef}
                     formatButtonRef={formatButtonRef}
@@ -1696,11 +2133,23 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                     restoreSelection={restoreSelection}
                 />
             </div>
-            <div className="dinolabsIDETableWrapperContainer" ref={tableWrapperContainerRef} style={{ position: "relative", width: "100%", height: "100%" }}>
-                <div style={{ width: `${100 * 100 / pageZoom}%`, height: `${100 * 100 / pageZoom}%` }}>
+            <div
+                className="dinolabsIDETableWrapperContainer"
+                ref={tableWrapperContainerRef}
+                style={{ position: "relative", width: "100%", height: "100%" }}
+            >
+                <div
+                    style={{
+                        width: `${(100 * 100) / pageZoom}%`,
+                        height: `${(100 * 100) / pageZoom}%`
+                    }}
+                >
                     <div
                         className="dinolabsIDETableWrapper"
-                        style={{ transform: `scale(${pageZoom / 100})`, transformOrigin: "top left" }}
+                        style={{
+                            transform: `scale(${pageZoom / 100})`,
+                            transformOrigin: "top left"
+                        }}
                         onSelectStart={(e) => e.preventDefault()}
                         onMouseDown={(e) => {
                             if (e.target.tagName !== "INPUT") {
@@ -1722,8 +2171,12 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                             }
                         }}
                     >
-                        {loading && <div className="dinolabsIDETableLoadingMessage">Loading...</div>}
-                        {error && <div className="dinolabsIDETableErrorMessage">{error}</div>}
+                        {loading && (
+                            <div className="dinolabsIDETableLoadingMessage">Loading...</div>
+                        )}
+                        {error && (
+                            <div className="dinolabsIDETableErrorMessage">{error}</div>
+                        )}
                         <div
                             className="dinolabsIDETableCornerHeader"
                             style={{ zIndex: 10 }}
@@ -1733,16 +2186,16 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                     selection &&
                                     selection.top === 0 &&
                                     selection.left === 0 &&
-                                    selection.bottom === DATA_ROW_COUNT - 1 &&
-                                    selection.right === DATA_COL_COUNT - 1
+                                    selection.bottom === numRows - 1 &&
+                                    selection.right === numCols - 1
                                 ) {
                                     setSelection(null);
                                 } else {
                                     setSelection({
                                         top: 0,
                                         left: 0,
-                                        bottom: DATA_ROW_COUNT - 1,
-                                        right: DATA_COL_COUNT - 1
+                                        bottom: numRows - 1,
+                                        right: numCols - 1
                                     });
                                 }
                                 e.preventDefault();
@@ -1757,37 +2210,54 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                         >
                             <div
                                 className="dinolabsIDETableColumnHeaderContent"
-                                style={{ width: sumRange(colWidths, 0, DATA_COL_COUNT) }}
+                                style={{
+                                    width:
+                                        effectiveCols <= colWidths.length
+                                            ? colWidthsCumulative[effectiveCols]
+                                            : colWidthsCumulative[colWidths.length] +
+                                              (effectiveCols - colWidths.length) *
+                                                  DEFAULT_COL_WIDTH
+                                }}
                             >
-                                {Array.from({ length: DATA_COL_COUNT }).map((_, colIndex) => {
-                                    const leftOffset = sumRange(colWidths, 0, colIndex);
-                                    const width = colWidths[colIndex];
-                                    const label = getColumnLabel(colIndex);
-                                    const isSelectedHeader =
-                                        selection &&
-                                        colIndex >= selection.left &&
-                                        colIndex <= selection.right &&
-                                        selection.top === 0 &&
-                                        selection.bottom === DATA_ROW_COUNT - 1;
-                                    return (
-                                        <div
-                                            key={colIndex}
-                                            className="dinolabsIDETableColumnHeaderCell"
-                                            style={{
-                                                left: leftOffset,
-                                                width: width,
-                                                backgroundColor: isSelectedHeader ? "#444" : "#333"
-                                            }}
-                                            onMouseDown={(e) => handleColumnHeaderMouseDown(e, colIndex)}
-                                        >
-                                            {label}
+                                {Array.from({ length: effectiveCols }).map(
+                                    (_, colIndex) => {
+                                        const leftOffset =
+                                            colIndex < colWidths.length
+                                                ? colWidthsCumulative[colIndex]
+                                                : colWidthsCumulative[colWidths.length] +
+                                                  (colIndex - colWidths.length) *
+                                                      DEFAULT_COL_WIDTH;
+                                        const width =
+                                            colIndex < colWidths.length
+                                                ? colWidths[colIndex]
+                                                : DEFAULT_COL_WIDTH;
+                                        const label = getColumnLabel(colIndex);
+                                        const isSelectedHeader =
+                                            selection &&
+                                            colIndex >= selection.left &&
+                                            colIndex <= selection.right &&
+                                            selection.top === 0 &&
+                                            selection.bottom === numRows - 1;
+                                        return (
                                             <div
-                                                className="dinolabsIDETableColumnHeaderResizeHandle"
-                                                onMouseDown={(e) => startResizingCol(colIndex, e)}
-                                            />
-                                        </div>
-                                    );
-                                })}
+                                                key={colIndex}
+                                                className="dinolabsIDETableColumnHeaderCell"
+                                                style={{
+                                                    left: leftOffset,
+                                                    width,
+                                                    backgroundColor: isSelectedHeader
+                                                        ? "#444"
+                                                        : "#333"
+                                                }}
+                                                onMouseDown={(e) =>
+                                                    handleColumnHeaderMouseDown(e, colIndex)
+                                                }
+                                            >
+                                                {label}
+                                            </div>
+                                        );
+                                    }
+                                )}
                             </div>
                         </div>
                         <div
@@ -1799,79 +2269,109 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                         >
                             <div
                                 className="dinolabsIDETableRowHeaderContent"
-                                style={{ height: sumRange(rowHeights, 0, DATA_ROW_COUNT) }}
+                                style={{
+                                    height:
+                                        effectiveRows <= rowHeights.length
+                                            ? rowHeightsCumulative[effectiveRows]
+                                            : rowHeightsCumulative[rowHeights.length] +
+                                              (effectiveRows - rowHeights.length) *
+                                                  DEFAULT_ROW_HEIGHT
+                                }}
                             >
-                                {Array.from({ length: DATA_ROW_COUNT }).map((_, rowIndex) => {
-                                    const topOffset = sumRange(rowHeights, 0, rowIndex);
-                                    const height = rowHeights[rowIndex];
-                                    const isSelectedRow =
-                                        selection &&
-                                        rowIndex >= selection.top &&
-                                        rowIndex <= selection.bottom &&
-                                        selection.left === 0 &&
-                                        selection.right === DATA_COL_COUNT - 1;
-                                    return (
-                                        <div
-                                            key={rowIndex}
-                                            className="dinolabsIDETableRowHeaderCell"
-                                            style={{
-                                                top: topOffset,
-                                                height: height,
-                                                backgroundColor: isSelectedRow ? "#3a3a3a" : "#2c2c2c"
-                                            }}
-                                            onMouseDown={(e) => handleRowHeaderMouseDown(e, rowIndex)}
-                                        >
-                                            {rowIndex + 1}
+                                {Array.from({ length: effectiveRows }).map(
+                                    (_, rowIndex) => {
+                                        const topOffset =
+                                            rowIndex < rowHeights.length
+                                                ? rowHeightsCumulative[rowIndex]
+                                                : rowHeightsCumulative[rowHeights.length] +
+                                                  (rowIndex - rowHeights.length) *
+                                                      DEFAULT_ROW_HEIGHT;
+                                        const height =
+                                            rowIndex < rowHeights.length
+                                                ? rowHeights[rowIndex]
+                                                : DEFAULT_ROW_HEIGHT;
+                                        const isSelectedRow =
+                                            selection &&
+                                            rowIndex >= selection.top &&
+                                            rowIndex <= selection.bottom &&
+                                            selection.left === 0 &&
+                                            selection.right === numCols - 1;
+                                        return (
                                             <div
-                                                className="dinolabsIDETableRowHeaderResizeHandle"
-                                                onMouseDown={(e) => startResizingRow(rowIndex, e)}
-                                            />
-                                        </div>
-                                    );
-                                })}
+                                                key={rowIndex}
+                                                className="dinolabsIDETableRowHeaderCell"
+                                                style={{
+                                                    top: topOffset,
+                                                    height,
+                                                    backgroundColor: isSelectedRow
+                                                        ? "#3a3a3a"
+                                                        : "#2c2c2c"
+                                                }}
+                                                onMouseDown={(e) =>
+                                                    handleRowHeaderMouseDown(e, rowIndex)
+                                                }
+                                            >
+                                                {rowIndex + 1}
+                                            </div>
+                                        );
+                                    }
+                                )}
                             </div>
                         </div>
-                        <div ref={gridContainerRef} className="dinolabsIDETableGridContainer">
+                        <div
+                            ref={gridContainerRef}
+                            className="dinolabsIDETableGridContainer"
+                        >
                             <AutoSizer>
-                                {({ width, height }) => (
-                                    <Grid
-                                        ref={dataGridRef}
-                                        columnCount={DATA_COL_COUNT}
-                                        rowCount={DATA_ROW_COUNT}
-                                        columnWidth={(index) => colWidths[index]}
-                                        rowHeight={(index) => rowHeights[index]}
-                                        width={width}
-                                        height={height}
-                                        onScroll={({ scrollLeft: sl, scrollTop: st }) => {
-                                            if (
-                                                columnHeaderRef.current &&
-                                                columnHeaderRef.current.firstChild
-                                            ) {
-                                                columnHeaderRef.current.firstChild.style.transform =
-                                                    `translateX(${-sl}px)`;
-                                            }
-                                            if (
-                                                rowHeaderRef.current &&
-                                                rowHeaderRef.current.firstChild
-                                            ) {
-                                                rowHeaderRef.current.firstChild.style.transform =
-                                                    `translateY(${-st}px)`;
-                                            }
-                                            scrollPos.current.left = sl;
-                                            scrollPos.current.top = st;
-                                            if (selection && selectionOverlayRef.current) {
-                                                const newTop =
-                                                    sumRange(rowHeights, 0, selection.top) - st;
-                                                const newLeft =
-                                                    sumRange(colWidths, 0, selection.left) - sl;
-                                                selectionOverlayRef.current.style.top = `${newTop}px`;
-                                                selectionOverlayRef.current.style.left = `${newLeft}px`;
-                                            }
-                                        }}
-                                    >
-                                        {renderDataCell}
-                                    </Grid>
-                                )}
+                                {({ width, height }) => {
+                                    if (
+                                        width !== autoSizerDims.width ||
+                                        height !== autoSizerDims.height
+                                    ) {
+                                        setAutoSizerDims({ width, height });
+                                    }
+                                    return (
+                                        <Grid
+                                            ref={dataGridRef}
+                                            columnCount={effectiveCols}
+                                            rowCount={effectiveRows}
+                                            columnWidth={getColWidth}
+                                            rowHeight={getRowHeight}
+                                            width={width}
+                                            height={height}
+                                            itemData={itemData}
+                                            onScroll={({ scrollLeft, scrollTop }) => {
+                                                if (
+                                                    columnHeaderRef.current &&
+                                                    columnHeaderRef.current.firstChild
+                                                ) {
+                                                    columnHeaderRef.current.firstChild.style.transform = `translateX(${-scrollLeft}px)`;
+                                                }
+                                                if (
+                                                    rowHeaderRef.current &&
+                                                    rowHeaderRef.current.firstChild
+                                                ) {
+                                                    rowHeaderRef.current.firstChild.style.transform = `translateY(${-scrollTop}px)`;
+                                                }
+                                                scrollPos.current.left = scrollLeft;
+                                                scrollPos.current.top = scrollTop;
+                                                if (selection && selectionOverlayRef.current) {
+                                                    const newTop =
+                                                        rowHeightsCumulative[selection.top];
+                                                    const newLeft =
+                                                        colWidthsCumulative[selection.left];
+                                                    selectionOverlayRef.current.style.top =
+                                                        newTop - scrollTop + "px";
+                                                    selectionOverlayRef.current.style.left =
+                                                        newLeft - scrollLeft + "px";
+                                                }
+                                                expandIfNeeded(scrollLeft, scrollTop, width, height);
+                                            }}
+                                        >
+                                            {cellRenderer}
+                                        </Grid>
+                                    );
+                                }}
                             </AutoSizer>
                             {selection && (
                                 <div style={{ position: "absolute", top: 0, left: 0 }}>
@@ -1879,11 +2379,15 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                         ref={selectionOverlayRef}
                                         className="dinolabsIDETableSelectionOverlay"
                                         onMouseDown={handleSelectionMouseDown}
-                                        style={{ 
-                                            ...overlayDynamicStyle, 
+                                        style={{
+                                            ...overlayDynamicStyle,
                                             zIndex: 0,
-                                            cursor: selectionDrag.active ? "grabbing" : "grab",
-                                            transform: selectionDrag.active ? `translate(${selectionDrag.offsetX}px, ${selectionDrag.offsetY}px)` : "none"
+                                            cursor: selectionDrag.active
+                                                ? "grabbing"
+                                                : "grab",
+                                            transform: selectionDrag.active
+                                                ? `translate(${selectionDrag.offsetX}px, ${selectionDrag.offsetY}px)`
+                                                : "none"
                                         }}
                                     >
                                         <div
@@ -1892,7 +2396,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                         />
                                         <div
                                             className="dinolabsIDETableSelectionHandleBottom"
-                                            onMouseDown={(e) => startSelectionResize("bottom", e)}
+                                            onMouseDown={(e) =>
+                                                startSelectionResize("bottom", e)
+                                            }
                                         />
                                         <div
                                             className="dinolabsIDETableSelectionHandleLeft"
@@ -1904,7 +2410,9 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                         />
                                         <div
                                             className="dinolabsIDETableSelectionHandleBottomRight"
-                                            onMouseDown={(e) => startSelectionResize("bottom-right", e)}
+                                            onMouseDown={(e) =>
+                                                startSelectionResize("bottom-right", e)
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -1912,6 +2420,19 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                         </div>
                     </div>
                 </div>
+            </div>
+            <div className="dinolabsIDERowColumnOperationsButtonWrapper">
+                <button className="dinolabsIDERowColumnOperationsButton" onClick={addRow}>
+                    <FontAwesomeIcon icon={faSquarePlus} />
+                    Add Row
+                </button>
+                <button
+                    className="dinolabsIDERowColumnOperationsButton"
+                    onClick={addColumn}
+                >
+                    <FontAwesomeIcon icon={faSquareMinus} />
+                    Add Column
+                </button>
             </div>
             {showSearchPanel && (
                 <div
@@ -2002,7 +2523,10 @@ export default function PinnedHeadersSheet({ fileHandle }) {
                                 setCurrentResultIndex(-1);
                             }}
                         >
-                            <FontAwesomeIcon icon={faArrowRightFromBracket} style={{ transform: "scaleX(-1)" }} />
+                            <FontAwesomeIcon
+                                icon={faArrowRightFromBracket}
+                                style={{ transform: "scaleX(-1)" }}
+                            />
                             Close Search
                         </button>
                     </div>
