@@ -17,7 +17,7 @@ import "../styles/mainStyles/MirrorThemes/DarkTheme.css";
 import "../styles/mainStyles/MirrorThemes/LightTheme.css";
 import "../styles/helperStyles/Tooltip.css";
 import "../styles/helperStyles/LoadingSpinner.css";
-import "../styles/helperStyles/highlightKill.css";
+import "../styles/helperStyles/HighlightKill.css";
 import useAuth from "../UseAuth";
 import LinePlot from "../helpers/PlottingHelpers/LineHelper.jsx";
 import DoughnutPlot from "../helpers/PlottingHelpers/DoughnutHelper.jsx";

@@ -1380,7 +1380,9 @@ export default function PinnedHeadersSheet({ fileHandle, keyBinds }) {
                             if (e.key === "Enter") {
                                 e.preventDefault();
                                 e.target.blur();
-                                moveActiveCellVertically(1);
+                                setTimeout(() => {
+                                    moveActiveCellVertically(1);
+                                }, 0);
                             } else if (e.key === "Tab") {
                                 e.preventDefault();
                                 e.target.blur();

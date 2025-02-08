@@ -1,12 +1,8 @@
 .leadingIDEDirectoryStack,
 .dinolabsIDESettingsContainer,
 .dinolabsIDEAlertOverlay,
-.dinolabsIDEContextMenu,
 .dinolabsIDEEditingSearchBoxWrapper,
-.codeEditorLanguageIndicator,
-.dinolabsIDETableWrapperContainer,
-.dinolabsIDEToolBar,
-.dinolabsIDEMediaWrapper {
+.dinolabsIDETableWrapperContainer {
     -webkit-user-select: text !important;
     user-select: text !important;
     ::selection {

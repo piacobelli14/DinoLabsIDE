@@ -1446,8 +1446,8 @@
   .dinolabsIDEMarkdownContextMenu {
     position: fixed;
     z-index: 4;
-    background-color: #1b1b1b;
-    border: 0.2vh solid rgba(255, 255, 255, 0.2);
+    background-color: #3a3a3a;
+    border: 0.4vh solid rgba(255, 255, 255, 0.2);
     border-radius: 0.4vw;
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
     list-style: none;
@@ -1456,13 +1456,14 @@
     max-width: 16vw;
     padding: 1vw 1vw;
     margin: 0;
+    box-shadow: 0 0 20px black; 
   }
 
   .dinolabsIDEMarkdownContextMenuItem {
     padding: 0.6vw 1vw;
     cursor: pointer;
     white-space: nowrap;
-    font-size: 0.9vw;
+    font-size: 1.1vw;
     font-weight: 600;
     color: #c0c0c0;
     border-bottom: 0.1vh solid rgba(255, 255, 255, 0.4);
