@@ -18,7 +18,7 @@ import {
     faSquarePlus
 } from "@fortawesome/free-solid-svg-icons";
 
-const MAX_ROWS = 100000;
+const MAX_ROWS = 10000;
 const MAX_COLS = 5000;
 
 function sumRange(arr, from, to) {
@@ -55,6 +55,8 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         tableDataRef.current = tableData;
     }, [tableData]);
     const [error, setError] = useState(null);
+    const hasLoadedFile = useRef(false);
+    const [truncationInfo, setTruncationInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [keybindLoading, setKeybindLoading] = useState(false);
     const [numRows, setNumRows] = useState(1000);
@@ -435,6 +437,8 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
     };
 
     useEffect(() => {
+        if (hasLoadedFile.current) return;
+        hasLoadedFile.current = true;
         async function loadFile() {
             try {
                 const file =
@@ -467,20 +471,29 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                 });
                 let finalRows = lines.length;
                 let finalCols = maxColsFound;
-                let alertMessage = "";
+                let truncatedRows = 0;
+                let truncatedCols = 0;
                 if (finalRows > MAX_ROWS) {
+                    truncatedRows = finalRows - MAX_ROWS;
                     finalRows = MAX_ROWS;
-                    alertMessage += `Row count exceeds limit and will be truncated to ${MAX_ROWS} rows. `;
                 }
                 if (finalCols > MAX_COLS) {
+                    truncatedCols = finalCols - MAX_COLS;
                     finalCols = MAX_COLS;
-                    alertMessage += `Column count exceeds limit and will be truncated to ${MAX_COLS} columns.`;
+                }
+                let alertMessage = "";
+                if (truncatedRows > 0) {
+                    alertMessage += `Row count exceeds limit. ${truncatedRows} row${truncatedRows === 1 ? '' : 's'} will be truncated. `;
+                }
+                if (truncatedCols > 0) {
+                    alertMessage += `Column count exceeds limit. ${truncatedCols} column${truncatedCols === 1 ? '' : 's'} will be truncated.`;
                 }
                 if (alertMessage) {
                     await showDialog({
                         title: "Data Truncation Alert",
                         message: alertMessage
                     });
+                    setTruncationInfo({ rows: truncatedRows, cols: truncatedCols });
                     Object.keys(data).forEach((key) => {
                         const [r, c] = key.split(",").map(Number);
                         if (r >= finalRows || c >= finalCols) {
@@ -639,6 +652,12 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                 await writable.write(csv);
                 await writable.close();
                 setSaveStatus("saved");
+                if (truncationInfo && truncationInfo.rows > 0) {
+                    await showDialog({
+                        title: "File Truncated",
+                        message: `This file has been truncated by ${truncationInfo.rows} row${truncationInfo.rows === 1 ? '' : 's'}.`
+                    });
+                }
                 setTimeout(() => setSaveStatus("idle"), 1500);
             } catch (err) {
                 setSaveStatus("idle");
@@ -699,6 +718,12 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             const blob = new Blob([content], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
             linkDownload(url, fileName + ".csv");
+            if (truncationInfo && truncationInfo.rows > 0) {
+                await showDialog({
+                    title: "File Truncated",
+                    message: `This file has been truncated by ${truncationInfo.rows} row${truncationInfo.rows === 1 ? '' : 's'}.`
+                });
+            }
         }
     }
 

@@ -257,19 +257,22 @@ const DinoLabsIDE = () => {
   const [flattenedSearchList, setFlattenedSearchList] = useState([]);
   const [dragOverId, setDragOverId] = useState(null);
   const loadDirectoryContents = async (directoryHandle, parentPath) => {
-    const entries = [];
-    for await (const entry of directoryHandle.values()) {
-      entries.push(entry);
-    }
-    const promises = entries.map(async entry => {
-      const fullPath = prefixPath(rootDirectoryName, `${parentPath}/${entry.name}`);
-      if (entry.kind === "file") {
-        return { name: entry.name, type: "file", handle: entry, fullPath };
-      } else if (entry.kind === "directory") {
-        return { name: entry.name, type: "directory", handle: entry, fullPath, files: undefined };
+    const promises = [];
+    for await (const [name, entry] of directoryHandle.entries()) {
+      if (entry.kind === "directory") {
+        const fullPath = `${parentPath}/${name}`;
+        promises.push(Promise.resolve({ name, type: "directory", handle: entry, fullPath, files: undefined }));
+      } else {
+        promises.push((async () => {
+          const fileObj = await entry.getFile();
+          const safeName = fileObj.name; 
+          const fullPath = `${parentPath}/${safeName}`;
+          return { name: safeName, type: "file", handle: entry, fullPath };
+        })());
       }
-    });
-    return await Promise.all(promises);
+    }
+    const results = await Promise.all(promises);
+    return results.filter(item => item !== null);
   };
 
   const updateTreeWithDirectoryContents = (tree, targetPath, children) => {
@@ -318,23 +321,19 @@ const DinoLabsIDE = () => {
       setIsLoaded(false);
       setScreenSize(window.innerWidth);
       setResizeTrigger(prev => !prev);
-
       setTimeout(() => setIsLoaded(true), 300);
     };
 
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-
   const flattenTree = (files, parentPath, level = 0, isParentVisible = true, output = []) => {
     files.forEach((item) => {
-      const directoryKey = prefixPath(rootDirectoryName, item.fullPath || `${parentPath}/${item.name}`);
+      const directoryKey = prefixPath("", item.fullPath || `${parentPath}/${item.name}`);
       const isDir = item.type === "directory";
       const isOpen = openedDirectories[directoryKey] || false;
-      const isVisible = isParentVisible && (isRootOpen || parentPath === rootDirectoryName);
-
+      const isVisible = isParentVisible && (isRootOpen || parentPath === "");
       output.push({
         id: directoryKey,
         name: item.name,
@@ -345,9 +344,8 @@ const DinoLabsIDE = () => {
         isOpen: isDir ? isOpen : false,
         handle: item.handle
       });
-
       if (isDir && isOpen && item.files && item.files.length > 0) {
-        flattenTree(item.files, directoryKey, level + 1, isVisible && isOpen, output);
+        flattenTree(item.files, item.fullPath, level + 1, isVisible && isOpen, output);
       }
     });
     return output;
@@ -358,24 +356,10 @@ const DinoLabsIDE = () => {
       setFlattenedDirectoryList([]);
       return;
     }
-
-    const filterFiles = (files, query) => {
-      return files.reduce((acc, file) => {
-        if (file.type === 'file' && file.name.toLowerCase().includes(query.toLowerCase())) {
-          acc.push(file);
-        } else if (file.type === 'directory') {
-          const filteredSubFiles = file.files ? filterFiles(file.files, query) : [];
-          if (filteredSubFiles.length > 0 || file.name.toLowerCase().includes(query.toLowerCase())) {
-            acc.push({ ...file, files: filteredSubFiles });
-          }
-        }
-        return acc;
-      }, []);
-    };
     const filtered = searchQuery
-      ? filterFiles(repositoryFiles, searchQuery)
+      ? repositoryFiles.filter(file => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
       : repositoryFiles;
-    const flatList = flattenTree(filtered, rootDirectoryName, 0, true, []);
+    const flatList = flattenTree(filtered, "", 0, true, []);
     setFlattenedDirectoryList(flatList);
   }, [repositoryFiles, openedDirectories, isRootOpen, rootDirectoryName, searchQuery]);
 
@@ -429,7 +413,6 @@ const DinoLabsIDE = () => {
         return;
       }
     };
-
     if (!loading && token) {
       fetchData();
     }
@@ -440,17 +423,12 @@ const DinoLabsIDE = () => {
       const token = localStorage.getItem("token");
       const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/user-info", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ userID, organizationID }),
       });
-
       if (response.status !== 200) {
         throw new Error(`Internal Server Error`);
       }
-
       const data = await response.json();
       if (data[0].userkeybinds) {
         setKeyBinds({ ...defaultKeyBinds, ...data[0].userkeybinds });
@@ -466,26 +444,19 @@ const DinoLabsIDE = () => {
 
   const fetchPersonalUsageData = async (userID, organizationID) => {
     setIsPlotRendered(false);
-
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("Token not found in localStorage");
       }
-
       const response = await fetch("https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ userID, organizationID }),
       });
-
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
-
       const data = await response.json();
       if (!data.personalUsageInfo || !Array.isArray(data.personalUsageInfo)) {
         throw new Error("Unexpected data structure from the backend");
@@ -498,7 +469,6 @@ const DinoLabsIDE = () => {
           count: parseInt(item.usage_count, 10),
         }))
       );
-
       if (!data.usageLanguages || !Array.isArray(data.usageLanguages)) {
         throw new Error("Unexpected usageLanguages data structure from the backend");
       }
@@ -508,7 +478,6 @@ const DinoLabsIDE = () => {
           count: parseInt(item.language_count, 10),
         }))
       );
-
     } catch (error) {
       return;
     }
@@ -525,10 +494,8 @@ const DinoLabsIDE = () => {
     const dir = directoryRef.current;
     const cont = contentRef.current;
     if (!dir || !cont) return;
-
     let isSyncingDir = false;
     let isSyncingCont = false;
-
     const onDirScroll = () => {
       if (isSyncingDir) {
         isSyncingDir = false;
@@ -537,7 +504,6 @@ const DinoLabsIDE = () => {
       isSyncingCont = true;
       cont.scrollTop = dir.scrollTop;
     };
-
     const onContScroll = () => {
       if (isSyncingCont) {
         isSyncingCont = false;
@@ -546,10 +512,8 @@ const DinoLabsIDE = () => {
       isSyncingDir = true;
       dir.scrollTop = cont.scrollTop;
     };
-
     dir.addEventListener('scroll', onDirScroll);
     cont.addEventListener('scroll', onContScroll);
-
     return () => {
       dir.removeEventListener('scroll', onDirScroll);
       cont.removeEventListener('scroll', onContScroll);
@@ -561,10 +525,8 @@ const DinoLabsIDE = () => {
     if (!isDraggingWidth) return;
     const container = document.querySelector(".dinolabsIDEControlFlex");
     const containerWidth = container.offsetWidth;
-
     const newDirectoryWidth =
       ((e.clientX - container.getBoundingClientRect().left) / containerWidth) * 100;
-
     if (newDirectoryWidth > 10 && newDirectoryWidth < 50) {
       setDirectoryWidth(newDirectoryWidth);
       setContentWidth(100 - newDirectoryWidth);
@@ -577,10 +539,8 @@ const DinoLabsIDE = () => {
     if (!isDraggingHeight) return;
     const container = document.querySelector(".dinolabsIDEControlFlex");
     const containerHeight = container.offsetHeight * 0.90;
-
     const newMarkdownHeight =
       ((e.clientY - container.getBoundingClientRect().top) / containerHeight) * 100;
-
     if (newMarkdownHeight > 20 && newMarkdownHeight < 80) {
       setMarkdownHeight(newMarkdownHeight);
       setConsoleHeight(90 - newMarkdownHeight);
@@ -593,14 +553,9 @@ const DinoLabsIDE = () => {
     if (!isDraggingPane) return;
     const container = document.querySelector(".dinolabsIDEMarkdownWrapper");
     const containerWidth = container.offsetWidth;
-
     const newPaneWidth = ((e.clientX - container.getBoundingClientRect().left) / containerWidth) * 100;
-
     if (newPaneWidth > 25 && newPaneWidth < 75) {
-      setPaneWidths({
-        pane1: newPaneWidth,
-        pane2: 100 - newPaneWidth
-      });
+      setPaneWidths({ pane1: newPaneWidth, pane2: 100 - newPaneWidth });
     }
   };
   const handleMouseUpPane = () => setIsDraggingPane(false);
@@ -626,10 +581,8 @@ const DinoLabsIDE = () => {
     const fullPath = prefixPath(rootDirectoryName, path);
     if (!rootDirectoryHandle) return null;
     if (fullPath === rootDirectoryName || fullPath === `${rootDirectoryName}/`) return rootDirectoryHandle;
-
     const parts = fullPath.replace(`${rootDirectoryName}/`, '').split('/').filter(part => part);
     let currentHandle = rootDirectoryHandle;
-
     for (const part of parts) {
       try {
         currentHandle = await currentHandle.getDirectoryHandle(part, { create: false });
@@ -637,7 +590,6 @@ const DinoLabsIDE = () => {
         return null;
       }
     }
-
     return currentHandle;
   };
 
@@ -651,14 +603,12 @@ const DinoLabsIDE = () => {
     try {
       const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
       const fileId = prefixPath(rootDirectoryName, fileHandle.name);
-  
       const parts = fileHandle.name.split('.');
       const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
       const lowerName = fileHandle.name.toLowerCase();
       const language = (lowerName === "dockerfile") ? "Dockerfile" :
                         (lowerName === "makefile") ? "Makefile" :
                         extensionToLanguageMap[extension] || "Unknown";
-    
       let mediaType = null;
       for (const type in mediaExtensions) {
         if (mediaExtensions[type].includes(extension)) {
@@ -666,7 +616,6 @@ const DinoLabsIDE = () => {
           break;
         }
       }
-  
       let content;
       if (!mediaType) {
         if (modifiedContents[fileId]) {
@@ -676,7 +625,6 @@ const DinoLabsIDE = () => {
           content = await file.text();
         }
       }
-  
       let existingTabPaneIndex = -1;
       let existingTab = null;
       panes.forEach((pane, index) => {
@@ -686,7 +634,6 @@ const DinoLabsIDE = () => {
           existingTab = tab;
         }
       });
-  
       if (existingTab) {
         setActivePaneIndex(existingTabPaneIndex);
         setPanes(prevPanes => {
@@ -696,7 +643,6 @@ const DinoLabsIDE = () => {
         });
         return;
       }
-  
       if (mediaType) {
         const newTab = {
           id: fileId,
@@ -704,14 +650,12 @@ const DinoLabsIDE = () => {
           isMedia: true,
           fileHandle: fileHandle
         };
-  
         setPanes(prevPanes => {
           const newPanes = [...prevPanes];
           newPanes[activePaneIndex].openedTabs.push(newTab);
           newPanes[activePaneIndex].activeTabId = newTab.id;
           return newPanes;
         });
-  
         setOriginalContents(prev => ({ ...prev, [fileId]: null }));
         setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
         return;
@@ -731,14 +675,12 @@ const DinoLabsIDE = () => {
           isReplaceOpen: false,
           fileHandle: fileHandle
         };
-  
         setPanes(prevPanes => {
           const newPanes = [...prevPanes];
           newPanes[activePaneIndex].openedTabs.push(newTab);
           newPanes[activePaneIndex].activeTabId = newTab.id;
           return newPanes;
         });
-  
         setOriginalContents(prev => ({ ...prev, [fileId]: content }));
         setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
       }
@@ -746,7 +688,6 @@ const DinoLabsIDE = () => {
       return;
     }
   };
-  
 
   const handleFileClick = async (file, parentPath) => {
     const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -757,7 +698,6 @@ const DinoLabsIDE = () => {
         break;
       }
     }
-  
     const fileId = prefixPath(rootDirectoryName, file.fullPath || `${parentPath}/${file.name}`);
     let existingTabPaneIndex = -1;
     let existingTab = null;
@@ -768,7 +708,6 @@ const DinoLabsIDE = () => {
         existingTab = tab;
       }
     });
-  
     if (existingTab) {
       setActivePaneIndex(existingTabPaneIndex);
       setPanes(prevPanes => {
@@ -778,7 +717,6 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-  
     if (mediaType) {
       const newTab = {
         id: fileId,
@@ -786,19 +724,16 @@ const DinoLabsIDE = () => {
         isMedia: true,
         fileHandle: file.handle
       };
-  
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
         newPanes[activePaneIndex].openedTabs.push(newTab);
         newPanes[activePaneIndex].activeTabId = newTab.id;
         return newPanes;
       });
-  
       setOriginalContents(prev => ({ ...prev, [fileId]: null }));
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
       return;
     }
-  
     try {
       let content;
       if (modifiedContents[fileId]) {
@@ -811,7 +746,6 @@ const DinoLabsIDE = () => {
           ? "Error reading file content."
           : "The content of this file type could not be automatically detected. Try to open it anyway.";
       }
-  
       const lowerName = file.name.toLowerCase();
       const language = (lowerName === "dockerfile") ? "Dockerfile" :
                       (lowerName === "makefile") ? "Makefile" :
@@ -830,7 +764,6 @@ const DinoLabsIDE = () => {
         isReplaceOpen: false,
         fileHandle: file.handle
       };
-  
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
         newPanes[activePaneIndex].openedTabs.push(newTab);
@@ -854,18 +787,16 @@ const DinoLabsIDE = () => {
         isReplaceOpen: false,
         fileHandle: null
       };
-  
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
         newPanes[activePaneIndex].openedTabs.push(newTab);
         newPanes[activePaneIndex].activeTabId = newTab.id;
         return newPanes;
       });
-  
       setUnsavedChanges(prev => ({ ...prev, [fileId]: false }));
     }
   };
-  
+
   const toggleDirectory = async (directoryKey) => {
     setOpenedDirectories(prev => ({
       ...prev,
@@ -974,12 +905,10 @@ const DinoLabsIDE = () => {
         message: 'You have unsaved changes in this file. Are you sure you want to close it?',
         showCancel: true
       });
-
       if (alertResult === null) {
         return;
       }
     }
-
     setPanes(prevPanes => {
       let newPanes = [...prevPanes];
       const pane = newPanes[paneIndex];
@@ -987,40 +916,33 @@ const DinoLabsIDE = () => {
       if (pane.activeTabId === tabId) {
         pane.activeTabId = pane.openedTabs.length > 0 ? pane.openedTabs[0].id : null;
       }
-
       if (pane.openedTabs.length === 0) {
         newPanes.splice(paneIndex, 1);
         if (activePaneIndex >= paneIndex && activePaneIndex > 0) {
           setActivePaneIndex(activePaneIndex - 1);
         }
-
         if (newPanes.length === 0) {
           newPanes = [{ openedTabs: [], activeTabId: null }];
         }
-
         if (newPanes.length === 1) {
           setPaneWidths({ pane1: 100, pane2: 0 });
         }
       }
-
       setUnsavedChanges(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-
       setOriginalContents(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-
       setModifiedContents(prev => {
         const updated = { ...prev };
         delete updated[tabId];
         return updated;
       });
-
       return newPanes;
     });
   };
@@ -1039,7 +961,6 @@ const DinoLabsIDE = () => {
       if (prevPanes.length >= 2) {
         return prevPanes;
       }
-
       const currentPane = prevPanes[activePaneIndex];
       const currentTabId = currentPane.activeTabId;
       const currentTabIndex = currentPane.openedTabs.findIndex(tab => tab.id === currentTabId);
@@ -1047,13 +968,11 @@ const DinoLabsIDE = () => {
       if (!currentTab) {
         return prevPanes;
       }
-
       const updatedPanes = [...prevPanes];
       updatedPanes[activePaneIndex].openedTabs.splice(currentTabIndex, 1);
       if (updatedPanes[activePaneIndex].activeTabId === currentTabId) {
         updatedPanes[activePaneIndex].activeTabId = updatedPanes[activePaneIndex].openedTabs.length > 0 ? updatedPanes[activePaneIndex].openedTabs[0].id : null;
       }
-
       const newPane = {
         openedTabs: [{
           ...currentTab,
@@ -1061,7 +980,6 @@ const DinoLabsIDE = () => {
         }],
         activeTabId: currentTab.id
       };
-
       setPaneWidths({ pane1: 50, pane2: 50 });
       return [...updatedPanes, newPane];
     });
@@ -1084,15 +1002,12 @@ const DinoLabsIDE = () => {
     const newPanes = [...currentPanes];
     const sourcePane = newPanes[sourcePaneIndex];
     const targetPane = newPanes[targetPaneIndex];
-
     const tabToMove = sourcePane.openedTabs.find(tab => tab.id === tabId);
     if (!tabToMove) return;
-
     sourcePane.openedTabs = sourcePane.openedTabs.filter(tab => tab.id !== tabId);
     if (sourcePane.activeTabId === tabId) {
       sourcePane.activeTabId = sourcePane.openedTabs.length > 0 ? sourcePane.openedTabs[0].id : null;
     }
-
     const existingTab = targetPane.openedTabs.find(tab => tab.id === tabId);
     if (!existingTab) {
       targetPane.openedTabs.push(tabToMove);
@@ -1100,7 +1015,6 @@ const DinoLabsIDE = () => {
     } else {
       targetPane.activeTabId = existingTab.id;
     }
-
     let newActivePaneIndex = activePaneIndex;
     if (sourcePane.openedTabs.length === 0) {
       newPanes.splice(sourcePaneIndex, 1);
@@ -1109,18 +1023,15 @@ const DinoLabsIDE = () => {
       } else if (activePaneIndex > sourcePaneIndex) {
         newActivePaneIndex = activePaneIndex - 1;
       }
-
       if (newPanes.length === 1) {
         setPaneWidths({ pane1: 100, pane2: 0 });
       }
     }
-
     if (newPanes.length === 0) {
       newPanes.push({ openedTabs: [], activeTabId: null });
       setPaneWidths({ pane1: 100, pane2: 0 });
       newActivePaneIndex = 0;
     }
-
     setPanes(newPanes);
     setActivePaneIndex(newActivePaneIndex);
   };
@@ -1135,7 +1046,6 @@ const DinoLabsIDE = () => {
     } else {
       setUnsavedChanges(prev => ({ ...prev, [tabId]: true }));
     }
-
     setPanes(prevPanes => {
       const newPanes = [...prevPanes];
       const pane = newPanes[paneIndex];
@@ -1148,7 +1058,6 @@ const DinoLabsIDE = () => {
       newPanes[paneIndex] = { ...pane, openedTabs: updatedTabs };
       return newPanes;
     });
-
     setModifiedContents(prev => ({ ...prev, [tabId]: newState.fullCode }));
   };
 
@@ -1167,7 +1076,6 @@ const DinoLabsIDE = () => {
   const performGlobalSearch = async () => {
     if (!globalSearchQuery) {
       setGlobalSearchResults([]);
-
       setPanes(prevPanes => prevPanes.map(pane => {
         const newTabs = pane.openedTabs.map(tab => ({
           ...tab,
@@ -1177,9 +1085,7 @@ const DinoLabsIDE = () => {
       }));
       return;
     }
-
     const results = [];
-
     const traverseFiles = async (files) => {
       for (const file of files) {
         if (file.type === 'file') {
@@ -1193,7 +1099,6 @@ const DinoLabsIDE = () => {
             } else {
               continue;
             }
-
             const lines = content.split('\n');
             lines.forEach((line, index) => {
               if (isCaseSensitiveSearch) {
@@ -1222,10 +1127,8 @@ const DinoLabsIDE = () => {
         }
       }
     };
-
     await traverseFiles(repositoryFiles);
     setGlobalSearchResults(results);
-
     setPanes(prevPanes => {
       return prevPanes.map(pane => {
         const newTabs = pane.openedTabs.map(tab => ({
@@ -1241,10 +1144,8 @@ const DinoLabsIDE = () => {
     if (!globalSearchQuery) {
       return;
     }
-
     let totalMatches = 0;
     let filesWithMatches = 0;
-
     const traverseAndCount = async (files) => {
       for (const file of files) {
         if (file.type === 'file') {
@@ -1258,14 +1159,12 @@ const DinoLabsIDE = () => {
             } else {
               continue;
             }
-
             let matchCount = 0;
             if (isCaseSensitiveSearch) {
               matchCount = (content.match(new RegExp(escapeRegExp(globalSearchQuery), 'g')) || []).length;
             } else {
               matchCount = (content.match(new RegExp(escapeRegExp(globalSearchQuery), 'gi')) || []).length;
             }
-
             if (matchCount > 0) {
               totalMatches += matchCount;
               filesWithMatches += 1;
@@ -1278,17 +1177,12 @@ const DinoLabsIDE = () => {
         }
       }
     };
-
     await traverseAndCount(repositoryFiles);
-
     if (totalMatches === 0) {
       return;
     }
-
     const confirmationMessage = `Are you sure you want to replace ${totalMatches} ${totalMatches === 1 ? 'occurrence' : 'occurrences'
-      } of "${globalSearchQuery}" across ${filesWithMatches} ${filesWithMatches === 1 ? 'file' : 'files'
-      }?`;
-
+      } of "${globalSearchQuery}" across ${filesWithMatches} ${filesWithMatches === 1 ? 'file' : 'files'}?`;
     const alertResult = await showDialog({
       title: 'System Alert',
       message: confirmationMessage,
@@ -1297,9 +1191,7 @@ const DinoLabsIDE = () => {
     if (alertResult === null) {
       return;
     }
-
     const updatedFiles = {};
-
     const traverseAndReplace = async (files) => {
       for (const file of files) {
         if (file.type === 'file') {
@@ -1313,10 +1205,8 @@ const DinoLabsIDE = () => {
             } else {
               continue;
             }
-
             let matchCount = 0;
             let newContent = content;
-
             if (isCaseSensitiveSearch) {
               if (content.includes(globalSearchQuery)) {
                 newContent = content.split(globalSearchQuery).join(globalReplaceTerm);
@@ -1328,10 +1218,8 @@ const DinoLabsIDE = () => {
               const matches = content.match(regex);
               matchCount = matches ? matches.length : 0;
             }
-
             if (matchCount > 0) {
               updatedFiles[file.fullPath] = newContent;
-
               if (file.handle) {
                 try {
                   const writable = await file.handle.createWritable();
@@ -1353,14 +1241,8 @@ const DinoLabsIDE = () => {
         }
       }
     };
-
     await traverseAndReplace(repositoryFiles);
-
-    setModifiedContents(prev => ({
-      ...prev,
-      ...updatedFiles
-    }));
-
+    setModifiedContents(prev => ({ ...prev, ...updatedFiles }));
     setPanes(prevPanes => {
       const newPanes = prevPanes.map(pane => {
         const updatedTabs = pane.openedTabs.map(tab => {
@@ -1373,10 +1255,8 @@ const DinoLabsIDE = () => {
       });
       return newPanes;
     });
-
     performGlobalSearch();
   };
-
 
   const toggleCollapse = (filePath) => {
     const prefixedPath = prefixPath(rootDirectoryName, filePath);
@@ -1393,7 +1273,6 @@ const DinoLabsIDE = () => {
     debounceRef.current = setTimeout(() => {
       performGlobalSearch();
     }, 500);
-
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
@@ -1405,7 +1284,6 @@ const DinoLabsIDE = () => {
     const prefixedFilePath = prefixPath(rootDirectoryName, filePath);
     let targetPaneIndex = -1;
     let targetTab = null;
-
     panes.forEach((pane, paneIndex) => {
       const tab = pane.openedTabs.find(tab => tab.id === prefixedFilePath);
       if (tab) {
@@ -1413,7 +1291,6 @@ const DinoLabsIDE = () => {
         targetTab = tab;
       }
     });
-
     if (targetTab) {
       setPanes(prevPanes => {
         const newPanes = [...prevPanes];
@@ -1427,9 +1304,7 @@ const DinoLabsIDE = () => {
         thePane.activeTabId = targetTab.id;
         return newPanes;
       });
-
       setActivePaneIndex(targetPaneIndex);
-
       const editorRef = editorRefs.current[targetPaneIndex][targetTab.id];
       if (editorRef && editorRef.current && typeof editorRef.current.jumpToLine === 'function') {
         editorRef.current.jumpToLine(lineNumber);
@@ -1439,7 +1314,6 @@ const DinoLabsIDE = () => {
         try {
           let content = '';
           let fileHandle = await getFileHandleByPath(repositoryFiles, prefixedFilePath);
-
           if (!fileHandle) {
             try {
               const [pickedFile] = await window.showOpenFilePicker({
@@ -1453,18 +1327,14 @@ const DinoLabsIDE = () => {
               return;
             }
           }
-
           if (!fileHandle) {
             return;
           }
-
           const fileData = await fileHandle.getFile();
           content = await fileData.text();
-
           const parts = prefixedFilePath.split('.');
           const extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
           const language = extensionToLanguageMap[extension] || "Unknown";
-
           const newTabId = prefixedFilePath;
           let existingPaneIndex = -1;
           let existingTab = null;
@@ -1475,7 +1345,6 @@ const DinoLabsIDE = () => {
               existingTab = tab;
             }
           });
-
           if (existingTab) {
             setActivePaneIndex(existingPaneIndex);
             setPanes(prevPanes => {
@@ -1496,7 +1365,6 @@ const DinoLabsIDE = () => {
             }
             return;
           }
-
           const newTab = {
             id: newTabId,
             name: prefixedFilePath.split('/').pop(),
@@ -1512,29 +1380,24 @@ const DinoLabsIDE = () => {
             fileHandle: fileHandle,
             fullPath: prefixedFilePath
           };
-
           setPanes(prevPanes => {
             const newPanes = [...prevPanes];
             newPanes[activePaneIndex].openedTabs.push(newTab);
             newPanes[activePaneIndex].activeTabId = newTab.id;
             return newPanes;
           });
-
           setOriginalContents(prev => ({ ...prev, [newTabId]: content }));
           setUnsavedChanges(prev => ({ ...prev, [newTabId]: false }));
-
           setTimeout(() => {
             const editorRef = editorRefs.current[activePaneIndex][newTab.id];
             if (editorRef && editorRef.current && typeof editorRef.current.jumpToLine === 'function') {
               editorRef.current.jumpToLine(lineNumber);
             }
           }, 100);
-
         } catch (error) {
           return;
         }
       };
-
       handleOpenAndJump();
     }
   };
@@ -1563,12 +1426,10 @@ const DinoLabsIDE = () => {
     });
     const fileName = alertResult && alertResult.fileName;
     if (!fileName) return;
-
     const dirHandle = await getDirectoryHandleByPath(path);
     if (!dirHandle) {
       return;
     }
-
     let fileExists = false;
     for await (const entry of dirHandle.values()) {
       if (entry.name.toLowerCase() === fileName.toLowerCase()) {
@@ -1576,7 +1437,6 @@ const DinoLabsIDE = () => {
         break;
       }
     }
-
     if (fileExists) {
       const alertResult = await showDialog({
         title: 'System Alert',
@@ -1586,7 +1446,6 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-
     try {
       await dirHandle.getFileHandle(fileName, { create: true });
       await reloadDirectory();
@@ -1607,12 +1466,10 @@ const DinoLabsIDE = () => {
     });
     const folderName = alertResult && alertResult.folderName;
     if (!folderName) return;
-
     const dirHandle = await getDirectoryHandleByPath(path);
     if (!dirHandle) {
       return;
     }
-
     let folderExists = false;
     for await (const entry of dirHandle.values()) {
       if (entry.name.toLowerCase() === folderName.toLowerCase()) {
@@ -1620,7 +1477,6 @@ const DinoLabsIDE = () => {
         break;
       }
     }
-
     if (folderExists) {
       const alertResult = await showDialog({
         title: 'System Alert',
@@ -1630,7 +1486,6 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-
     try {
       await dirHandle.getDirectoryHandle(folderName, { create: true });
       await reloadDirectory();
@@ -1643,11 +1498,9 @@ const DinoLabsIDE = () => {
   const deleteItem = async () => {
     if (!contextMenuTarget) return;
     const { type: itemType, path } = contextMenuTarget;
-
     const splitted = path.split('/');
     const itemName = splitted.pop();
     const parentPath = splitted.join('/');
-
     const confirmationMessage = `Are you sure you want to delete the ${itemType} "${itemName}"?`;
     const alertResult = await showDialog({
       title: 'Confirm Delete',
@@ -1655,34 +1508,27 @@ const DinoLabsIDE = () => {
       showCancel: true
     });
     if (alertResult === null) return;
-
     const dirHandle = await getDirectoryHandleByPath(parentPath);
     if (!dirHandle) {
       return;
     }
-
     try {
       await dirHandle.removeEntry(itemName, { recursive: itemType === 'directory' });
       await reloadDirectory();
     } catch (error) {
       return;
     }
-
     setContextMenuVisible(false);
   };
-
 
   const handleContextMenu = (e, target) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (!rootDirectoryName) {
       return;
     }
-
     let xPos = e.clientX;
     let yPos = e.clientY;
-
     setContextMenuVisible(true);
     setContextMenuPosition({ x: xPos, y: yPos });
     setContextMenuTarget(target);
@@ -1692,14 +1538,9 @@ const DinoLabsIDE = () => {
     if (contextMenuTarget) {
       const { path } = contextMenuTarget;
       const pathWithSlash = path.endsWith('/') ? path : path + '/';
-
       navigator.clipboard.writeText(pathWithSlash)
-        .then(() => {
-          setContextMenuVisible(false);
-        })
-        .catch(err => {
-          return;
-        });
+        .then(() => { setContextMenuVisible(false); })
+        .catch(err => { return; });
     }
   };
 
@@ -1712,18 +1553,14 @@ const DinoLabsIDE = () => {
       let newX = x;
       let newY = y;
       const margin = 10;
-
       if (x + menuRect.width > innerWidth) {
         newX = innerWidth - menuRect.width - margin;
       }
-
       if (y + menuRect.height > innerHeight) {
         newY = innerHeight - menuRect.height - margin;
       }
-
       newX = Math.max(newX, margin);
       newY = Math.max(newY, margin);
-
       if (newX !== x || newY !== y) {
         setContextMenuPosition({ x: newX, y: newY });
       }
@@ -1741,10 +1578,8 @@ const DinoLabsIDE = () => {
         setContextMenuVisible(false);
       }
     };
-
     window.addEventListener('click', handleClickOutside);
     window.addEventListener('keydown', handleEsc);
-
     return () => {
       window.removeEventListener('click', handleClickOutside);
       window.removeEventListener('keydown', handleEsc);
@@ -1760,10 +1595,8 @@ const DinoLabsIDE = () => {
     const data = e.dataTransfer.getData("application/my-app");
     if (!data) return;
     const { path: sourcePath, type: sourceType } = JSON.parse(data);
-
     const targetDirHandle = await getDirectoryHandleByPath(targetDirItem.fullPath);
     if (!targetDirHandle) return;
-
     if (sourceType === "directory" && sourcePath.startsWith(targetDirItem.fullPath)) {
       const alertResult = await showDialog({
         title: 'System Alert',
@@ -1773,7 +1606,6 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-
     let exists = false;
     for await (const entry of targetDirHandle.values()) {
       if (entry.name.toLowerCase() === sourcePath.split('/').pop().toLowerCase()) {
@@ -1790,7 +1622,6 @@ const DinoLabsIDE = () => {
       });
       return;
     }
-
     if (sourceType === "file") {
       const sourceFileHandle = await getFileHandleByPath(repositoryFiles, sourcePath);
       if (!sourceFileHandle) return;
@@ -1826,17 +1657,14 @@ const DinoLabsIDE = () => {
       const parentDir = await getDirectoryHandleByPath(parentPath);
       await parentDir.removeEntry(sourceDirHandle.name, { recursive: true });
     }
-
     await reloadDirectory();
   };
 
   const renderNavigatorRow = ({ index, style, data }) => {
     const item = data[index];
-
     if (!item.isVisible) {
       return <div style={{ ...style, display: 'none' }} />;
     }
-
     if (item.type === 'directory') {
       return (
         <div
@@ -1938,7 +1766,6 @@ const DinoLabsIDE = () => {
     }
   };
 
-
   return (
     <div
       className="dinolabsIDEPageWrapper"
@@ -1959,10 +1786,8 @@ const DinoLabsIDE = () => {
       }}
     >
       <DinoLabsNav activePage={"dinolabside"} />
-
       {(screenSize >= 700 && screenSize <= 5399) && isLoaded ? (
-
-        <div className="dinolabsIDEHeaderContainer" style={{ "height": "100%" }}>
+        <div className="dinolabsIDEHeaderContainer" style={{ height: "100%" }}>
           <div className="dinolabsIDEControlFlex">
             <div
               className="leadingIDEDirectoryStack"
@@ -1977,13 +1802,11 @@ const DinoLabsIDE = () => {
                       <FontAwesomeIcon icon={faPlusSquare} />
                     </button>
                   </Tippy>
-
                   <Tippy content={"Zoom Out"} theme="tooltip-light" placement="bottom">
                     <button className="leadingDirectoryZoomButton" onClick={handleZoomOut} disabled={!rootDirectoryName}>
                       <FontAwesomeIcon icon={faMinusSquare} />
                     </button>
                   </Tippy>
-
                   <Tippy content={"Reset View"} theme="tooltip-light" placement="bottom">
                     <button className="leadingDirectoryZoomButton" onClick={handleResetZoomLevel} disabled={!rootDirectoryName}>
                       <FontAwesomeIcon icon={faRetweet} />
@@ -1991,22 +1814,18 @@ const DinoLabsIDE = () => {
                   </Tippy>
                 </div>
               </div>
-
               <div className="leadingDirectoryStack">
                 <div className="leadingdDirectoryOperationsWrapper">
-                  <div className="leadingDirectory">
-                  </div>
+                  <div className="leadingDirectory" />
                   <button className="leadingDirectoryButton" onClick={handleLoadRepository}>
                     <FontAwesomeIcon icon={faFolderOpen} />
                     Import a Directory
                   </button>
-
                   <button className="leadingDirectoryButton" onClick={handleLoadFile}>
                     <FontAwesomeIcon icon={faCode} />
                     Import a File
                   </button>
                 </div>
-
                 <div className="leadingDirectoryTabsWrapper">
                   <button
                     className="leadingDirectoryTabButton"
@@ -2029,7 +1848,6 @@ const DinoLabsIDE = () => {
                     Search
                   </button>
                 </div>
-
                 {isNavigatorState && (
                   <div className="leadingDirectorySearchWrapper">
                     <input
@@ -2041,58 +1859,50 @@ const DinoLabsIDE = () => {
                     />
                   </div>
                 )}
-
-                {isNavigatorState && (
-                  isNavigatorLoading ? (
-                    <div className="leadingDirectoryFilesSupplement" style={{ textAlign: 'center' }}>
+                {isNavigatorState &&
+                  (isNavigatorLoading ? (
+                    <div className="leadingDirectoryFilesSupplement" style={{ textAlign: "center" }}>
                       <div className="loading-circle" />
                     </div>
                   ) : (
                     <div className="leadingDirectoryFiles">
-                      {
-                        rootDirectoryName && (
-                          <ul className="leadingDirectoryFileStack">
-                            <li className="leadingDirectoryFileStackContent">
-                              <div
-                                onClick={() => setIsRootOpen(!isRootOpen)}
-                                onContextMenu={(e) => handleContextMenu(e, { type: 'directory', path: rootDirectoryName })}
-                                className="directoryListItemRoot"
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) =>
-                                  handleItemDrop(e, { fullPath: rootDirectoryName, type: 'directory' })
-                                }
-                              >
-                                <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
-                                {rootDirectoryName}
-                                {unsavedChanges[rootDirectoryName] && (
-                                  <Tippy content="Unsaved" theme="tooltip-light">
-                                    <span className="dinolabsIDEFileUnsavedDot" />
-                                  </Tippy>
-                                )}
-                              </div>
-
-                              {isRootOpen && flattenedDirectoryList.length > 0 && (
-                                <div className="nestedDirectoryFileStack" style={{ height: "70vh", width: "100%" }}>
-                                  <List
-                                    height={window.innerHeight * 0.65}
-                                    itemCount={flattenedDirectoryList.length}
-                                    itemSize={getVirtualizedItemHeight(screenSize)}
-                                    width={"100%"}
-                                    itemData={flattenedDirectoryList}
-                                    className="nestedDirectoryFileStack"
-                                  >
-                                    {renderNavigatorRow}
-                                  </List>
-                                </div>
+                      {rootDirectoryName && (
+                        <ul className="leadingDirectoryFileStack">
+                          <li className="leadingDirectoryFileStackContent">
+                            <div
+                              onClick={() => setIsRootOpen(!isRootOpen)}
+                              onContextMenu={(e) => handleContextMenu(e, { type: "directory", path: rootDirectoryName })}
+                              className="directoryListItemRoot"
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => handleItemDrop(e, { fullPath: rootDirectoryName, type: "directory" })}
+                            >
+                              <FontAwesomeIcon icon={isRootOpen ? faAngleDown : faAngleRight} />
+                              {rootDirectoryName}
+                              {unsavedChanges[rootDirectoryName] && (
+                                <Tippy content="Unsaved" theme="tooltip-light">
+                                  <span className="dinolabsIDEFileUnsavedDot" />
+                                </Tippy>
                               )}
-                            </li>
-                          </ul>
-                        )
-                      }
+                            </div>
+                            {isRootOpen && flattenedDirectoryList.length > 0 && (
+                              <div className="nestedDirectoryFileStack" style={{ height: "70vh", width: "100%" }}>
+                                <List
+                                  height={window.innerHeight * 0.65}
+                                  itemCount={flattenedDirectoryList.length}
+                                  itemSize={getVirtualizedItemHeight(screenSize)}
+                                  width={"100%"}
+                                  itemData={flattenedDirectoryList}
+                                  className="nestedDirectoryFileStack"
+                                >
+                                  {renderNavigatorRow}
+                                </List>
+                              </div>
+                            )}
+                          </li>
+                        </ul>
+                      )}
                     </div>
-                  )
-                )}
-
+                  ))}
                 {isSearchState && (
                   <div className="leadingDirectoryGlobalSearchWrapper">
                     <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-end" }}>
@@ -2103,7 +1913,6 @@ const DinoLabsIDE = () => {
                         value={globalSearchQuery}
                         onChange={(e) => setGlobalSearchQuery(e.target.value)}
                       />
-
                       <div className="leadingDirectoryGlobalSearchTrailingButtons">
                         <Tippy content={"Case Sensitive"} theme="tooltip-light">
                           <button
@@ -2116,18 +1925,13 @@ const DinoLabsIDE = () => {
                             <FontAwesomeIcon icon={faA} style={{ color: isCaseSensitiveSearch ? "#AD6ADD" : "" }} />
                           </button>
                         </Tippy>
-
                         <Tippy content={"Search Files"} theme="tooltip-light">
-                          <button
-                            className="leadingDirectoryGlobalSearchButton"
-                            onClick={performGlobalSearch}
-                          >
+                          <button className="leadingDirectoryGlobalSearchButton" onClick={performGlobalSearch}>
                             <FontAwesomeIcon icon={faMagnifyingGlass} />
                           </button>
                         </Tippy>
                       </div>
                     </div>
-
                     <div className="leadingDirectoryGlobalSearchFlex" style={{ alignItems: "flex-start" }}>
                       <input
                         type="text"
@@ -2137,7 +1941,6 @@ const DinoLabsIDE = () => {
                         onChange={(e) => setGlobalReplaceTerm(e.target.value)}
                         disabled={!isGlobalReplace}
                       />
-
                       <div className="leadingDirectoryGlobalSearchTrailingButtons">
                         <Tippy content={"Replace Across Files"} theme="tooltip-light">
                           <button
@@ -2156,30 +1959,21 @@ const DinoLabsIDE = () => {
                   </div>
                 )}
               </div>
-
               <div className="leadingDirectoryBottomBar">
                 <div className="leadingDirectorySettingsButtonFlex" style={{ borderRight: "0.2vh solid rgba(255,255,255,0.1)" }}>
                   <Tippy content={"Account"} theme="tooltip-light">
                     <button
                       className="leadingDirectoryZoomButton"
-                      onClick={() => {
-                        setIsAccountOpen(!isAccountOpen);
-                      }}
+                      onClick={() => { setIsAccountOpen(!isAccountOpen); }}
                     >
-                      <FontAwesomeIcon icon={faUserCircle} style={{ "color": isAccountOpen ? "#AD6ADD" : "" }} />
+                      <FontAwesomeIcon icon={faUserCircle} style={{ color: isAccountOpen ? "#AD6ADD" : "" }} />
                     </button>
                   </Tippy>
                 </div>
               </div>
             </div>
-
             <div className="resizableWidthDivider" onMouseDown={handleMouseDownWidth} />
-
-            <div
-              className="dinolabsIDEControlStack"
-              style={{ width: `${contentWidth}%` }}
-              ref={contentRef}
-            >
+            <div className="dinolabsIDEControlStack" style={{ width: `${contentWidth}%` }} ref={contentRef}>
               {(!isAccountOpen) && (
                 <div className="topIDEControlBarWrapper">
                   {panes.map((pane, paneIndex) => (
@@ -2187,7 +1981,6 @@ const DinoLabsIDE = () => {
                       {(panes.length > 1 && paneIndex === 1) && (
                         <div className="resizablePaneDivider" />
                       )}
-
                       <div
                         className="topIDEControlBar"
                         style={{
@@ -2205,17 +1998,16 @@ const DinoLabsIDE = () => {
                             if (!editorRefs.current[paneIndex][tab.id]) {
                               editorRefs.current[paneIndex][tab.id] = React.createRef();
                             }
-
                             return (
                               <div
                                 key={tab.id}
                                 className={`dinolabsIDETabItem ${pane.activeTabId === tab.id && unsavedChanges[tab.id]
-                                    ? "activeUnsavedTab"
-                                    : pane.activeTabId === tab.id
-                                      ? "activeTab"
-                                      : unsavedChanges[tab.id]
-                                        ? "unsavedTab"
-                                        : ""
+                                  ? "activeUnsavedTab"
+                                  : pane.activeTabId === tab.id
+                                    ? "activeTab"
+                                    : unsavedChanges[tab.id]
+                                      ? "unsavedTab"
+                                      : ""
                                   }`}
                                 onClick={() => switchTab(paneIndex, tab.id)}
                                 draggable={true}
@@ -2231,10 +2023,7 @@ const DinoLabsIDE = () => {
                                 {tab.name}
                                 <span
                                   className="dinolabsIDECloseTab"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    closeTab(paneIndex, tab.id);
-                                  }}
+                                  onClick={(e) => { e.stopPropagation(); closeTab(paneIndex, tab.id); }}
                                 >
                                   ×
                                 </span>
@@ -2252,7 +2041,6 @@ const DinoLabsIDE = () => {
                   ))}
                 </div>
               )}
-
               {(!isAccountOpen) && (
                 <div
                   className="dinolabsIDEMarkdownWrapper"
@@ -2299,20 +2087,17 @@ const DinoLabsIDE = () => {
                                         keyBinds={keyBinds}    
                                       />
                                     )}
-
                                     {(['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDETabularEditor 
                                         fileHandle={tab.fileHandle} 
                                         keyBinds={keyBinds}
                                       />
                                     )}
-
                                     {(!tab.fileHandle ||
                                       (!(
-                                          ['txt', 'md'].includes(tab.fileHandle.name.split('.').pop().toLowerCase()) ||
-                                          ['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase()) 
-                                        )
-                                      )
+                                        ['txt', 'md'].includes(tab.fileHandle.name.split('.').pop().toLowerCase()) ||
+                                        ['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())
+                                      ))
                                     ) && (
                                       <DinoLabsIDEMarkdown
                                         fileContent={tab.content}
@@ -2357,12 +2142,9 @@ const DinoLabsIDE = () => {
                                         keyBinds={keyBinds}
                                         colorTheme={colorTheme}
                                       />
-
                                     )}
-
                                   </>
                                 )}
-
                               </div>
                             ))
                           ) : (
@@ -2381,25 +2163,21 @@ const DinoLabsIDE = () => {
                                         <FontAwesomeIcon icon={faFolderOpen} />
                                         Import a Directory
                                       </button>
-
                                       <button className="dinolabsIDEStartButton" onClick={handleLoadFile}>
                                         <FontAwesomeIcon icon={faCode} />
                                         Import a File
                                       </button>
                                     </div>
                                   </div>
-
                                   {isPlotRendered ? (
                                     <LinePlot plotType="getStartedPageUsagePlot" data={personalUsageByDay} />
                                   ) : (
-                                    <div className="getStartedLinePlot" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                    <div className="getStartedLinePlot" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                                       <div className="loading-circle" />
                                     </div>
                                   )}
                                 </div>
-
                                 <div className="dinolabsIDELanguageDisplayFlex">
-
                                   {isPlotRendered ? (
                                     <div className="dinolabsIDEGetStartedWrapperLanguages">
                                       <div className="dinolabsIDEUsageLanguagesContainer">
@@ -2432,20 +2210,13 @@ const DinoLabsIDE = () => {
                                                 default: "#95a5a6"
                                               };
                                               const color = languageColors[language.language] || languageColors.default;
-
                                               return (
                                                 <li key={language.language} className="dinolabsIDELanguageItem">
                                                   <div className="dinolabsIDELanguageLabel">
                                                     {language.language}
                                                     <span>{percentage.toFixed(1)}%</span>
                                                   </div>
-                                                  <div
-                                                    className="dinolabsIDELanguageBar"
-                                                    style={{
-                                                      width: `${percentage}%`,
-                                                      backgroundColor: color,
-                                                    }}
-                                                  ></div>
+                                                  <div className="dinolabsIDELanguageBar" style={{ width: `${percentage}%`, backgroundColor: color }}></div>
                                                 </li>
                                               );
                                             })}
@@ -2454,48 +2225,33 @@ const DinoLabsIDE = () => {
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                                       <div className="loading-circle" />
                                     </div>
                                   )}
-
                                   {isPlotRendered ? (
                                     <div className="dinolabsIDEGetStartedWrapperLanguages">
-                                      <DoughnutPlot
-                                        cellType="languageUsage"
-                                        data={{ usageLanguages }}
-                                        fontSizeMultiplier={1.7}
-                                      />
+                                      <DoughnutPlot cellType="languageUsage" data={{ usageLanguages }} fontSizeMultiplier={1.7} />
                                     </div>
                                   ) : (
-                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ "display": "flex", "justify-content": "center", "align-items": "center" }}>
+                                    <div className="dinolabsIDEGetStartedWrapperLanguages" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                                       <div className="loading-circle" />
                                     </div>
                                   )}
-
                                 </div>
-
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
-
                       {paneIndex < panes.length - 1 && (
-                        <div
-                          className="resizablePaneDivider"
-                          onMouseDown={handleMouseDownPane}
-                        />
+                        <div className="resizablePaneDivider" onMouseDown={handleMouseDownPane} />
                       )}
                     </React.Fragment>
                   ))}
                 </div>
               )}
-
-              {(!isAccountOpen) && (
-                <div className="bottomIDEControlBar" />
-              )}
-
+              {(!isAccountOpen) && <div className="bottomIDEControlBar" />}
               {isAccountOpen && (
                 <DinoLabsIDEAccount
                   onClose={() => setIsAccountOpen(false)}
@@ -2510,19 +2266,14 @@ const DinoLabsIDE = () => {
             </div>
           </div>
         </div>
-
       ) : (
         !isLoaded ? (
-          <div className="dinolabsIDEHeaderContainer" style={{ "background-color": "#222222" }}>
+          <div className="dinolabsIDEHeaderContainer" style={{ backgroundColor: "#222222" }}>
             <div className="loading-wrapper">
               <div className="loading-circle" />
-
-              <label className="loading-title">
-                Dino Labs Web IDE
-              </label>
+              <label className="loading-title">Dino Labs Web IDE</label>
             </div>
           </div>
-
         ) : (
           <div className="dinolabsIDEHeaderContainer">
             <div className="dinolabsIDEUnavailableWrapper">
@@ -2530,50 +2281,31 @@ const DinoLabsIDE = () => {
               <label className="dinolabsUnavailableLabel">
                 The Dino Labs IDE is currently unavailable at this screen size.
               </label>
-
               <label className="dinolabsUnavailableSubLabel">
                 Please sign in on a {screenSize < 700 ? "larger" : "smaller"} screen to continue.
               </label>
             </div>
           </div>
         )
-
       )}
-
       {(screenSize >= 700 && screenSize <= 5399) && contextMenuVisible && (
         <ul
           className="dinolabsIDEContextMenu"
           ref={contextMenuRef}
-          style={{
-            top: contextMenuPosition.y,
-            left: contextMenuPosition.x,
-          }}
+          style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
         >
-          <li
-            className="dinolabsIDEContextMenuItem"
-            onClick={createNewFile}
-          >
+          <li className="dinolabsIDEContextMenuItem" onClick={createNewFile}>
             Add File
           </li>
-          <li
-            className="dinolabsIDEContextMenuItem"
-            onClick={createNewFolder}
-          >
+          <li className="dinolabsIDEContextMenuItem" onClick={createNewFolder}>
             Add Folder
           </li>
-          {(contextMenuTarget?.type === 'file' || contextMenuTarget?.type === 'directory') && (
-            <li
-              className="dinolabsIDEContextMenuItem"
-              onClick={deleteItem}
-            >
+          {(contextMenuTarget?.type === "file" || contextMenuTarget?.type === "directory") && (
+            <li className="dinolabsIDEContextMenuItem" onClick={deleteItem}>
               Delete
             </li>
           )}
-          <li
-            className="dinolabsIDEContextMenuItem"
-            style={{ "border-bottom": "none" }}
-            onClick={copyRelativePathToClipboard}
-          >
+          <li className="dinolabsIDEContextMenuItem" style={{ borderBottom: "none" }} onClick={copyRelativePathToClipboard}>
             Copy Relative Path
           </li>
         </ul>
