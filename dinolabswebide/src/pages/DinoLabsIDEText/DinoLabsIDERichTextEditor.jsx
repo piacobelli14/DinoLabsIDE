@@ -84,7 +84,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
     const editorRef = useRef(null);
     const savedRangeRef = useRef(null);
     const imageInputRef = useRef(null);
-    const [initialHTML, setInitialHTML] = useState("<p>Loading...</p>");
+    const [initialHTML, setInitialHTML] = useState("");
     const [error, setError] = useState(null);
     const [fileName, setFileName] = useState(fileHandle?.name || "Untitled");
     const [openModal, setOpenModal] = useState(null);

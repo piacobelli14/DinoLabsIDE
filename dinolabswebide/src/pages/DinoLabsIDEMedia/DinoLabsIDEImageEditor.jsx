@@ -1581,8 +1581,9 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         </svg>
                     </div>
                 </div>
-                {/*
                 <div className="dinolabsIDEVideoInputBottomBar"> 
+
+                {/*
                     <div> 
                     </div>
                     <label className="dinolabsIDEMediaModeIndicator">
@@ -1590,8 +1591,9 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         {isCropping ? 'Cropping' : 'Idle'}
                         </span>
                     </label>
-                </div>
+                
                 */}
+                </div>
             </div>
         </div>
     );

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-import DinoLabsIDEMarkdown from "./DinoLabsIDEMarkdown.jsx";
+import DinoLabsIDEMarkdown from "./DinoLabsIDECode/DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDETabularEditor from "./DinoLabsIDETabular/DinoLabsIDETabularEditor.jsx"; 
 import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor.jsx"; 
-import DinoLabsIDEPDFEditor from "./DinoLabsIDEText/DinoLabsIDEPDFEditor.jsx"; 
 import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
 import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor.jsx"; 
 import DinoLabsIDEAudioEditor from "./DinoLabsIDEMedia/DinoLabsIDEAudioEditor.jsx"; 
@@ -152,7 +151,6 @@ const markdownExtensions = [
 
 const textExtensions = {
   richText: ['txt', 'md'],
-  pdf: ['pdf'],
 };
 
 const mediaExtensions = {
@@ -258,6 +256,33 @@ const DinoLabsIDE = () => {
   const [flattenedDirectoryList, setFlattenedDirectoryList] = useState([]);
   const [flattenedSearchList, setFlattenedSearchList] = useState([]);
   const [dragOverId, setDragOverId] = useState(null);
+  const loadDirectoryContents = async (directoryHandle, parentPath) => {
+    const entries = [];
+    for await (const entry of directoryHandle.values()) {
+      entries.push(entry);
+    }
+    const promises = entries.map(async entry => {
+      const fullPath = prefixPath(rootDirectoryName, `${parentPath}/${entry.name}`);
+      if (entry.kind === "file") {
+        return { name: entry.name, type: "file", handle: entry, fullPath };
+      } else if (entry.kind === "directory") {
+        return { name: entry.name, type: "directory", handle: entry, fullPath, files: undefined };
+      }
+    });
+    return await Promise.all(promises);
+  };
+
+  const updateTreeWithDirectoryContents = (tree, targetPath, children) => {
+    return tree.map(node => {
+      if (node.fullPath === targetPath) {
+        return { ...node, files: children };
+      } else if (node.type === 'directory' && node.files) {
+        return { ...node, files: updateTreeWithDirectoryContents(node.files, targetPath, children) };
+      } else {
+        return node;
+      }
+    });
+  };
 
   const getVirtualizedItemHeight = (size) => {
     if (size < 499) {
@@ -339,7 +364,7 @@ const DinoLabsIDE = () => {
         if (file.type === 'file' && file.name.toLowerCase().includes(query.toLowerCase())) {
           acc.push(file);
         } else if (file.type === 'directory') {
-          const filteredSubFiles = filterFiles(file.files, query);
+          const filteredSubFiles = file.files ? filterFiles(file.files, query) : [];
           if (filteredSubFiles.length > 0 || file.name.toLowerCase().includes(query.toLowerCase())) {
             acc.push({ ...file, files: filteredSubFiles });
           }
@@ -580,20 +605,6 @@ const DinoLabsIDE = () => {
   };
   const handleMouseUpPane = () => setIsDraggingPane(false);
 
-  const loadAllDirectoryContents = async (directoryHandle, parentPath) => {
-    const files = [];
-    for await (const entry of directoryHandle.values()) {
-      const fullPath = prefixPath(rootDirectoryName, `${parentPath}/${entry.name}`);
-      if (entry.kind === "file") {
-        files.push({ name: entry.name, type: "file", handle: entry, fullPath });
-      } else if (entry.kind === "directory") {
-        const subFiles = await loadAllDirectoryContents(entry, fullPath);
-        files.push({ name: entry.name, type: "directory", files: subFiles, handle: entry, fullPath });
-      }
-    }
-    return files;
-  };
-
   const handleLoadRepository = async () => {
     try {
       setIsNavigatorLoading(true);
@@ -601,7 +612,7 @@ const DinoLabsIDE = () => {
       const rootName = directoryHandle.name;
       setRootDirectoryHandle(directoryHandle);
       setRootDirectoryName(rootName);
-      const files = await loadAllDirectoryContents(directoryHandle, rootName);
+      const files = await loadDirectoryContents(directoryHandle, rootName);
       setRepositoryFiles(files);
       setIsRootOpen(true);
       setIsNavigatorLoading(false);
@@ -628,6 +639,12 @@ const DinoLabsIDE = () => {
     }
 
     return currentHandle;
+  };
+
+  const reloadDirectory = async () => {
+    if (!rootDirectoryHandle) return;
+    const newFiles = await loadDirectoryContents(rootDirectoryHandle, rootDirectoryName);
+    setRepositoryFiles(newFiles);
   };
 
   const handleLoadFile = async () => {
@@ -849,12 +866,28 @@ const DinoLabsIDE = () => {
     }
   };
   
-
-  const toggleDirectory = (directoryKey) => {
+  const toggleDirectory = async (directoryKey) => {
     setOpenedDirectories(prev => ({
       ...prev,
       [directoryKey]: !prev[directoryKey],
     }));
+    if (!openedDirectories[directoryKey]) {
+      const findNode = (nodes) => {
+        for (let node of nodes) {
+          if (node.fullPath === directoryKey) return node;
+          if (node.type === 'directory' && node.files) {
+            const result = findNode(node.files);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      const node = findNode(repositoryFiles);
+      if (node && node.files === undefined && node.handle) {
+        const children = await loadDirectoryContents(node.handle, node.fullPath);
+        setRepositoryFiles(prevTree => updateTreeWithDirectoryContents(prevTree, directoryKey, children));
+      }
+    }
   };
 
   const handleForceOpenTab = (paneIndex, tabId) => {
@@ -1519,12 +1552,6 @@ const DinoLabsIDE = () => {
     return null;
   };
 
-  const reloadDirectory = async () => {
-    if (!rootDirectoryHandle) return;
-    const newFiles = await loadAllDirectoryContents(rootDirectoryHandle, rootDirectoryName);
-    setRepositoryFiles(newFiles);
-  };
-
   const createNewFile = async () => {
     if (!contextMenuTarget) return;
     const { type: itemType, path } = contextMenuTarget;
@@ -2128,24 +2155,6 @@ const DinoLabsIDE = () => {
                     </div>
                   </div>
                 )}
-
-                {isSearchState && (
-                  <div className="leadingDirectoryGlobalSearchResults">
-                    {flattenedSearchList.length > 0 && (
-                      <div className="leadingDirectoryGlobalSearchResultsGrouped" style={{ height: "60vh", width: "100%" }}>
-                        <List
-                          height={window.innerHeight * 0.55}
-                          itemCount={flattenedSearchList.length}
-                          itemSize={getVirtualizedItemHeight(screenSize)}
-                          width={"100%"}
-                          itemData={flattenedSearchList}
-                        >
-                          {renderSearchRow}
-                        </List>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className="leadingDirectoryBottomBar">
@@ -2298,16 +2307,13 @@ const DinoLabsIDE = () => {
                                       />
                                     )}
 
-                                    {(['pdf'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
-                                      <DinoLabsIDEPDFEditor fileHandle={tab.fileHandle} />
-                                    )}
-
-                                    {([
-                                        'js', 'jsx', 'ts', 'tsx', 'html', 'css',
-                                        'py', 'java', 'rb', 'php', 'swift', 'c', 'cpp', 'h', 'cs', 'rs', 'bash', 'sh', 'zsh',
-                                        'mc', 'mcgen', 'asm', 'sql', 'xml', 'json',
-                                        'dockerfile', 'makefile'
-                                      ].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                    {(!tab.fileHandle ||
+                                      (!(
+                                          ['txt', 'md'].includes(tab.fileHandle.name.split('.').pop().toLowerCase()) ||
+                                          ['csv'].includes(tab.fileHandle.name.split('.').pop().toLowerCase()) 
+                                        )
+                                      )
+                                    ) && (
                                       <DinoLabsIDEMarkdown
                                         fileContent={tab.content}
                                         detectedLanguage={tab.language}
@@ -2355,9 +2361,6 @@ const DinoLabsIDE = () => {
                                     )}
 
                                   </>
-
-                                  
-                                  
                                 )}
 
                               </div>
@@ -2447,7 +2450,6 @@ const DinoLabsIDE = () => {
                                               );
                                             })}
                                           </ul>
-
                                         )}
                                       </div>
                                     </div>
@@ -2471,9 +2473,7 @@ const DinoLabsIDE = () => {
                                     </div>
                                   )}
 
-
                                 </div>
-
 
                               </div>
                             </div>
@@ -2491,15 +2491,6 @@ const DinoLabsIDE = () => {
                   ))}
                 </div>
               )}
-
-              {/*{hasOpenFile && (!isAccountOpen) && (
-                <>
-                  <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
-                  <div className="dinolabsIDEConsoleWrapper" style={{ height: `${consoleHeight}%` }}>
-                    
-                  </div>
-                </>
-              )}*/}
 
               {(!isAccountOpen) && (
                 <div className="bottomIDEControlBar" />

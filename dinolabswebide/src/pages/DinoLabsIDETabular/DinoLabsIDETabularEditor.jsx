@@ -48,7 +48,7 @@ function getColumnLabel(colIndex) {
     return label;
 }
 
-export default function PinnedHeadersSheet({ fileHandle, keyBinds }) {
+export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
     const [tableData, setTableData] = useState({});
     const tableDataRef = useRef(tableData);
     useEffect(() => {
@@ -2154,12 +2154,6 @@ export default function PinnedHeadersSheet({ fileHandle, keyBinds }) {
                             }
                         }}
                     >
-                        {loading && (
-                            <div className="dinolabsIDETableLoadingMessage">Loading...</div>
-                        )}
-                        {error && (
-                            <div className="dinolabsIDETableErrorMessage">{error}</div>
-                        )}
                         <div
                             className="dinolabsIDETableCornerHeader"
                             style={{ zIndex: 10 }}

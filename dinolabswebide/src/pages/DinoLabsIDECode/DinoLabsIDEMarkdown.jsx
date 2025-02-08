@@ -26,7 +26,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
 import { syntaxHighlight, escapeRegExp } from "./DinoLabsIDEParser";
-import useAuth from "../UseAuth";
+import useAuth from "../../UseAuth";
 
 const languageImageMap = {
   Javascript: "javascript.svg",
