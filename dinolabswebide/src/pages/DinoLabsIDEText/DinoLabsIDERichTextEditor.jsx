@@ -612,7 +612,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
                 <head>
                   <title>${fileName}</title>
                   <style>
-                    body { margin: 20px; font-family: Arial, sans-serif; }
+                    body {  }
                   </style>
                 </head>
                 <body>
