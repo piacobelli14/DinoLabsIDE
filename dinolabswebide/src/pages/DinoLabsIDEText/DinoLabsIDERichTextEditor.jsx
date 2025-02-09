@@ -610,9 +610,9 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
                 printWindow.document.write(`
                 <html>
                 <head>
-                  <title>${fileName.replace(/\.[^/.]+$/, "") + ".pdf"}</title>
+                  <title>${fileName}</title>
                   <style>
-                    body { }
+                    body {  }
                   </style>
                 </head>
                 <body>
