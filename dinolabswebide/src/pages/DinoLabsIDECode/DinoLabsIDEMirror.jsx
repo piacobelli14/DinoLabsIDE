@@ -57,7 +57,7 @@ function unifyIndentation(line) {
 
   let spaceCount = 0;
   for (let j = 0; j < leading.length; j++) {
-    spaceCount += (leading[j] === "\t") ? 4 : 1;
+    spaceCount += leading[j] === "\t" ? 4 : 1;
   }
   return " ".repeat(spaceCount) + rest;
 }
@@ -304,7 +304,7 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
         resolve();
         return;
       }
-      const selObj = saveSelection(textEl);
+      const selObj = saveSelection(textareaRef.current);
       if (!selObj) {
         resolve();
         return;
@@ -506,11 +506,10 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
 
   useEffect(() => {
     if (!highlightRef.current) return;
-    const splittedLines = highlightedCode.includes("<br")
+    const splitted = highlightedCode.includes("<br")
       ? highlightedCode.split(/<br\s*\/?>/gi)
-      : highlightedCode.split(/\r?\n/);
-
-    const highlightLines = splittedLines.map((line) =>
+      : highlightedCode.split(/\r\n|\r|\n/);
+    const highlightLines = splitted.map((line) =>
       line.trim() === "" ? "\u200B" : line
     );
 
@@ -591,7 +590,7 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
 
   const splitted = highlightedCode.includes("<br")
     ? highlightedCode.split(/<br\s*\/?>/gi)
-    : highlightedCode.split(/\r?\n/);
+    : highlightedCode.split(/\r\n|\r|\n/);
   const lines = splitted.map((l) => (l === "" ? "\u200B" : l));
 
   const lineElements = lines.map((lineHtml, i) => {
