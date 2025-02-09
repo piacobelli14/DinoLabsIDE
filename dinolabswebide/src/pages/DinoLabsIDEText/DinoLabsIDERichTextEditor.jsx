@@ -586,6 +586,7 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
                         { label: "Plain Text (.txt)", value: "txt" },
                         { label: "Markdown (.md)", value: "md" },
                         { label: "HTML (.html)", value: "html" },
+                        { label: "PDF (.pdf)", value: "pdf" }
                     ],
                 },
             ],
@@ -602,6 +603,27 @@ export default function DinoLabsIDERichTextEditor({ fileHandle, keyBinds }) {
                 link.download = fileName.replace(/\.[^/.]+$/, "") + "." + fileExtension;
                 link.click();
                 URL.revokeObjectURL(url);
+            } else if (result.fileType === "pdf") {
+                const content = editorRef.current.innerHTML;
+                const printWindow = window.open('', '_blank');
+                printWindow.document.open();
+                printWindow.document.write(`
+                <html>
+                <head>
+                  <title>${fileName}</title>
+                  <style>
+                    body { margin: 20px; font-family: Arial, sans-serif; }
+                  </style>
+                </head>
+                <body>
+                  ${content}
+                </body>
+                </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
             } else {
                 const content = editorRef.current.innerText;
                 const fileExtension = result.fileType === "md" ? "md" : "txt";
@@ -1383,4 +1405,3 @@ function escapeHtml(str) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 }
-
