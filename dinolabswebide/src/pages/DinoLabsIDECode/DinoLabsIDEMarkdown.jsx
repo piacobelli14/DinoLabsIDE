@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-
 import {
   faA,
   faArrowDown,
@@ -22,11 +21,30 @@ import {
   faTableColumns,
   faXmark,
   faCode,
+  faXmarkSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
 import { syntaxHighlight, escapeRegExp } from "./DinoLabsIDEParser";
 import useAuth from "../../UseAuth";
+import { lintPython } from "./DinoLabsIDELint/DinoLabsIDELintPython.jsx";
+import { lintTypeScript } from "./DinoLabsIDELint/DinoLabsIDELintTypeScript.jsx";
+import { lintJavaScript } from "./DinoLabsIDELint/DinoLabsIDELintJavaScript.jsx";
+import { lintBash } from "./DinoLabsIDELint/DinoLabsIDELintBash.jsx";
+import { lintShell } from "./DinoLabsIDELint/DinoLabsIDELintShell.jsx";
+import { lintC } from "./DinoLabsIDELint/DinoLabsIDELintC.jsx";
+import { lintCSharp } from "./DinoLabsIDELint/DinoLabsIDELintCSharp.jsx";
+import { lintCPP } from "./DinoLabsIDELint/DinoLabsIDELintCPP.jsx";
+import { lintSwift } from "./DinoLabsIDELint/DinoLabsIDELintSwift.jsx";
+import { lintPHP } from "./DinoLabsIDELint/DinoLabsIDELintPHP.jsx";
+import { lintSQL } from "./DinoLabsIDELint/DinoLabsIDELintSQL.jsx";
+import { lintMonkeyC } from "./DinoLabsIDELint/DinoLabsIDELintMonkeyC.jsx";
+import { lintRust } from "./DinoLabsIDELint/DinoLabsIDELintRust.jsx";
+import { lintAssembly } from "./DinoLabsIDELint/DinoLabsIDELintAssembly.jsx";
+import { lintJSON } from "./DinoLabsIDELint/DinoLabsIDELintJSON.jsx";
+import { lintCSS } from "./DinoLabsIDELint/DinoLabsIDELintCSS.jsx";
+import { lintHTML } from "./DinoLabsIDELint/DinoLabsIDELintHTML.jsx";
+import { lintXML } from "./DinoLabsIDELint/DinoLabsIDELintXML.jsx";
 
 const languageImageMap = {
   Javascript: "javascript.svg",
@@ -48,6 +66,7 @@ const languageImageMap = {
   SQL: "sql.svg",
   Dockerfile: "dockerfileExtension.svg",
   Makefile: "makefileExtension.svg",
+  Assembly: "assembly.svg",
 };
 
 let editorIdCounter = 0;
@@ -106,11 +125,53 @@ const DinoLabsIDEMarkdown = forwardRef(
     const [isCaseSensitiveSearch, setIsCaseSensitiveSearch] = useState(true);
     const [lineHeight, setLineHeight] = useState(24);
     const [fontSize, setFontSize] = useState(13);
-    const [isSearchOpenInternal, setIsSearchOpenInternal] = useState(isSearchOpen || false);
-    const [isReplaceOpenInternal, setIsReplaceOpenInternal] = useState(isReplaceOpen || false);
-    const [activeLineNumber, setActiveLineNumber] = useState(null);
+    const [isSearchOpenInternal, setIsSearchOpenInternal] = useState(
+      isSearchOpen || false
+    );
+    const [isReplaceOpenInternal, setIsReplaceOpenInternal] = useState(
+      isReplaceOpen || false
+    );
     const [screenSize, setScreenSize] = useState(window.innerWidth);
     const [isSearchBoxFocused, setIsSearchBoxFocused] = useState(false);
+    const [lintErrors, setLintErrors] = useState([]);
+    const [mutedLines, setMutedLines] = useState([]);
+    const visibleLintErrors = useMemo(() => {
+      return lintErrors.filter((err) => !mutedLines.includes(err.line));
+    }, [lintErrors, mutedLines]);
+    const containerRef = useRef(null);
+    const [editorHeight, setEditorHeight] = useState("70%");
+    const [consoleHeight, setConsoleHeight] = useState("30%");
+    const isResizingRef = useRef(false);
+
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      isResizingRef.current = true;
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isResizingRef.current || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const totalHeight = containerRect.height;
+      const offsetTop = containerRect.top;
+      let newEditorHeight = e.clientY - offsetTop;
+
+      const minHeight = 50;
+      const maxHeight = totalHeight - 50;
+      if (newEditorHeight < minHeight) newEditorHeight = minHeight;
+      if (newEditorHeight > maxHeight) newEditorHeight = maxHeight;
+
+      const newEditorPercent = (newEditorHeight / totalHeight) * 100;
+      setEditorHeight(`${newEditorPercent}%`);
+      setConsoleHeight(`${100 - newEditorPercent}%`);
+    };
+
+    const handleMouseUp = () => {
+      isResizingRef.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
 
     useEffect(() => {
       const handleResize = () => setScreenSize(window.innerWidth);
@@ -172,12 +233,9 @@ const DinoLabsIDEMarkdown = forwardRef(
         setViewCode(newContent);
         setSearchPositions([]);
         setCurrentSearchIndex(-1);
-        setActiveLineNumber(null);
         onEdit(paneIndex, tabId, { fullCode }, { fullCode: newContent });
       },
       jumpToLine: (lineNumber) => {
-        setActiveLineNumber(lineNumber);
-        mirrorRef.current?.ensureVisible?.(lineNumber);
         mirrorRef.current?.jumpToLine?.(lineNumber);
       },
       selectAll: () => {
@@ -193,7 +251,6 @@ const DinoLabsIDEMarkdown = forwardRef(
       setViewCode(fileContent || "");
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
-      setActiveLineNumber(null);
 
       if (mirrorRef.current?.setContent) {
         mirrorRef.current.setContent(fileContent || "");
@@ -212,18 +269,72 @@ const DinoLabsIDEMarkdown = forwardRef(
           viewCode,
           currentLanguage.toLowerCase(),
           searchTerm,
-          isCaseSensitiveSearch,
-          activeLineNumber
+          isCaseSensitiveSearch
         );
         setHighlightedCode(highlighted);
       }
-    }, [
-      viewCode,
-      currentLanguage,
-      searchTerm,
-      isCaseSensitiveSearch,
-      activeLineNumber,
-    ]);
+    }, [viewCode, currentLanguage, searchTerm, isCaseSensitiveSearch]);
+
+    useEffect(() => {
+      const lang = currentLanguage.toLowerCase();
+      if (["javascript", "react", "express", "node"].includes(lang)) {
+        const errors = lintJavaScript(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "typescript") {
+        const errors = lintTypeScript(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "python") {
+        const errors = lintPython(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "bash") {
+        const errors = lintBash(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "shell") {
+        const errors = lintShell(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "c") {
+        const errors = lintC(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "c#") {
+        const errors = lintCSharp(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "c++") {
+        const errors = lintCPP(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "swift") {
+        const errors = lintSwift(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "php") {
+        const errors = lintPHP(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "sql") {
+        const errors = lintSQL(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "monkey c") {
+        const errors = lintMonkeyC(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "rust") {
+        const errors = lintRust(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "assembly") {
+        const errors = lintAssembly(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "json") {
+        const errors = lintJSON(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "css") {
+        const errors = lintCSS(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "html") {
+        const errors = lintHTML(viewCode);
+        setLintErrors(errors);
+      } else if (lang === "xml") {
+        const errors = lintXML(viewCode);
+        setLintErrors(errors);
+      } else {
+        setLintErrors([]);
+      }
+    }, [viewCode, currentLanguage]);
 
     useEffect(() => {
       if (debounceTimer.current) {
@@ -247,7 +358,7 @@ const DinoLabsIDEMarkdown = forwardRef(
         currentSearchIndex < searchPositions.length
       ) {
         const match = searchPositions[currentSearchIndex];
-        highlightSearchResult(match);
+        mirrorRef.current?.jumpToLine(match.lineNumber);
       }
     }, [currentSearchIndex, searchPositions, isSearchBoxFocused]);
 
@@ -258,11 +369,6 @@ const DinoLabsIDEMarkdown = forwardRef(
     useEffect(() => {
       setIsReplaceOpenInternal(isReplaceOpen);
     }, [isReplaceOpen]);
-
-    const highlightSearchResult = (pos) => {
-      setActiveLineNumber(pos.lineNumber);
-      mirrorRef.current?.jumpToLine(pos.lineNumber);
-    };
 
     const clickEnterSearch = (e) => {
       if (e.key === "Enter") {
@@ -277,7 +383,7 @@ const DinoLabsIDEMarkdown = forwardRef(
         setCurrentSearchIndex(-1);
         return;
       }
-      let flags = isCaseSensitiveSearch ? "" : "i";
+      const flags = isCaseSensitiveSearch ? "" : "i";
       const safeTerm = escapeRegExp(searchTerm);
 
       try {
@@ -291,7 +397,7 @@ const DinoLabsIDEMarkdown = forwardRef(
         }
         setSearchPositions(matches);
         setCurrentSearchIndex(matches.length > 0 ? 0 : -1);
-      } catch (err) {
+      } catch {
         setSearchPositions([]);
         setCurrentSearchIndex(-1);
       }
@@ -330,7 +436,6 @@ const DinoLabsIDEMarkdown = forwardRef(
 
       setFullCode(updatedCode);
       setViewCode(updatedCode);
-      setActiveLineNumber(null);
 
       const newPositions = [...searchPositions];
       newPositions.splice(currentSearchIndex, 1);
@@ -339,7 +444,6 @@ const DinoLabsIDEMarkdown = forwardRef(
       if (newIdx >= newPositions.length) {
         newIdx = newPositions.length - 1;
       }
-
       setSearchPositions(newPositions);
       setCurrentSearchIndex(newIdx);
     };
@@ -354,7 +458,6 @@ const DinoLabsIDEMarkdown = forwardRef(
       setViewCode(updatedCode);
       setSearchPositions([]);
       setCurrentSearchIndex(-1);
-      setActiveLineNumber(null);
     };
 
     const handleKeyDown = (event) => {
@@ -454,7 +557,12 @@ const DinoLabsIDEMarkdown = forwardRef(
 
     useEffect(() => {
       function handleGlobalKeyDown(e) {
-        if (isSearchBoxFocused && !isGlobalSearchActive && (e.ctrlKey || e.metaKey) && keyBinds) {
+        if (
+          isSearchBoxFocused &&
+          !isGlobalSearchActive &&
+          (e.ctrlKey || e.metaKey) &&
+          keyBinds
+        ) {
           const keyLower = e.key.toLowerCase();
           if (keyLower === keyBinds.undo?.toLowerCase()) {
             e.preventDefault();
@@ -481,11 +589,10 @@ const DinoLabsIDEMarkdown = forwardRef(
       return () => {
         window.removeEventListener("keydown", handleGlobalKeyDown, true);
       };
-    }, [
-      isSearchBoxFocused,
-      isGlobalSearchActive,
-      keyBinds,
-    ]);
+    }, [isSearchBoxFocused, isGlobalSearchActive, keyBinds]);
+
+    const totalErrorsCount = lintErrors.length;
+    const mutedCount = mutedLines.length;
 
     return (
       <div
@@ -551,7 +658,10 @@ const DinoLabsIDEMarkdown = forwardRef(
                       setReplaceTerm("");
                       setSearchPositions([]);
                       setCurrentSearchIndex(-1);
-                      setActiveLineNumber(null);
+                      setIsSearchBoxFocused(false);
+                      setTimeout(() => {
+                        mirrorRef.current?.focusEditor();
+                      }, 0);
                     }}
                     onMouseDown={(e) => e.preventDefault()}
                   >
@@ -596,7 +706,10 @@ const DinoLabsIDEMarkdown = forwardRef(
                       setReplaceTerm("");
                       setSearchPositions([]);
                       setCurrentSearchIndex(-1);
-                      setActiveLineNumber(null);
+                      setIsSearchBoxFocused(false);
+                      setTimeout(() => {
+                        mirrorRef.current?.focusEditor();
+                      }, 0);
                     }}
                     onMouseDown={(e) => e.preventDefault()}
                   >
@@ -761,38 +874,129 @@ const DinoLabsIDEMarkdown = forwardRef(
                   {currentSearchIndex + 1} of {searchPositions.length} results found
                 </span>
               )}
-              {searchPositions.length === 0 && <span className="codeEditorSearchMatchIndicator">No matches found</span>}
+              {searchPositions.length === 0 && (
+                <span className="codeEditorSearchMatchIndicator">No matches found</span>
+              )}
             </div>
           )}
         </div>
 
         {isSupported ? (
           <div
-            ref={scrollContainerRef}
-            style={{
-              width: "100%",
-              height: "auto",
-              overflow: "auto",
-              position: "relative",
-              paddingLeft: 0,
-              boxSizing: "border-box",
-              color: "white",
-            }}
+            className="codeEditorSpace"
+            ref={containerRef}
+            style={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
-            <DinoLabsIDEMirror
-              ref={mirrorRef}
-              viewCode={viewCode}
-              setViewCode={setViewCode}
-              handleInput={handleInput}
-              handleKeyDown={handleKeyDown} 
-              highlightedCode={highlightedCode}
-              fontSize={fontSize}
-              lineHeight={lineHeight}
-              activeLineNumber={activeLineNumber}
-              editorId={editorId}
-              disableFocus={isSearchBoxFocused}
-              keyBinds={keyBinds}
+            <div
+              className="codeContentWrapper"
+              ref={scrollContainerRef}
+              style={{ height: editorHeight }}
+            >
+              <DinoLabsIDEMirror
+                ref={mirrorRef}
+                viewCode={viewCode}
+                setViewCode={setViewCode}
+                handleInput={handleInput}
+                handleKeyDown={handleKeyDown}
+                highlightedCode={highlightedCode}
+                fontSize={fontSize}
+                lineHeight={lineHeight}
+                editorId={editorId}
+                disableFocus={isSearchBoxFocused}
+                keyBinds={keyBinds}
+                lintErrors={visibleLintErrors}
+              />
+            </div>
+
+            <div
+              className="draggableConsoleDivider"
+              onMouseDown={handleMouseDown}
             />
+            <div
+              className="codeConsoleWrapper"
+              style={{ height: consoleHeight}}
+            >
+              {(
+                currentLanguage.toLowerCase() === "python" ||
+                currentLanguage.toLowerCase() === "typescript" ||
+                ["javascript", "react", "express", "node"].includes(currentLanguage.toLowerCase()) ||
+                currentLanguage.toLowerCase() === "bash" ||
+                currentLanguage.toLowerCase() === "shell" ||
+                currentLanguage.toLowerCase() === "c" ||
+                currentLanguage.toLowerCase() === "c#" ||
+                currentLanguage.toLowerCase() === "c++" ||
+                currentLanguage.toLowerCase() === "swift" ||
+                currentLanguage.toLowerCase() === "php" ||
+                currentLanguage.toLowerCase() === "sql" ||
+                currentLanguage.toLowerCase() === "monkey c" ||
+                currentLanguage.toLowerCase() === "rust" ||
+                currentLanguage.toLowerCase() === "assembly" ||
+                currentLanguage.toLowerCase() === "json" ||
+                currentLanguage.toLowerCase() === "css" ||
+                currentLanguage.toLowerCase() === "html" ||
+                currentLanguage.toLowerCase() === "xml"
+              ) && (
+                <div className="dinolabsIDEConsoleHeader">
+                  <div className="dinolabsIDEConsoleNavigatorButtonsFlex">
+                    <button className="dinolabsIDEConsoleNavigatorButton"> 
+                      Problems
+                    </button>
+                  </div>
+                  <div className="dinolabsIDELintErrorWrapper">
+                    <label className="dinolabsIDELintErrorCount">
+                      <span>Errors:</span> {lintErrors.length} (Muted: {mutedLines.length})
+                    </label>
+                    <button
+                      className="dinolabsIDELintMessageMuteButtonMain"
+                      onClick={() => setMutedLines([])}
+                    >
+                      <FontAwesomeIcon icon={faXmarkSquare}/>
+                      Unmute
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(
+                currentLanguage.toLowerCase() === "python" ||
+                currentLanguage.toLowerCase() === "typescript" ||
+                ["javascript", "react", "express", "node"].includes(currentLanguage.toLowerCase()) ||
+                currentLanguage.toLowerCase() === "bash" ||
+                currentLanguage.toLowerCase() === "shell" ||
+                currentLanguage.toLowerCase() === "c" ||
+                currentLanguage.toLowerCase() === "c#" ||
+                currentLanguage.toLowerCase() === "c++" ||
+                currentLanguage.toLowerCase() === "swift" ||
+                currentLanguage.toLowerCase() === "php" ||
+                currentLanguage.toLowerCase() === "sql" ||
+                currentLanguage.toLowerCase() === "monkey c" ||
+                currentLanguage.toLowerCase() === "rust" ||
+                currentLanguage.toLowerCase() === "assembly" ||
+                currentLanguage.toLowerCase() === "json" ||
+                currentLanguage.toLowerCase() === "css" ||
+                currentLanguage.toLowerCase() === "html" ||
+                currentLanguage.toLowerCase() === "xml"
+              ) && visibleLintErrors.length > 0 && (
+                visibleLintErrors.map((err, idx) => (
+                  <div
+                    className="dinolabsIDELintMessage"
+                    key={idx}
+                  >
+                    <div
+                      onClick={() => mirrorRef.current?.jumpToLine(err.line)}
+                    >
+                      Line {err.line} - Col {err.col}: {err.message}
+                    </div>
+                    <button
+                      className="dinolabsIDELintMessageMuteButton"
+                      onClick={() => setMutedLines((prev) => [...prev, err.line])}
+                    >
+                      Mute
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         ) : (
           <div className="dinolabsIDEUnsupportedWrapper">

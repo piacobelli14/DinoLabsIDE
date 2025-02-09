@@ -2251,7 +2251,18 @@ const DinoLabsIDE = () => {
                   ))}
                 </div>
               )}
+
+              {/*{hasOpenFile && (!isAccountOpen) && (
+                <>
+                  <div className="draggableConsoleDivider" onMouseDown={handleMouseDownHeight} />
+                  <div className="dinolabsIDEConsoleWrapper" style={{ height: `${consoleHeight}%` }}>
+                    
+                  </div>
+                </>
+              )}*/}
+
               {(!isAccountOpen) && <div className="bottomIDEControlBar" />}
+
               {isAccountOpen && (
                 <DinoLabsIDEAccount
                   onClose={() => setIsAccountOpen(false)}

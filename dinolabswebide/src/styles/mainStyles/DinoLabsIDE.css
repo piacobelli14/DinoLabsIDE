@@ -279,7 +279,7 @@
 
   .draggableConsoleDivider {
     width: 100%;
-    height: 0.2vh;
+    height: 5px;
     background-color: rgba(80, 80, 80, 1);
     cursor: row-resize;
     box-sizing: border-box;
@@ -938,9 +938,181 @@
     font-weight: 400;
     color: #d4d4d4;
     overflow: hidden;
-    height: 100%;
+    height: 80%;
     width: 100%;
     position: relative;
+  }
+
+  .codeEditorSpace {
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .codeContentWrapper {
+    width: 100%; 
+    height: 80%; 
+    overflow: auto; 
+    position: relative; 
+    box-sizing: border-box;
+    color: white; 
+  }
+
+  .codeConsoleWrapper {
+    width: 100%; 
+    height: 20%; 
+    overflow-y: auto;
+    padding: 0vw; 
+    box-sizing: border-box;
+  }
+
+  .codeLine.errorHighlight {
+    background-color: rgba(255, 100, 100, 0.15);
+  }  
+
+  .dinolabsIDEConsoleHeader {
+    position: sticky; 
+    top: 0; 
+    right: 0; 
+    left: 0; 
+    background-color: #171717; 
+    padding: 0.8vw 2vw; 
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dinolabsIDEConsoleNavigatorButtonsFlex {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+  }
+
+  .dinolabsIDEConsoleNavigatorButton {
+    font-size: 1.1vw; 
+    font-weight: 800;
+    color: #c1c1c1; 
+    background-color: rgba(255, 255, 255, 0.0); 
+    padding: 0;
+    border: none; 
+    outline: none; 
+    text-decoration: underline;
+    font-style: italic; 
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    text-underline-offset: 8px; 
+  }
+
+  .dinolabsIDEConsoleNavigatorButton:hover {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
+  }
+
+  .dinolabsIDEConsoleNavigatorButton:focus {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
+  }
+
+  .dinolabsIDELintErrorWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5vw; 
+  }
+
+  .dinolabsIDELintErrorCount {
+    padding: 0.4vw 1vw; 
+    font-size: 0.9vw; 
+    font-weight: 700;
+    background-color: #222222;
+    color: #c0c0c0; 
+    border: none; 
+    border-radius: 0.4vw; 
+    outline: none;
+  }
+
+  .dinolabsIDELintMessageMuteButtonMain {
+    background-color: rgba(255,255,255,0.0);
+    padding: 0; 
+    border: none;
+    outline: none; 
+    color: #c0c0c0;
+    opacity: 0.9; 
+    font-size: 0.9vw;
+    font-weight: 700; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    gap: 0.4vw; 
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+
+  .dinolabsIDELintMessageMuteButtonMain:hover {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
+  }
+
+  .dinolabsIDELintMessageMuteButtonMain:focus {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
+  }
+
+  .dinolabsIDELintMessage {
+    width: 100%; 
+    padding: 0.8vw 1vw; 
+    font-size: 1vw; 
+    font-weight: 600; 
+    color: #E54B4B; 
+    cursor: pointer; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+  }
+
+  .dinolabsIDELintMessage span {
+    font-weight: 800; 
+  }
+
+  .dinolabsIDELintMessage:hover {
+    background-color: rgba(255,255,255,0.1);
+  }
+
+  .dinolabsIDELintMessageMuteButton {
+    background-color: #838383;
+    padding: 0.4vw 1vw; 
+    font-size: 0.9vw; 
+    font-weight: 700;
+    background-color: #222222;
+    color: #c0c0c0; 
+    border: none; 
+    border-radius: 0.4vw; 
+    outline: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .dinolabsIDELintMessageMuteButton:hover {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
+  }
+
+  .dinolabsIDELintMessageMuteButton:focus {
+    opacity: 0.6; 
+    transform: scale(1.1); 
+    outline: none;
+    border: none; 
   }
 
   .lineNumberContainer {
