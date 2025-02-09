@@ -18,8 +18,25 @@ import {
     faBackward,
     faForward,
     faPlay,
-    faPause
+    faPause,
+    faFont,
+    faT,
+    faXmarkSquare
 } from '@fortawesome/free-solid-svg-icons';
+
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
 
 function DinoLabsIDEImageEditor({ fileHandle }) {
     const [url, setUrl] = useState(null);
@@ -84,6 +101,8 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
     const [isCropDisabled, setIsCropDisabled] = useState(false);
     const [circleCrop, setCircleCrop] = useState(false);
     const containerRef = useRef(null);
+    const initialTextOverlaysRef = useRef([]);
+    const [zIndexCounter, setZIndexCounter] = useState(1);
 
     useEffect(() => {
         let objectUrl;
@@ -165,6 +184,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         setBorderBottomRightRadius(0);
         setPaths([]);
         setUndonePaths([]);
+        setTextOverlays([]);
         const containerWidth = containerRef.current?.clientWidth || 800;
         const containerHeight = containerRef.current?.clientHeight || 600;
         const maxPossibleWidth = containerWidth * 0.7;
@@ -269,31 +289,76 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         img.crossOrigin = "anonymous";
         img.onload = () => {
             ctx.drawImage(img, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-            ctx.save();
-            ctx.translate(-imageWidth / 2, -imageHeight / 2);
-            paths.forEach(pathData => {
-                ctx.strokeStyle = pathData.color;
-                ctx.lineWidth = pathData.width;
-                ctx.lineCap = "round";
-                try {
-                    const p = new Path2D(pathData.d);
-                    ctx.stroke(p);
-                } catch (err) {
-                    return;
+            const combinedElements = [
+                ...paths.map(p => ({ type: 'drawing', data: p })),
+                ...(tempPath ? [{ type: 'drawing', data: { ...tempPath, zIndex: zIndexCounter + 1 } }] : []),
+                ...textOverlays.map(t => ({ type: 'text', data: t }))
+            ];
+            combinedElements.sort((a, b) => a.data.zIndex - b.data.zIndex);
+            combinedElements.forEach(elem => {
+                if (elem.type === 'drawing') {
+                    ctx.save();
+                    ctx.translate(-imageWidth / 2, -imageHeight / 2);
+                    ctx.scale(imageWidth / nativeWidth, imageHeight / nativeHeight);
+                    ctx.strokeStyle = elem.data.color;
+                    ctx.lineWidth = elem.data.width;
+                    ctx.lineCap = "round";
+                    try {
+                        const p = new Path2D(elem.data.d);
+                        ctx.stroke(p);
+                    } catch (err) {
+                        return; 
+                    }
+                    ctx.restore();
+                } else if (elem.type === 'text') {
+                    const overlay = elem.data;
+                    const xPos = -imageWidth / 2 + overlay.x;
+                    const yPos = -imageHeight / 2 + overlay.y;
+                    if (overlay.style.backgroundColor) {
+                        ctx.save();
+                        ctx.fillStyle = overlay.style.backgroundColor;
+                        if (overlay.style.borderRadius) {
+                            const radius = parseFloat(overlay.style.borderRadius) || 0;
+                            drawRoundedRect(ctx, xPos, yPos, overlay.width, overlay.height, radius);
+                            ctx.fill();
+                        } else {
+                            ctx.fillRect(xPos, yPos, overlay.width, overlay.height);
+                        }
+                        ctx.restore();
+                    }
+                    if (overlay.style.borderWidth && overlay.style.borderColor) {
+                        ctx.save();
+                        ctx.lineWidth = parseFloat(overlay.style.borderWidth) || 0;
+                        ctx.strokeStyle = overlay.style.borderColor;
+                        if (overlay.style.borderRadius) {
+                            const radius = parseFloat(overlay.style.borderRadius) || 0;
+                            drawRoundedRect(ctx, xPos, yPos, overlay.width, overlay.height, radius);
+                            ctx.stroke();
+                        } else {
+                            ctx.strokeRect(xPos, yPos, overlay.width, overlay.height);
+                        }
+                        ctx.restore();
+                    }
+                    ctx.save();
+                    ctx.fillStyle = overlay.style.color || '#000';
+                    let fontSize = overlay.style.fontSize || '16px';
+                    if (fontSize.endsWith("px") && nativeWidth) {
+                        fontSize = (parseFloat(fontSize) * (imageWidth / nativeWidth)) + "px";
+                    }
+                    const fontWeight = overlay.style.fontWeight || 'normal';
+                    const fontFamily = overlay.style.fontFamily || 'Arial';
+                    ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;
+                    ctx.textBaseline = 'middle';
+                    const text = overlay.text;
+                    const textMetrics = ctx.measureText(text);
+                    const textWidth = textMetrics.width;
+                    const textX = xPos + (overlay.width - textWidth) / 2;
+                    const textY = yPos + overlay.height / 2;
+                    ctx.fillText(text, textX, textY);
+                    ctx.restore();
                 }
             });
-            if(tempPath) {
-                ctx.strokeStyle = tempPath.color;
-                ctx.lineWidth = tempPath.width;
-                ctx.lineCap = "round";
-                try {
-                    const p = new Path2D(tempPath.d);
-                    ctx.stroke(p);
-                } catch (err) {
-                    return;
-                }
-            }
-            ctx.restore();
+
             const dataUrl = canvas.toDataURL(mimeType);
             const link = document.createElement('a');
             link.href = dataUrl;
@@ -333,6 +398,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         lastResizePosRef.current = { x: e.clientX, y: e.clientY };
         initialSizeRef.current = { width: imageWidth, height: imageHeight };
         initialPosRef.current = { x: panX, y: panY };
+        initialTextOverlaysRef.current = textOverlays;
         if (maintainAspectRatio) {
             aspectRatioRef.current = imageWidth / imageHeight;
         }
@@ -381,10 +447,22 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 newHeight = initialSizeRef.current.height - localDy;
             }
         }
-        setImageWidth(Math.max(newWidth, 50));
-        setImageHeight(Math.max(newHeight, 50));
+        newWidth = Math.max(newWidth, 50);
+        newHeight = Math.max(newHeight, 50);
+        setImageWidth(newWidth);
+        setImageHeight(newHeight);
         setPanX(newPanX);
         setPanY(newPanY);
+
+        const ratioX = newWidth / initialSizeRef.current.width;
+        const ratioY = newHeight / initialSizeRef.current.height;
+        setTextOverlays(initialTextOverlaysRef.current.map(overlay => ({
+            ...overlay,
+            x: overlay.x * ratioX,
+            y: overlay.y * ratioY,
+            width: overlay.width * ratioX,
+            height: overlay.height * ratioY,
+        })));
     };
 
     const handleGlobalMouseUp = () => {
@@ -516,7 +594,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
 
     useEffect(() => {
         const onMouseMove = (e) => handleCropMouseMove(e);
-        const onMouseUp = () => handleCropMouseUp();
+        const onMouseUp = (e) => handleCropMouseUp(e);
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
         return () => {
@@ -611,10 +689,13 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     d += ` Q ${pts[i].x} ${pts[i].y} ${x_mid} ${y_mid}`;
                 }
                 d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`;
+                const newZ = zIndexCounter + 1;
+                setZIndexCounter(newZ);
                 const newPath = {
                     d,
                     color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
+                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize,
+                    zIndex: newZ
                 };
                 setPaths(prev => [...prev, newPath]);
             }
@@ -659,6 +740,43 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             setIsCropping(false);
         }
     };
+
+    const updateSelectedTextOverlayStyle = (newStyle) => {
+        setTextOverlays(prev =>
+            prev.map(overlay => overlay.id === selectedTextId ? { ...overlay, style: { ...overlay.style, ...newStyle } } : overlay)
+        );
+    };
+
+    const handleAddTextOverlay = () => {
+        const newZ = zIndexCounter + 1;
+        setZIndexCounter(newZ);
+        const newOverlay = {
+            id: Date.now(),
+            x: imageWidth / 2 - 50,
+            y: imageHeight / 2 - 20,
+            width: 100,
+            height: 100,
+            text: 'New Text',
+            style: {
+                fontFamily: 'arial',
+                fontSize: '16px',
+                fontWeight: 'normal',
+                color: '#000000', 
+                borderColor: '#000000',
+                borderWidth: '1px', 
+                borderRadius: '0px',
+                backgroundColor: '#f5f5f5'
+            },
+            zIndex: newZ
+        };
+        setTextOverlays(prev => [...prev, newOverlay]);
+    };
+
+    const combinedElements = [
+        ...paths.map(p => ({ type: 'drawing', data: p })),
+        ...textOverlays.map(t => ({ type: 'text', data: t }))
+    ];
+    combinedElements.sort((a, b) => a.data.zIndex - b.data.zIndex);
 
     return (
         <div className="dinolabsIDEMediaWrapper">
@@ -902,6 +1020,12 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                                 setImageHeight(cropRect.height);
                                                 setNativeWidth(cropWidth);
                                                 setNativeHeight(cropHeight);
+                                                setTextOverlays(prev => prev.map(overlay => ({
+                                                    ...overlay,
+                                                    x: overlay.x - cropRect.x,
+                                                    y: overlay.y - cropRect.y,
+                                                })));
+                                                
                                                 setIsCropping(false);
                                                 setPaths([]);
                                                 setUndonePaths([]);
@@ -930,10 +1054,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                 <Tippy content="Circle Crop" theme="tooltip-light">
                                     <button 
                                         onClick={() => {
-                                        setCircleCrop(prev => {
-                                            const newVal = !prev;
-                                            return newVal;
-                                        })
+                                        setCircleCrop(prev => !prev)
                                         }}
                                         style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
                                         className="dinolabsIDEMediaToolButton"
@@ -964,124 +1085,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                             </div>
                         </div>
                     )}
-                </div>
-                <div className="dinolabsIDEMediaCellWrapper">
-                    <div className="dinolabsIDEMediaHeaderFlex">
-                        <label className="dinolabsIDEMediaCellTitle">
-                            <FontAwesomeIcon icon={faBrush} />
-                            Drawing
-                        </label>
-                        <div className="dinolabsIDEMediaCellFlexSupplement">
-                            <Tippy content="Undo Marks" theme="tooltip-light">
-                                <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                    <FontAwesomeIcon icon={faArrowLeft} />
-                                </button>
-                            </Tippy>
-                            <Tippy content="Redo Marks" theme="tooltip-light">
-                                <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                                    <FontAwesomeIcon icon={faArrowRight} />
-                                </button>
-                            </Tippy>
-                        </div>
-                    </div>
-                    <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Draw on Image
-                        </label>
-                        <div className="dinolabsIDEMediaCellFlex">
-                            <button
-                                onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
-                                style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
-                                disabled={isCropping}
-                                className="dinolabsIDEMediaToolButtonBig"
-                            >
-                                Draw
-                            </button>
-                            <Tippy
-                                content={
-                                    <DinoLabsIDEColorPicker
-                                        color={drawColor}
-                                        onChange={setDrawColor}
-                                    />
-                                }
-                                visible={isDrawColorOpen}
-                                onClickOutside={() => setIsDrawColorOpen(false)}
-                                interactive={true}
-                                placement="right"
-                                className="color-picker-tippy"
-                            >
-                                <label
-                                    className="dinolabsIDEMediaColorPicker"
-                                    onClick={() => setIsDrawColorOpen((prev) => !prev)}
-                                    style={{
-                                        backgroundColor: drawColor,
-                                    }}
-                                />
-                            </Tippy>
-                            <div className="dinolabsIDEMediaBrushSizeFlex">
-                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
-                                    <button key={opt.size}
-                                    onClick={() => setDrawBrushSize(opt.size)}
-                                    style={{
-                                        backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : ''
-                                    }}
-                                    className="dinolabsIDEMediaToolButtonMini"
-                                    >
-                                    {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="dinolabsIDEMediaCellFlexStack">
-                        <label className="dinolabsIDEMediaCellFlexTitle">
-                            Highlight on Image
-                        </label>
-                        <div className="dinolabsIDEMediaCellFlex">
-                            <button
-                                onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
-                                style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
-                                disabled={isCropping}
-                                className="dinolabsIDEMediaToolButtonBig"
-                            >
-                                Highlight
-                            </button>
-                            <Tippy
-                                content={
-                                    <DinoLabsIDEColorPicker
-                                        color={highlightColor}
-                                        onChange={setHighlightColor}
-                                    />
-                                }
-                                visible={isHighlightColorOpen}
-                                onClickOutside={() => setIsHighlightColorOpen(false)}
-                                interactive={true}
-                                placement="right"
-                                className="color-picker-tippy"
-                            >
-                                <label
-                                    className="dinolabsIDEMediaColorPicker"
-                                    onClick={() => setIsHighlightColorOpen((prev) => !prev)}
-                                    style={{
-                                        backgroundColor: highlightColor,
-                                    }}
-                                />
-                            </Tippy>
-                            <div className="dinolabsIDEMediaBrushSizeFlex">
-                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
-                                    <button key={opt.size}
-                                    onClick={() => setHighlightBrushSize(opt.size)}
-                                    style={{
-                                        backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : ''
-                                    }}
-                                    className="dinolabsIDEMediaToolButtonMini"
-                                    >
-                                    {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
@@ -1301,6 +1304,272 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 <div className="dinolabsIDEMediaCellWrapper">
                     <div className="dinolabsIDEMediaHeaderFlex">
                         <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faBrush} />
+                            Drawing
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlexSupplement">
+                            <Tippy content="Undo Marks" theme="tooltip-light">
+                                <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faArrowLeft} />
+                                </button>
+                            </Tippy>
+                            <Tippy content="Redo Marks" theme="tooltip-light">
+                                <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                                    <FontAwesomeIcon icon={faArrowRight} />
+                                </button>
+                            </Tippy>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Draw on Image
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button
+                                onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
+                                style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                disabled={isCropping}
+                                className="dinolabsIDEMediaToolButtonBig"
+                            >
+                                Draw
+                            </button>
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={drawColor}
+                                        onChange={setDrawColor}
+                                    />
+                                }
+                                visible={isDrawColorOpen}
+                                onClickOutside={() => setIsDrawColorOpen(false)}
+                                interactive={true}
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <label
+                                    className="dinolabsIDEMediaColorPicker"
+                                    onClick={() => setIsDrawColorOpen((prev) => !prev)}
+                                    style={{
+                                        backgroundColor: drawColor,
+                                    }}
+                                />
+                            </Tippy>
+                            <div className="dinolabsIDEMediaBrushSizeFlex">
+                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                    <button key={opt.size}
+                                    onClick={() => setDrawBrushSize(opt.size)}
+                                    style={{
+                                        backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : ''
+                                    }}
+                                    className="dinolabsIDEMediaToolButtonMini"
+                                    >
+                                    {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Highlight on Image
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button
+                                onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
+                                style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+                                disabled={isCropping}
+                                className="dinolabsIDEMediaToolButtonBig"
+                            >
+                                Highlight
+                            </button>
+                            <Tippy
+                                content={
+                                    <DinoLabsIDEColorPicker
+                                        color={highlightColor}
+                                        onChange={setHighlightColor}
+                                    />
+                                }
+                                visible={isHighlightColorOpen}
+                                onClickOutside={() => setIsHighlightColorOpen(false)}
+                                interactive={true}
+                                placement="right"
+                                className="color-picker-tippy"
+                            >
+                                <label
+                                    className="dinolabsIDEMediaColorPicker"
+                                    onClick={() => setIsHighlightColorOpen((prev) => !prev)}
+                                    style={{
+                                        backgroundColor: highlightColor,
+                                    }}
+                                />
+                            </Tippy>
+                            <div className="dinolabsIDEMediaBrushSizeFlex">
+                                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                                    <button key={opt.size}
+                                    onClick={() => setHighlightBrushSize(opt.size)}
+                                    style={{
+                                        backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : ''
+                                    }}
+                                    className="dinolabsIDEMediaToolButtonMini"
+                                    >
+                                    {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
+                            <FontAwesomeIcon icon={faFont} />
+                            Text
+                        </label>
+                        <label className="dinolabsIDEConfrmationCheck">
+                        </label>
+                    </div>
+                    <div className="dinolabsIDEMediaCellFlexStack">
+
+                        <label className="dinolabsIDEMediaCellFlexTitle">
+                            Add Text Box
+                        </label>
+                        <div className="dinolabsIDEMediaCellFlex">
+                            <button onClick={handleAddTextOverlay} className="dinolabsIDEMediaToolButton">
+                                <FontAwesomeIcon icon={faT}/>
+                            </button>
+                        </div>
+                    </div>
+
+                    {selectedTextId && (() => {
+                        const selectedOverlay = textOverlays.find(o => o.id === selectedTextId);
+                        if (!selectedOverlay) return null;
+                        return (
+                            <>
+                            <div className="dinolabsIDEMediaCellFlexStack">
+                                <label className="dinolabsIDEMediaCellFlexTitle">
+                                    Box Styles
+                                </label>
+                                <div className="dinolabsIDEMediaCellFlex">
+                                    <Tippy content="Font Family" theme="tooltip-light">
+                                        <select className="dinolabsIDEMediaPositionInputFlexed"
+                                            value={selectedOverlay.style.fontFamily || 'Arial'} onChange={(e) => updateSelectedTextOverlayStyle({ fontFamily: e.target.value })}
+                                        >
+                                            <option value="Arial">Arial</option>
+                                            <option value="Helvetica">Helvetica</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Verdana">Verdana</option>
+                                        </select>
+                                    </Tippy>
+
+                                    <Tippy
+                                        content={<DinoLabsIDEColorPicker color={selectedOverlay.style.backgroundColor || '#ffffff'} onChange={(newColor) => updateSelectedTextOverlayStyle({ backgroundColor: newColor })} />}
+                                        interactive={true}
+                                        trigger="click"
+                                        className="color-picker-tippy"
+                                    >
+                                        <Tippy content="Background Color" theme="tooltip-light">
+                                            <label className="dinolabsIDEMediaColorPicker" 
+                                                style={{ backgroundColor: selectedOverlay.style.backgroundColor || '#ffffff'}}
+                                            />
+                                        </Tippy>
+                                    </Tippy>
+                                </div> 
+                            </div>
+
+                            <div className="dinolabsIDEMediaCellFlexStack">
+                                <label className="dinolabsIDEMediaCellFlexTitle">
+                                    Font Styles
+                                </label>
+                                <div className="dinolabsIDEMediaCellFlex">
+                                    <Tippy content="Font Weight" theme="tooltip-light">
+                                        <select className="dinolabsIDEMediaPositionInputFlexed"
+                                            value={selectedOverlay.style.fontWeight || 'normal'} onChange={(e) => updateSelectedTextOverlayStyle({ fontWeight: e.target.value })}
+                                        >
+                                            <option value="normal">Normal</option>
+                                            <option value="bold">Bold</option>
+                                            <option value="bolder">Bolder</option>
+                                            <option value="lighter">Lighter</option>
+                                        </select>
+                                    </Tippy>
+
+                                    <Tippy content="Font Size" theme="tooltip-light">
+                                        <input 
+                                            className="dinolabsIDEMediaPositionInputFlexed"
+                                            type="text" 
+                                            value={selectedOverlay.style.fontSize}
+                                            onChange={(e) => {
+                                                updateSelectedTextOverlayStyle({ fontSize: e.target.value });
+                                            }}
+                                        />
+                                    </Tippy>
+
+                                    <Tippy
+                                        content={<DinoLabsIDEColorPicker color={selectedOverlay.style.color || '#000000'} onChange={(newColor) => updateSelectedTextOverlayStyle({ color: newColor })} />}
+                                        interactive={true}
+                                        trigger="click"
+                                        className="color-picker-tippy"
+                                    >
+                                        <Tippy content="Font Color" theme="tooltip-light">
+                                            <label className="dinolabsIDEMediaColorPicker" 
+                                                style={{ backgroundColor: selectedOverlay.style.color || '#000000'}}
+                                            />
+                                        </Tippy>
+                                    </Tippy>
+
+                                </div>
+                                
+                            </div>
+
+                            <div className="dinolabsIDEMediaCellFlexStack">
+                                <label className="dinolabsIDEMediaCellFlexTitle">
+                                    Border Styles
+                                </label>
+                                <div className="dinolabsIDEMediaCellFlex" style={{"overflow": "scroll"}}>
+                                    <Tippy content="Border Width" theme="tooltip-light">
+                                        <input 
+                                            className="dinolabsIDEMediaPositionInputFlexed"
+                                            type="text" 
+                                            value={selectedOverlay.style.borderWidth}
+                                            onChange={(e) => {
+                                                updateSelectedTextOverlayStyle({ borderWidth: e.target.value });
+                                            }}
+                                        />
+                                    </Tippy>
+                                    
+                                    <Tippy content="Border Radius" theme="tooltip-light">
+                                        <input 
+                                            className="dinolabsIDEMediaPositionInputFlexed"
+                                            type="text" 
+                                            value={selectedOverlay.style.borderRadius}
+                                            onChange={(e) => {
+                                                updateSelectedTextOverlayStyle({ borderRadius: e.target.value });
+                                            }}
+                                        />
+                                    </Tippy>
+
+                                    <Tippy
+                                        content={<DinoLabsIDEColorPicker color={selectedOverlay.style.borderColor || '#000000'} onChange={(newColor) => updateSelectedTextOverlayStyle({ borderColor: newColor })} />}
+                                        interactive={true}
+                                        trigger="click"
+                                        className="color-picker-tippy"
+                                    >
+                                        <Tippy content="Border Color" theme="tooltip-light">
+                                            <label className="dinolabsIDEMediaColorPicker" 
+                                                style={{ backgroundColor: selectedOverlay.style.borderColor || '#000000'}}
+                                            />
+                                        </Tippy>
+                                    </Tippy>
+                                </div>
+                            </div>
+                            </>
+                        )
+
+                    })()}
+                </div>
+                <div className="dinolabsIDEMediaCellWrapper">
+                    <div className="dinolabsIDEMediaHeaderFlex">
+                        <label className="dinolabsIDEMediaCellTitle">
                             <FontAwesomeIcon icon={faBorderTopLeft} />
                             Corner Rounding
                         </label>
@@ -1414,7 +1683,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                     }}
                     ref={containerRef}
                     onMouseDown={(e) => {
-                        if (focusedTextId && !e.target.closest(`[data-text-id="${focusedTextId}"]`)) {
+                        if (!e.target.closest('[data-text-id]')) {
                             setFocusedTextId(null);
                             setSelectedTextId(null);
                         }
@@ -1457,7 +1726,82 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                 transform: `scale(${flipX}, ${flipY})`
                             }}
                         />
-                        {!isCropping && actionMode === 'Idle' && (
+                        {combinedElements.map((elem, index) => {
+                            if (elem.type === 'drawing') {
+                                return (
+                                    <svg
+                                        key={`elem-drawing-${index}`}
+                                        viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            pointerEvents: 'none',
+                                            zIndex: elem.data.zIndex
+                                        }}
+                                    >
+                                        <path
+                                            d={elem.data.d}
+                                            stroke={elem.data.color}
+                                            strokeWidth={elem.data.width}
+                                            fill="none"
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                );
+                            } else if (elem.type === 'text') {
+                                return (
+                                    <DraggableTextBox
+                                        key={`elem-text-${elem.data.id}`}
+                                        overlay={elem.data}
+                                        onUpdate={(updatedOverlay) =>
+                                            setTextOverlays(prev => prev.map(o => o.id === updatedOverlay.id ? updatedOverlay : o))
+                                        }
+                                        onRemove={() => {
+                                            setTextOverlays(prev => prev.filter(o => o.id !== elem.data.id));
+                                            if (selectedTextId === elem.data.id) {
+                                                setSelectedTextId(null);
+                                                setFocusedTextId(null);
+                                            }
+                                        }}
+                                        onSelect={() => setSelectedTextId(elem.data.id)}
+                                        isSelected={selectedTextId === elem.data.id}
+                                        scaleFactor={nativeWidth ? imageWidth / nativeWidth : 1}
+                                    />
+                                );
+                            }
+                            return null;
+                        })}
+                        {(actionMode === 'Drawing' || actionMode === 'Highlighting') && (
+                            <svg
+                                viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    pointerEvents: 'auto',
+                                    zIndex: zIndexCounter + 1
+                                }}
+                                onMouseDown={handleSvgMouseDown}
+                                onMouseMove={handleSvgMouseMove}
+                                onMouseUp={handleSvgMouseUp}
+                            >
+                                {tempPath && (
+                                    <path
+                                        d={tempPath.d}
+                                        stroke={tempPath.color}
+                                        strokeWidth={tempPath.width}
+                                        fill="none"
+                                        strokeLinecap="round"
+                                    />
+                                )}
+                            </svg>
+                        )}
+                        { !isCropping && actionMode === 'Idle' && (
                             <>
                             <div
                                 className="dinolabsIDEMediaResizeHandle top-left"
@@ -1540,45 +1884,6 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                 />
                             </div>
                         )}
-                        <svg
-                            viewBox={`0 0 ${nativeWidth} ${nativeHeight}`}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                pointerEvents: actionMode !== 'Idle' ? 'auto' : 'none',
-                                cursor: actionMode === 'Drawing' ? 'crosshair' : actionMode === 'Highlighting' ? 'pointer' : 'default',
-                                filter: `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`,
-                                transform: `scale(${flipX}, ${flipY})`,
-                                transformBox: 'fill-box',
-                                transformOrigin: 'center'
-                            }}
-                            onMouseDown={handleSvgMouseDown}
-                            onMouseMove={handleSvgMouseMove}
-                            onMouseUp={handleSvgMouseUp}
-                        >
-                            {paths.map((pathData, index) => (
-                                <path
-                                    key={index}
-                                    d={pathData.d}
-                                    stroke={pathData.color}
-                                    strokeWidth={pathData.width}
-                                    fill="none"
-                                    strokeLinecap="round"
-                                />
-                            ))}
-                            {tempPath && (
-                                <path
-                                    d={tempPath.d}
-                                    stroke={tempPath.color}
-                                    strokeWidth={tempPath.width}
-                                    fill="none"
-                                    strokeLinecap="round"
-                                />
-                            )}
-                        </svg>
                     </div>
                 </div>
                 <div className="dinolabsIDEVideoInputBottomBar"> 
@@ -1595,6 +1900,185 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 */}
                 </div>
             </div>
+        </div>
+    );
+}
+
+function DraggableTextBox({ overlay, onUpdate, onRemove, onSelect, isSelected, scaleFactor }) {
+    const [isDragging, setIsDragging] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
+    const dragStartPos = useRef({});
+    const overlayRef = useRef(null);
+    const textRef = useRef(null);
+
+    useEffect(() => {
+        if(textRef.current) {
+            textRef.current.innerText = overlay.text;
+        }
+    }, [overlay.text]);
+
+    const handleDragMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onSelect) onSelect();
+        const parentRect = overlayRef.current.parentElement.getBoundingClientRect();
+        dragStartPos.current = {
+            startX: e.clientX - parentRect.left,
+            startY: e.clientY - parentRect.top,
+            initialX: overlay.x,
+            initialY: overlay.y,
+        };
+        setIsDragging(true);
+    };
+
+    const handleDragMouseMove = (e) => {
+        if (!isDragging) return;
+        const parentRect = overlayRef.current.parentElement.getBoundingClientRect();
+        const currentX = e.clientX - parentRect.left;
+        const currentY = e.clientY - parentRect.top;
+        const dx = currentX - dragStartPos.current.startX;
+        const dy = currentY - dragStartPos.current.startY;
+        onUpdate({ ...overlay, x: dragStartPos.current.initialX + dx, y: dragStartPos.current.initialY + dy });
+    };
+
+    const handleDragMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleResizeMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const parentRect = overlayRef.current.parentElement.getBoundingClientRect();
+        dragStartPos.current = {
+            startX: e.clientX - parentRect.left,
+            startY: e.clientY - parentRect.top,
+            initialWidth: overlay.width,
+            initialHeight: overlay.height,
+        };
+        setIsResizing(true);
+    };
+
+    const handleResizeMouseMove = (e) => {
+        if (!isResizing) return;
+        const parentRect = overlayRef.current.parentElement.getBoundingClientRect();
+        const currentX = e.clientX - parentRect.left;
+        const currentY = e.clientY - parentRect.top;
+        const dx = currentX - dragStartPos.current.startX;
+        const dy = currentY - dragStartPos.current.startY;
+        onUpdate({ 
+            ...overlay, 
+            width: Math.max(50, dragStartPos.current.initialWidth + dx), 
+            height: Math.max(20, dragStartPos.current.initialHeight + dy) 
+        });
+    };
+
+    const handleResizeMouseUp = () => {
+        setIsResizing(false);
+    };
+
+    useEffect(() => {
+        const handleWindowMouseMove = (e) => {
+            if (isDragging) handleDragMouseMove(e);
+            if (isResizing) handleResizeMouseMove(e);
+        };
+        const handleWindowMouseUp = (e) => {
+            if (isDragging) handleDragMouseUp(e);
+            if (isResizing) handleResizeMouseUp(e);
+        };
+        window.addEventListener('mousemove', handleWindowMouseMove);
+        window.addEventListener('mouseup', handleWindowMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleWindowMouseMove);
+            window.removeEventListener('mouseup', handleWindowMouseUp);
+        };
+    }, [isDragging, isResizing, overlay]);
+
+    const scaledStyle = { ...overlay.style };
+    if (scaledStyle.fontSize && scaledStyle.fontSize.endsWith("px")) {
+        const size = parseFloat(scaledStyle.fontSize) * scaleFactor;
+        scaledStyle.fontSize = size + "px";
+    }
+    if (scaledStyle.borderWidth && scaledStyle.borderWidth.endsWith("px")) {
+        const bw = parseFloat(scaledStyle.borderWidth) * scaleFactor;
+        scaledStyle.borderWidth = bw + "px";
+    }
+    if (scaledStyle.borderRadius && scaledStyle.borderRadius.endsWith("px")) {
+        const br = parseFloat(scaledStyle.borderRadius) * scaleFactor;
+        scaledStyle.borderRadius = br + "px";
+    }
+    const scaledPadding = 8 * scaleFactor;
+    const handlerPadding = 4 * scaleFactor;
+    const closeBtnSize = 20 * scaleFactor;
+    const closeBtnFontSize = 16 * scaleFactor;
+    const resizeHandleSize = 8 * scaleFactor;
+    const topHandlerHeight = closeBtnSize + handlerPadding; 
+    const bottomHandlerHeight = closeBtnSize + handlerPadding; 
+
+    return (
+        <div 
+            ref={overlayRef}
+            data-text-id={overlay.id}
+            className="dinolabsIDEMediaTextOverlay"
+            style={{
+                position: 'absolute',
+                top: overlay.y,
+                left: overlay.x,
+                width: overlay.width,
+                height: overlay.height,
+                zIndex: overlay.zIndex,
+                opacity: 1,
+                backgroundColor: overlay.style.backgroundColor
+            }}
+            onClick={(e) => { e.stopPropagation(); if (onSelect) onSelect(); }}
+        >
+            {isSelected && (
+                <div
+                    className="dinolabsIDEMediaTextDragSectionTop"
+                    onMouseDown={handleDragMouseDown}
+                    style={{ height: `${topHandlerHeight}px` }}
+                >
+                    <button 
+                        className="dinolabsIDEMediaTextCloseButton"
+                        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                        style={{
+                            width: `${closeBtnSize}px`,
+                            height: `${closeBtnSize}px`,
+                            fontSize: `${closeBtnFontSize}px`
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faXmarkSquare}/>
+                    </button>
+                </div>
+            )}
+            <div
+                contentEditable
+                ref={textRef}
+                onBlur={(e) => onUpdate({ ...overlay, text: e.currentTarget.innerText })}
+                className="dinolabsIDEMediaTextSpace"
+                style={{
+                    ...scaledStyle,
+                    padding: `${scaledPadding}px`,
+                    height: `calc(100% - ${bottomHandlerHeight}px - ${topHandlerHeight}px)`
+                }}
+            ></div>
+            {isSelected && (
+                <div
+                    className="dinolabsIDEMediaTextDragSectionBottom"
+                    onMouseDown={handleDragMouseDown}
+                    style={{
+                        height: `${bottomHandlerHeight}px`,
+                    }}
+                >
+                    <div 
+                        className="dinolabsIDEMediaTextResizeHandle"
+                        onMouseDown={handleResizeMouseDown}
+                        style={{
+                            width: `${resizeHandleSize}px`,
+                            height: `${resizeHandleSize}px`
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
 }
