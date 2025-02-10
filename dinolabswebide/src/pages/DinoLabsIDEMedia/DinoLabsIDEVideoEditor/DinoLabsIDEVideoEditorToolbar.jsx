@@ -18,9 +18,7 @@ import {
     faMinus, 
     faPlus, 
     faSwatchbook, 
-    faUpDown,
-    faFont,
-    faT
+    faBorderTopLeft 
 } from '@fortawesome/free-solid-svg-icons';
 import DinoLabsIDEColorPicker from '../../DinoLabsIDEColorPicker.jsx';
 
@@ -94,12 +92,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
   borderBottomLeftRadius,
   setBorderBottomLeftRadius,
   borderBottomRightRadius,
-  setBorderBottomRightRadius,
-  handleAddTextOverlay,
-  textOverlays,
-  selectedTextId,
-  updateSelectedTextOverlayStyle,
-  setSelectedTextId
+  setBorderBottomRightRadius
 }) => {
   return (
     <div
@@ -223,8 +216,8 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 }}
                 disabled={isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting'}
                 style={{
-                  opacity: (isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? "0.6" : "1.0",
-                  backgroundColor: isCropping ? "#5C2BE2" : ""
+                  opacity: (isCropDisabled || actionMode === 'Drawing' || actionMode === 'Highlighting') ? '0.6' : '1.0',
+                  backgroundColor: isCropping ? '#5C2BE2' : '',
                 }}
                 className="dinolabsIDEMediaToolButton"
               >
@@ -234,7 +227,9 @@ const DinoLabsIDEVideoEditorToolbar = ({
             {isCropping && (
               <Tippy content="Circle Crop" theme="tooltip-light">
                 <button
-                  onClick={() => { setCircleCrop(prev => !prev); }}
+                  onClick={() => {
+                    setCircleCrop((prev) => !prev);
+                  }}
                   style={{ backgroundColor: circleCrop ? '#5C2BE2' : '' }}
                   className="dinolabsIDEMediaToolButton"
                 >
@@ -246,7 +241,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
               <button
                 onClick={undoCrop}
                 disabled={isCropDisabled}
-                style={{ opacity: isCropDisabled ? "0.6" : "1.0" }}
+                style={{ opacity: isCropDisabled ? '0.6' : '1.0' }}
                 className="dinolabsIDEMediaToolButton"
               >
                 <FontAwesomeIcon icon={faSquareCaretLeft} />
@@ -254,6 +249,46 @@ const DinoLabsIDEVideoEditorToolbar = ({
             </Tippy>
           </div>
         </div>
+        {isCropping && (
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Crop Presets</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                className="dinolabsIDEMediaToolButtonText"
+                onClick={() =>
+                  setCropRect((prev) => ({
+                    ...prev,
+                    height: prev.width,
+                  }))
+                }
+              >
+                1:1
+              </button>
+              <button
+                className="dinolabsIDEMediaToolButtonText"
+                onClick={() =>
+                  setCropRect((prev) => ({
+                    ...prev,
+                    height: prev.width * (3 / 4),
+                  }))
+                }
+              >
+                4:3
+              </button>
+              <button
+                className="dinolabsIDEMediaToolButtonText"
+                onClick={() =>
+                  setCropRect((prev) => ({
+                    ...prev,
+                    height: prev.width * (9 / 16),
+                  }))
+                }
+              >
+                16:9
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="dinolabsIDEMediaCellWrapper">
         <div className="dinolabsIDEMediaHeaderFlex">
@@ -278,8 +313,8 @@ const DinoLabsIDEVideoEditorToolbar = ({
           <label className="dinolabsIDEMediaCellFlexTitle">Draw on Video</label>
           <div className="dinolabsIDEMediaCellFlex">
             <button
-              onClick={() => setActionMode(prev => prev === 'Drawing' ? 'Idle' : 'Drawing')}
-              style={{ backgroundColor: actionMode === "Drawing" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+              onClick={() => setActionMode((prev) => (prev === 'Drawing' ? 'Idle' : 'Drawing'))}
+              style={{ backgroundColor: actionMode === 'Drawing' ? '#5C2BE2' : '', opacity: isCropping ? '0.6' : '1.0' }}
               disabled={isCropping}
               className="dinolabsIDEMediaToolButtonBig"
             >
@@ -295,12 +330,18 @@ const DinoLabsIDEVideoEditorToolbar = ({
             >
               <label
                 className="dinolabsIDEMediaColorPicker"
-                onClick={() => setIsDrawColorOpen(prev => !prev)}
+                onClick={() => setIsDrawColorOpen((prev) => !prev)}
                 style={{ backgroundColor: drawColor }}
               />
             </Tippy>
             <div className="dinolabsIDEMediaBrushSizeFlex">
-              {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+              {[
+                { size: 1, label: 'XS' },
+                { size: 2, label: 'S' },
+                { size: 4, label: 'M' },
+                { size: 6, label: 'L' },
+                { size: 8, label: 'XL' },
+              ].map((opt) => (
                 <button
                   key={opt.size}
                   onClick={() => setDrawBrushSize(opt.size)}
@@ -317,8 +358,8 @@ const DinoLabsIDEVideoEditorToolbar = ({
           <label className="dinolabsIDEMediaCellFlexTitle">Highlight on Video</label>
           <div className="dinolabsIDEMediaCellFlex">
             <button
-              onClick={() => setActionMode(prev => prev === 'Highlighting' ? 'Idle' : 'Highlighting')}
-              style={{ backgroundColor: actionMode === "Highlighting" ? "#5C2BE2" : "", opacity: isCropping ? "0.6" : "1.0" }}
+              onClick={() => setActionMode((prev) => (prev === 'Highlighting' ? 'Idle' : 'Highlighting'))}
+              style={{ backgroundColor: actionMode === 'Highlighting' ? '#5C2BE2' : '', opacity: isCropping ? '0.6' : '1.0' }}
               disabled={isCropping}
               className="dinolabsIDEMediaToolButtonBig"
             >
@@ -334,12 +375,18 @@ const DinoLabsIDEVideoEditorToolbar = ({
             >
               <label
                 className="dinolabsIDEMediaColorPicker"
-                onClick={() => setIsHighlightColorOpen(prev => !prev)}
+                onClick={() => setIsHighlightColorOpen((prev) => !prev)}
                 style={{ backgroundColor: highlightColor }}
               />
             </Tippy>
             <div className="dinolabsIDEMediaBrushSizeFlex">
-              {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+              {[
+                { size: 1, label: 'XS' },
+                { size: 2, label: 'S' },
+                { size: 4, label: 'M' },
+                { size: 6, label: 'L' },
+                { size: 8, label: 'XL' },
+              ].map((opt) => (
                 <button
                   key={opt.size}
                   onClick={() => setHighlightBrushSize(opt.size)}
@@ -363,7 +410,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Opacity</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setOpacity(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setOpacity((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -376,7 +423,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setOpacity(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setOpacity((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -384,7 +431,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Hue</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setHue(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setHue((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -397,7 +444,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setHue(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setHue((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -405,7 +452,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Saturation</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSaturation(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSaturation((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -418,7 +465,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setSaturation(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSaturation((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -426,7 +473,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Brightness</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setBrightness(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setBrightness((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -439,7 +486,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setBrightness(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setBrightness((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -447,7 +494,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Contrast</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setContrast(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setContrast((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -460,7 +507,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setContrast(prev => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setContrast((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -468,7 +515,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Blur</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setBlur(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setBlur((prev) => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -481,7 +528,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setBlur(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setBlur((prev) => prev + 1)} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -489,7 +536,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Shadow</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSpread(prev => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSpread((prev) => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -502,7 +549,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setSpread(prev => prev + 1)} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSpread((prev) => prev + 1)} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -510,7 +557,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Grayscale</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setGrayscale((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -523,7 +570,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setGrayscale((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -531,7 +578,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Sepia</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSepia(prev => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSepia((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faMinus} />
             </button>
             <div className="dinolabsIDEMediaSliderWrapper">
@@ -544,7 +591,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
                 className="dinolabsIDESettingsSlider"
               />
             </div>
-            <button onClick={() => setSepia(prev => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
+            <button onClick={() => setSepia((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
               <FontAwesomeIcon icon={faPlus} />
             </button>
           </div>
@@ -553,137 +600,103 @@ const DinoLabsIDEVideoEditorToolbar = ({
       <div className="dinolabsIDEMediaCellWrapper">
         <div className="dinolabsIDEMediaHeaderFlex">
           <label className="dinolabsIDEMediaCellTitle">
-            <FontAwesomeIcon icon={faFont} />
-            Text
+            <FontAwesomeIcon icon={faBorderTopLeft} />
+            Corner Rounding
           </label>
           <label className="dinolabsIDEConfrmationCheck">
+            <input
+              type="checkbox"
+              className="dinolabsIDESettingsCheckbox"
+              checked={syncCorners}
+              onChange={(e) => {
+                setSyncCorners(e.target.checked);
+                if (e.target.checked) {
+                  const v = borderRadius || borderTopLeftRadius || 0;
+                  const limited = Math.min(v, 100);
+                  setBorderRadius(limited);
+                  setBorderTopLeftRadius(limited);
+                  setBorderTopRightRadius(limited);
+                  setBorderBottomLeftRadius(limited);
+                  setBorderBottomRightRadius(limited);
+                }
+              }}
+            />
+            <span>Sync Corners</span>
           </label>
         </div>
         <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">
-            Add Text Box
-          </label>
+          <label className="dinolabsIDEMediaCellFlexTitle">Corner Radii</label>
           <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={handleAddTextOverlay} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faT}/>
-            </button>
+            {syncCorners ? (
+              <input
+                className="dinolabsIDEMediaPositionInput"
+                type="text"
+                value={`Corner: ${borderRadius}px`}
+                onChange={(e) => {
+                  const newVal = e.target.value.replace(/[^0-9]/g, "");
+                  let val = Number(newVal);
+                  val = Math.min(val, 100);
+                  setBorderRadius(val);
+                  setBorderTopLeftRadius(val);
+                  setBorderTopRightRadius(val);
+                  setBorderBottomLeftRadius(val);
+                  setBorderBottomRightRadius(val);
+                }}
+              />
+            ) : (
+              <div className="dinolabsIDECornerInputGridWrapper">
+                <div className="dinolabsIDECornerInputFlex">
+                  <input
+                    className="dinolabsIDEMediaPositionInput"
+                    type="text"
+                    value={`TL: ${borderTopLeftRadius}px`}
+                    onChange={(e) => {
+                      const nVal = e.target.value.replace(/[^0-9]/g, "");
+                      let v = Number(nVal);
+                      v = Math.min(v, 100);
+                      setBorderTopLeftRadius(v);
+                    }}
+                  />
+                  <input
+                    className="dinolabsIDEMediaPositionInput"
+                    type="text"
+                    value={`TR: ${borderTopRightRadius}px`}
+                    onChange={(e) => {
+                      const nVal = e.target.value.replace(/[^0-9]/g, "");
+                      let v = Number(nVal);
+                      v = Math.min(v, 100);
+                      setBorderTopRightRadius(v);
+                    }}
+                  />
+                </div>
+                <div className="dinolabsIDECornerInputFlex">
+                  <input
+                    className="dinolabsIDEMediaPositionInput"
+                    type="text"
+                    value={`BL: ${borderBottomLeftRadius}px`}
+                    onChange={(e) => {
+                      const nVal = e.target.value.replace(/[^0-9]/g, "");
+                      let v = Number(nVal);
+                      v = Math.min(v, 100);
+                      setBorderBottomLeftRadius(v);
+                    }}
+                  />
+                  <input
+                    className="dinolabsIDEMediaPositionInput"
+                    type="text"
+                    value={`BR: ${borderBottomRightRadius}px`}
+                    onChange={(e) => {
+                      const nVal = e.target.value.replace(/[^0-9]/g, "");
+                      let v = Number(nVal);
+                      v = Math.min(v, 100);
+                      setBorderBottomRightRadius(v);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        {selectedTextId && (() => {
-          const selectedOverlay = textOverlays.find(o => o.id === selectedTextId);
-          if (!selectedOverlay) return null;
-          return (
-            <>
-              <div className="dinolabsIDEMediaCellFlexStack">
-                <label className="dinolabsIDEMediaCellFlexTitle">
-                  Box Styles
-                </label>
-                <div className="dinolabsIDEMediaCellFlex">
-                  <Tippy content="Font Family" theme="tooltip-light">
-                    <select className="dinolabsIDEMediaPositionInputFlexed"
-                      value={selectedOverlay.style.fontFamily || 'Arial'} onChange={(e) => updateSelectedTextOverlayStyle({ fontFamily: e.target.value })}
-                    >
-                      <option value="Arial">Arial</option>
-                      <option value="Helvetica">Helvetica</option>
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Courier New">Courier New</option>
-                      <option value="Verdana">Verdana</option>
-                    </select>
-                  </Tippy>
-                  <Tippy
-                    content={<DinoLabsIDEColorPicker color={selectedOverlay.style.backgroundColor || '#ffffff'} onChange={(newColor) => updateSelectedTextOverlayStyle({ backgroundColor: newColor })} />}
-                    interactive={true}
-                    trigger="click"
-                    className="color-picker-tippy"
-                  >
-                    <Tippy content="Background Color" theme="tooltip-light">
-                      <label
-                        className="dinolabsIDEMediaColorPicker" 
-                        style={{ backgroundColor: selectedOverlay.style.backgroundColor || '#ffffff'}}
-                      />
-                    </Tippy>
-                  </Tippy>
-                </div> 
-              </div>
-              <div className="dinolabsIDEMediaCellFlexStack">
-                <label className="dinolabsIDEMediaCellFlexTitle">
-                  Font Styles
-                </label>
-                <div className="dinolabsIDEMediaCellFlex">
-                  <Tippy content="Font Weight" theme="tooltip-light">
-                    <select className="dinolabsIDEMediaPositionInputFlexed"
-                      value={selectedOverlay.style.fontWeight || 'normal'} onChange={(e) => updateSelectedTextOverlayStyle({ fontWeight: e.target.value })}
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="bold">Bold</option>
-                      <option value="bolder">Bolder</option>
-                      <option value="lighter">Lighter</option>
-                    </select>
-                  </Tippy>
-                  <Tippy content="Font Size" theme="tooltip-light">
-                    <input 
-                      className="dinolabsIDEMediaPositionInputFlexed"
-                      type="text" 
-                      value={selectedOverlay.style.fontSize}
-                      onChange={(e) => {
-                        updateSelectedTextOverlayStyle({ fontSize: e.target.value });
-                      }}
-                    />
-                  </Tippy>
-                  <Tippy
-                    content={<DinoLabsIDEColorPicker color={selectedOverlay.style.color || '#000000'} onChange={(newColor) => updateSelectedTextOverlayStyle({ color: newColor })} />}
-                    interactive={true}
-                    trigger="click"
-                    className="color-picker-tippy"
-                  >
-                    <Tippy content="Font Color" theme="tooltip-light">
-                      <label
-                        className="dinolabsIDEMediaColorPicker" 
-                        style={{ backgroundColor: selectedOverlay.style.color || '#000000'}}
-                      />
-                    </Tippy>
-                  </Tippy>
-                </div>
-              </div>
-              <div className="dinolabsIDEMediaCellFlexStack">
-                <label className="dinolabsIDEMediaCellFlexTitle">
-                  Border Styles
-                </label>
-                <div className="dinolabsIDEMediaCellFlex" style={{overflow: "scroll"}}>
-                  <Tippy content="Border Width" theme="tooltip-light">
-                    <input 
-                      className="dinolabsIDEMediaPositionInputFlexed"
-                      type="text" 
-                      value={selectedOverlay.style.borderWidth}
-                      onChange={(e) => updateSelectedTextOverlayStyle({ borderWidth: e.target.value })}
-                    />
-                  </Tippy>
-                  <Tippy content="Border Radius" theme="tooltip-light">
-                    <input 
-                      className="dinolabsIDEMediaPositionInputFlexed"
-                      type="text" 
-                      value={selectedOverlay.style.borderRadius}
-                      onChange={(e) => updateSelectedTextOverlayStyle({ borderRadius: e.target.value })}
-                    />
-                  </Tippy>
-                  <Tippy
-                    content={<DinoLabsIDEColorPicker color={selectedOverlay.style.borderColor || '#000000'} onChange={(newColor) => updateSelectedTextOverlayStyle({ borderColor: newColor })} />}
-                    interactive={true}
-                    trigger="click"
-                    className="color-picker-tippy"
-                  >
-                    <Tippy content="Border Color" theme="tooltip-light">
-                      <label
-                        className="dinolabsIDEMediaColorPicker" 
-                        style={{ backgroundColor: selectedOverlay.style.borderColor || '#000000'}}
-                      />
-                    </Tippy>
-                  </Tippy>
-                </div>
-              </div>
-            </>
-          );
-        })()}
       </div>
     </div>
   );

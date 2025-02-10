@@ -20,14 +20,14 @@ import {
     faSwatchbook, faTabletScreenButton, faTape, faUpDown
 } from '@fortawesome/free-solid-svg-icons';
 import DinoLabsIDEVideoEditorToolbar from './DinoLabsIDEVideoEditorToolbar';
-
+  
 function formatFileSize(bytes) {
     if (bytes == null) return "N/A";
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
     else return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
-
+  
 function formatTime(totalSeconds) {
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
@@ -38,7 +38,7 @@ function formatTime(totalSeconds) {
         String(s).padStart(2, '0')
     );
 }
-
+  
 function DinoLabsIDEVideoEditor({ fileHandle }) {
     function fitToContainer(frameBarOpen, realW = nativeWidth, realH = nativeHeight) {
         if (!containerRef.current) return;
@@ -63,7 +63,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setPanX(0);
         setPanY(0);
     }
-
+  
     const [url, setUrl] = useState(null);
     const [mediaType, setMediaType] = useState(null);
     const videoRef = useRef(null);
@@ -1481,7 +1481,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 borderBottomRightRadius={borderBottomRightRadius}
                 setBorderBottomRightRadius={setBorderBottomRightRadius}
             />
-  
             <div className="dinolabsIDEMediaContainerWrapper">
                 <div
                     className="dinolabsIDEMediaContainer"
