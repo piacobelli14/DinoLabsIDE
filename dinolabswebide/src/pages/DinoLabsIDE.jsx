@@ -5,7 +5,7 @@ import DinoLabsIDEMarkdown from "./DinoLabsIDECode/DinoLabsIDEMarkdown.jsx";
 import DinoLabsIDETabularEditor from "./DinoLabsIDETabular/DinoLabsIDETabularEditor.jsx"; 
 import DinoLabsIDERichTextEditor from "./DinoLabsIDEText/DinoLabsIDERichTextEditor.jsx"; 
 import DinoLabsIDEImageEditor from "./DinoLabsIDEMedia/DinoLabsIDEImageEditor.jsx"; 
-import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor.jsx"; 
+import DinoLabsIDEVideoEditor from "./DinoLabsIDEMedia/DinoLabsIDEVideoEditor/DinoLabsIDEVideoEditor.jsx"; 
 import DinoLabsIDEAudioEditor from "./DinoLabsIDEMedia/DinoLabsIDEAudioEditor.jsx"; 
 import DinoLabsIDEAccount from "./DinoLabsIDEAccount/DinoLabsIDEAccount.jsx";
 import { showDialog } from "./DinoLabsIDEAlert.jsx";
