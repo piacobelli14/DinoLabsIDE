@@ -41,6 +41,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 function DinoLabsIDEImageEditor({ fileHandle }) {
     const [url, setUrl] = useState(null);
     const [mediaType, setMediaType] = useState(null);
+    const [svgContent, setSvgContent] = useState(null);
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
     const [flipX, setFlipX] = useState(1);
@@ -115,7 +116,42 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
             setUrl(objectUrl);
       
             const extension = file.name.split('.').pop().toLowerCase();
-            if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp'].includes(extension)) {
+            if (extension === 'svg') {
+              setMediaType('svg');
+              const response = await fetch(objectUrl);
+              const svgText = await response.text();
+              setSvgContent(svgText);
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(svgText, "image/svg+xml");
+              const svgElement = doc.documentElement;
+              let svgWidth = parseFloat(svgElement.getAttribute('width'));
+              let svgHeight = parseFloat(svgElement.getAttribute('height'));
+              if (!svgWidth || !svgHeight) {
+                const viewBox = svgElement.getAttribute('viewBox');
+                if (viewBox) {
+                  const vbValues = viewBox.split(' ');
+                  svgWidth = parseFloat(vbValues[2]);
+                  svgHeight = parseFloat(vbValues[3]);
+                }
+              }
+              setNativeWidth(svgWidth);
+              setNativeHeight(svgHeight);
+              const containerWidth = containerRef.current?.clientWidth || 800;
+              const containerHeight = containerRef.current?.clientHeight || 600;
+              const maxPossibleWidth = containerWidth * 0.7;
+              const maxPossibleHeight = containerHeight * 0.7;
+              let initWidth = svgWidth;
+              let initHeight = svgHeight;
+              const widthRatio = initWidth / maxPossibleWidth;
+              const heightRatio = initHeight / maxPossibleHeight;
+              if (widthRatio > 1 || heightRatio > 1) {
+                const ratio = Math.max(widthRatio, heightRatio);
+                initWidth /= ratio;
+                initHeight /= ratio;
+              }
+              setImageWidth(initWidth);
+              setImageHeight(initHeight);
+            } else if (['png', 'jpg', 'jpeg', 'gif', 'bmp'].includes(extension)) {
               setMediaType('image');
               const img = new Image();
               img.onload = () => {
@@ -138,7 +174,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 setImageHeight(initHeight);
               };
               img.src = objectUrl;
-            } 
+            }
           } catch (error) {
             return; 
           }
@@ -223,6 +259,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                         { label: '.png', value: 'png' },
                         { label: '.jpg', value: 'jpg' },
                         { label: '.jpeg', value: 'jpeg' },
+                        { label: '.svg', value: 'svg' }
                     ]
                 },
                 {
@@ -245,6 +282,65 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
         const fileType = alertResult?.fileType || 'png';
         const scale = alertResult?.scale || '1x';
         const scaleFactor = scale === '2x' ? 2 : scale === '3x' ? 3 : 1;
+
+        if (fileType === 'svg' && mediaType === 'svg') {
+            const baseHref = svgContent
+              ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent)
+              : url;
+            const outWidth = imageWidth * scaleFactor;
+            const outHeight = imageHeight * scaleFactor;
+            const transformGroup1 = `translate(${imageWidth/2},${imageHeight/2}) rotate(${rotation}) scale(${flipX * zoom},${flipY * zoom})`;
+            const transformGroup2 = `translate(${-imageWidth/2},${-imageHeight/2}) scale(${imageWidth/nativeWidth},${imageHeight/nativeHeight})`;
+            const combinedElements = [
+                ...paths.map(p => ({ type: 'drawing', data: p })),
+                ...textOverlays.map(t => ({ type: 'text', data: t }))
+            ];
+            combinedElements.sort((a, b) => a.data.zIndex - b.data.zIndex);
+            const overlaysSvg = combinedElements.map(elem => {
+                if (elem.type === 'drawing') {
+                    return `<path d="${elem.data.d}" stroke="${elem.data.color}" stroke-width="${elem.data.width}" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />`;
+                } else if (elem.type === 'text') {
+                    const overlay = elem.data;
+                    let rect = '';
+                    if (overlay.style.backgroundColor) {
+                        if (overlay.style.borderRadius) {
+                            rect = `<rect x="${overlay.x}" y="${overlay.y}" width="${overlay.width}" height="${overlay.height}" rx="${parseFloat(overlay.style.borderRadius) || 0}" fill="${overlay.style.backgroundColor}" />`;
+                        } else {
+                            rect = `<rect x="${overlay.x}" y="${overlay.y}" width="${overlay.width}" height="${overlay.height}" fill="${overlay.style.backgroundColor}" />`;
+                        }
+                    }
+                    const fontSize = overlay.style.fontSize || '16px';
+                    const fontFamily = overlay.style.fontFamily || 'Arial';
+                    const fontWeight = overlay.style.fontWeight || 'normal';
+                    const textX = overlay.x + overlay.width/2;
+                    const textY = overlay.y + overlay.height/2;
+                    const textElement = `<text x="${textX}" y="${textY}" text-anchor="middle" dominant-baseline="middle" fill="${overlay.style.color || '#000'}" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${fontWeight}">${overlay.text}</text>`;
+                    return rect + textElement;
+                }
+                return '';
+            }).join('');
+            
+            const svgString = `
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${outWidth}" height="${outHeight}" viewBox="0 0 ${imageWidth} ${imageHeight}">
+                    <g transform="${transformGroup1}">
+                    <image x="${-imageWidth/2}" y="${-imageHeight/2}" width="${imageWidth}" height="${imageHeight}" xlink:href="${baseHref}" style="filter: hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%);" />
+                    <g transform="${transformGroup2}">
+                        ${overlaysSvg}
+                    </g>
+                    </g>
+                </svg>
+            `;
+            
+            const blob = new Blob([svgString], { type: "image/svg+xml" });
+            const dataUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileHandle.name ? fileHandle.name.replace(/\.\w+$/, '.svg') : 'edited_image.svg';
+            link.click();
+            return;
+          }
+          
+
         const mimeType = (fileType === 'jpg' || fileType === 'jpeg') ? 'image/jpeg' : 'image/png';
         const canvas = document.createElement('canvas');
         canvas.width = imageWidth * scaleFactor;

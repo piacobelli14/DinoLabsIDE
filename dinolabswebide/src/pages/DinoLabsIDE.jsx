@@ -2069,7 +2069,7 @@ const DinoLabsIDE = () => {
                               >
                                 {tab.isMedia ? (
                                   <>
-                                    {(['png', 'jpg', 'jpeg'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
+                                    {(['png', 'jpg', 'jpeg', 'svg'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
                                       <DinoLabsIDEImageEditor fileHandle={tab.fileHandle} />
                                     )}
                                     {(['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(tab.fileHandle.name.split('.').pop().toLowerCase())) && (
