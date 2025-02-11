@@ -207,6 +207,8 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
     const alignButtonRef = useRef(null);
     const moreModalRef = useRef(null);
     const moreButtonRef = useRef(null);
+    const insertModalRef = useRef(null);
+    const insertButtonRef = useRef(null);
 
     const addRow = useCallback(() => {
         if (numRows < MAX_ROWS) {
@@ -427,6 +429,88 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             }
             return newFormats;
         });
+    };
+
+    const handleBorders = (borderType) => {
+        commitActiveCellIfNeeded();
+        const sel = selection || storedSelectionRef.current;
+        if (!sel) return;
+
+        setCellFormats((prev) => {
+            const newFormats = { ...prev };
+            const setSide = (formats, side) => {
+                formats[side] = `1px solid #c0c0c0`;
+            };
+            const clearSide = (formats, side) => {
+                if (formats[side]) {
+                    delete formats[side];
+                }
+            };
+
+            for (let r = sel.top; r <= sel.bottom; r++) {
+                for (let c = sel.left; c <= sel.right; c++) {
+                    const key = `${r},${c}`;
+                    const current = newFormats[key] || {};
+
+                    switch (borderType) {
+                        case "allBorders":
+                            setSide(current, "borderTop");
+                            setSide(current, "borderBottom");
+                            setSide(current, "borderLeft");
+                            setSide(current, "borderRight");
+                            if (r === sel.top) setSide(current, "borderTop");
+                            if (r === sel.bottom) setSide(current, "borderBottom");
+                            if (c === sel.left) setSide(current, "borderLeft");
+                            if (c === sel.right) setSide(current, "borderRight");
+                            break;
+
+                        case "noBorders":
+                            clearSide(current, "borderTop");
+                            clearSide(current, "borderBottom");
+                            clearSide(current, "borderLeft");
+                            clearSide(current, "borderRight");
+                            break;
+
+                        case "topBorder":
+                            setSide(current, "borderTop");
+                            break;
+
+                        case "bottomBorder":
+                            setSide(current, "borderBottom");
+                            break;
+
+                        case "leftBorder":
+                            setSide(current, "borderLeft");
+                            break;
+
+                        case "rightBorder":
+                            setSide(current, "borderRight");
+                            break;
+
+                        case "outsideBorders": {
+                            const isTopRow = r === sel.top;
+                            const isBottomRow = r === sel.bottom;
+                            const isLeftCol = c === sel.left;
+                            const isRightCol = c === sel.right;
+
+                            if (isTopRow) setSide(current, "borderTop");
+                            if (isBottomRow) setSide(current, "borderBottom");
+                            if (isLeftCol) setSide(current, "borderLeft");
+                            if (isRightCol) setSide(current, "borderRight");
+                            break;
+                        }
+
+                        default:
+                            break;
+                    }
+
+                    newFormats[key] = current;
+                }
+            }
+
+            return newFormats;
+        });
+        setOpenModal(null);
     };
 
     const restoreSelection = () => {
@@ -1333,12 +1417,12 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             isCellHighlightedBySearch
         } = data;
         const key = `${rowIndex},${columnIndex}`;
-        const prevCellVal = tableDataRef.current[key] || "";
         const cellIsActive =
             activeCell.row === rowIndex && activeCell.col === columnIndex;
         const isSelected = isCellInSelection(rowIndex, columnIndex);
         const searchHighlightStatus = isCellHighlightedBySearch(rowIndex, columnIndex);
         const cellFormat = cellFormats[key] || {};
+
         let backgroundColor = cellFormat.backgroundColor || "transparent";
         if (searchHighlightStatus === "matched") {
             backgroundColor = "rgba(255,255,0,0.2)";
@@ -1347,11 +1431,33 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         } else if (!cellFormat.backgroundColor && isSelected && !cellIsActive) {
             backgroundColor = "rgba(255,255,255,0.1)";
         }
-        const outline = cellIsActive
-            ? "0.2vh solid #008000"
-            : "0.2vh solid transparent";
-        const cellValue = tableDataRef.current[key] || "";
-        let cellStyle = { ...style, outline, backgroundColor };
+
+        let outerStyle = {
+            ...style,
+            backgroundColor,
+            boxSizing: "border-box"
+        };
+        if (cellFormat.borderTop) outerStyle.borderTop = cellFormat.borderTop;
+        if (cellFormat.borderBottom) outerStyle.borderBottom = cellFormat.borderBottom;
+        if (cellFormat.borderLeft) outerStyle.borderLeft = cellFormat.borderLeft;
+        if (cellFormat.borderRight) outerStyle.borderRight = cellFormat.borderRight;
+
+        const innerStyle = {
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            width: "100%",
+            height: "100%",
+            cursor: "default",
+            paddingLeft: "10px",
+            paddingRight: "10px",
+            ...cellFormat
+        };
+        delete innerStyle.borderTop;
+        delete innerStyle.borderBottom;
+        delete innerStyle.borderLeft;
+        delete innerStyle.borderRight;
+
         if (
             selectionDrag.active &&
             selectionDrag.originalSelection &&
@@ -1360,108 +1466,102 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             columnIndex >= selectionDrag.originalSelection.left &&
             columnIndex <= selectionDrag.originalSelection.right
         ) {
-            cellStyle = {
-                ...cellStyle,
+            outerStyle = {
+                ...outerStyle,
                 transform: `translate(${selectionDrag.offsetX}px, ${selectionDrag.offsetY}px)`
             };
         }
+
+        const cellValue = tableDataRef.current[`${rowIndex},${columnIndex}`] || "";
+
         return (
             <div
-                style={cellStyle}
+                style={outerStyle}
                 className="dinolabsIDETableCell"
                 onMouseDown={(e) => handleCellMouseDown(rowIndex, columnIndex, e)}
                 onMouseUp={(e) => handleCellMouseUp(rowIndex, columnIndex, e)}
                 onDoubleClick={() => handleCellDoubleClick(rowIndex, columnIndex)}
             >
                 {cellIsActive ? (
-                    <input
-                        type="text"
-                        className="dinolabsIDETableCellInput"
-                        value={cellEditingValue}
-                        onChange={onCellValueChange}
-                        onBlur={handleCellBlur}
-                        onKeyDown={(e) => {
-                            if (e.ctrlKey || e.metaKey) {
-                                const k = e.key.toLowerCase();
-                                if (
-                                    [
-                                        "s",
-                                        "p",
-                                        "a",
-                                        "x",
-                                        "c",
-                                        "v",
-                                        "z",
-                                        "y",
-                                        "f"
-                                    ].includes(k)
+                    <div style={innerStyle}>
+                        <input
+                            type="text"
+                            className="dinolabsIDETableCellInput"
+                            value={cellEditingValue}
+                            onChange={onCellValueChange}
+                            onBlur={handleCellBlur}
+                            onKeyDown={(e) => {
+                                if (e.ctrlKey || e.metaKey) {
+                                    const k = e.key.toLowerCase();
+                                    if (
+                                        [
+                                            "s",
+                                            "p",
+                                            "a",
+                                            "x",
+                                            "c",
+                                            "v",
+                                            "z",
+                                            "y",
+                                            "f"
+                                        ].includes(k)
+                                    ) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        e.target.blur();
+                                        return;
+                                    }
+                                }
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                    setTimeout(() => {
+                                        moveActiveCellVertically(1);
+                                    }, 0);
+                                } else if (e.key === "Tab") {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                    moveActiveCellHorizontally(1);
+                                } else if (
+                                    e.key === "ArrowRight" &&
+                                    e.target.selectionStart === e.target.value.length
                                 ) {
                                     e.preventDefault();
-                                    e.stopPropagation();
                                     e.target.blur();
-                                    return;
-                                }
-                            }
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                e.target.blur();
-                                setTimeout(() => {
+                                    moveActiveCellHorizontally(1);
+                                } else if (
+                                    e.key === "ArrowLeft" &&
+                                    e.target.selectionStart === 0
+                                ) {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                    moveActiveCellHorizontally(-1);
+                                } else if (
+                                    e.key === "ArrowDown" &&
+                                    e.target.selectionStart === e.target.value.length
+                                ) {
+                                    e.preventDefault();
+                                    e.target.blur();
                                     moveActiveCellVertically(1);
-                                }, 0);
-                            } else if (e.key === "Tab") {
-                                e.preventDefault();
-                                e.target.blur();
-                                moveActiveCellHorizontally(1);
-                            } else if (
-                                e.key === "ArrowRight" &&
-                                e.target.selectionStart === e.target.value.length
-                            ) {
-                                e.preventDefault();
-                                e.target.blur();
-                                moveActiveCellHorizontally(1);
-                            } else if (
-                                e.key === "ArrowLeft" &&
-                                e.target.selectionStart === 0
-                            ) {
-                                e.preventDefault();
-                                e.target.blur();
-                                moveActiveCellHorizontally(-1);
-                            } else if (
-                                e.key === "ArrowDown" &&
-                                e.target.selectionStart === e.target.value.length
-                            ) {
-                                e.preventDefault();
-                                e.target.blur();
-                                moveActiveCellVertically(1);
-                            } else if (
-                                e.key === "ArrowUp" &&
-                                e.target.selectionStart === 0
-                            ) {
-                                e.preventDefault();
-                                e.target.blur();
-                                moveActiveCellVertically(-1);
-                            }
-                        }}
-                        style={{
-                            userSelect: "text",
-                            WebkitUserSelect: "text",
-                            MozUserSelect: "text"
-                        }}
-                        autoFocus
-                    />
+                                } else if (
+                                    e.key === "ArrowUp" &&
+                                    e.target.selectionStart === 0
+                                ) {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                    moveActiveCellVertically(-1);
+                                }
+                            }}
+                            style={{
+                                userSelect: "text",
+                                WebkitUserSelect: "text",
+                                MozUserSelect: "text"
+                            }}
+                            autoFocus
+                        />
+                    </div>
                 ) : (
-                    <div
-                        className="dinolabsIDETableCellContent"
-                        style={{
-                            userSelect: "none",
-                            WebkitUserSelect: "none",
-                            MozUserSelect: "none",
-                            width: "100%",
-                            height: "100%",
-                            cursor: "default",
-                            ...cellFormat
-                        }}
-                    >
+                    <div className="dinolabsIDETableCellContent" style={innerStyle}>
                         {cellValue}
                     </div>
                 )}
@@ -1479,8 +1579,10 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         if (prevProps.style.height !== nextProps.style.height) return false;
         if (prevProps.style.left !== nextProps.style.left) return false;
         if (prevProps.style.top !== nextProps.style.top) return false;
+
         const prevData = prevProps.data;
         const nextData = nextProps.data;
+
         const wasActive =
             prevData.activeCell.row === prevProps.rowIndex &&
             prevData.activeCell.col === prevProps.columnIndex;
@@ -1488,6 +1590,7 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             nextData.activeCell.row === nextProps.rowIndex &&
             nextData.activeCell.col === nextProps.columnIndex;
         if (wasActive !== isActive) return false;
+
         const prevSelected = prevData.isCellInSelection(
             prevProps.rowIndex,
             prevProps.columnIndex
@@ -1497,6 +1600,7 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             nextProps.columnIndex
         );
         if (prevSelected !== nextSelected) return false;
+
         const prevHighlight = prevData.isCellHighlightedBySearch(
             prevProps.rowIndex,
             prevProps.columnIndex
@@ -1506,6 +1610,7 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             nextProps.columnIndex
         );
         if (prevHighlight !== nextHighlight) return false;
+
         if (
             prevData.selectionDrag.active !== nextData.selectionDrag.active ||
             prevData.selectionDrag.offsetX !== nextData.selectionDrag.offsetX ||
@@ -1543,6 +1648,7 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                 }
             }
         }
+
         const prevFormat = prevData.cellFormats[key] || {};
         const nextFormat = nextData.cellFormats[key] || {};
         if (
@@ -1552,7 +1658,11 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             prevFormat.textAlign !== nextFormat.textAlign ||
             prevFormat.backgroundColor !== nextFormat.backgroundColor ||
             prevFormat.color !== nextFormat.color ||
-            prevFormat.fontFamily !== nextFormat.fontFamily
+            prevFormat.fontFamily !== nextFormat.fontFamily ||
+            prevFormat.borderTop !== nextFormat.borderTop ||
+            prevFormat.borderBottom !== nextFormat.borderBottom ||
+            prevFormat.borderLeft !== nextFormat.borderLeft ||
+            prevFormat.borderRight !== nextFormat.borderRight
         ) {
             return false;
         }
@@ -2140,6 +2250,9 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                     moreModalRef={moreModalRef}
                     moreButtonRef={moreButtonRef}
                     restoreSelection={restoreSelection}
+                    handleBorders={handleBorders}
+                    insertModalRef={insertModalRef}
+                    insertButtonRef={insertButtonRef}
                 />
             </div>
             <div
