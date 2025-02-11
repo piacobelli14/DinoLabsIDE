@@ -937,7 +937,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 setActiveTempPath({
                     d,
                     color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                    width: actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize
+                    width: (actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize) * 3
                 });
             }
         }
@@ -958,7 +958,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             const newPath = {
                 d,
                 color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                width: actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize
+                width: (actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize) * 3
             };
             const existing = getActivePaths();
             setActivePaths([...existing, newPath]);
@@ -1381,36 +1381,39 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     chunks.push(e.data);
                 }
             };
-            recorder.onstop = async () => {
-                const newBlob = new Blob(chunks, { type: 'video/mp4' });
-                const newUrl = URL.createObjectURL(newBlob);
-                setUrl(newUrl);
-                if (videoRef.current) {
-                    videoRef.current.src = newUrl;
-                    videoRef.current.load();
-                    videoRef.current.currentTime = 0;
-                    videoRef.current.loop = true;
-                    videoRef.current.play();
-                    setIsPlaying(true);
-                    setIsLooping(true);
+            return new Promise(async (resolve)  => {
+                recorder.onstop = async () => {
+                    const newBlob = new Blob(chunks, { type: 'video/mp4' });
+                    const newUrl = URL.createObjectURL(newBlob);
+                    setUrl(newUrl);
+                    if (videoRef.current) {
+                        videoRef.current.src = newUrl;
+                        videoRef.current.load();
+                        videoRef.current.currentTime = 0;
+                        videoRef.current.loop = true;
+                        videoRef.current.play();
+                        setIsPlaying(true);
+                        setIsLooping(true);
+                    }
+                    setIsRebuildingVideoFromFrames(false);
+                    setFramesPanelMode('none');
+                    setActionMode('Idle');
+                    resolve();
+                };
+                recorder.start();
+                for (let i = 0; i < frames.length; i++) {
+                    await new Promise(resolve => {
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            setTimeout(resolve, captureDurationPerFrame * 1000);
+                        };
+                        img.src = frames[i].dataUrl;
+                    });
                 }
-                setIsRebuildingVideoFromFrames(false);
-                setFramesPanelMode('none');
-                setActionMode('Idle');
-            };
-            recorder.start();
-            for (let i = 0; i < frames.length; i++) {
-                await new Promise(resolve => {
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        setTimeout(resolve, captureDurationPerFrame * 1000);
-                    };
-                    img.src = frames[i].dataUrl;
-                });
-            }
-            recorder.stop();
+                recorder.stop();
+            });
         } catch (err) {
             setIsRebuildingVideoFromFrames(false);
         }
@@ -2204,6 +2207,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     strokeWidth={p.width}
                                     fill="none"
                                     strokeLinecap="round"
+                                    vectorEffect="non-scaling-stroke"
                                 />
                             ))}
                             {getActiveTempPath() && (
@@ -2213,6 +2217,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     strokeWidth={getActiveTempPath().width}
                                     fill="none"
                                     strokeLinecap="round"
+                                    vectorEffect="non-scaling-stroke"
                                 />
                             )}
                         </svg>

@@ -156,12 +156,18 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
     useEffect(() => {
         const normalizedRotation = rotation % 360;
         const isAtOriginalPosition = normalizedRotation === 0;
-        if (isAtOriginalPosition && flipX === 1 && flipY === 1) {
+        if (isAtOriginalPosition && flipX === 1 && flipY === 1 && textOverlays.length === 0) {
             setIsCropDisabled(false);
         } else {
             setIsCropDisabled(true);
         }
-    }, [rotation, flipX, flipY]);
+    }, [rotation, flipX, flipY, textOverlays]);
+
+    useEffect(() => {
+        if (textOverlays.length > 0 && isCropping) {
+            setIsCropping(false);
+        }
+    }, [textOverlays, isCropping]);
 
     const resetImage = () => {
         setZoom(1);
@@ -671,7 +677,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 setTempPath({
                     d,
                     color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize
+                    width: (actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize) * 3
                 });
             }
         }
@@ -694,7 +700,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                 const newPath = {
                     d,
                     color: actionMode === 'Drawing' ? drawColor : highlightColor,
-                    width: actionMode === 'Highlighting' ? highlightBrushSize : drawBrushSize,
+                    width: (actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize) * 3,
                     zIndex: newZ
                 };
                 setPaths(prev => [...prev, newPath]);
@@ -1748,6 +1754,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                             strokeWidth={elem.data.width}
                                             fill="none"
                                             strokeLinecap="round"
+                                            vectorEffect="non-scaling-stroke"
                                         />
                                     </svg>
                                 );
@@ -1797,6 +1804,7 @@ function DinoLabsIDEImageEditor({ fileHandle }) {
                                         strokeWidth={tempPath.width}
                                         fill="none"
                                         strokeLinecap="round"
+                                        vectorEffect="non-scaling-stroke"
                                     />
                                 )}
                             </svg>
