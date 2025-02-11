@@ -2,28 +2,35 @@ import React from 'react';
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-    faTabletScreenButton, 
-    faArrowsRotate, 
-    faDownload, 
-    faRulerCombined, 
-    faArrowsLeftRightToLine, 
-    faArrowsUpToLine, 
-    faCropSimple, 
-    faCircle, 
-    faSquareCaretLeft, 
-    faBrush, 
-    faArrowLeft, 
-    faArrowRight, 
-    faMinus, 
-    faPlus, 
-    faSwatchbook, 
-    faBorderTopLeft 
+import {
+  faTabletScreenButton,
+  faArrowsRotate,
+  faDownload,
+  faRulerCombined,
+  faArrowsLeftRightToLine,
+  faArrowsUpToLine,
+  faCropSimple,
+  faCircle,
+  faSquareCaretLeft,
+  faBrush,
+  faArrowLeft,
+  faArrowRight,
+  faMinus,
+  faPlus,
+  faSwatchbook,
+  faBorderTopLeft,
+  faMagnifyingGlassPlus,
+  faMagnifyingGlassMinus,
+  faRotateLeft,
+  faRotateRight,
+  faLeftRight,
+  faUpDown
 } from '@fortawesome/free-solid-svg-icons';
 import DinoLabsIDEColorPicker from '../../DinoLabsIDEColorPicker.jsx';
 
 const DinoLabsIDEVideoEditorToolbar = ({
   showFrameBar,
+  framesPanelMode,
   resetVideo,
   downloadVideo,
   panX,
@@ -92,17 +99,30 @@ const DinoLabsIDEVideoEditorToolbar = ({
   borderBottomLeftRadius,
   setBorderBottomLeftRadius,
   borderBottomRightRadius,
-  setBorderBottomRightRadius
+  setBorderBottomRightRadius,
+  selectedSingleFrameIndex,
+  resetSingleFrameEdits,
+  handleZoomIn,
+  handleZoomOut,
+  handleRotateLeft,
+  handleRotateRight,
+  handleFlipHorizontal,
+  handleFlipVertical
 }) => {
+  const isFrameSelected = selectedSingleFrameIndex !== null && selectedSingleFrameIndex !== undefined;
+
   return (
     <div
       className="dinoLabsIDEMediaToolBar"
       style={{
-        pointerEvents: showFrameBar ? 'none' : 'auto',
-        opacity: showFrameBar ? 0.4 : 1.0,
+        pointerEvents: (showFrameBar && framesPanelMode !== 'single') ? 'none' : 'auto',
+        opacity: (showFrameBar && framesPanelMode !== 'single') ? 0.4 : 1.0,
       }}
     >
-      <div className="dinolabsIDEMediaCellWrapper">
+      <div
+        className="dinolabsIDEMediaCellWrapper"
+        style={{ display: framesPanelMode === 'single' ? 'none' : 'block' }}
+      >
         <div className="dinolabsIDEMediaHeaderFlex">
           <label className="dinolabsIDEMediaCellTitle">
             <FontAwesomeIcon icon={faTabletScreenButton} />
@@ -121,6 +141,7 @@ const DinoLabsIDEVideoEditorToolbar = ({
             </Tippy>
           </div>
         </div>
+
         <div className="dinolabsIDEMediaCellFlexStack">
           <label className="dinolabsIDEMediaCellFlexTitle">Position</label>
           <div className="dinolabsIDEMediaCellFlex">
@@ -144,8 +165,45 @@ const DinoLabsIDEVideoEditorToolbar = ({
             />
           </div>
         </div>
+        <div className="dinolabsIDEMediaCellFlexStack">
+          <div className="dinolabsIDEMediaCellFlex">
+            <Tippy content="Zoom In" theme="tooltip-light">
+              <button onClick={handleZoomIn} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+              </button>
+            </Tippy>
+            <Tippy content="Zoom Out" theme="tooltip-light">
+              <button onClick={handleZoomOut} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
+              </button>
+            </Tippy>
+            <Tippy content="Rotate Left" theme="tooltip-light">
+              <button onClick={handleRotateLeft} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faRotateLeft} />
+              </button>
+            </Tippy>
+            <Tippy content="Rotate Right" theme="tooltip-light">
+              <button onClick={handleRotateRight} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faRotateRight} />
+              </button>
+            </Tippy>
+            <Tippy content="Flip Horizontally" theme="tooltip-light">
+              <button onClick={handleFlipHorizontal} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faLeftRight} />
+              </button>
+            </Tippy>
+            <Tippy content="Flip Vertically" theme="tooltip-light">
+              <button onClick={handleFlipVertical} className="dinolabsIDEMediaToolButton">
+                <FontAwesomeIcon icon={faUpDown} />
+              </button>
+            </Tippy>
+          </div>
+        </div>
       </div>
-      <div className="dinolabsIDEMediaCellWrapper">
+      <div
+        className="dinolabsIDEMediaCellWrapper"
+        style={{ display: framesPanelMode === 'single' ? 'none' : 'block' }}
+      >
         <div className="dinolabsIDEMediaHeaderFlex">
           <label className="dinolabsIDEMediaCellTitle">
             <FontAwesomeIcon icon={faRulerCombined} />
@@ -290,414 +348,532 @@ const DinoLabsIDEVideoEditorToolbar = ({
           </div>
         )}
       </div>
-      <div className="dinolabsIDEMediaCellWrapper">
-        <div className="dinolabsIDEMediaHeaderFlex">
-          <label className="dinolabsIDEMediaCellTitle">
-            <FontAwesomeIcon icon={faBrush} />
-            Drawing
-          </label>
-          <div className="dinolabsIDEMediaCellFlexSupplement">
-            <Tippy content="Undo Marks" theme="tooltip-light">
-              <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </button>
-            </Tippy>
-            <Tippy content="Redo Marks" theme="tooltip-light">
-              <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
-                <FontAwesomeIcon icon={faArrowRight} />
-              </button>
-            </Tippy>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Draw on Video</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button
-              onClick={() => setActionMode((prev) => (prev === 'Drawing' ? 'Idle' : 'Drawing'))}
-              style={{ backgroundColor: actionMode === 'Drawing' ? '#5C2BE2' : '', opacity: isCropping ? '0.6' : '1.0' }}
-              disabled={isCropping}
-              className="dinolabsIDEMediaToolButtonBig"
-            >
-              Draw
-            </button>
-            <Tippy
-              content={<DinoLabsIDEColorPicker color={drawColor} onChange={setDrawColor} />}
-              visible={isDrawColorOpen}
-              onClickOutside={() => setIsDrawColorOpen(false)}
-              interactive
-              placement="right"
-              className="color-picker-tippy"
-            >
-              <label
-                className="dinolabsIDEMediaColorPicker"
-                onClick={() => setIsDrawColorOpen((prev) => !prev)}
-                style={{ backgroundColor: drawColor }}
-              />
-            </Tippy>
-            <div className="dinolabsIDEMediaBrushSizeFlex">
-              {[
-                { size: 1, label: 'XS' },
-                { size: 2, label: 'S' },
-                { size: 4, label: 'M' },
-                { size: 6, label: 'L' },
-                { size: 8, label: 'XL' },
-              ].map((opt) => (
-                <button
-                  key={opt.size}
-                  onClick={() => setDrawBrushSize(opt.size)}
-                  style={{ backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : '' }}
-                  className="dinolabsIDEMediaToolButtonMini"
-                >
-                  {opt.label}
+
+      {framesPanelMode === 'single' && (
+        <div className="dinolabsIDEMediaCellWrapper">
+          <div className="dinolabsIDEMediaHeaderFlex">
+            <label className="dinolabsIDEMediaCellTitle">
+              <FontAwesomeIcon icon={faBrush} />
+              Drawing
+            </label>
+            <div className="dinolabsIDEMediaCellFlexSupplement">
+              <Tippy content="Undo Marks" theme="tooltip-light">
+                <button onClick={undoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                  <FontAwesomeIcon icon={faArrowLeft} />
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Highlight on Video</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button
-              onClick={() => setActionMode((prev) => (prev === 'Highlighting' ? 'Idle' : 'Highlighting'))}
-              style={{ backgroundColor: actionMode === 'Highlighting' ? '#5C2BE2' : '', opacity: isCropping ? '0.6' : '1.0' }}
-              disabled={isCropping}
-              className="dinolabsIDEMediaToolButtonBig"
-            >
-              Highlight
-            </button>
-            <Tippy
-              content={<DinoLabsIDEColorPicker color={highlightColor} onChange={setHighlightColor} />}
-              visible={isHighlightColorOpen}
-              onClickOutside={() => setIsHighlightColorOpen(false)}
-              interactive
-              placement="right"
-              className="color-picker-tippy"
-            >
-              <label
-                className="dinolabsIDEMediaColorPicker"
-                onClick={() => setIsHighlightColorOpen((prev) => !prev)}
-                style={{ backgroundColor: highlightColor }}
-              />
-            </Tippy>
-            <div className="dinolabsIDEMediaBrushSizeFlex">
-              {[
-                { size: 1, label: 'XS' },
-                { size: 2, label: 'S' },
-                { size: 4, label: 'M' },
-                { size: 6, label: 'L' },
-                { size: 8, label: 'XL' },
-              ].map((opt) => (
-                <button
-                  key={opt.size}
-                  onClick={() => setHighlightBrushSize(opt.size)}
-                  style={{ backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : '' }}
-                  className="dinolabsIDEMediaToolButtonMini"
-                >
-                  {opt.label}
+              </Tippy>
+              <Tippy content="Redo Marks" theme="tooltip-light">
+                <button onClick={redoStroke} className="dinolabsIDEMediaToolButtonHeader">
+                  <FontAwesomeIcon icon={faArrowRight} />
                 </button>
-              ))}
+              </Tippy>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Draw on Video</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                onClick={() => setActionMode((prev) => (prev === 'Drawing' ? 'Idle' : 'Drawing'))}
+                style={{
+                  backgroundColor: actionMode === 'Drawing' ? '#5C2BE2' : '',
+                  opacity: (isCropping || !isFrameSelected) ? '0.6' : '1.0'
+                }}
+                disabled={isCropping || !isFrameSelected}
+                className="dinolabsIDEMediaToolButtonBig"
+              >
+                Draw
+              </button>
+              <Tippy
+                content={<DinoLabsIDEColorPicker color={drawColor} onChange={setDrawColor} />}
+                visible={isDrawColorOpen}
+                onClickOutside={() => setIsDrawColorOpen(false)}
+                interactive={true}
+                placement="right"
+                className="color-picker-tippy"
+              >
+                <label
+                  className="dinolabsIDEMediaColorPicker"
+                  onClick={() => setIsDrawColorOpen((prev) => !prev)}
+                  style={{ backgroundColor: drawColor }}
+                />
+              </Tippy>
+              <div className="dinolabsIDEMediaBrushSizeFlex">
+                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                  <button key={opt.size}
+                    onClick={() => setDrawBrushSize(opt.size)}
+                    style={{
+                      backgroundColor: drawBrushSize === opt.size ? '#5C2BE2' : '',
+                      opacity: !isFrameSelected ? "0.6" : "1.0"
+                    }}
+                    disabled={!isFrameSelected}
+                    className="dinolabsIDEMediaToolButtonMini"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Highlight on Video</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                onClick={() => setActionMode((prev) => (prev === 'Highlighting' ? 'Idle' : 'Highlighting'))}
+                style={{
+                  backgroundColor: actionMode === 'Highlighting' ? '#5C2BE2' : '',
+                  opacity: (isCropping || !isFrameSelected) ? '0.6' : '1.0'
+                }}
+                disabled={isCropping || !isFrameSelected}
+                className="dinolabsIDEMediaToolButtonBig"
+              >
+                Highlight
+              </button>
+              <Tippy
+                content={<DinoLabsIDEColorPicker color={highlightColor} onChange={setHighlightColor} />}
+                visible={isHighlightColorOpen}
+                onClickOutside={() => setIsHighlightColorOpen(false)}
+                interactive={true}
+                placement="right"
+                className="color-picker-tippy"
+              >
+                <label
+                  className="dinolabsIDEMediaColorPicker"
+                  onClick={() => setIsHighlightColorOpen((prev) => !prev)}
+                  style={{ backgroundColor: highlightColor }}
+                />
+              </Tippy>
+              <div className="dinolabsIDEMediaBrushSizeFlex">
+                {[{size:1,label:'XS'},{size:2,label:'S'},{size:4,label:'M'},{size:6,label:'L'},{size:8,label:'XL'}].map(opt => (
+                  <button key={opt.size}
+                    onClick={() => setHighlightBrushSize(opt.size)}
+                    style={{
+                      backgroundColor: highlightBrushSize === opt.size ? '#5C2BE2' : '',
+                      opacity: !isFrameSelected ? "0.6" : "1.0"
+                    }}
+                    disabled={!isFrameSelected}
+                    className="dinolabsIDEMediaToolButtonMini"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="dinolabsIDEMediaCellWrapper">
-        <div className="dinolabsIDEMediaHeaderFlex">
-          <label className="dinolabsIDEMediaCellTitle">
-            <FontAwesomeIcon icon={faSwatchbook} />
-            Styles
-          </label>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Opacity</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setOpacity((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={opacity}
-                onChange={(e) => setOpacity(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
+      )}
+
+      {framesPanelMode === 'single' && (
+        <div className="dinolabsIDEMediaCellWrapper">
+          <div className="dinolabsIDEMediaHeaderFlex">
+            <label className="dinolabsIDEMediaCellTitle">
+              <FontAwesomeIcon icon={faSwatchbook} />
+              Styles
+            </label>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Opacity</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setOpacity(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={opacity}
+                  onChange={(e) => setOpacity(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setOpacity(prev => Math.min(prev + 10, 100))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
             </div>
-            <button onClick={() => setOpacity((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Hue</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setHue(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={hue}
+                  onChange={(e) => setHue(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setHue(prev => Math.min(prev + 10, 360))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Saturation</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSaturation(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={saturation}
+                  onChange={(e) => setSaturation(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSaturation(prev => Math.min(prev + 10, 360))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Brightness</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setBrightness(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={brightness}
+                  onChange={(e) => setBrightness(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setBrightness(prev => Math.min(prev + 10, 360))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Contrast</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setContrast(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={contrast}
+                  onChange={(e) => setContrast(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setContrast(prev => Math.min(prev + 10, 360))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Blur</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setBlur(prev => Math.max(prev - 1, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={blur}
+                  onChange={(e) => setBlur(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setBlur(prev => prev + 1)}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Shadow</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSpread(prev => Math.max(prev - 1, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={spread}
+                  onChange={(e) => setSpread(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSpread(prev => prev + 1)}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Grayscale</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setGrayscale(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={grayscale}
+                  onChange={(e) => setGrayscale(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setGrayscale(prev => Math.min(prev + 10, 100))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Sepia</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSepia(prev => Math.max(prev - 10, 0))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="dinolabsIDEMediaSliderWrapper">
+                <input
+                  className="dinolabsIDESettingsSlider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={sepia}
+                  onChange={(e) => setSepia(Number(e.target.value))}
+                  disabled={!isFrameSelected}
+                />
+              </div>
+              <button
+                style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                disabled={!isFrameSelected}
+                onClick={() => setSepia(prev => Math.min(prev + 10, 100))}
+                className="dinolabsIDEMediaToolButton"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
           </div>
         </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Hue</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setHue((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
+      )}
+
+      {framesPanelMode === 'single' && (
+        <div className="dinolabsIDEMediaCellWrapper">
+          <div className="dinolabsIDEMediaHeaderFlex">
+            <label className="dinolabsIDEMediaCellTitle">
+              <FontAwesomeIcon icon={faBorderTopLeft} />
+              Corner Rounding
+            </label>
+            <label className="dinolabsIDEConfrmationCheck">
               <input
-                type="range"
-                min="0"
-                max="360"
-                value={hue}
-                onChange={(e) => setHue(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setHue((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Saturation</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSaturation((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={saturation}
-                onChange={(e) => setSaturation(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setSaturation((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Brightness</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setBrightness((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={brightness}
-                onChange={(e) => setBrightness(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setBrightness((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Contrast</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setContrast((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={contrast}
-                onChange={(e) => setContrast(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setContrast((prev) => Math.min(prev + 10, 360))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Blur</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setBlur((prev) => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={blur}
-                onChange={(e) => setBlur(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setBlur((prev) => prev + 1)} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Shadow</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSpread((prev) => Math.max(prev - 1, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={spread}
-                onChange={(e) => setSpread(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setSpread((prev) => prev + 1)} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Grayscale</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setGrayscale((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={grayscale}
-                onChange={(e) => setGrayscale(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setGrayscale((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Sepia</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            <button onClick={() => setSepia((prev) => Math.max(prev - 10, 0))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="dinolabsIDEMediaSliderWrapper">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={sepia}
-                onChange={(e) => setSepia(Number(e.target.value))}
-                className="dinolabsIDESettingsSlider"
-              />
-            </div>
-            <button onClick={() => setSepia((prev) => Math.min(prev + 10, 100))} className="dinolabsIDEMediaToolButton">
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="dinolabsIDEMediaCellWrapper">
-        <div className="dinolabsIDEMediaHeaderFlex">
-          <label className="dinolabsIDEMediaCellTitle">
-            <FontAwesomeIcon icon={faBorderTopLeft} />
-            Corner Rounding
-          </label>
-          <label className="dinolabsIDEConfrmationCheck">
-            <input
-              type="checkbox"
-              className="dinolabsIDESettingsCheckbox"
-              checked={syncCorners}
-              onChange={(e) => {
-                setSyncCorners(e.target.checked);
-                if (e.target.checked) {
-                  const v = borderRadius || borderTopLeftRadius || 0;
-                  const limited = Math.min(v, 100);
-                  setBorderRadius(limited);
-                  setBorderTopLeftRadius(limited);
-                  setBorderTopRightRadius(limited);
-                  setBorderBottomLeftRadius(limited);
-                  setBorderBottomRightRadius(limited);
-                }
-              }}
-            />
-            <span>Sync Corners</span>
-          </label>
-        </div>
-        <div className="dinolabsIDEMediaCellFlexStack">
-          <label className="dinolabsIDEMediaCellFlexTitle">Corner Radii</label>
-          <div className="dinolabsIDEMediaCellFlex">
-            {syncCorners ? (
-              <input
-                className="dinolabsIDEMediaPositionInput"
-                type="text"
-                value={`Corner: ${borderRadius}px`}
+                type="checkbox"
+                className="dinolabsIDESettingsCheckbox"
+                checked={syncCorners}
                 onChange={(e) => {
-                  const newVal = e.target.value.replace(/[^0-9]/g, "");
-                  let val = Number(newVal);
-                  val = Math.min(val, 100);
-                  setBorderRadius(val);
-                  setBorderTopLeftRadius(val);
-                  setBorderTopRightRadius(val);
-                  setBorderBottomLeftRadius(val);
-                  setBorderBottomRightRadius(val);
+                  setSyncCorners(e.target.checked);
+                  if (e.target.checked) {
+                    const v = borderRadius || borderTopLeftRadius || 0;
+                    const limited = Math.min(v, 100);
+                    setBorderRadius(limited);
+                    setBorderTopLeftRadius(limited);
+                    setBorderTopRightRadius(limited);
+                    setBorderBottomLeftRadius(limited);
+                    setBorderBottomRightRadius(limited);
+                  }
                 }}
               />
-            ) : (
-              <div className="dinolabsIDECornerInputGridWrapper">
-                <div className="dinolabsIDECornerInputFlex">
-                  <input
-                    className="dinolabsIDEMediaPositionInput"
-                    type="text"
-                    value={`TL: ${borderTopLeftRadius}px`}
-                    onChange={(e) => {
-                      const nVal = e.target.value.replace(/[^0-9]/g, "");
-                      let v = Number(nVal);
-                      v = Math.min(v, 100);
-                      setBorderTopLeftRadius(v);
-                    }}
-                  />
-                  <input
-                    className="dinolabsIDEMediaPositionInput"
-                    type="text"
-                    value={`TR: ${borderTopRightRadius}px`}
-                    onChange={(e) => {
-                      const nVal = e.target.value.replace(/[^0-9]/g, "");
-                      let v = Number(nVal);
-                      v = Math.min(v, 100);
-                      setBorderTopRightRadius(v);
-                    }}
-                  />
+              <span>Sync Corners</span>
+            </label>
+          </div>
+          <div className="dinolabsIDEMediaCellFlexStack">
+            <label className="dinolabsIDEMediaCellFlexTitle">Corner Radii</label>
+            <div className="dinolabsIDEMediaCellFlex">
+              {syncCorners ? (
+                <input
+                  className="dinolabsIDEMediaPositionInput"
+                  type="text"
+                  value={`Corner: ${borderRadius}px`}
+                  onChange={(e) => {
+                    const newVal = e.target.value.replace(/[^0-9]/g, "");
+                    let val = Number(newVal);
+                    val = Math.min(val, 100);
+                    setBorderRadius(val);
+                    setBorderTopLeftRadius(val);
+                    setBorderTopRightRadius(val);
+                    setBorderBottomLeftRadius(val);
+                    setBorderBottomRightRadius(val);
+                  }}
+                  disabled={!isFrameSelected}
+                  style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                />
+              ) : (
+                <div className="dinolabsIDECornerInputGridWrapper">
+                  <div className="dinolabsIDECornerInputFlex">
+                    <input
+                      className="dinolabsIDEMediaPositionInput"
+                      type="text"
+                      value={`TL: ${borderTopLeftRadius}px`}
+                      onChange={(e) => {
+                        const nVal = e.target.value.replace(/[^0-9]/g, "");
+                        let v = Number(nVal);
+                        v = Math.min(v, 100);
+                        setBorderTopLeftRadius(v);
+                      }}
+                      disabled={!isFrameSelected}
+                      style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                    />
+                    <input
+                      className="dinolabsIDEMediaPositionInput"
+                      type="text"
+                      value={`TR: ${borderTopRightRadius}px`}
+                      onChange={(e) => {
+                        const nVal = e.target.value.replace(/[^0-9]/g, "");
+                        let v = Number(nVal);
+                        v = Math.min(v, 100);
+                        setBorderTopRightRadius(v);
+                      }}
+                      disabled={!isFrameSelected}
+                      style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                    />
+                  </div>
+                  <div className="dinolabsIDECornerInputFlex">
+                    <input
+                      className="dinolabsIDEMediaPositionInput"
+                      type="text"
+                      value={`BL: ${borderBottomLeftRadius}px`}
+                      onChange={(e) => {
+                        const nVal = e.target.value.replace(/[^0-9]/g, "");
+                        let v = Number(nVal);
+                        v = Math.min(v, 100);
+                        setBorderBottomLeftRadius(v);
+                      }}
+                      disabled={!isFrameSelected}
+                      style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                    />
+                    <input
+                      className="dinolabsIDEMediaPositionInput"
+                      type="text"
+                      value={`BR: ${borderBottomRightRadius}px`}
+                      onChange={(e) => {
+                        const nVal = e.target.value.replace(/[^0-9]/g, "");
+                        let v = Number(nVal);
+                        v = Math.min(v, 100);
+                        setBorderBottomRightRadius(v);
+                      }}
+                      disabled={!isFrameSelected}
+                      style={{ opacity: !isFrameSelected ? "0.6" : "1.0" }}
+                    />
+                  </div>
                 </div>
-                <div className="dinolabsIDECornerInputFlex">
-                  <input
-                    className="dinolabsIDEMediaPositionInput"
-                    type="text"
-                    value={`BL: ${borderBottomLeftRadius}px`}
-                    onChange={(e) => {
-                      const nVal = e.target.value.replace(/[^0-9]/g, "");
-                      let v = Number(nVal);
-                      v = Math.min(v, 100);
-                      setBorderBottomLeftRadius(v);
-                    }}
-                  />
-                  <input
-                    className="dinolabsIDEMediaPositionInput"
-                    type="text"
-                    value={`BR: ${borderBottomRightRadius}px`}
-                    onChange={(e) => {
-                      const nVal = e.target.value.replace(/[^0-9]/g, "");
-                      let v = Number(nVal);
-                      v = Math.min(v, 100);
-                      setBorderBottomRightRadius(v);
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

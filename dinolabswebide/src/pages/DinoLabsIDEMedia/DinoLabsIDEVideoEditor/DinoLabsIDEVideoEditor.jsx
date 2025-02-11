@@ -20,14 +20,14 @@ import {
     faSwatchbook, faTabletScreenButton, faTape, faUpDown
 } from '@fortawesome/free-solid-svg-icons';
 import DinoLabsIDEVideoEditorToolbar from './DinoLabsIDEVideoEditorToolbar';
-  
+
 function formatFileSize(bytes) {
     if (bytes == null) return "N/A";
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
     else return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
-  
+
 function formatTime(totalSeconds) {
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
@@ -38,7 +38,7 @@ function formatTime(totalSeconds) {
         String(s).padStart(2, '0')
     );
 }
-  
+
 function DinoLabsIDEVideoEditor({ fileHandle }) {
     function fitToContainer(frameBarOpen, realW = nativeWidth, realH = nativeHeight) {
         if (!containerRef.current) return;
@@ -63,7 +63,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setPanX(0);
         setPanY(0);
     }
-  
+
     const [url, setUrl] = useState(null);
     const [mediaType, setMediaType] = useState(null);
     const videoRef = useRef(null);
@@ -87,21 +87,22 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const draggingRef = useRef(false);
     const lastMousePosRef = useRef({ x: 0, y: 0 });
     const initialMousePosRef = useRef(null);
-    const [hue, setHue] = useState(0);
-    const [saturation, setSaturation] = useState(100);
-    const [brightness, setBrightness] = useState(100);
-    const [contrast, setContrast] = useState(100);
-    const [opacity, setOpacity] = useState(100);
-    const [blur, setBlur] = useState(0);
-    const [spread, setSpread] = useState(0);
-    const [grayscale, setGrayscale] = useState(0);
-    const [sepia, setSepia] = useState(0);
-    const [borderRadius, setBorderRadius] = useState(0);
-    const [borderTopLeftRadius, setBorderTopLeftRadius] = useState(0);
-    const [borderTopRightRadius, setBorderTopRightRadius] = useState(0);
-    const [borderBottomLeftRadius, setBorderBottomLeftRadius] = useState(0);
-    const [borderBottomRightRadius, setBorderBottomRightRadius] = useState(0);
-    const [syncCorners, setSyncCorners] = useState(false);
+    const [hueGlobal, setHueGlobal] = useState(0);
+    const [saturationGlobal, setSaturationGlobal] = useState(100);
+    const [brightnessGlobal, setBrightnessGlobal] = useState(100);
+    const [contrastGlobal, setContrastGlobal] = useState(100);
+    const [opacityGlobal, setOpacityGlobal] = useState(100);
+    const [blurGlobal, setBlurGlobal] = useState(0);
+    const [spreadGlobal, setSpreadGlobal] = useState(0);
+    const [grayscaleGlobal, setGrayscaleGlobal] = useState(0);
+    const [sepiaGlobal, setSepiaGlobal] = useState(0);
+    const [borderRadiusGlobal, setBorderRadiusGlobal] = useState(0);
+    const [borderTopLeftRadiusGlobal, setBorderTopLeftRadiusGlobal] = useState(0);
+    const [borderTopRightRadiusGlobal, setBorderTopRightRadiusGlobal] = useState(0);
+    const [borderBottomLeftRadiusGlobal, setBorderBottomLeftRadiusGlobal] = useState(0);
+    const [borderBottomRightRadiusGlobal, setBorderBottomRightRadiusGlobal] = useState(0);
+    const [syncCornersGlobal, setSyncCornersGlobal] = useState(false);
+    const [singleFrameEdits, setSingleFrameEdits] = useState({});
     const [isCropping, setIsCropping] = useState(false);
     const [cropRect, setCropRect] = useState({ x: 0, y: 0, width: 100, height: 100 });
     const [cropRotation, setCropRotation] = useState(0);
@@ -152,7 +153,36 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
     const [frameInterval, setFrameInterval] = useState(1);
     const [isClippingVideo, setIsClippingVideo] = useState(false);
     const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
-  
+    const [selectedSingleFrameIndex, setSelectedSingleFrameIndex] = useState(null);
+    const [singleFramePaths, setSingleFramePaths] = useState({});
+    const [singleFrameUndonePaths, setSingleFrameUndonePaths] = useState({});
+    const [singleFrameTempPath, setSingleFrameTempPath] = useState(null);
+    const [originalExtractedFrames, setOriginalExtractedFrames] = useState([]);
+
+    const handleZoomIn = () => {
+        setZoom(prev => prev + 0.1);
+    };
+
+    const handleZoomOut = () => {
+        setZoom(prev => Math.max(prev - 0.1, 0.1));
+    };
+
+    const handleRotateLeft = () => {
+        setRotation(prev => prev - 90);
+    };
+
+    const handleRotateRight = () => {
+        setRotation(prev => prev + 90);
+    };
+
+    const handleFlipHorizontal = () => {
+        setFlipX(prev => -prev);
+    };
+
+    const handleFlipVertical = () => {
+        setFlipY(prev => -prev);
+    };
+
     useEffect(() => {
         let objectUrl;
         const loadMedia = async () => {
@@ -185,7 +215,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }
         };
     }, [fileHandle]);
-  
+
     useEffect(() => {
         const normalizedRotation = rotation % 360;
         const isAtOriginalPosition = normalizedRotation === 0;
@@ -195,7 +225,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsCropDisabled(true);
         }
     }, [rotation, flipX, flipY]);
-  
+
     useEffect(() => {
         if (showFrameBar) {
             if (videoRef.current) {
@@ -207,7 +237,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             fitToContainer(false);
         }
     }, [showFrameBar]);
-  
+
     const resetVideo = () => {
         setZoom(1);
         setRotation(0);
@@ -215,21 +245,21 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setFlipY(1);
         setPanX(0);
         setPanY(0);
-        setHue(0);
-        setSaturation(100);
-        setBrightness(100);
-        setContrast(100);
-        setOpacity(100);
-        setBlur(0);
-        setSpread(0);
-        setGrayscale(0);
-        setSepia(0);
-        setBorderRadius(0);
-        setBorderTopLeftRadius(0);
-        setBorderTopRightRadius(0);
-        setBorderBottomLeftRadius(0);
-        setBorderBottomRightRadius(0);
-        setSyncCorners(false);
+        setHueGlobal(0);
+        setSaturationGlobal(100);
+        setBrightnessGlobal(100);
+        setContrastGlobal(100);
+        setOpacityGlobal(100);
+        setBlurGlobal(0);
+        setSpreadGlobal(0);
+        setGrayscaleGlobal(0);
+        setSepiaGlobal(0);
+        setBorderRadiusGlobal(0);
+        setBorderTopLeftRadiusGlobal(0);
+        setBorderTopRightRadiusGlobal(0);
+        setBorderBottomLeftRadiusGlobal(0);
+        setBorderBottomRightRadiusGlobal(0);
+        setSyncCornersGlobal(false);
         setPaths([]);
         setUndonePaths([]);
         setTempPath(null);
@@ -240,464 +270,33 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setCircleCrop(false);
         setIsCropDisabled(false);
         fitToContainer(showFrameBar, nativeWidth, nativeHeight);
+        setSingleFramePaths({});
+        setSingleFrameUndonePaths({});
+        setSingleFrameTempPath(null);
+        setSingleFrameEdits({});
+        setSelectedSingleFrameIndex(null);
+        setFrames([]);
+        setOriginalExtractedFrames([]);
     };
-  
-    const downloadVideo = async () => {
-        const fileName = fileHandle?.name || 'download';
-        const originalExtension = fileName.split('.').pop().toLowerCase();
-        let baseName = fileName.replace(/\.[^/.]+$/, "");
-        const alertResult = await showDialog({
-            title: 'Select Video Type and Scale',
-            message: 'Select the video type and scale.',
-            inputs: [
-                {
-                    name: 'fileType',
-                    type: 'select',
-                    label: 'Video Type',
-                    defaultValue: ['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(originalExtension) ? originalExtension : 'mp4',
-                    options: [
-                        { label: '.mp4', value: 'mp4' },
-                        { label: '.mkv', value: 'mkv' },
-                        { label: '.avi', value: 'avi' },
-                        { label: '.mov', value: 'mov' },
-                        { label: '.webm', value: 'webm' }
-                    ]
-                },
-                {
-                    name: 'scale',
-                    type: 'select',
-                    label: 'Scale',
-                    defaultValue: '1x',
-                    options: [
-                        { label: '1x', value: '1x' },
-                        { label: '2x', value: '2x' },
-                        { label: '3x', value: '3x' }
-                    ]
-                }
-            ],
-            showCancel: true
-        });
-        if (!alertResult) return;
-        setIsDownloadingVideo(true);
-        const fileType = alertResult.fileType;
-        let scaleFactor = 1;
-        if (alertResult.scale === '2x') scaleFactor = 2;
-        if (alertResult.scale === '3x') scaleFactor = 3;
-        const tempVideo = document.createElement('video');
-        tempVideo.src = url;
-        tempVideo.crossOrigin = 'anonymous';
-        tempVideo.style.position = 'fixed';
-        tempVideo.style.left = '-9999px';
-        tempVideo.style.top = '-9999px';
-        tempVideo.muted = true;
-        document.body.appendChild(tempVideo);
-        await new Promise((res) => {
-            tempVideo.onloadeddata = () => res();
-        });
-        tempVideo.currentTime = 0;
-        await new Promise((res) => {
-            tempVideo.onseeked = () => res();
-        });
-        const audioStream = tempVideo.captureStream();
-        const audioTracks = audioStream.getAudioTracks();
-        const fps = 30;
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = videoWidth * scaleFactor;
-        offscreenCanvas.height = videoHeight * scaleFactor;
-        const offscreenCtx = offscreenCanvas.getContext('2d');
-        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-        if (spread) {
-            filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
-        }
-        offscreenCtx.filter = filterString;
-        offscreenCtx.globalAlpha = opacity / 100;
-        offscreenCtx.translate(offscreenCanvas.width / 2, offscreenCanvas.height / 2);
-        offscreenCtx.rotate(rotation * Math.PI / 180);
-        offscreenCtx.scale(flipX * scaleFactor, flipY * scaleFactor);
-        const roundedRect = new Path2D();
-        if (circleCrop) {
-            const radius = Math.min(videoWidth, videoHeight) / 2;
-            roundedRect.arc(0, 0, radius, 0, 2 * Math.PI);
-        } else if (syncCorners) {
-            let radius = borderRadius;
-            radius = Math.min(radius, videoWidth/2, videoHeight/2);
-            roundedRect.moveTo(-videoWidth / 2 + radius, -videoHeight / 2);
-            roundedRect.lineTo(videoWidth / 2 - radius, -videoHeight / 2);
-            roundedRect.quadraticCurveTo(videoWidth / 2, -videoHeight / 2, videoWidth / 2, -videoHeight / 2 + radius);
-            roundedRect.lineTo(videoWidth / 2, videoHeight / 2 - radius);
-            roundedRect.quadraticCurveTo(videoWidth / 2, videoHeight / 2, videoWidth / 2 - radius, videoHeight / 2);
-            roundedRect.lineTo(-videoWidth / 2 + radius, videoHeight / 2);
-            roundedRect.quadraticCurveTo(-videoWidth / 2, videoHeight / 2, -videoWidth / 2, videoHeight / 2 - radius);
-            roundedRect.lineTo(-videoWidth / 2, -videoHeight / 2 + radius);
-            roundedRect.quadraticCurveTo(-videoWidth / 2, -videoHeight / 2, -videoWidth / 2 + radius, -videoHeight / 2);
-        } else {
-            const tl = Math.min(borderTopLeftRadius, videoWidth/2, videoHeight/2);
-            const tr = Math.min(borderTopRightRadius, videoWidth/2, videoHeight/2);
-            const br = Math.min(borderBottomRightRadius, videoWidth/2, videoHeight/2);
-            const bl = Math.min(borderBottomLeftRadius, videoWidth/2, videoHeight/2);
-            roundedRect.moveTo(-videoWidth / 2 + tl, -videoHeight / 2);
-            roundedRect.lineTo(videoWidth / 2 - tr, -videoHeight / 2);
-            roundedRect.quadraticCurveTo(videoWidth / 2, -videoHeight / 2, videoWidth / 2, -videoHeight / 2 + tr);
-            roundedRect.lineTo(videoWidth / 2, videoHeight / 2 - br);
-            roundedRect.quadraticCurveTo(videoWidth / 2, videoHeight / 2, videoWidth / 2 - br, videoHeight / 2);
-            roundedRect.lineTo(-videoWidth / 2 + bl, videoHeight / 2);
-            roundedRect.quadraticCurveTo(-videoWidth / 2, videoHeight / 2, -videoWidth / 2, videoHeight / 2 - bl);
-            roundedRect.lineTo(-videoWidth / 2, -videoHeight / 2 + tl);
-            roundedRect.quadraticCurveTo(-videoWidth / 2, -videoHeight / 2, -videoWidth / 2 + tl, -videoHeight / 2);
-        }
-        offscreenCtx.clip(roundedRect);
-        const recordedStream = offscreenCanvas.captureStream(fps);
-        const combinedStream = new MediaStream();
-        recordedStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
-        audioTracks.forEach(track => combinedStream.addTrack(track));
-        const mediaRecorder = new MediaRecorder(combinedStream, {
-            mimeType: 'video/webm;codecs=vp9'
-        });
-        const chunks = [];
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) {
-                chunks.push(e.data);
-            }
-        };
-        let resolveDone;
-        const donePromise = new Promise((r) => (resolveDone = r));
-        mediaRecorder.onstop = () => resolveDone();
-        mediaRecorder.start();
-        tempVideo.play();
-        let lastDrawTime = 0;
-        const frameInterval = 1000 / fps;
-        function drawFrame(timestamp) {
-            if (!lastDrawTime) {
-                lastDrawTime = timestamp;
-            }
-            const elapsed = timestamp - lastDrawTime;
-            if (elapsed >= frameInterval) {
-                offscreenCtx.save();
-                offscreenCtx.clearRect(-videoWidth / 2, -videoHeight / 2, videoWidth, videoHeight);
-                offscreenCtx.drawImage(tempVideo, -videoWidth / 2, -videoHeight / 2, videoWidth, videoHeight);
-                offscreenCtx.restore();
-                offscreenCtx.save();
-                offscreenCtx.translate(-videoWidth / 2, -videoHeight / 2);
-                paths.forEach(p => {
-                    offscreenCtx.strokeStyle = p.color;
-                    offscreenCtx.lineWidth = p.width;
-                    offscreenCtx.lineCap = "round";
-                    try {
-                        const path2d = new Path2D(p.d);
-                        offscreenCtx.stroke(path2d);
-                    } catch {}
-                });
-                if (tempPath) {
-                    offscreenCtx.strokeStyle = tempPath.color;
-                    offscreenCtx.lineWidth = tempPath.width;
-                    offscreenCtx.lineCap = "round";
-                    try {
-                        const tmp = new Path2D(tempPath.d);
-                        offscreenCtx.stroke(tmp);
-                    } catch {}
-                }
-                offscreenCtx.restore();
-                lastDrawTime = timestamp;
-            }
-            if (tempVideo.currentTime < tempVideo.duration - 0.1) {
-                requestAnimationFrame(drawFrame);
-            } else {
-                mediaRecorder.stop();
-            }
-        }
-        requestAnimationFrame(drawFrame);
-        await donePromise;
-        const finalBlob = new Blob(chunks, { type: 'video/webm' });
-        document.body.removeChild(tempVideo);
-        const downloadUrl = URL.createObjectURL(finalBlob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = baseName + '.' + fileType;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setIsDownloadingVideo(false);
-    };
-  
-    const handleDragStart = (e) => {
-        if (isCropping) return;
-        if (actionMode !== 'Idle') return;
-        draggingRef.current = true;
-        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-    };
-  
-    const handleDragEnd = () => {
-        draggingRef.current = false;
-    };
-  
-    const handleDragMove = (e) => {
-        if (!draggingRef.current) return;
-        const dx = e.clientX - lastMousePosRef.current.x;
-        const dy = e.clientY - lastMousePosRef.current.y;
-        setPanX(prev => prev + dx);
-        setPanY(prev => prev + dy);
-        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-    };
-  
-    const handleResizeMouseDown = (corner, e) => {
-        if (isCropping || actionMode !== 'Idle') return;
-        e.stopPropagation();
-        e.preventDefault();
-        setResizingCorner(corner);
-        resizingRef.current = true;
-        initialMousePosRef.current = { x: e.clientX, y: e.clientY };
-        lastResizePosRef.current = { x: e.clientX, y: e.clientY };
-        initialSizeRef.current = { width: videoWidth, height: videoHeight };
-        initialPosRef.current = { x: panX, y: panY };
-        if (maintainAspectRatio) {
-            aspectRatioRef.current = videoWidth / videoHeight;
-        }
-    };
-  
-    const handleGlobalMouseMove = (e) => {
-        if (!resizingRef.current) return;
-        const rad = rotation * Math.PI / 180;
-        const cos = Math.cos(rad);
-        const sin = Math.sin(rad);
-        const totalDx = e.clientX - initialMousePosRef.current.x;
-        const totalDy = e.clientY - initialMousePosRef.current.y;
-        const localTotalDx = cos * totalDx + sin * totalDy;
-        const localTotalDy = -sin * totalDx + cos * totalDy;
-  
-        let newWidth, newHeight;
-  
-        if (maintainAspectRatio) {
-            let handleUnit = { x: 0, y: 0 };
-            if (resizingCorner === 'bottom-right') {
-                handleUnit = { x: 1 / Math.sqrt(2), y: 1 / Math.sqrt(2) };
-            } else if (resizingCorner === 'bottom-left') {
-                handleUnit = { x: -1 / Math.sqrt(2), y: 1 / Math.sqrt(2) };
-            } else if (resizingCorner === 'top-right') {
-                handleUnit = { x: 1 / Math.sqrt(2), y: -1 / Math.sqrt(2) };
-            } else if (resizingCorner === 'top-left') {
-                handleUnit = { x: -1 / Math.sqrt(2), y: -1 / Math.sqrt(2) };
-            }
-            const effectiveDelta = localTotalDx * handleUnit.x + localTotalDy * handleUnit.y;
-            const initialHalfWidth = initialSizeRef.current.width / 2;
-            const scale = (initialHalfWidth + effectiveDelta) / initialHalfWidth;
-            newWidth = initialSizeRef.current.width * scale;
-            newHeight = initialSizeRef.current.height * scale;
-        } else {
-            let horizontalDelta = 0;
-            let verticalDelta = 0;
-            if (resizingCorner === 'bottom-right') {
-                horizontalDelta = localTotalDx;
-                verticalDelta = localTotalDy;
-            } else if (resizingCorner === 'bottom-left') {
-                horizontalDelta = -localTotalDx;
-                verticalDelta = localTotalDy;
-            } else if (resizingCorner === 'top-right') {
-                horizontalDelta = localTotalDx;
-                verticalDelta = -localTotalDy;
-            } else if (resizingCorner === 'top-left') {
-                horizontalDelta = -localTotalDx;
-                verticalDelta = -localTotalDy;
-            }
-            newWidth = initialSizeRef.current.width + 2 * horizontalDelta;
-            newHeight = initialSizeRef.current.height + 2 * verticalDelta;
-        }
-        newWidth = Math.max(newWidth, 50);
-        newHeight = Math.max(newHeight, 50);
-        setVideoWidth(newWidth);
-        setVideoHeight(newHeight);
-        setPanX(initialPosRef.current.x);
-        setPanY(initialPosRef.current.y);
-    };
-  
-    const handleGlobalMouseUp = () => {
-        resizingRef.current = false;
-        setResizingCorner(null);
-    };
-  
-    useEffect(() => {
-        const onMouseMove = (e) => handleGlobalMouseMove(e);
-        const onMouseUp = () => handleGlobalMouseUp();
-        if (resizingRef.current) {
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-        };
-    }, [resizingCorner]);
-  
-    const restoreAspectRatioWidth = () => {
-        const newHeight = videoWidth * (nativeHeight / nativeWidth);
-        setVideoHeight(newHeight);
-    };
-  
-    const restoreAspectRatioHeight = () => {
-        const newWidth = videoHeight * (nativeWidth / nativeHeight);
-        setVideoWidth(newWidth);
-    };
-  
-    const handleCropResizeMouseDown = (corner, e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        cropResizingRef.current = true;
-        cropResizingCorner.current = corner;
-        cropLastResizePosRef.current = { x: e.clientX, y: e.clientY };
-        cropInitialRectRef.current = { ...cropRect };
-    };
-  
-    const handleCropGlobalMouseMove = (e) => {
-        if (!cropResizingRef.current) return;
-        const dx = e.clientX - cropLastResizePosRef.current.x;
-        const dy = e.clientY - cropLastResizePosRef.current.y;
-        let { x, y, width, height } = cropInitialRectRef.current;
-        if (circleCrop) {
-            if (cropResizingCorner.current === 'bottom-right') {
-                width += dx;
-                height += dy;
-            } else if (cropResizingCorner.current === 'bottom-left') {
-                x += dx;
-                width -= dx;
-                height += dy;
-            } else if (cropResizingCorner.current === 'top-right') {
-                y += dy;
-                width += dx;
-                height -= dy;
-            } else if (cropResizingCorner.current === 'top-left') {
-                x += dx;
-                y += dy;
-                width -= dx;
-                height -= dy;
-            }
-        } else {
-            if (cropResizingCorner.current === 'bottom-right') {
-                width += dx;
-                height += dy;
-            } else if (cropResizingCorner.current === 'bottom-left') {
-                x += dx;
-                width -= dx;
-                height += dy;
-            } else if (cropResizingCorner.current === 'top-right') {
-                y += dy;
-                width += dx;
-                height -= dy;
-            } else if (cropResizingCorner.current === 'top-left') {
-                x += dx;
-                y += dy;
-                width -= dx;
-                height -= dy;
-            }
-        }
-        width = Math.max(width, 10);
-        height = Math.max(height, 10);
-        setCropRect({ x, y, width, height });
-    };
-  
-    useEffect(() => {
-        const onMouseMove = (e) => handleCropGlobalMouseMove(e);
-        const onMouseUp = () => { cropResizingRef.current = false; };
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-        };
-    }, []);
-  
-    const cropDraggingRefLocal = useRef(false);
-    const lastCropDragPosRef = useRef({ x: 0, y: 0 });
-  
-    const handleCropMouseDown = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        cropDraggingRefLocal.current = true;
-        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
-    };
-  
-    const handleCropMouseMove = (e) => {
-        if (!cropDraggingRefLocal.current) return;
-        const dx = e.clientX - lastCropDragPosRef.current.x;
-        const dy = e.clientY - lastCropDragPosRef.current.y;
-        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
-        setCropRect(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-    };
-  
-    const handleCropMouseUp = () => {
-        cropDraggingRefLocal.current = false;
-    };
-  
-    useEffect(() => {
-        const onMouseMove = (e) => handleCropMouseMove(e);
-        const onMouseUp = () => handleCropMouseUp();
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-        };
-    }, []);
-  
-    const handleCropRotationMouseDown = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        cropRotatingRef.current = true;
-        const rect = e.currentTarget.parentElement.getBoundingClientRect();
-        cropRotationCenter.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        const dx = e.clientX - cropRotationCenter.current.x;
-        const dy = e.clientY - cropRotationCenter.current.y;
-        cropRotationStartAngle.current = Math.atan2(dy, dx) * (180 / Math.PI);
-        cropInitialRotation.current = cropRotation;
-    };
-  
-    const handleCropGlobalMouseMoveRotation = (e) => {
-        if (!cropRotatingRef.current) return;
-        const dx = e.clientX - cropRotationCenter.current.x;
-        const dy = e.clientY - cropRotationCenter.current.y;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        const deltaAngle = angle - cropRotationStartAngle.current;
-        setCropRotation(cropInitialRotation.current + deltaAngle);
-    };
-  
-    const handleCropGlobalMouseUpRotation = () => {
-        cropRotatingRef.current = false;
-    };
-  
-    useEffect(() => {
-        window.addEventListener('mousemove', handleCropGlobalMouseMoveRotation);
-        window.addEventListener('mouseup', handleCropGlobalMouseUpRotation);
-        return () => {
-            window.removeEventListener('mousemove', handleCropGlobalMouseMoveRotation);
-            window.removeEventListener('mouseup', handleCropGlobalMouseUpRotation);
-        };
-    }, []);
-  
-    const undoCrop = () => {
-        if (cropHistory.length > 0) {
-            const prev = cropHistory[cropHistory.length - 1];
-            setCropHistory(old => old.slice(0, old.length - 1));
-            setUrl(prev.url);
-            setPanX(prev.panX);
-            setPanY(prev.panY);
-            setVideoWidth(prev.videoWidth);
-            setVideoHeight(prev.videoHeight);
-            setNativeWidth(prev.nativeWidth);
-            setNativeHeight(prev.nativeHeight);
-            setIsCropping(false);
-        }
-    };
-  
+
+    function hasAnySingleFrameChanges() {
+        if (Object.keys(singleFramePaths).length > 0) return true;
+        if (Object.keys(singleFrameEdits).length > 0) return true;
+        return false;
+    }
+
     async function performCanvasVideoCrop() {
         setIsProcessingCrop(true);
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = nativeWidth;
         offscreenCanvas.height = nativeHeight;
         const offscreenCtx = offscreenCanvas.getContext('2d');
-        let filterString = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)`;
-        if (spread) {
-            filterString += ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))`;
+        let filterString = `hue-rotate(${hueGlobal}deg) saturate(${saturationGlobal}%) brightness(${brightnessGlobal}%) contrast(${contrastGlobal}%) blur(${blurGlobal}px) grayscale(${grayscaleGlobal}%) sepia(${sepiaGlobal}%)`;
+        if (spreadGlobal) {
+            filterString += ` drop-shadow(0 0 ${spreadGlobal}px rgba(0,0,0,0.5))`;
         }
         offscreenCtx.filter = filterString;
-        offscreenCtx.globalAlpha = opacity / 100;
+        offscreenCtx.globalAlpha = opacityGlobal / 100;
         const tempVideo = document.createElement('video');
         tempVideo.src = url;
         tempVideo.crossOrigin = 'anonymous';
@@ -726,7 +325,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         videoTracks.forEach(t => combinedStream.addTrack(t));
         audioTracks.forEach(t => combinedStream.addTrack(t));
         const mediaRecorder = new MediaRecorder(combinedStream, {
-            mimeType: 'video/webm; codecs=vp9'
+            mimeType: 'video/mp4'
         });
         const chunks = [];
         mediaRecorder.ondataavailable = (e) => {
@@ -743,7 +342,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         intermediateCanvas.height = nativeHeight;
         const icCtx = intermediateCanvas.getContext('2d');
         const finalCanvas = document.createElement('canvas');
-        let minX, minY, realCropW, realCropH;
         const rad = cropRotation * Math.PI / 180;
         const cx = cropRect.x + cropRect.width / 2;
         const cy = cropRect.y + cropRect.height / 2;
@@ -753,7 +351,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             { x: cropRect.x + cropRect.width, y: cropRect.y + cropRect.height },
             { x: cropRect.x, y: cropRect.y + cropRect.height }
         ];
-        const rotatedCorners = cropRotation % 360 !== 0
+        const rotatedCorners = (cropRotation % 360 !== 0)
             ? corners.map(pt => {
                 const dx = pt.x - cx;
                 const dy = pt.y - cy;
@@ -768,18 +366,18 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }));
         const xs = rotatedCorners.map(pt => pt.x);
         const ys = rotatedCorners.map(pt => pt.y);
-        minX = Math.min(...xs);
+        const minX = Math.min(...xs);
         const maxX = Math.max(...xs);
-        minY = Math.min(...ys);
+        const minY = Math.min(...ys);
         const maxY = Math.max(...ys);
-        realCropW = maxX - minX;
-        realCropH = maxY - minY;
+        const realCropW = maxX - minX;
+        const realCropH = maxY - minY;
         finalCanvas.width = realCropW;
         finalCanvas.height = realCropH;
         const fcCtx = finalCanvas.getContext('2d');
         const finalCanvasStream = finalCanvas.captureStream(fps);
         const finalMediaRecorder = new MediaRecorder(finalCanvasStream, {
-            mimeType: 'video/webm; codecs=vp9'
+            mimeType: 'video/mp4'
         });
         const finalChunks = [];
         finalMediaRecorder.ondataavailable = (e) => {
@@ -792,15 +390,15 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         finalMediaRecorder.onstop = () => resolveFinalDone();
         finalMediaRecorder.start();
         let lastDrawTime = 0;
-        const frameInterval = 1000 / fps;
+        const frameIntervalMS = 1000 / fps;
         const drawFrame = async (timestamp) => {
             if (!lastDrawTime) lastDrawTime = timestamp;
             const elapsed = timestamp - lastDrawTime;
-            if (elapsed >= frameInterval) {
+            if (elapsed >= frameIntervalMS) {
                 icCtx.save();
                 icCtx.clearRect(0, 0, nativeWidth, nativeHeight);
                 icCtx.filter = filterString;
-                icCtx.globalAlpha = opacity / 100;
+                icCtx.globalAlpha = opacityGlobal / 100;
                 icCtx.drawImage(tempVideo, 0, 0, nativeWidth, nativeHeight);
                 icCtx.restore();
                 icCtx.save();
@@ -858,7 +456,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         drawFrame();
         await finalDonePromise;
         await donePromise;
-        const finalBlob = new Blob(finalChunks, { type: 'video/webm' });
+        const finalBlob = new Blob(finalChunks, { type: 'video/mp4' });
         const newUrl = URL.createObjectURL(finalBlob);
         document.body.removeChild(tempVideo);
         setCropHistory(prev => [
@@ -892,7 +490,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setTempPath(null);
         setActionMode('Idle');
     }
-  
+
     const finalizeCrop = async () => {
         if (mediaType !== 'video') {
             return;
@@ -903,25 +501,425 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         ]);
         await performCanvasVideoCrop();
     };
-  
-    const getSvgPoint = (e) => {
-        const svg = e.currentTarget;
-        const point = svg.createSVGPoint();
-        point.x = e.clientX;
-        point.y = e.clientY;
-        const ctm = svg.getScreenCTM().inverse();
-        return point.matrixTransform(ctm);
+
+    async function downloadVideo() {
+        const alertResult = await showDialog({
+            title: 'Select Video Type',
+            message: 'Select the video type for download.',
+            inputs: [
+                {
+                    name: 'fileType',
+                    type: 'select',
+                    label: 'Video Type',
+                    defaultValue: 'mov',
+                    options: [
+                        { label: '.mov', value: 'mov' },
+                        { label: '.mp4', value: 'mp4' },
+                        { label: '.webm', value: 'webm' }
+                    ]
+                }
+            ],
+            showCancel: true
+        });
+        if (!alertResult) {
+            return;
+        }
+        const fileType = alertResult?.fileType || 'mov';
+        if (hasAnySingleFrameChanges() && framesPanelMode !== 'none') {
+            const stitchedUrl = await reStitchAllFrames();
+            if (stitchedUrl) {
+                setUrl(stitchedUrl);
+                if (videoRef.current) {
+                    videoRef.current.src = stitchedUrl;
+                    videoRef.current.load();
+                }
+            }
+        }
+        if (!url) return;
+        const fileName = fileHandle?.name
+            ? fileHandle?.name.replace(/\.\w+$/, '.' + fileType)
+            : 'download.' + fileType;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    const handleDragStart = (e) => {
+        if (isCropping) return;
+        if (actionMode !== 'Idle') return;
+        draggingRef.current = true;
+        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     };
-  
+
+    const handleDragEnd = () => {
+        draggingRef.current = false;
+    };
+
+    const handleDragMove = (e) => {
+        if (!draggingRef.current) return;
+        const dx = e.clientX - lastMousePosRef.current.x;
+        const dy = e.clientY - lastMousePosRef.current.y;
+        setPanX(prev => prev + dx);
+        setPanY(prev => prev + dy);
+        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleResizeMouseDown = (corner, e) => {
+        if (isCropping || actionMode !== 'Idle') return;
+        e.stopPropagation();
+        e.preventDefault();
+        setResizingCorner(corner);
+        resizingRef.current = true;
+        initialMousePosRef.current = { x: e.clientX, y: e.clientY };
+        lastResizePosRef.current = { x: e.clientX, y: e.clientY };
+        initialSizeRef.current = { width: videoWidth, height: videoHeight };
+        initialPosRef.current = { x: panX, y: panY };
+        if (maintainAspectRatio) {
+            aspectRatioRef.current = videoWidth / videoHeight;
+        }
+    };
+
+    const handleGlobalMouseMove = (e) => {
+        if (!resizingRef.current) return;
+        const rad = rotation * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const totalDx = e.clientX - initialMousePosRef.current.x;
+        const totalDy = e.clientY - initialMousePosRef.current.y;
+        const localTotalDx = cos * totalDx + sin * totalDy;
+        const localTotalDy = -sin * totalDx + cos * totalDy;
+        let newWidth, newHeight;
+        if (maintainAspectRatio) {
+            let handleUnit = { x: 0, y: 0 };
+            if (resizingCorner === 'bottom-right') {
+                handleUnit = { x: 1 / Math.sqrt(2), y: 1 / Math.sqrt(2) };
+            } else if (resizingCorner === 'bottom-left') {
+                handleUnit = { x: -1 / Math.sqrt(2), y: 1 / Math.sqrt(2) };
+            } else if (resizingCorner === 'top-right') {
+                handleUnit = { x: 1 / Math.sqrt(2), y: -1 / Math.sqrt(2) };
+            } else if (resizingCorner === 'top-left') {
+                handleUnit = { x: -1 / Math.sqrt(2), y: -1 / Math.sqrt(2) };
+            }
+            const effectiveDelta = localTotalDx * handleUnit.x + localTotalDy * handleUnit.y;
+            const initialHalfWidth = initialSizeRef.current.width / 2;
+            const scale = (initialHalfWidth + effectiveDelta) / initialHalfWidth;
+            newWidth = initialSizeRef.current.width * scale;
+            newHeight = initialSizeRef.current.height * scale;
+        } else {
+            let horizontalDelta = 0;
+            let verticalDelta = 0;
+            if (resizingCorner === 'bottom-right') {
+                horizontalDelta = localTotalDx;
+                verticalDelta = localTotalDy;
+            } else if (resizingCorner === 'bottom-left') {
+                horizontalDelta = -localTotalDx;
+                verticalDelta = localTotalDy;
+            } else if (resizingCorner === 'top-right') {
+                horizontalDelta = localTotalDx;
+                verticalDelta = -localTotalDy;
+            } else if (resizingCorner === 'top-left') {
+                horizontalDelta = -localTotalDx;
+                verticalDelta = -localTotalDy;
+            }
+            newWidth = initialSizeRef.current.width + 2 * horizontalDelta;
+            newHeight = initialSizeRef.current.height + 2 * verticalDelta;
+        }
+        newWidth = Math.max(newWidth, 50);
+        newHeight = Math.max(newHeight, 50);
+        setVideoWidth(newWidth);
+        setVideoHeight(newHeight);
+        setPanX(initialPosRef.current.x);
+        setPanY(initialPosRef.current.y);
+    };
+
+    const handleGlobalMouseUp = () => {
+        resizingRef.current = false;
+        setResizingCorner(null);
+    };
+
+    useEffect(() => {
+        const onMouseMove = (e) => handleGlobalMouseMove(e);
+        const onMouseUp = () => handleGlobalMouseUp();
+        if (resizingRef.current) {
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, [resizingCorner]);
+
+    const restoreAspectRatioWidth = () => {
+        const newHeight = videoWidth * (nativeHeight / nativeWidth);
+        setVideoHeight(newHeight);
+    };
+
+    const restoreAspectRatioHeight = () => {
+        const newWidth = videoHeight * (nativeWidth / nativeHeight);
+        setVideoWidth(newWidth);
+    };
+
+    const handleCropResizeMouseDown = (corner, e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cropResizingRef.current = true;
+        cropResizingCorner.current = corner;
+        cropLastResizePosRef.current = { x: e.clientX, y: e.clientY };
+        cropInitialRectRef.current = { ...cropRect };
+    };
+
+    const handleCropGlobalMouseMove = (e) => {
+        if (!cropResizingRef.current) return;
+        const dx = e.clientX - cropLastResizePosRef.current.x;
+        const dy = e.clientY - cropLastResizePosRef.current.y;
+        let { x, y, width, height } = cropInitialRectRef.current;
+        if (circleCrop) {
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += dx;
+                width -= dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += dy;
+                width += dx;
+                height -= dy;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
+            }
+        } else {
+            if (cropResizingCorner.current === 'bottom-right') {
+                width += dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'bottom-left') {
+                x += dx;
+                width -= dx;
+                height += dy;
+            } else if (cropResizingCorner.current === 'top-right') {
+                y += dy;
+                width += dx;
+                height -= dy;
+            } else if (cropResizingCorner.current === 'top-left') {
+                x += dx;
+                y += dy;
+                width -= dx;
+                height -= dy;
+            }
+        }
+        width = Math.max(width, 10);
+        height = Math.max(height, 10);
+        setCropRect({ x, y, width, height });
+    };
+
+    useEffect(() => {
+        const onMouseMove = (e) => handleCropGlobalMouseMove(e);
+        const onMouseUp = () => { cropResizingRef.current = false; };
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, []);
+
+    const cropDraggingRefLocal = useRef(false);
+    const lastCropDragPosRef = useRef({ x: 0, y: 0 });
+
+    const handleCropMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cropDraggingRefLocal.current = true;
+        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleCropMouseMove = (e) => {
+        if (!cropDraggingRefLocal.current) return;
+        const dx = e.clientX - lastCropDragPosRef.current.x;
+        const dy = e.clientY - lastCropDragPosRef.current.y;
+        lastCropDragPosRef.current = { x: e.clientX, y: e.clientY };
+        setCropRect(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+    };
+
+    const handleCropMouseUp = () => {
+        cropDraggingRefLocal.current = false;
+    };
+
+    useEffect(() => {
+        const onMouseMove = (e) => handleCropMouseMove(e);
+        const onMouseUp = () => handleCropMouseUp();
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, []);
+
+    const handleCropRotationMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cropRotatingRef.current = true;
+        const rect = e.currentTarget.parentElement.getBoundingClientRect();
+        cropRotationCenter.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        const dx = e.clientX - cropRotationCenter.current.x;
+        const dy = e.clientY - cropRotationCenter.current.y;
+        cropRotationStartAngle.current = Math.atan2(dy, dx) * (180 / Math.PI);
+        cropInitialRotation.current = cropRotation;
+    };
+
+    const handleCropGlobalMouseMoveRotation = (e) => {
+        if (!cropRotatingRef.current) return;
+        const dx = e.clientX - cropRotationCenter.current.x;
+        const dy = e.clientY - cropRotationCenter.current.y;
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        const deltaAngle = angle - cropRotationStartAngle.current;
+        setCropRotation(cropInitialRotation.current + deltaAngle);
+    };
+
+    const handleCropGlobalMouseUpRotation = () => {
+        cropRotatingRef.current = false;
+    };
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleCropGlobalMouseMoveRotation);
+        window.addEventListener('mouseup', handleCropGlobalMouseUpRotation);
+        return () => {
+            window.removeEventListener('mousemove', handleCropGlobalMouseMoveRotation);
+            window.removeEventListener('mouseup', handleCropGlobalMouseUpRotation);
+        };
+    }, []);
+
+    const undoCrop = () => {
+        if (cropHistory.length > 0) {
+            const prev = cropHistory[cropHistory.length - 1];
+            setCropHistory(old => old.slice(0, old.length - 1));
+            setUrl(prev.url);
+            setPanX(prev.panX);
+            setPanY(prev.panY);
+            setVideoWidth(prev.videoWidth);
+            setVideoHeight(prev.videoHeight);
+            setNativeWidth(prev.nativeWidth);
+            setNativeHeight(prev.nativeHeight);
+            setIsCropping(false);
+        }
+    };
+
+    async function reStitchAllFrames() {
+        if (frames.length === 0) {
+            return null;
+        }
+        setIsRebuildingVideoFromFrames(true);
+        const fps = 25;
+        const totalFrames = frames.length;
+        const canvas = document.createElement("canvas");
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        const ctx = canvas.getContext("2d");
+        const stream = canvas.captureStream(fps);
+        const recorder = new MediaRecorder(stream, {
+            mimeType: "video/mp4",
+            videoBitsPerSecond: 2500000
+        });
+        const chunks = [];
+        recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+            }
+        };
+        return new Promise((resolve) => {
+            recorder.onstop = async () => {
+                const newBlob = new Blob(chunks, { type: 'video/mp4' });
+                const newUrl = URL.createObjectURL(newBlob);
+                setIsRebuildingVideoFromFrames(false);
+                resolve(newUrl);
+            };
+            recorder.start();
+            let i = 0;
+            const startTime = performance.now();
+            const totalMs = originalDuration * 1000;
+            function drawOneFrame() {
+                if (i >= totalFrames) {
+                    const now = performance.now();
+                    const elapsed = now - startTime;
+                    const leftover = totalMs - elapsed;
+                    if (leftover > 0) {
+                        setTimeout(() => recorder.stop(), leftover + 10);
+                    } else {
+                        recorder.stop();
+                    }
+                    return;
+                }
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    i++;
+                    if (i >= totalFrames) {
+                        const now2 = performance.now();
+                        const elapsed2 = now2 - startTime;
+                        const leftover2 = totalMs - elapsed2;
+                        if (leftover2 > 0) {
+                            setTimeout(() => recorder.stop(), leftover2 + 10);
+                        } else {
+                            recorder.stop();
+                        }
+                        return;
+                    }
+                    const now = performance.now();
+                    const elapsed = now - startTime;
+                    const target = (i / totalFrames) * totalMs;
+                    const wait = target - elapsed;
+                    setTimeout(drawOneFrame, Math.max(0, wait));
+                };
+                img.onerror = () => {
+                    i++;
+                    if (i >= totalFrames) {
+                        const now2 = performance.now();
+                        const elapsed2 = now2 - startTime;
+                        const leftover2 = totalMs - elapsed2;
+                        if (leftover2 > 0) {
+                            setTimeout(() => recorder.stop(), leftover2 + 10);
+                        } else {
+                            recorder.stop();
+                        }
+                        return;
+                    }
+                    const now = performance.now();
+                    const elapsed = now - startTime;
+                    const target = (i / totalFrames) * totalMs;
+                    const wait = target - elapsed;
+                    setTimeout(drawOneFrame, Math.max(0, wait));
+                };
+                img.src = frames[i].dataUrl;
+            }
+            drawOneFrame();
+        });
+    }
+
     const handleSvgMouseDown = (e) => {
         if (actionMode === 'Drawing' || actionMode === 'Highlighting') {
             isDrawingRef.current = true;
             const { x, y } = getSvgPoint(e);
             currentPathPoints.current = [{ x, y }];
-            setUndonePaths([]);
+            if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+                setSingleFrameUndonePaths(prevUndone => ({
+                    ...prevUndone,
+                    [selectedSingleFrameIndex]: []
+                }));
+            } else {
+                setUndonePaths([]);
+            }
         }
     };
-  
+
     const handleSvgMouseMove = (e) => {
         if (!isDrawingRef.current) return;
         if (actionMode === 'Drawing' || actionMode === 'Highlighting') {
@@ -936,7 +934,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     d += ` Q ${pts[i].x} ${pts[i].y} ${x_mid} ${y_mid}`;
                 }
                 d += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`;
-                setTempPath({
+                setActiveTempPath({
                     d,
                     color: actionMode === 'Drawing' ? drawColor : highlightColor,
                     width: actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize
@@ -944,7 +942,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }
         }
     };
-  
+
     const handleSvgMouseUp = () => {
         if (!isDrawingRef.current) return;
         isDrawingRef.current = false;
@@ -962,38 +960,121 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 color: actionMode === 'Drawing' ? drawColor : highlightColor,
                 width: actionMode === 'Drawing' ? drawBrushSize : highlightBrushSize
             };
-            setPaths(prev => [...prev, newPath]);
+            const existing = getActivePaths();
+            setActivePaths([...existing, newPath]);
         }
-        setTempPath(null);
+        setActiveTempPath(null);
         currentPathPoints.current = [];
     };
-  
-    const undoStroke = () => {
-        setPaths(prev => {
-            if (prev.length === 0) return prev;
-            const newPaths = [...prev];
-            const undoneStroke = newPaths.pop();
-            setUndonePaths(ups => [...ups, undoneStroke]);
-            return newPaths;
-        });
+
+    function getActivePaths() {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            return singleFramePaths[selectedSingleFrameIndex] || [];
+        }
+        return paths;
+    }
+
+    function setActivePaths(newPaths) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFramePaths(prev => ({
+                ...prev,
+                [selectedSingleFrameIndex]: newPaths
+            }));
+        } else {
+            setPaths(newPaths);
+        }
+    }
+
+    function getActiveTempPath() {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            return singleFrameTempPath;
+        }
+        return tempPath;
+    }
+
+    function setActiveTempPath(newTemp) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameTempPath(newTemp);
+        } else {
+            setTempPath(newTemp);
+        }
+    }
+
+    function undoStroke() {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFramePaths(prevPaths => {
+                const existing = prevPaths[selectedSingleFrameIndex] || [];
+                if (existing.length === 0) return prevPaths;
+                const newArr = [...existing];
+                const undoneStroke = newArr.pop();
+                setSingleFrameUndonePaths(prevUndone => {
+                    const pu = prevUndone[selectedSingleFrameIndex] || [];
+                    return {
+                        ...prevUndone,
+                        [selectedSingleFrameIndex]: [...pu, undoneStroke]
+                    };
+                });
+                return {
+                    ...prevPaths,
+                    [selectedSingleFrameIndex]: newArr
+                };
+            });
+        } else {
+            setPaths(prev => {
+                if (prev.length === 0) return prev;
+                const newPaths = [...prev];
+                const undoneStroke = newPaths.pop();
+                setUndonePaths(ups => [...ups, undoneStroke]);
+                return newPaths;
+            });
+        }
+    }
+
+    function redoStroke() {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameUndonePaths(prevUndone => {
+                const undoneForFrame = prevUndone[selectedSingleFrameIndex] || [];
+                if (undoneForFrame.length === 0) return prevUndone;
+                const newUndone = [...undoneForFrame];
+                const strokeToRedo = newUndone.pop();
+                setSingleFramePaths(prevPaths => {
+                    const existing = prevPaths[selectedSingleFrameIndex] || [];
+                    return {
+                        ...prevPaths,
+                        [selectedSingleFrameIndex]: [...existing, strokeToRedo]
+                    };
+                });
+                return {
+                    ...prevUndone,
+                    [selectedSingleFrameIndex]: newUndone
+                };
+            });
+        } else {
+            setUndonePaths(prev => {
+                if (prev.length === 0) return prev;
+                const newUndone = [...prev];
+                const strokeToRedo = newUndone.pop();
+                setPaths(ps => [...ps, strokeToRedo]);
+                return newUndone;
+            });
+        }
+    }
+
+    const getSvgPoint = (e) => {
+        const svg = e.currentTarget;
+        const point = svg.createSVGPoint();
+        point.x = e.clientX;
+        point.y = e.clientY;
+        const ctm = svg.getScreenCTM().inverse();
+        return point.matrixTransform(ctm);
     };
-  
-    const redoStroke = () => {
-        setUndonePaths(prev => {
-            if (prev.length === 0) return prev;
-            const newUndone = [...prev];
-            const strokeToRedo = newUndone.pop();
-            setPaths(ps => [...ps, strokeToRedo]);
-            return newUndone;
-        });
-    };
-  
+
     const handleRewind15 = () => {
         if (videoRef.current) {
             videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 15);
         }
     };
-  
+
     const handlePlayVideo = () => {
         if (!videoRef.current) return;
         if (isPlaying) {
@@ -1004,58 +1085,80 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsPlaying(true);
         }
     };
-  
+
     const handleToggleLoop = () => {
         if (!videoRef.current) return;
         const newVal = !videoRef.current.loop;
         videoRef.current.loop = newVal;
         setIsLooping(newVal);
     };
-  
+
     const handleSkip15 = () => {
         if (videoRef.current && videoRef.current.duration) {
             videoRef.current.currentTime = Math.min(videoRef.current.duration, videoRef.current.currentTime + 15);
         }
     };
-  
-    const handleSetPlaybackRate = (rate) => {
-        if (videoRef.current) {
-            videoRef.current.playbackRate = rate;
+
+    function computeFrameStyleEdits(i) {
+        const single = singleFrameEdits[i];
+        if (single) {
+            return {
+                hue: single.hue ?? 0,
+                saturation: single.saturation ?? 100,
+                brightness: single.brightness ?? 100,
+                contrast: single.contrast ?? 100,
+                opacity: single.opacity ?? 100,
+                blur: single.blur ?? 0,
+                spread: single.spread ?? 0,
+                grayscale: single.grayscale ?? 0,
+                sepia: single.sepia ?? 0,
+                syncCorners: single.syncCorners ?? false,
+                borderRadius: single.borderRadius ?? 0,
+                borderTopLeftRadius: single.borderTopLeftRadius ?? 0,
+                borderTopRightRadius: single.borderTopRightRadius ?? 0,
+                borderBottomLeftRadius: single.borderBottomLeftRadius ?? 0,
+                borderBottomRightRadius: single.borderBottomRightRadius ?? 0
+            };
+        } else {
+            return {
+                hue: hueGlobal,
+                saturation: saturationGlobal,
+                brightness: brightnessGlobal,
+                contrast: contrastGlobal,
+                opacity: opacityGlobal,
+                blur: blurGlobal,
+                spread: spreadGlobal,
+                grayscale: grayscaleGlobal,
+                sepia: sepiaGlobal,
+                syncCorners: syncCornersGlobal,
+                borderRadius: borderRadiusGlobal,
+                borderTopLeftRadius: borderTopLeftRadiusGlobal,
+                borderTopRightRadius: borderTopRightRadiusGlobal,
+                borderBottomLeftRadius: borderBottomLeftRadiusGlobal,
+                borderBottomRightRadius: borderBottomRightRadiusGlobal
+            };
         }
-        setCurrentPlaybackRate(rate);
-    };
-  
-    async function extractFramesFromVideo(videoElem, existingFrames = []) {
-        const framesArray = [];
-        if (!videoElem.duration) return framesArray;
-        const oldPausedState = videoElem.paused;
-        const oldTime = videoElem.currentTime;
-        videoElem.pause();
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        let framesCount = existingFrames.length;
-        if (framesCount === 0) {
-            const totalFrames = Math.floor(videoElem.duration / frameInterval);
-            framesCount = totalFrames + 1;
-        }
-        for (let i = 0; i < framesCount; i++) {
-            const captureTime = i * frameInterval;
-            if (captureTime > videoElem.duration) break;
-            videoElem.currentTime = captureTime;
-            await new Promise((resolve) => {
-                const onSeeked = () => {
-                    videoElem.removeEventListener("seeked", onSeeked);
-                    resolve();
-                };
-                videoElem.addEventListener("seeked", onSeeked);
-            });
+    }
+
+    function updateSingleFrameData(index) {
+        if (!originalExtractedFrames[index]) return;
+        const base = originalExtractedFrames[index].dataUrl;
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
             canvas.width = videoWidth;
             canvas.height = videoHeight;
+            const ctx = canvas.getContext('2d');
+            const style = computeFrameStyleEdits(index);
+            let filterString = `hue-rotate(${style.hue}deg) saturate(${style.saturation}%) brightness(${style.brightness}%) contrast(${style.contrast}%) blur(${style.blur}px) grayscale(${style.grayscale}%) sepia(${style.sepia}%)`;
+            if (style.spread) {
+                filterString += ` drop-shadow(0 0 ${style.spread}px rgba(0,0,0,0.5))`;
+            }
+            ctx.filter = filterString;
+            ctx.globalAlpha = style.opacity / 100;
             ctx.save();
-            ctx.filter = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%) contrast(${contrast}%) blur(${blur}px) grayscale(${grayscale}%) sepia(${sepia}%)${spread ? ` drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}`;
-            ctx.globalAlpha = opacity / 100;
-            if (syncCorners) {
-                const r = borderRadius;
+            if (style.syncCorners) {
+                const r = style.borderRadius;
                 ctx.beginPath();
                 ctx.moveTo(r, 0);
                 ctx.lineTo(canvas.width - r, 0);
@@ -1069,10 +1172,10 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 ctx.closePath();
                 ctx.clip();
             } else {
-                const tl = borderTopLeftRadius;
-                const tr = borderTopRightRadius;
-                const br = borderBottomRightRadius;
-                const bl = borderBottomLeftRadius;
+                const tl = style.borderTopLeftRadius;
+                const tr = style.borderTopRightRadius;
+                const br = style.borderBottomRightRadius;
+                const bl = style.borderBottomLeftRadius;
                 ctx.beginPath();
                 ctx.moveTo(tl, 0);
                 ctx.lineTo(canvas.width - tr, 0);
@@ -1086,31 +1189,61 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 ctx.closePath();
                 ctx.clip();
             }
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rotation * Math.PI / 180);
-            ctx.scale(flipX, flipY);
-            ctx.drawImage(videoElem, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             ctx.restore();
             ctx.save();
-            ctx.filter = "none";
+            ctx.filter = 'none';
             ctx.globalAlpha = 1;
             const scaleX = canvas.width / nativeWidth;
             const scaleY = canvas.height / nativeHeight;
             ctx.scale(scaleX, scaleY);
-            for (let p of paths) {
-                const path2d = new Path2D(p.d);
-                ctx.lineWidth = p.width;
-                ctx.strokeStyle = p.color;
-                ctx.lineCap = "round";
-                ctx.stroke(path2d);
+            if (singleFramePaths[index]) {
+                singleFramePaths[index].forEach(p => {
+                    const path2d = new Path2D(p.d);
+                    ctx.lineWidth = p.width;
+                    ctx.strokeStyle = p.color;
+                    ctx.lineCap = "round";
+                    ctx.stroke(path2d);
+                });
             }
-            if (tempPath) {
-                const path2d = new Path2D(tempPath.d);
-                ctx.lineWidth = tempPath.width;
-                ctx.strokeStyle = tempPath.color;
-                ctx.lineCap = "round";
-                ctx.stroke(path2d);
-            }
+            ctx.restore();
+            const updatedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
+            setFrames(prev => {
+                if (!prev[index]) return prev;
+                const newFrames = [...prev];
+                newFrames[index] = { ...newFrames[index], dataUrl: updatedDataUrl };
+                return newFrames;
+            });
+        };
+        img.src = base;
+    }
+
+    async function extractFramesFromVideo(videoElem) {
+        const framesArray = [];
+        if (!videoElem.duration) return [];
+        const oldPausedState = videoElem.paused;
+        const oldTime = videoElem.currentTime;
+        videoElem.pause();
+        const totalFrames = Math.floor(videoElem.duration / frameInterval);
+        const numberOfFrames = totalFrames + 1;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        for (let i = 0; i < numberOfFrames; i++) {
+            const captureTime = i * frameInterval;
+            if (captureTime > videoElem.duration) break;
+            videoElem.currentTime = captureTime;
+            await new Promise((resolve) => {
+                const onSeeked = () => {
+                    videoElem.removeEventListener("seeked", onSeeked);
+                    resolve();
+                };
+                videoElem.addEventListener("seeked", onSeeked);
+            });
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(videoElem, 0, 0, canvas.width, canvas.height);
             ctx.restore();
             const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
             framesArray.push({ time: captureTime, dataUrl });
@@ -1121,38 +1254,81 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         }
         return framesArray;
     }
-  
+
     useEffect(() => {
-        if (framesPanelMode !== 'none' && videoRef.current && !isProcessingCrop && !isCropping) {
-            (async () => {
+        const doExtract = async () => {
+            if (mediaType === 'video' && videoRef.current && !isProcessingCrop && !isCropping) {
                 setIsExtractingFrames(true);
-                const extracted = await extractFramesFromVideo(videoRef.current, []);
-                setFrames(extracted);
+                const newBase = await extractFramesFromVideo(videoRef.current);
+                setOriginalExtractedFrames(newBase);
+                setFrames([...newBase]);
                 setIsExtractingFrames(false);
-            })();
+            }
+        };
+        if (framesPanelMode !== 'none') {
+            doExtract();
+        } else {
+            setFrames([]);
+            setOriginalExtractedFrames([]);
         }
-    }, [framesPanelMode, url, isProcessingCrop, isCropping, frameInterval]);
-  
+    }, [framesPanelMode, url, isProcessingCrop, isCropping, frameInterval, mediaType]);
+
+    useEffect(() => {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            updateSingleFrameData(selectedSingleFrameIndex);
+        }
+    }, [
+        framesPanelMode,
+        selectedSingleFrameIndex,
+        singleFramePaths,
+        singleFrameEdits
+    ]);
+
     const handleViewFrames = async () => {
         if (!videoRef.current) return;
         setFramesPanelMode(prev => (prev === 'view' ? 'none' : 'view'));
     };
-  
+
     const handleClipFromVideo = () => {
         setClipStartTime(null);
         setClipEndTime(null);
         setFramesPanelMode(prev => (prev === 'clip' ? 'none' : 'clip'));
     };
-  
+
     const handleRearrangeFrames = () => {
         setFramesPanelMode(prev => (prev === 'rearrange' ? 'none' : 'rearrange'));
     };
-  
+
+    const handleSingleFrameMode = async () => {
+        if (framesPanelMode === 'single') {
+            setSelectedSingleFrameIndex(null);
+            if (frames.length > 0 && hasAnySingleFrameChanges()) {
+                const stitchedUrl = await reStitchAllFrames();
+                if (stitchedUrl) {
+                    setUrl(stitchedUrl);
+                    if (videoRef.current) {
+                        videoRef.current.src = stitchedUrl;
+                        videoRef.current.load();
+                        videoRef.current.currentTime = 0;
+                        videoRef.current.loop = true;
+                        videoRef.current.play();
+                        setIsPlaying(true);
+                        setIsLooping(true);
+                    }
+                }
+            }
+            setFramesPanelMode('none');
+        } else {
+            setFramesPanelMode('single');
+        }
+        setActionMode('Idle');
+    };
+
     const handleDragStartFrame = (e, index) => {
         setDraggedFrameIndex(index);
         setDropTargetIndex(null);
     };
-  
+
     const handleDragOverFrame = (e, index) => {
         e.preventDefault();
         setDropTargetIndex(index);
@@ -1166,7 +1342,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }
         }
     };
-  
+
     const handleDropFrame = (e, index) => {
         e.preventDefault();
         setFrames(prevFrames => {
@@ -1181,7 +1357,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         setDraggedFrameIndex(null);
         setDropTargetIndex(null);
     };
-  
+
     const handleSaveRearrange = async () => {
         try {
             if (frames.length === 0) {
@@ -1196,7 +1372,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             const ctx = canvas.getContext("2d");
             const stream = canvas.captureStream(fps);
             const recorder = new MediaRecorder(stream, {
-                mimeType: "video/webm;codecs=vp8",
+                mimeType: "video/mp4",
                 videoBitsPerSecond: 2500000
             });
             const chunks = [];
@@ -1206,7 +1382,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 }
             };
             recorder.onstop = async () => {
-                const newBlob = new Blob(chunks, { type: 'video/webm' });
+                const newBlob = new Blob(chunks, { type: 'video/mp4' });
                 const newUrl = URL.createObjectURL(newBlob);
                 setUrl(newUrl);
                 if (videoRef.current) {
@@ -1239,7 +1415,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsRebuildingVideoFromFrames(false);
         }
     };
-  
+
     async function clipVideo(start, end) {
         const videoElem = document.createElement("video");
         videoElem.src = url;
@@ -1258,7 +1434,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
         videoElem.playbackRate = 1;
         const stream = videoElem.captureStream();
         const recorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm;codecs=vp8',
+            mimeType: 'video/mp4',
             videoBitsPerSecond: 2500000
         });
         const chunks = [];
@@ -1269,7 +1445,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 }
             };
             recorder.onstop = async () => {
-                const newBlob = new Blob(chunks, { type: 'video/webm' });
+                const newBlob = new Blob(chunks, { type: 'video/mp4' });
                 const newUrl = URL.createObjectURL(newBlob);
                 resolve(newUrl);
             };
@@ -1288,7 +1464,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             requestAnimationFrame(checkTime);
         });
     }
-  
+
     const handleSaveClip = async () => {
         if (clipStartTime !== null && clipEndTime !== null && clipEndTime > clipStartTime) {
             setIsClippingVideo(true);
@@ -1310,7 +1486,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setActionMode('Idle');
         }
     };
-  
+
     useEffect(() => {
         if (framesContainerRef.current && frames.length > 0 && framesPanelMode === 'clip') {
             const containerRect = framesContainerRef.current.getBoundingClientRect();
@@ -1335,7 +1511,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }
         }
     }, [clipOverlayLeft, clipOverlayRight, frames, framesPanelMode]);
-  
+
     useEffect(() => {
         if (framesPanelMode === 'clip' && framesContainerRef.current) {
             setTimeout(() => {
@@ -1344,7 +1520,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             }, 0);
         }
     }, [framesPanelMode, frames]);
-  
+
     useEffect(() => {
         function onMouseMove(e) {
             if (!framesContainerRef.current) return;
@@ -1376,17 +1552,17 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             window.removeEventListener("mouseup", onMouseUp);
         };
     }, [isDraggingLeftHandle, isDraggingRightHandle, clipOverlayLeft, clipOverlayRight]);
-  
+
     const handleMouseDownLeft = (e) => {
         e.preventDefault();
         setIsDraggingLeftHandle(true);
     };
-  
+
     const handleMouseDownRight = (e) => {
         e.preventDefault();
         setIsDraggingRightHandle(true);
     };
-  
+
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.load();
@@ -1397,11 +1573,281 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             setIsPlaying(true);
         }
     }, [url]);
-  
+
     const handleCropRotationMouseDownHandler = (e) => {
         handleCropRotationMouseDown(e);
     };
-  
+
+    function setOpacity(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, opacity: val }
+                };
+            });
+        } else {
+            setOpacityGlobal(val);
+        }
+    }
+    function setHue(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, hue: val }
+                };
+            });
+        } else {
+            setHueGlobal(val);
+        }
+    }
+    function setSaturation(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, saturation: val }
+                };
+            });
+        } else {
+            setSaturationGlobal(val);
+        }
+    }
+    function setBrightness(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, brightness: val }
+                };
+            });
+        } else {
+            setBrightnessGlobal(val);
+        }
+    }
+    function setContrast(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, contrast: val }
+                };
+            });
+        } else {
+            setContrastGlobal(val);
+        }
+    }
+    function setBlur(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, blur: val }
+                };
+            });
+        } else {
+            setBlurGlobal(val);
+        }
+    }
+    function setSpread(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, spread: val }
+                };
+            });
+        } else {
+            setSpreadGlobal(val);
+        }
+    }
+    function setGrayscale(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, grayscale: val }
+                };
+            });
+        } else {
+            setGrayscaleGlobal(val);
+        }
+    }
+    function setSepia(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                const old = prev[selectedSingleFrameIndex] || {};
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, sepia: val }
+                };
+            });
+        } else {
+            setSepiaGlobal(val);
+        }
+    }
+    function setSyncCorners(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                if (val) {
+                    let cornerValue = old.borderRadius ?? old.borderTopLeftRadius ?? 0;
+                    cornerValue = Math.min(cornerValue, 100);
+                    old = {
+                        ...old,
+                        syncCorners: true,
+                        borderRadius: cornerValue,
+                        borderTopLeftRadius: cornerValue,
+                        borderTopRightRadius: cornerValue,
+                        borderBottomLeftRadius: cornerValue,
+                        borderBottomRightRadius: cornerValue
+                    };
+                } else {
+                    old = { ...old, syncCorners: false };
+                }
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: old
+                };
+            });
+        } else {
+            setSyncCornersGlobal(val);
+            if (val) {
+                let cornerValue = borderRadiusGlobal || borderTopLeftRadiusGlobal || 0;
+                cornerValue = Math.min(cornerValue, 100);
+                setBorderRadiusGlobal(cornerValue);
+                setBorderTopLeftRadiusGlobal(cornerValue);
+                setBorderTopRightRadiusGlobal(cornerValue);
+                setBorderBottomLeftRadiusGlobal(cornerValue);
+                setBorderBottomRightRadiusGlobal(cornerValue);
+            }
+        }
+    }
+    function setBorderRadius(val) {
+        let limitVal = Math.min(val, 100);
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                if (old.syncCorners) {
+                    old = {
+                        ...old,
+                        borderRadius: limitVal,
+                        borderTopLeftRadius: limitVal,
+                        borderTopRightRadius: limitVal,
+                        borderBottomLeftRadius: limitVal,
+                        borderBottomRightRadius: limitVal
+                    };
+                } else {
+                    old = { ...old, borderRadius: limitVal };
+                }
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: old
+                };
+            });
+        } else {
+            if (syncCornersGlobal) {
+                setBorderRadiusGlobal(limitVal);
+                setBorderTopLeftRadiusGlobal(limitVal);
+                setBorderTopRightRadiusGlobal(limitVal);
+                setBorderBottomLeftRadiusGlobal(limitVal);
+                setBorderBottomRightRadiusGlobal(limitVal);
+            } else {
+                setBorderRadiusGlobal(limitVal);
+            }
+        }
+    }
+    function setBorderTopLeftRadius(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                let limitVal = Math.min(val, 100);
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, borderTopLeftRadius: limitVal }
+                };
+            });
+        } else {
+            setBorderTopLeftRadiusGlobal(Math.min(val, 100));
+        }
+    }
+    function setBorderTopRightRadius(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                let limitVal = Math.min(val, 100);
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, borderTopRightRadius: limitVal }
+                };
+            });
+        } else {
+            setBorderTopRightRadiusGlobal(Math.min(val, 100));
+        }
+    }
+    function setBorderBottomLeftRadius(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                let limitVal = Math.min(val, 100);
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, borderBottomLeftRadius: limitVal }
+                };
+            });
+        } else {
+            setBorderBottomLeftRadiusGlobal(Math.min(val, 100));
+        }
+    }
+    function setBorderBottomRightRadius(val) {
+        if (framesPanelMode === 'single' && selectedSingleFrameIndex != null) {
+            setSingleFrameEdits(prev => {
+                let old = prev[selectedSingleFrameIndex] || {};
+                let limitVal = Math.min(val, 100);
+                return {
+                    ...prev,
+                    [selectedSingleFrameIndex]: { ...old, borderBottomRightRadius: limitVal }
+                };
+            });
+        } else {
+            setBorderBottomRightRadiusGlobal(Math.min(val, 100));
+        }
+    }
+
+    function resetSingleFrameEdits(index) {
+        setSingleFramePaths(prev => {
+            const newPaths = { ...prev };
+            delete newPaths[index];
+            return newPaths;
+        });
+        setSingleFrameUndonePaths(prev => {
+            const newUndone = { ...prev };
+            delete newUndone[index];
+            return newUndone;
+        });
+        setSingleFrameEdits(prev => {
+            const newEdits = { ...prev };
+            delete newEdits[index];
+            return newEdits;
+        });
+        updateSingleFrameData(index);
+    }
+
+    function handleSetPlaybackRate(rate) {
+        if (!videoRef.current) return;
+        setCurrentPlaybackRate(rate);
+        videoRef.current.playbackRate = rate;
+    }
+
     return (
         <div className="dinolabsIDEMediaWrapper">
             {(isProcessingCrop || isExtractingFrames || isRebuildingVideoFromFrames || isClippingVideo || isDownloadingVideo) && (
@@ -1411,6 +1857,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
             )}
             <DinoLabsIDEVideoEditorToolbar
                 showFrameBar={showFrameBar}
+                framesPanelMode={framesPanelMode}
                 resetVideo={resetVideo}
                 downloadVideo={downloadVideo}
                 panX={panX}
@@ -1451,42 +1898,110 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                 highlightBrushSize={highlightBrushSize}
                 setHighlightBrushSize={setHighlightBrushSize}
                 setOpacity={setOpacity}
-                opacity={opacity}
+                opacity={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.opacity ?? 100)
+                        : opacityGlobal
+                }
                 setHue={setHue}
-                hue={hue}
+                hue={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.hue ?? 0)
+                        : hueGlobal
+                }
                 setSaturation={setSaturation}
-                saturation={saturation}
+                saturation={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.saturation ?? 100)
+                        : saturationGlobal
+                }
                 setBrightness={setBrightness}
-                brightness={brightness}
+                brightness={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.brightness ?? 100)
+                        : brightnessGlobal
+                }
                 setContrast={setContrast}
-                contrast={contrast}
+                contrast={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.contrast ?? 100)
+                        : contrastGlobal
+                }
                 setBlur={setBlur}
-                blur={blur}
+                blur={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.blur ?? 0)
+                        : blurGlobal
+                }
                 setSpread={setSpread}
-                spread={spread}
+                spread={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.spread ?? 0)
+                        : spreadGlobal
+                }
                 setGrayscale={setGrayscale}
-                grayscale={grayscale}
+                grayscale={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.grayscale ?? 0)
+                        : grayscaleGlobal
+                }
                 setSepia={setSepia}
-                sepia={sepia}
-                syncCorners={syncCorners}
+                sepia={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.sepia ?? 0)
+                        : sepiaGlobal
+                }
+                syncCorners={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.syncCorners ?? false)
+                        : syncCornersGlobal
+                }
                 setSyncCorners={setSyncCorners}
-                borderRadius={borderRadius}
+                borderRadius={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.borderRadius ?? 0)
+                        : borderRadiusGlobal
+                }
                 setBorderRadius={setBorderRadius}
-                borderTopLeftRadius={borderTopLeftRadius}
+                borderTopLeftRadius={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.borderTopLeftRadius ?? 0)
+                        : borderTopLeftRadiusGlobal
+                }
                 setBorderTopLeftRadius={setBorderTopLeftRadius}
-                borderTopRightRadius={borderTopRightRadius}
+                borderTopRightRadius={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.borderTopRightRadius ?? 0)
+                        : borderTopRightRadiusGlobal
+                }
                 setBorderTopRightRadius={setBorderTopRightRadius}
-                borderBottomLeftRadius={borderBottomLeftRadius}
+                borderBottomLeftRadius={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.borderBottomLeftRadius ?? 0)
+                        : borderBottomLeftRadiusGlobal
+                }
                 setBorderBottomLeftRadius={setBorderBottomLeftRadius}
-                borderBottomRightRadius={borderBottomRightRadius}
+                borderBottomRightRadius={
+                    framesPanelMode === 'single' && selectedSingleFrameIndex != null
+                        ? (singleFrameEdits[selectedSingleFrameIndex]?.borderBottomRightRadius ?? 0)
+                        : borderBottomRightRadiusGlobal
+                }
                 setBorderBottomRightRadius={setBorderBottomRightRadius}
+                selectedSingleFrameIndex={selectedSingleFrameIndex}
+                resetSingleFrameEdits={resetSingleFrameEdits}
+                handleZoomIn={handleZoomIn}
+                handleZoomOut={handleZoomOut}
+                handleRotateLeft={handleRotateLeft}
+                handleRotateRight={handleRotateRight}
+                handleFlipHorizontal={handleFlipHorizontal}
+                handleFlipVertical={handleFlipVertical}
             />
             <div className="dinolabsIDEMediaContainerWrapper">
                 <div
                     className="dinolabsIDEMediaContainer"
-                    style={{ 
-                        cursor: 'grab', 
-                        height: showFrameBar ? "70%" : "90%",  
+                    style={{
+                        cursor: 'grab',
+                        height: showFrameBar ? "70%" : "90%",
                         minHeight: showFrameBar ? "70%" : "90%",
                         maxHeight: showFrameBar ? "70%" : "90%",
                     }}
@@ -1509,37 +2024,77 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             rotate(${rotation}deg)
                             `,
                             overflow: 'visible',
-                            borderRadius: syncCorners
-                                ? `${borderRadius}px`
-                                : `${borderTopLeftRadius}px ${borderTopRightRadius}px ${borderBottomRightRadius}px ${borderBottomLeftRadius}px`
+                            borderRadius: (framesPanelMode === 'single' && selectedSingleFrameIndex != null)
+                                ? (
+                                    singleFrameEdits[selectedSingleFrameIndex]?.syncCorners
+                                        ? `${singleFrameEdits[selectedSingleFrameIndex]?.borderRadius ?? 0}px`
+                                        : `${singleFrameEdits[selectedSingleFrameIndex]?.borderTopLeftRadius ?? 0}px 
+                                           ${singleFrameEdits[selectedSingleFrameIndex]?.borderTopRightRadius ?? 0}px 
+                                           ${singleFrameEdits[selectedSingleFrameIndex]?.borderBottomRightRadius ?? 0}px 
+                                           ${singleFrameEdits[selectedSingleFrameIndex]?.borderBottomLeftRadius ?? 0}px`
+                                  )
+                                : (
+                                    syncCornersGlobal
+                                        ? `${borderRadiusGlobal}px`
+                                        : `${borderTopLeftRadiusGlobal}px 
+                                           ${borderTopRightRadiusGlobal}px 
+                                           ${borderBottomRightRadiusGlobal}px 
+                                           ${borderBottomLeftRadiusGlobal}px`
+                                  )
                         }}
                     >
-                        <video
-                            src={url}
-                            ref={videoRef}
-                            controls
-                            draggable={false}
-                            onDragStart={(e) => e.preventDefault()}
-                            className="dinolabsIDEMediaContent"
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                filter: `
-                                    hue-rotate(${hue}deg)
-                                    saturate(${saturation}%)
-                                    brightness(${brightness}%)
-                                    contrast(${contrast}%)
-                                    blur(${blur}px)
-                                    grayscale(${grayscale}%)
-                                    sepia(${sepia}%)
-                                    ${spread ? `drop-shadow(0 0 ${spread}px rgba(0,0,0,0.5))` : ''}
-                                `,
-                                userSelect: 'none',
-                                borderRadius: 'inherit',
-                                opacity: opacity / 100,
-                                transform: `scale(${flipX}, ${flipY})`
-                            }}
-                        />
+                        {(framesPanelMode === 'single' && selectedSingleFrameIndex != null) ? (
+                            <img
+                                src={frames[selectedSingleFrameIndex]?.dataUrl}
+                                alt="Single Frame"
+                                draggable={false}
+                                onDragStart={(e) => e.preventDefault()}
+                                className="dinolabsIDEMediaContent"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    userSelect: 'none',
+                                    borderRadius: 'inherit',
+                                    transform: `scale(${flipX}, ${flipY})`,
+                                    filter: (() => {
+                                        const sf = computeFrameStyleEdits(selectedSingleFrameIndex);
+                                        let f = `hue-rotate(${sf.hue}deg) saturate(${sf.saturation}%) brightness(${sf.brightness}%) contrast(${sf.contrast}%) blur(${sf.blur}px) grayscale(${sf.grayscale}%) sepia(${sf.sepia}%)`;
+                                        if (sf.spread) {
+                                            f += ` drop-shadow(0 0 ${sf.spread}px rgba(0,0,0,0.5))`;
+                                        }
+                                        return f;
+                                    })(),
+                                    opacity: (singleFrameEdits[selectedSingleFrameIndex]?.opacity ?? 100) / 100,
+                                }}
+                            />
+                        ) : (
+                            <video
+                                src={url}
+                                ref={videoRef}
+                                controls
+                                draggable={false}
+                                onDragStart={(e) => e.preventDefault()}
+                                className="dinolabsIDEMediaContent"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    userSelect: 'none',
+                                    borderRadius: 'inherit',
+                                    transform: `scale(${flipX}, ${flipY})`,
+                                    filter: `
+                                        hue-rotate(${hueGlobal}deg)
+                                        saturate(${saturationGlobal}%)
+                                        brightness(${brightnessGlobal}%)
+                                        contrast(${contrastGlobal}%)
+                                        blur(${blurGlobal}px)
+                                        grayscale(${grayscaleGlobal}%)
+                                        sepia(${sepiaGlobal}%)
+                                        ${spreadGlobal ? `drop-shadow(0 0 ${spreadGlobal}px rgba(0,0,0,0.5))` : ''}
+                                    `,
+                                    opacity: opacityGlobal / 100
+                                }}
+                            />
+                        )}
                         {!isCropping && (actionMode === 'Idle') && (
                             <>
                                 <div
@@ -1633,15 +2188,6 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 height: '100%',
                                 pointerEvents: (actionMode !== 'Idle') ? 'auto' : 'none',
                                 cursor: (actionMode === 'Drawing') ? 'crosshair' : (actionMode === 'Highlighting') ? 'pointer' : 'default',
-                                filter: `
-                                    hue-rotate(${hue}deg)
-                                    saturate(${saturation}%)
-                                    brightness(${brightness}%)
-                                    contrast(${contrast}%)
-                                    blur(${blur}px)
-                                    grayscale(${grayscale}%)
-                                    sepia(${sepia}%)
-                                `,
                                 transform: `scale(${flipX}, ${flipY})`,
                                 transformBox: 'fill-box',
                                 transformOrigin: 'center'
@@ -1650,7 +2196,7 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                             onMouseMove={handleSvgMouseMove}
                             onMouseUp={handleSvgMouseUp}
                         >
-                            {paths.map((p, idx) => (
+                            {getActivePaths().map((p, idx) => (
                                 <path
                                     key={idx}
                                     d={p.d}
@@ -1660,11 +2206,11 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                     strokeLinecap="round"
                                 />
                             ))}
-                            {tempPath && (
+                            {getActiveTempPath() && (
                                 <path
-                                    d={tempPath.d}
-                                    stroke={tempPath.color}
-                                    strokeWidth={tempPath.width}
+                                    d={getActiveTempPath().d}
+                                    stroke={getActiveTempPath().color}
+                                    strokeWidth={getActiveTempPath().width}
                                     fill="none"
                                     strokeLinecap="round"
                                 />
@@ -1673,61 +2219,100 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                     </div>
                 </div>
                 {showFrameBar && (
-                    <div className="dinolabsIDEVideoInputBottomBarFrameSupplement" ref={framesContainerRef}>
-                        {framesPanelMode === 'clip' && (
-                            <>
-                                <div
-                                    className="dinolabsIDEClipSliderTrack"
-                                    style={{
-                                        left: `${clipOverlayLeft}px`,
-                                        width: `${clipOverlayRight - clipOverlayLeft}px`,
-                                    }}
-                                />
-                                <div
-                                    className="dinolabsIDEClipSliderBar"
-                                    style={{ left: `${clipOverlayLeft - 5}px` }}
-                                    onMouseDown={handleMouseDownLeft}
-                                />
-                                <div
-                                    className="dinolabsIDEClipSliderBar"
-                                    style={{ left: `${clipOverlayRight - 5}px` }}
-                                    onMouseDown={handleMouseDownRight}
-                                />
-                            </>
-                        )}
-                        {frames.map((frame, idx) => (
+                    <>
+                        {framesPanelMode === 'single' ? (
                             <div
-                                key={idx}
-                                className="dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper"
-                                draggable={framesPanelMode === 'rearrange'}
-                                onDragStart={framesPanelMode === 'rearrange' ? (e) => handleDragStartFrame(e, idx) : undefined}
-                                onDragOver={framesPanelMode === 'rearrange' ? (e) => handleDragOverFrame(e, idx) : undefined}
-                                onDrop={framesPanelMode === 'rearrange' ? (e) => handleDropFrame(e, idx) : undefined}
-                                style={{
-                                    border: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
-                                        ? '0.2vh dashed rgba(31, 174, 245, 1)'
-                                        : 'none', 
-                                    backgroundColor: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
-                                        ? 'rgba(255,255,255,0.05)'
-                                        : 'rgba(255,255,255,0.0)', 
-                                }}
+                                className="dinolabsIDEVideoInputBottomBarFrameSupplement"
+                                ref={framesContainerRef}
                             >
-                                <img
+                              {frames.map((frame, idx) => (
+                                <div
+                                  key={idx}
+                                  className="dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper"
+                                  style={{
+                                    border: (selectedSingleFrameIndex === idx)
+                                      ? '0.2vh dashed rgba(31, 174, 245, 1)'
+                                      : 'none',
+                                    backgroundColor: (selectedSingleFrameIndex === idx)
+                                      ? 'rgba(255,255,255,0.05)'
+                                      : 'rgba(255,255,255,0.0)',
+                                  }}
+                                  onClick={() => {
+                                    setSelectedSingleFrameIndex(idx);
+                                  }}
+                                >
+                                  <img
                                     src={frame.dataUrl}
                                     alt={`Frame ${idx}`}
                                     className="dinolabsIDEVideoInputBottomBarFrameSupplementImage"
-                                    onClick={() => {
-                                        if (videoRef.current) {
-                                            videoRef.current.currentTime = frame.time;
-                                        }
-                                    }}
-                                />
-                                <span className="dinolabsIDEVideoInputBottomBarFrameSupplementImageText">
+                                  />
+                                  <span className="dinolabsIDEVideoInputBottomBarFrameSupplementImageText">
                                     {formatTime(frame.time)}
-                                </span>
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                        ))}
-                    </div>
+                        ) : (
+                            <div
+                                className="dinolabsIDEVideoInputBottomBarFrameSupplement"
+                                ref={framesContainerRef}
+                            >
+                                {framesPanelMode === 'clip' && (
+                                    <>
+                                        <div
+                                            className="dinolabsIDEClipSliderTrack"
+                                            style={{
+                                                left: `${clipOverlayLeft}px`,
+                                                width: `${clipOverlayRight - clipOverlayLeft}px`,
+                                            }}
+                                        />
+                                        <div
+                                            className="dinolabsIDEClipSliderBar"
+                                            style={{ left: `${clipOverlayLeft - 5}px` }}
+                                            onMouseDown={handleMouseDownLeft}
+                                        />
+                                        <div
+                                            className="dinolabsIDEClipSliderBar"
+                                            style={{ left: `${clipOverlayRight - 5}px` }}
+                                            onMouseDown={handleMouseDownRight}
+                                        />
+                                    </>
+                                )}
+                                {frames.map((frame, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="dinolabsIDEVideoInputBottomBarFrameSupplementImageWrapper"
+                                        draggable={framesPanelMode === 'rearrange'}
+                                        onDragStart={framesPanelMode === 'rearrange' ? (e) => handleDragStartFrame(e, idx) : undefined}
+                                        onDragOver={framesPanelMode === 'rearrange' ? (e) => handleDragOverFrame(e, idx) : undefined}
+                                        onDrop={framesPanelMode === 'rearrange' ? (e) => handleDropFrame(e, idx) : undefined}
+                                        style={{
+                                            border: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
+                                                ? '0.2vh dashed rgba(31, 174, 245, 1)'
+                                                : 'none',
+                                            backgroundColor: framesPanelMode === 'rearrange' && dropTargetIndex === idx && draggedFrameIndex !== idx
+                                                ? 'rgba(255,255,255,0.05)'
+                                                : 'rgba(255,255,255,0.0)',
+                                        }}
+                                        onClick={() => {
+                                            if (framesPanelMode === 'view' && videoRef.current) {
+                                                videoRef.current.currentTime = frame.time;
+                                            }
+                                        }}
+                                    >
+                                        <img
+                                            src={frame.dataUrl}
+                                            alt={`Frame ${idx}`}
+                                            className="dinolabsIDEVideoInputBottomBarFrameSupplementImage"
+                                        />
+                                        <span className="dinolabsIDEVideoInputBottomBarFrameSupplementImageText">
+                                            {formatTime(frame.time)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
                 <div className="dinolabsIDEVideoInputBottomBar">
                     <div className="dinolabsIDEVideoContentFlexBig">
@@ -1854,11 +2439,39 @@ function DinoLabsIDEVideoEditor({ fileHandle }) {
                                 </button>
                             </Tippy>
                         )}
+                        <Tippy content="Single Frame Edit" theme="tooltip-light">
+                            <button
+                                className="dinolabsIDEVideoButtonHelper"
+                                disabled={isCropping ? true : false}
+                                style={{
+                                    color: framesPanelMode === 'single' ? '#5C2BE2' : '#c0c0c0',
+                                    opacity: isCropping ? '0.6' : '1.0'
+                                }}
+                                onClick={handleSingleFrameMode}
+                            >
+                                <FontAwesomeIcon icon={faSquare} />
+                            </button>
+                        </Tippy>
+                        {framesPanelMode === 'single' && (
+                            <Tippy content="Reset Frame" theme="tooltip-light">
+                                <button
+                                    className="dinolabsIDEVideoButtonHelper"
+                                    disabled={isCropping ? true : false}
+                                    style={{
+                                        color: framesPanelMode === 'single' ? '#5C2BE2' : '#c0c0c0',
+                                        opacity: isCropping ? '0.6' : '1.0'
+                                    }}
+                                    onClick={() => resetSingleFrameEdits(selectedSingleFrameIndex)}
+                                >
+                                    <FontAwesomeIcon icon={faArrowsRotate} />
+                                </button>
+                            </Tippy>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
-  
+
 export default DinoLabsIDEVideoEditor;

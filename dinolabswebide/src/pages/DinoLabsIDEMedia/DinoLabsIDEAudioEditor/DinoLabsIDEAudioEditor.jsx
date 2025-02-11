@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import "../../styles/mainStyles/DinoLabsIDEMedia.css";
-import "../../styles/helperStyles/Slider.css";
-import "../../styles/helperStyles/Checkbox.css";
-import { showDialog } from "../DinoLabsIDEAlert.jsx";
+import "../../../styles/mainStyles/DinoLabsIDEMedia.css";
+import "../../../styles/helperStyles/Slider.css";
+import "../../../styles/helperStyles/Checkbox.css";
+import { showDialog } from "../../DinoLabsIDEAlert.jsx";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
