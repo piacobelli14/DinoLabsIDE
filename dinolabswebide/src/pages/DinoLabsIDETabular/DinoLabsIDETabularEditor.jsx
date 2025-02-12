@@ -14,6 +14,7 @@ import { showDialog } from "../DinoLabsIDEAlert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faArrowRightFromBracket,
+    faFilter,
     faSquareMinus,
     faSquarePlus
 } from "@fortawesome/free-solid-svg-icons";
@@ -209,6 +210,63 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
     const moreButtonRef = useRef(null);
     const insertModalRef = useRef(null);
     const insertButtonRef = useRef(null);
+    const [columnFilters, setColumnFilters] = useState({});
+
+    const filterOptions = useMemo(() => {
+        const options = {};
+        for (let c = 0; c < numCols; c++) {
+            const set = new Set();
+            for (const key in tableData) {
+                const [r, col] = key.split(",").map(Number);
+                if (col === c) {
+                    const value = tableData[key];
+                    if (value && value.trim() !== "") {
+                        set.add(value);
+                    }
+                }
+            }
+            options[c] = Array.from(set);
+        }
+        return options;
+    }, [tableData, numCols]);
+
+    const hasActiveFilter = useMemo(() => {
+        return Object.values(columnFilters).some(val => val !== "");
+    }, [columnFilters]);
+
+    const filteredRows = useMemo(() => {
+        if (!hasActiveFilter) {
+            return Array.from({ length: numRows }, (_, i) => i);
+        }
+        const result = [];
+        for (let r = 0; r < numRows; r++) {
+            let include = true;
+            for (const col in columnFilters) {
+                const filterVal = columnFilters[col];
+                if (filterVal) {
+                    const key = `${r},${col}`;
+                    const cellValue = tableData[key] || "";
+                    if (cellValue !== filterVal) {
+                        include = false;
+                        break;
+                    }
+                }
+            }
+            if (include) {
+                result.push(r);
+            }
+        }
+        return result;
+    }, [tableData, columnFilters, numRows, hasActiveFilter]);
+
+    const filteredRowHeightsCumulative = useMemo(() => {
+        const cumulative = [0];
+        for (let i = 0; i < filteredRows.length; i++) {
+            const actualRow = filteredRows[i];
+            cumulative.push(cumulative[i] + (rowHeights[actualRow] || DEFAULT_ROW_HEIGHT));
+        }
+        return cumulative;
+    }, [filteredRows, rowHeights]);
 
     const addRow = useCallback(() => {
         if (numRows < MAX_ROWS) {
@@ -1392,12 +1450,12 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         if (!autoSizerDims.height) return 0;
         return Math.ceil(autoSizerDims.height / DEFAULT_ROW_HEIGHT);
     }, [autoSizerDims.height]);
+    const effectiveRows = hasActiveFilter ? filteredRows.length : Math.max(numRows, minNeededRows);
     const effectiveCols = Math.max(numCols, minNeededCols);
-    const effectiveRows = Math.max(numRows, minNeededRows);
 
     const getRowHeight = (index) => {
-        if (index < rowHeights.length) return rowHeights[index];
-        return DEFAULT_ROW_HEIGHT;
+        const actualRow = filteredRows[index];
+        return rowHeights[actualRow] || DEFAULT_ROW_HEIGHT;
     };
 
     const getColWidth = (index) => {
@@ -1447,6 +1505,8 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             searchResults,
             currentResultIndex,
             selectionDrag,
+            filteredRows,
+            hasActiveFilter,
             handleCellMouseDown,
             handleCellMouseUp,
             handleCellDoubleClick,
@@ -1465,7 +1525,9 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             selection,
             searchResults,
             currentResultIndex,
-            selectionDrag
+            selectionDrag,
+            filteredRows,
+            hasActiveFilter
         ]
     );
 
@@ -1486,13 +1548,15 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             moveActiveCellHorizontally,
             moveActiveCellVertically,
             isCellInSelection,
-            isCellHighlightedBySearch
+            isCellHighlightedBySearch,
+            filteredRows
         } = data;
-        const key = `${rowIndex},${columnIndex}`;
+        const actualRowIndex = filteredRows[rowIndex];
+        const key = `${actualRowIndex},${columnIndex}`;
         const cellIsActive =
-            activeCell.row === rowIndex && activeCell.col === columnIndex;
-        const isSelected = isCellInSelection(rowIndex, columnIndex);
-        const searchHighlightStatus = isCellHighlightedBySearch(rowIndex, columnIndex);
+            activeCell.row === actualRowIndex && activeCell.col === columnIndex;
+        const isSelected = isCellInSelection(actualRowIndex, columnIndex);
+        const searchHighlightStatus = isCellHighlightedBySearch(actualRowIndex, columnIndex);
         const cellFormat = cellFormats[key] || {};
 
         let backgroundColor = cellFormat.backgroundColor || "transparent";
@@ -1533,8 +1597,8 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         if (
             selectionDrag.active &&
             selectionDrag.originalSelection &&
-            rowIndex >= selectionDrag.originalSelection.top &&
-            rowIndex <= selectionDrag.originalSelection.bottom &&
+            actualRowIndex >= selectionDrag.originalSelection.top &&
+            actualRowIndex <= selectionDrag.originalSelection.bottom &&
             columnIndex >= selectionDrag.originalSelection.left &&
             columnIndex <= selectionDrag.originalSelection.right
         ) {
@@ -1544,15 +1608,15 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
             };
         }
 
-        const cellValue = tableDataRef.current[`${rowIndex},${columnIndex}`] || "";
+        const cellValue = tableDataRef.current[`${actualRowIndex},${columnIndex}`] || "";
 
         return (
             <div
                 style={outerStyle}
                 className="dinolabsIDETableCell"
-                onMouseDown={(e) => handleCellMouseDown(rowIndex, columnIndex, e)}
-                onMouseUp={(e) => handleCellMouseUp(rowIndex, columnIndex, e)}
-                onDoubleClick={() => handleCellDoubleClick(rowIndex, columnIndex)}
+                onMouseDown={(e) => handleCellMouseDown(actualRowIndex, columnIndex, e)}
+                onMouseUp={(e) => handleCellMouseUp(actualRowIndex, columnIndex, e)}
+                onDoubleClick={() => handleCellDoubleClick(actualRowIndex, columnIndex)}
             >
                 {cellIsActive ? (
                     <div style={innerStyle}>
@@ -2210,28 +2274,40 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
     const overlayDynamicStyle = selection
         ? {
               width: sumRange(colWidths, selection.left, selection.right + 1),
-              height: sumRange(rowHeights, selection.top, selection.bottom + 1)
+              height: hasActiveFilter
+                ? filteredRowHeightsCumulative[filteredRows.indexOf(selection.bottom) + 1] -
+                  filteredRowHeightsCumulative[filteredRows.indexOf(selection.top)]
+                : sumRange(rowHeights, selection.top, selection.bottom + 1)
           }
         : {};
 
     useLayoutEffect(() => {
         if (selection && selectionOverlayRef.current) {
-            const newTop =
-                rowHeightsCumulative[selection.top] - scrollPos.current.top;
-            const newLeft =
-                colWidthsCumulative[selection.left] - scrollPos.current.left;
+            let newTop, newLeft, newHeight, newWidth;
+            if (hasActiveFilter) {
+                const startIndex = filteredRows.indexOf(selection.top);
+                const endIndex = filteredRows.indexOf(selection.bottom);
+                newTop = startIndex >= 0 ? filteredRowHeightsCumulative[startIndex] : 0;
+                newLeft = colWidthsCumulative[selection.left] - scrollPos.current.left;
+                newWidth = colWidthsCumulative[selection.right + 1] - colWidthsCumulative[selection.left];
+                newHeight =
+                    endIndex >= 0
+                        ? filteredRowHeightsCumulative[endIndex + 1] - filteredRowHeightsCumulative[startIndex]
+                        : 0;
+            } else {
+                newTop = rowHeightsCumulative[selection.top] - scrollPos.current.top;
+                newLeft = colWidthsCumulative[selection.left] - scrollPos.current.left;
+                newWidth = colWidthsCumulative[selection.right + 1] - colWidthsCumulative[selection.left];
+                newHeight = rowHeightsCumulative[selection.bottom + 1] - rowHeightsCumulative[selection.top];
+            }
             Object.assign(selectionOverlayRef.current.style, {
                 top: newTop + "px",
                 left: newLeft + "px",
-                width:
-                    colWidthsCumulative[selection.right + 1] -
-                    colWidthsCumulative[selection.left] + "px",
-                height:
-                    rowHeightsCumulative[selection.bottom + 1] -
-                    rowHeightsCumulative[selection.top] + "px"
+                width: newWidth + "px",
+                height: newHeight + "px"
             });
         }
-    }, [selection, rowHeightsCumulative, colWidthsCumulative]);
+    }, [selection, rowHeightsCumulative, colWidthsCumulative, filteredRowHeightsCumulative, filteredRows, hasActiveFilter]);
 
     return (
         <div
@@ -2427,21 +2503,69 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                                             selection.top === 0 &&
                                             selection.bottom === numRows - 1;
                                         return (
-                                            <div
-                                                key={colIndex}
-                                                className="dinolabsIDETableColumnHeaderCell"
+                                            <div className="dinolabsIDEColumnHeaderCellWrapper"
                                                 style={{
                                                     left: leftOffset,
                                                     width,
-                                                    backgroundColor: isSelectedHeader
-                                                        ? "#444"
-                                                        : "#333"
                                                 }}
-                                                onMouseDown={(e) =>
-                                                    handleColumnHeaderMouseDown(e, colIndex)
-                                                }
                                             >
-                                                {label}
+                                                <div
+                                                    key={colIndex}
+                                                    className="dinolabsIDETableColumnHeaderCell"
+                                                    style={{
+                                                        backgroundColor: isSelectedHeader
+                                                            ? "#444"
+                                                            : "#333"
+                                                    }}
+                                                    onMouseDown={(e) =>
+                                                        handleColumnHeaderMouseDown(e, colIndex)
+                                                    }
+                                                >
+                                                    {label}
+                                                </div>
+
+                                                <div className="dinolabsIDETabularHeaderFilterContainer">
+                                                    <div className="dinolabsIDETabularHeaderFilterIcon"
+                                                        style={{
+                                                            backgroundColor: isSelectedHeader
+                                                                ? "#444"
+                                                                : "#313131"
+                                                        }}
+                                                    > 
+                                                        <FontAwesomeIcon icon={faFilter}/>
+                                                    </div>
+                                                    <select
+                                                        className="dinolabsIDETabularHeaderFilter"
+                                                        value={columnFilters[colIndex] || ""}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            setColumnFilters((prev) => ({
+                                                                ...prev,
+                                                                [colIndex]: value
+                                                            }));
+                                                        }}
+                                                        style={{
+                                                            backgroundColor: isSelectedHeader
+                                                                ? "#444"
+                                                                : "#292929"
+                                                        }}
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <FontAwesomeIcon icon={faFilter}/>
+                                                        <option value="">All</option>
+                                                        {(filterOptions[colIndex] || []).map(
+                                                            (option) => (
+                                                                <option
+                                                                    key={option}
+                                                                    value={option}
+                                                                >
+                                                                    {option}
+                                                                </option>
+                                                            )
+                                                        )}
+                                                    </select>
+                                                </div>
                                             </div>
                                         );
                                     }
@@ -2460,33 +2584,28 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                                 style={{
                                     height:
                                         effectiveRows <= rowHeights.length
-                                            ? rowHeightsCumulative[effectiveRows]
-                                            : rowHeightsCumulative[rowHeights.length] +
+                                            ? filteredRowHeightsCumulative[effectiveRows]
+                                            : filteredRowHeightsCumulative[filteredRowHeightsCumulative.length - 1] +
                                               (effectiveRows - rowHeights.length) *
                                                   DEFAULT_ROW_HEIGHT
                                 }}
                             >
                                 {Array.from({ length: effectiveRows }).map(
-                                    (_, rowIndex) => {
+                                    (_, gridRowIndex) => {
+                                        const actualRow = filteredRows[gridRowIndex];
                                         const topOffset =
-                                            rowIndex < rowHeights.length
-                                                ? rowHeightsCumulative[rowIndex]
-                                                : rowHeightsCumulative[rowHeights.length] +
-                                                  (rowIndex - rowHeights.length) *
-                                                      DEFAULT_ROW_HEIGHT;
+                                            filteredRowHeightsCumulative[gridRowIndex];
                                         const height =
-                                            rowIndex < rowHeights.length
-                                                ? rowHeights[rowIndex]
-                                                : DEFAULT_ROW_HEIGHT;
+                                            rowHeights[actualRow] || DEFAULT_ROW_HEIGHT;
                                         const isSelectedRow =
                                             selection &&
-                                            rowIndex >= selection.top &&
-                                            rowIndex <= selection.bottom &&
+                                            actualRow >= selection.top &&
+                                            actualRow <= selection.bottom &&
                                             selection.left === 0 &&
                                             selection.right === numCols - 1;
                                         return (
                                             <div
-                                                key={rowIndex}
+                                                key={gridRowIndex}
                                                 className="dinolabsIDETableRowHeaderCell"
                                                 style={{
                                                     top: topOffset,
@@ -2496,10 +2615,10 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                                                         : "#2c2c2c"
                                                 }}
                                                 onMouseDown={(e) =>
-                                                    handleRowHeaderMouseDown(e, rowIndex)
+                                                    handleRowHeaderMouseDown(e, actualRow)
                                                 }
                                             >
-                                                {rowIndex + 1}
+                                                {actualRow + 1}
                                             </div>
                                         );
                                     }
