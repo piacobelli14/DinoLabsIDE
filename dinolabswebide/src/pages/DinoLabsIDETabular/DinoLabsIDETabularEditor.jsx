@@ -1795,6 +1795,7 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
                 pushToUndoStack(tableDataRef.current);
                 setTableData(newData);
                 setSelection(newSelection);
+                setActiveCell({ row: null, col: null });
                 return {
                     active: false,
                     startX: 0,
