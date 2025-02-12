@@ -1,4 +1,3 @@
-
 import React from "react";
 import "../../styles/mainStyles/DinoLabsIDEContent.css";
 import Tippy from "@tippyjs/react";
@@ -30,7 +29,11 @@ import {
     faEraser,
     faDroplet,
     faHighlighter,
-    faEllipsisV
+    faEllipsisV,
+    faSortAlphaDown,
+    faSortAlphaUp,
+    faSortNumericDown,
+    faSortNumericUp
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DinoLabsIDETabularEditorToolbar({
@@ -96,6 +99,26 @@ export default function DinoLabsIDETabularEditorToolbar({
 
     const closeAllMenusInternal = () => {
         setOpenMenu(null);
+        closeAllMenus();
+    };
+
+    const handleSortAZ = () => {
+        execCommand("sortAZ");
+        closeAllMenus();
+    };
+
+    const handleSortZA = () => {
+        execCommand("sortZA");
+        closeAllMenus();
+    };
+
+    const handleSortNumericAsc = () => {
+        execCommand("sortNumericAsc");
+        closeAllMenus();
+    };
+
+    const handleSortNumericDesc = () => {
+        execCommand("sortNumericDesc");
         closeAllMenus();
     };
 
@@ -251,7 +274,6 @@ export default function DinoLabsIDETabularEditorToolbar({
                                 Edit
                             </button>
                         </Tippy>
-
                         <Tippy
                             visible={openModal === "format"}
                             onClickOutside={() => closeAllMenusInternal()}
@@ -343,7 +365,7 @@ export default function DinoLabsIDETabularEditorToolbar({
                         </Tippy>
                         <Tippy
                             visible={openModal === "insert"}
-                            onClickOutside={() => closeAllMenusInternal()}
+                            onClickOutside={() => closeAllMenus()}
                             placement="bottom"
                             interactive
                             className="context-menu-tippy-vertical"
@@ -423,6 +445,66 @@ export default function DinoLabsIDETabularEditorToolbar({
                                 ref={insertButtonRef}
                             >
                                 Insert
+                            </button>
+                        </Tippy>
+                        <Tippy
+                            visible={openModal === "filter"}
+                            onClickOutside={() => closeAllMenus()}
+                            placement="bottom"
+                            interactive
+                            className="context-menu-tippy-vertical"
+                            content={
+                                openModal === "filter" && (
+                                    <div className="dinolabsIDEEditingContextMenuVertical">
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onMouseDown={() => { callActionAndBlur(handleSortAZ); }}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSortAlphaDown} />
+                                                Sort A–Z
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onMouseDown={() => { callActionAndBlur(handleSortZA); }}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSortAlphaUp} />
+                                                Sort Z–A
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onMouseDown={() => { callActionAndBlur(handleSortNumericAsc); }}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSortNumericDown} />
+                                                Sort 0–9
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="dinolabsIDEEditingContextMenuButtonWrapper"
+                                            onMouseDown={() => { callActionAndBlur(handleSortNumericDesc); }}
+                                        >
+                                            <span>
+                                                <FontAwesomeIcon icon={faSortNumericUp} />
+                                                Sort 9–0
+                                            </span>
+                                        </button>
+                                    </div>
+                                )
+                            }
+                        >
+                            <button
+                                className="dinolabsIDEOperationsButton"
+                                onMouseDown={e => {
+                                    e.preventDefault();
+                                    storeSelection();
+                                }}
+                                onClick={() => toggleModal("filter")}
+                            >
+                                Filter
                             </button>
                         </Tippy>
                     </div>

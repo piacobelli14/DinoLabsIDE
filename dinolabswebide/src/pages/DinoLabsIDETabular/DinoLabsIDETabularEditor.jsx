@@ -315,7 +315,79 @@ export default function DinoLabsIDETabularEditor({ fileHandle, keyBinds }) {
         });
     };
 
+    const sortTableByColumn = (command) => {
+        const sel = selection || storedSelectionRef.current || { top: 0, left: 0, bottom: numRows - 1, right: numCols - 1 };
+        const sortCol = sel.left; 
+        const startRow = sel.top;
+        const endRow = sel.bottom;
+        const rowsToSort = [];
+        for (let i = startRow; i <= endRow; i++) {
+            rowsToSort.push(i);
+        }
+        rowsToSort.sort((a, b) => {
+            const aVal = tableData[`${a},${sortCol}`];
+            const bVal = tableData[`${b},${sortCol}`];
+            const aEmpty = (aVal === null || aVal === undefined || aVal === "");
+            const bEmpty = (bVal === null || bVal === undefined || bVal === "");
+            if (aEmpty && !bEmpty) return 1; 
+            if (!aEmpty && bEmpty) return -1;
+            if (aEmpty && bEmpty) return 0;
+            if (command === "sortAZ" || command === "sortZA") {
+                const aStr = aVal.toString().toLowerCase();
+                const bStr = bVal.toString().toLowerCase();
+                if (aStr < bStr) return command === "sortAZ" ? -1 : 1;
+                if (aStr > bStr) return command === "sortAZ" ? 1 : -1;
+                return 0;
+            } else {
+                const digitRegex = /^\d+$/;
+                let aNum, bNum;
+                if (digitRegex.test(aVal) && digitRegex.test(bVal)) {
+                    aNum = BigInt(aVal);
+                    bNum = BigInt(bVal);
+                } else {
+                    aNum = parseFloat(aVal);
+                    bNum = parseFloat(bVal);
+                }
+                if (aNum < bNum) return command === "sortNumericAsc" ? -1 : 1;
+                if (aNum > bNum) return command === "sortNumericAsc" ? 1 : -1;
+                return 0;
+            }
+        });
+        const newTableData = { ...tableData };
+        const newCellFormats = { ...cellFormats };
+        for (let idx = 0; idx < rowsToSort.length; idx++) {
+            const sortedRow = rowsToSort[idx];
+            const targetRow = startRow + idx;
+            for (let col = 0; col < numCols; col++) {
+                const oldKey = `${sortedRow},${col}`;
+                const newKey = `${targetRow},${col}`;
+                if (tableData.hasOwnProperty(oldKey)) {
+                    newTableData[newKey] = tableData[oldKey];
+                } else {
+                    delete newTableData[newKey];
+                }
+                if (cellFormats.hasOwnProperty(oldKey)) {
+                    newCellFormats[newKey] = cellFormats[oldKey];
+                } else {
+                    delete newCellFormats[newKey];
+                }
+            }
+        }
+        pushToUndoStack(tableData);
+        setTableData(newTableData);
+        setCellFormats(newCellFormats);
+    };
+
     const execCommand = (command) => {
+        if (
+            command === "sortAZ" ||
+            command === "sortZA" ||
+            command === "sortNumericAsc" ||
+            command === "sortNumericDesc"
+        ) {
+            sortTableByColumn(command);
+            return;
+        }
         const sel = selection || storedSelectionRef.current || {
             top: 0,
             left: 0,
