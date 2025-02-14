@@ -31,7 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DinoLabsPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBEC15A22D5D8A19009A0FAF /* Dino Labs Playground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dino Labs Playground.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlaygroundApp.swift; sourceTree = "<group>"; };
 		CBEC15A72D5D8A19009A0FAF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -78,7 +78,7 @@
 		CBEC15A32D5D8A19009A0FAF /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */,
+				CBEC15A22D5D8A19009A0FAF /* Dino Labs Playground.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -211,9 +211,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CBEC15A12D5D8A19009A0FAF /* DinoLabsPlayground */ = {
+		CBEC15A12D5D8A19009A0FAF /* Dino Labs Playground */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "DinoLabsPlayground" */;
+			buildConfigurationList = CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "Dino Labs Playground" */;
 			buildPhases = (
 				CBEC159E2D5D8A19009A0FAF /* Sources */,
 				CBEC159F2D5D8A19009A0FAF /* Frameworks */,
@@ -223,9 +223,9 @@
 			);
 			dependencies = (
 			);
-			name = DinoLabsPlayground;
+			name = "Dino Labs Playground";
 			productName = DinoLabsPlayground;
-			productReference = CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */;
+			productReference = CBEC15A22D5D8A19009A0FAF /* Dino Labs Playground.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -243,7 +243,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "DinoLabsPlayground" */;
+			buildConfigurationList = CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "Dino Labs Playground" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -256,7 +256,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CBEC15A12D5D8A19009A0FAF /* DinoLabsPlayground */,
+				CBEC15A12D5D8A19009A0FAF /* Dino Labs Playground */,
 			);
 		};
 /* End PBXProject section */
@@ -497,7 +497,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "DinoLabsPlayground" */ = {
+		CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "Dino Labs Playground" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CBEC15AE2D5D8A1D009A0FAF /* Debug */,
@@ -506,7 +506,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "DinoLabsPlayground" */ = {
+		CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "Dino Labs Playground" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CBEC15B12D5D8A1D009A0FAF /* Debug */,

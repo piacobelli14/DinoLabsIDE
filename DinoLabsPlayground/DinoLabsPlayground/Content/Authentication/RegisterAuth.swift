@@ -122,7 +122,6 @@ struct RegisterAuth: View {
                                     .padding(.bottom, 4)
                                     .frame(width: geometry.size.width * 0.32)
                                     
-                                    // Email
                                     AuthenticationTextField(placeholder: "Email", text: $email)
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .foregroundColor(.black)
@@ -142,7 +141,6 @@ struct RegisterAuth: View {
                                         .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
                                         .padding(.bottom, 4)
                                     
-                                    // Phone
                                     AuthenticationTextField(placeholder: "Phone", text: $phone)
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .foregroundColor(.black)
@@ -165,7 +163,6 @@ struct RegisterAuth: View {
                                             self.phone = formatPhoneNumber(newValue)
                                         }
                                     
-                                    // Username
                                     AuthenticationTextField(placeholder: "Username", text: $username)
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .foregroundColor(.black)
@@ -243,7 +240,6 @@ struct RegisterAuth: View {
                                     .shadow(color: .gray.opacity(0.5), radius: 1, x: 0, y: 0)
                                 
                                 VStack {
-                                    // New Password Field
                                     ZStack(alignment: .trailing) {
                                         AuthenticationTextField(placeholder: "New Password", text: $newPassword, isSecure: !newPasswordVisible)
                                             .id(newPasswordVisible ? "visible" : "secure")
@@ -278,7 +274,6 @@ struct RegisterAuth: View {
                                         .padding(.trailing, 8)
                                     }
                                     
-                                    // Confirm Password Field
                                     ZStack(alignment: .trailing) {
                                         AuthenticationTextField(placeholder: "Confirm Password", text: $confirmPassword, isSecure: !confirmPasswordVisible)
                                             .id(confirmPasswordVisible ? "visible" : "secure")
@@ -313,7 +308,6 @@ struct RegisterAuth: View {
                                         .padding(.trailing, 8)
                                     }
                                     
-                                    // Create Account Button (styled like the reset button)
                                     AuthenticationButtonMain(action: {
                                         handlePassword()
                                     })
@@ -365,13 +359,8 @@ struct RegisterAuth: View {
             }
         }
     }
-    
-    // MARK: - Helper Functions
-    
     private func formatPhoneNumber(_ value: String) -> String {
-        // Remove all non-digit characters
         let numericValue = value.filter { "0123456789".contains($0) }
-        // Format as (XXX) XXX-XXXX if possible
         if numericValue.count >= 10 {
             let areaCode = numericValue.prefix(3)
             let middle = numericValue.dropFirst(3).prefix(3)
@@ -382,13 +371,11 @@ struct RegisterAuth: View {
     }
     
     private func handleRegister() {
-        // Validate that required fields are not empty
         guard !firstName.isEmpty, !lastName.isEmpty, !email.isEmpty, !username.isEmpty, !phone.isEmpty else {
             errorMessage = "Please fill in all fields."
             return
         }
         
-        // Validate email format
         let emailRegex = "\\S+@\\S+\\.\\S+"
         let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         if !emailTest.evaluate(with: email) {
@@ -396,7 +383,6 @@ struct RegisterAuth: View {
             return
         }
         
-        // Validate phone number format
         let phoneRegex = "^\\(\\d{3}\\) \\d{3}-\\d{4}$"
         let phoneTest = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
         if !phoneTest.evaluate(with: phone) {
@@ -447,7 +433,6 @@ struct RegisterAuth: View {
     }
     
     private func handlePassword() {
-        // Validate new password requirements
         let hasUpperCase = newPassword.rangeOfCharacter(from: .uppercaseLetters) != nil
         let hasLowerCase = newPassword.rangeOfCharacter(from: .lowercaseLetters) != nil
         let hasNumber = newPassword.rangeOfCharacter(from: .decimalDigits) != nil
@@ -480,7 +465,6 @@ struct RegisterAuth: View {
             return
         }
         
-        // Convert profileImage to a base64 string if available
         var imageBase64: String = ""
         if let image = profileImage {
             if let tiffData = image.tiffRepresentation,

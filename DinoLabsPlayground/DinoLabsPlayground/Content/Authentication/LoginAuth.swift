@@ -349,7 +349,7 @@ struct LoginAuth: View {
                         if let decodedToken = decodeJWT(token: loginResponse.token) {
                             self.authenticatedUsername = decodedToken.userid
                             self.authenticatedOrgID = decodedToken.orgid
-                            self.currentView = .LoginAuth
+                            self.currentView = .DinoLabsPlayground
                         } else {
                             self.errorMessage = "Failed to decode token."
                         }
