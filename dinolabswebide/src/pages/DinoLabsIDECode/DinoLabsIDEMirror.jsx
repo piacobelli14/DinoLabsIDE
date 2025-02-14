@@ -1,11 +1,12 @@
 import React, {
-  forwardRef,
-  useRef,
-  useImperativeHandle,
-  useEffect,
   useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 
+// (Helper functions such as saveSelection and restoreSelection remain unchanged)
 function saveSelection(containerEl) {
   if (!containerEl) return null;
   return {
@@ -21,45 +22,6 @@ function restoreSelection(containerEl, savedSel) {
   containerEl.selectionEnd = savedSel.end;
   containerEl.scrollTop = scrollTop;
   containerEl.scrollLeft = scrollLeft;
-}
-
-function offsetToLineCol(text, offset) {
-  let idx = 0;
-  const lines = text.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    if (offset <= idx + lines[i].length) {
-      return { line: i, col: offset - idx };
-    }
-    idx += lines[i].length + 1;
-  }
-  return {
-    line: lines.length - 1,
-    col: lines[lines.length - 1].length,
-  };
-}
-
-function lineColToOffset(text, line, col) {
-  const lines = text.split("\n");
-  let sum = 0;
-  for (let i = 0; i < line && i < lines.length; i++) {
-    sum += lines[i].length + 1;
-  }
-  return sum + Math.min(col, lines[line].length);
-}
-
-function unifyIndentation(line) {
-  let i = 0;
-  while (i < line.length && (line[i] === " " || line[i] === "\t")) {
-    i++;
-  }
-  const leading = line.slice(0, i);
-  const rest = line.slice(i);
-
-  let spaceCount = 0;
-  for (let j = 0; j < leading.length; j++) {
-    spaceCount += leading[j] === "\t" ? 4 : 1;
-  }
-  return " ".repeat(spaceCount) + rest;
 }
 
 const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
@@ -91,6 +53,18 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
     y: 0,
   });
   const commandChainRef = useRef(Promise.resolve());
+
+  // New state to track the visible range for virtualization.
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
+
+  function updateVisibleRange() {
+    if (!textareaRef.current) return;
+    const scrollTop = textareaRef.current.scrollTop;
+    const clientHeight = textareaRef.current.clientHeight;
+    const start = Math.floor(scrollTop / lineHeight);
+    const count = Math.ceil(clientHeight / lineHeight) + 5; // add a small overscan
+    setVisibleRange({ start, end: start + count });
+  }
 
   function queueCommand(fn) {
     commandChainRef.current = commandChainRef.current.then(fn);
@@ -482,11 +456,13 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
     }
   }
 
+  // Updated scroll handler now calls updateVisibleRange as well.
   function handleTextAreaScroll() {
     if (highlightRef.current && textareaRef.current) {
       highlightRef.current.scrollTop = textareaRef.current.scrollTop;
       highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
     }
+    updateVisibleRange();
   }
 
   function handleTextAreaChange() {
@@ -588,32 +564,42 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
     };
   }, [viewCode, handleInput, setViewCode]);
 
+  // --- VIRTUALIZATION OF LINE NUMBERS AND CODE ---
+  // Instead of rendering all lines at once, we compute the visible portion.
   const splitted = highlightedCode.includes("<br")
     ? highlightedCode.split(/<br\s*\/?>/gi)
     : highlightedCode.split(/\r\n|\r|\n/);
-  const lines = splitted.map((l) => (l === "" ? "\u200B" : l));
-
-  const lineElements = lines.map((lineHtml, i) => {
-    const lineNumber = i + 1;
-    const hasError = lintErrors.some((e) => e.line === lineNumber);
-    return (
-      <div
-        key={`line-${lineNumber}-${editorId}`}
-        data-line-number={lineNumber}
-        className={`codeLine${hasError ? " errorHighlight" : ""}`}
-        style={{
-          fontSize: `${fontSize}px`,
-          lineHeight: `${lineHeight}px`,
-        }}
-      >
-        <div className="lineNumberMarginWrapper">{lineNumber}</div>
-        <div
-          className="lineEditorWrapper"
-          dangerouslySetInnerHTML={{ __html: lineHtml + "\n" }}
-        />
-      </div>
-    );
-  });
+  const allLines = splitted.map((l) => (l === "" ? "\u200B" : l));
+  const totalLines = allLines.length;
+  const visibleLines = allLines.slice(visibleRange.start, visibleRange.end);
+  const virtualizedLineElements = (
+    <>
+      <div style={{ height: visibleRange.start * lineHeight }} />
+      {visibleLines.map((lineHtml, index) => {
+        const lineNumber = visibleRange.start + index + 1;
+        const hasError = lintErrors.some((e) => e.line === lineNumber);
+        return (
+          <div
+            key={`line-${lineNumber}-${editorId}`}
+            data-line-number={lineNumber}
+            className={`codeLine${hasError ? " errorHighlight" : ""}`}
+            style={{
+              fontSize: `${fontSize}px`,
+              lineHeight: `${lineHeight}px`,
+            }}
+          >
+            <div className="lineNumberMarginWrapper">{lineNumber}</div>
+            <div
+              className="lineEditorWrapper"
+              dangerouslySetInnerHTML={{ __html: lineHtml + "\n" }}
+            />
+          </div>
+        );
+      })}
+      <div style={{ height: (totalLines - visibleRange.end) * lineHeight }} />
+    </>
+  );
+  // --- END VIRTUALIZATION ---
 
   function doPasteAtCursor() {
     const sel = saveSelection(textareaRef.current);
@@ -713,7 +699,7 @@ const DinoLabsIDEMirror = forwardRef(function DinoLabsIDEMirror(
       className="scriptEditorContainer"
     >
       <div className="scriptEditorSubContainer">
-        {lineElements}
+        {virtualizedLineElements}
         <pre
           ref={highlightRef}
           style={{

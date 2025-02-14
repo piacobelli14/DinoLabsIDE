@@ -3,7 +3,6 @@ import "../../styles/mainStyles/DinoLabsIDEContent.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import DinoLabsIDEColorPicker from "../DinoLabsIDEColorPicker.jsx";
 import {
     faSave,

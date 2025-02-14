@@ -980,4 +980,16 @@
         width: 100%; 
         height: 100%; 
     }
+
+    .dinolabsIDEFunctionEditingInput {
+        width: 300px; 
+        height: 50px; 
+        resize: false; 
+        box-sizing: border-box;
+        padding: 1vw; 
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+    }
 }

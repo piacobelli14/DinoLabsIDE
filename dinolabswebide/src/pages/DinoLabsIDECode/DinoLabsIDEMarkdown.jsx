@@ -5,6 +5,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useMemo,
+  useDeferredValue,
 } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
@@ -25,7 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DinoLabsIDEMirror from "./DinoLabsIDEMirror";
-import { syntaxHighlight, escapeRegExp } from "./DinoLabsIDEParser";
+import { syntaxHighlight, escapeRegExp, escapeHtml } from "./DinoLabsIDEParser";
 import useAuth from "../../UseAuth";
 import { lintPython } from "./DinoLabsIDELint/DinoLabsIDELintPython.jsx";
 import { lintTypeScript } from "./DinoLabsIDELint/DinoLabsIDELintTypeScript.jsx";
@@ -116,7 +117,7 @@ const DinoLabsIDEMarkdown = forwardRef(
     const editorId = useRef(generateEditorId()).current;
     const [fullCode, setFullCode] = useState("");
     const [viewCode, setViewCode] = useState("");
-    const [highlightedCode, setHighlightedCode] = useState("");
+    // Removed highlightedCode state and its updater effect.
     const [currentLanguage, setCurrentLanguage] = useState(
       detectedLanguage || "Unknown"
     );
@@ -142,6 +143,24 @@ const DinoLabsIDEMarkdown = forwardRef(
     const [editorHeight, setEditorHeight] = useState("70%");
     const [consoleHeight, setConsoleHeight] = useState("30%");
     const isResizingRef = useRef(false);
+
+    // ─── DEFERRED SYNTAX HIGHLIGHTING ───────────────────────────────
+    // Instead of updating highlighting immediately, we defer the heavy computation.
+    const deferredViewCode = useDeferredValue(viewCode, { timeoutMs: 200 });
+    const deferredSearchTerm = useDeferredValue(searchTerm, { timeoutMs: 200 });
+    const computedHighlightedCode = useMemo(() => {
+      if (currentLanguage === "Unknown") {
+        return escapeHtml(deferredViewCode).replace(/\n/g, "<br/>");
+      } else {
+        return syntaxHighlight(
+          deferredViewCode,
+          currentLanguage.toLowerCase(),
+          deferredSearchTerm,
+          isCaseSensitiveSearch
+        );
+      }
+    }, [deferredViewCode, currentLanguage, deferredSearchTerm, isCaseSensitiveSearch]);
+    // ─────────────────────────────────────────────────────────────────
 
     const handleMouseDown = (e) => {
       e.preventDefault();
@@ -256,24 +275,6 @@ const DinoLabsIDEMarkdown = forwardRef(
         mirrorRef.current.setContent(fileContent || "");
       }
     }, [fileContent, forceOpen]);
-
-    useEffect(() => {
-      if (currentLanguage === "Unknown") {
-        const escaped = viewCode
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-        setHighlightedCode(escaped);
-      } else {
-        const highlighted = syntaxHighlight(
-          viewCode,
-          currentLanguage.toLowerCase(),
-          searchTerm,
-          isCaseSensitiveSearch
-        );
-        setHighlightedCode(highlighted);
-      }
-    }, [viewCode, currentLanguage, searchTerm, isCaseSensitiveSearch]);
 
     useEffect(() => {
       const lang = currentLanguage.toLowerCase();
@@ -898,7 +899,7 @@ const DinoLabsIDEMarkdown = forwardRef(
                 setViewCode={setViewCode}
                 handleInput={handleInput}
                 handleKeyDown={handleKeyDown}
-                highlightedCode={highlightedCode}
+                highlightedCode={computedHighlightedCode}
                 fontSize={fontSize}
                 lineHeight={lineHeight}
                 editorId={editorId}
@@ -914,7 +915,7 @@ const DinoLabsIDEMarkdown = forwardRef(
             />
             <div
               className="codeConsoleWrapper"
-              style={{ height: consoleHeight}}
+              style={{ height: consoleHeight }}
             >
               {(
                 currentLanguage.toLowerCase() === "python" ||

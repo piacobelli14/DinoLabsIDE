@@ -1,0 +1,521 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */; };
+		CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A72D5D8A19009A0FAF /* ContentView.swift */; };
+		CBEC15AA2D5D8A1D009A0FAF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */; };
+		CBEC15AD2D5D8A1D009A0FAF /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15AC2D5D8A1D009A0FAF /* Preview Assets.xcassets */; };
+		CBEC15BF2D5D8FC7009A0FAF /* DinoLabsPlayground.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */; };
+		CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */; };
+		CBEC15C32D5D9015009A0FAF /* DinoLabsIDEAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */; };
+		CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */; };
+		CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */; };
+		CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */; };
+		CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */; };
+		CBEC15CD2D5D91A8009A0FAF /* StructManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */; };
+		CBEC15CF2D5D9226009A0FAF /* ViewControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15CE2D5D9226009A0FAF /* ViewControl.swift */; };
+		CBEC15D22D5D978B009A0FAF /* SolarSystemBackground.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15D12D5D978B009A0FAF /* SolarSystemBackground.mp4 */; };
+		CBEC15D62D5E5CFA009A0FAF /* AuthenticationTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15D52D5E5CFA009A0FAF /* AuthenticationTextField.swift */; };
+		CBEC15D82D5E64C7009A0FAF /* AuthenticationButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15D72D5E64C7009A0FAF /* AuthenticationButtonMain.swift */; };
+		CBEC15DA2D5E7205009A0FAF /* HoverHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */; };
+		CBEC15DC2D5E806E009A0FAF /* ClickHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */; };
+		CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */; };
+		CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */; };
+		CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DinoLabsPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlaygroundApp.swift; sourceTree = "<group>"; };
+		CBEC15A72D5D8A19009A0FAF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CBEC15AC2D5D8A1D009A0FAF /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlayground.swift; sourceTree = "<group>"; };
+		CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsColorPicker.swift; sourceTree = "<group>"; };
+		CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsIDEAlert.swift; sourceTree = "<group>"; };
+		CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginAuth.swift; sourceTree = "<group>"; };
+		CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionManager.swift; sourceTree = "<group>"; };
+		CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
+		CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
+		CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructManager.swift; sourceTree = "<group>"; };
+		CBEC15CE2D5D9226009A0FAF /* ViewControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControl.swift; sourceTree = "<group>"; };
+		CBEC15D12D5D978B009A0FAF /* SolarSystemBackground.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = SolarSystemBackground.mp4; sourceTree = "<group>"; };
+		CBEC15D32D5E5C96009A0FAF /* DinoLabsPlayground.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DinoLabsPlayground.entitlements; sourceTree = "<group>"; };
+		CBEC15D52D5E5CFA009A0FAF /* AuthenticationTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationTextField.swift; sourceTree = "<group>"; };
+		CBEC15D72D5E64C7009A0FAF /* AuthenticationButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationButtonMain.swift; sourceTree = "<group>"; };
+		CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverHelper.swift; sourceTree = "<group>"; };
+		CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickHelper.swift; sourceTree = "<group>"; };
+		CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetAuth.swift; sourceTree = "<group>"; };
+		CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterAuth.swift; sourceTree = "<group>"; };
+		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CBEC159F2D5D8A19009A0FAF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CBEC15992D5D8A19009A0FAF = {
+			isa = PBXGroup;
+			children = (
+				CBEC15A42D5D8A19009A0FAF /* DinoLabsPlayground */,
+				CBEC15A32D5D8A19009A0FAF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CBEC15A32D5D8A19009A0FAF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CBEC15A42D5D8A19009A0FAF /* DinoLabsPlayground */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15D32D5E5C96009A0FAF /* DinoLabsPlayground.entitlements */,
+				CBEC15B32D5D8E96009A0FAF /* Managers */,
+				CBEC15B52D5D8EA9009A0FAF /* Helpers */,
+				CBEC15B62D5D8EB2009A0FAF /* Protocols */,
+				CBEC15B82D5D8F45009A0FAF /* Content */,
+				CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */,
+				CBEC15A72D5D8A19009A0FAF /* ContentView.swift */,
+				CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */,
+				CBEC15D12D5D978B009A0FAF /* SolarSystemBackground.mp4 */,
+				CBEC15AB2D5D8A1D009A0FAF /* Preview Content */,
+			);
+			path = DinoLabsPlayground;
+			sourceTree = "<group>";
+		};
+		CBEC15AB2D5D8A1D009A0FAF /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15AC2D5D8A1D009A0FAF /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		CBEC15B32D5D8E96009A0FAF /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */,
+				CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */,
+				CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */,
+				CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */,
+				CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		CBEC15B52D5D8EA9009A0FAF /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */,
+				CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		CBEC15B62D5D8EB2009A0FAF /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15CE2D5D9226009A0FAF /* ViewControl.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		CBEC15B72D5D8EC9009A0FAF /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15D42D5E5CDF009A0FAF /* AuthenticationHelpers */,
+				CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */,
+				CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */,
+				CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		CBEC15B82D5D8F45009A0FAF /* Content */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15BD2D5D8FAF009A0FAF /* Text */,
+				CBEC15BC2D5D8FA2009A0FAF /* Tabular */,
+				CBEC15BB2D5D8F9D009A0FAF /* Media */,
+				CBEC15BA2D5D8F96009A0FAF /* Code */,
+				CBEC15B92D5D8F8F009A0FAF /* Account */,
+				CBEC15B72D5D8EC9009A0FAF /* Authentication */,
+				CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */,
+				CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */,
+				CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */,
+			);
+			path = Content;
+			sourceTree = "<group>";
+		};
+		CBEC15B92D5D8F8F009A0FAF /* Account */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Account;
+			sourceTree = "<group>";
+		};
+		CBEC15BA2D5D8F96009A0FAF /* Code */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Code;
+			sourceTree = "<group>";
+		};
+		CBEC15BB2D5D8F9D009A0FAF /* Media */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Media;
+			sourceTree = "<group>";
+		};
+		CBEC15BC2D5D8FA2009A0FAF /* Tabular */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tabular;
+			sourceTree = "<group>";
+		};
+		CBEC15BD2D5D8FAF009A0FAF /* Text */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Text;
+			sourceTree = "<group>";
+		};
+		CBEC15D42D5E5CDF009A0FAF /* AuthenticationHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CBEC15D52D5E5CFA009A0FAF /* AuthenticationTextField.swift */,
+				CBEC15D72D5E64C7009A0FAF /* AuthenticationButtonMain.swift */,
+			);
+			path = AuthenticationHelpers;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CBEC15A12D5D8A19009A0FAF /* DinoLabsPlayground */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "DinoLabsPlayground" */;
+			buildPhases = (
+				CBEC159E2D5D8A19009A0FAF /* Sources */,
+				CBEC159F2D5D8A19009A0FAF /* Frameworks */,
+				CBEC15A02D5D8A19009A0FAF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DinoLabsPlayground;
+			productName = DinoLabsPlayground;
+			productReference = CBEC15A22D5D8A19009A0FAF /* DinoLabsPlayground.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CBEC159A2D5D8A19009A0FAF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					CBEC15A12D5D8A19009A0FAF = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "DinoLabsPlayground" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CBEC15992D5D8A19009A0FAF;
+			productRefGroup = CBEC15A32D5D8A19009A0FAF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CBEC15A12D5D8A19009A0FAF /* DinoLabsPlayground */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CBEC15A02D5D8A19009A0FAF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBEC15AD2D5D8A1D009A0FAF /* Preview Assets.xcassets in Resources */,
+				CBEC15AA2D5D8A1D009A0FAF /* Assets.xcassets in Resources */,
+				CBEC15D22D5D978B009A0FAF /* SolarSystemBackground.mp4 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CBEC159E2D5D8A19009A0FAF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBEC15BF2D5D8FC7009A0FAF /* DinoLabsPlayground.swift in Sources */,
+				CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */,
+				CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */,
+				CBEC15D82D5E64C7009A0FAF /* AuthenticationButtonMain.swift in Sources */,
+				CBEC15DA2D5E7205009A0FAF /* HoverHelper.swift in Sources */,
+				CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */,
+				CBEC15DC2D5E806E009A0FAF /* ClickHelper.swift in Sources */,
+				CBEC15CD2D5D91A8009A0FAF /* StructManager.swift in Sources */,
+				CBEC15D62D5E5CFA009A0FAF /* AuthenticationTextField.swift in Sources */,
+				CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */,
+				CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */,
+				CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */,
+				CBEC15C32D5D9015009A0FAF /* DinoLabsIDEAlert.swift in Sources */,
+				CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */,
+				CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */,
+				CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */,
+				CBEC15CF2D5D9226009A0FAF /* ViewControl.swift in Sources */,
+				CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CBEC15AE2D5D8A1D009A0FAF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CBEC15AF2D5D8A1D009A0FAF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CBEC15B12D5D8A1D009A0FAF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=macosx*]" = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = DinoLabsPlayground/DinoLabsPlayground.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"DinoLabsPlayground/Preview Content\"";
+				DEVELOPMENT_TEAM = 3UP33MD4NA;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nightingale.DinoLabsPlayground;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CBEC15B22D5D8A1D009A0FAF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=macosx*]" = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = DinoLabsPlayground/DinoLabsPlayground.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"DinoLabsPlayground/Preview Content\"";
+				DEVELOPMENT_TEAM = 3UP33MD4NA;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nightingale.DinoLabsPlayground;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CBEC159D2D5D8A19009A0FAF /* Build configuration list for PBXProject "DinoLabsPlayground" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CBEC15AE2D5D8A1D009A0FAF /* Debug */,
+				CBEC15AF2D5D8A1D009A0FAF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CBEC15B02D5D8A1D009A0FAF /* Build configuration list for PBXNativeTarget "DinoLabsPlayground" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CBEC15B12D5D8A1D009A0FAF /* Debug */,
+				CBEC15B22D5D8A1D009A0FAF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CBEC159A2D5D8A19009A0FAF /* Project object */;
+}
