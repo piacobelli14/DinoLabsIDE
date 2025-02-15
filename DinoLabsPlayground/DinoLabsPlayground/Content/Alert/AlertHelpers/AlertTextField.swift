@@ -1,5 +1,5 @@
 //
-//  AuthenticationTextField.swift
+//  AlertTextField.swift
 //
 //  Created by Peter Iacobelli on 2/13/25.
 //
@@ -7,7 +7,7 @@
 import SwiftUI
 import AppKit
 
-struct AuthenticationTextField: NSViewRepresentable {
+struct AlertTextField: NSViewRepresentable {
     var placeholder: String
     @Binding var text: String
     var isSecure: Bool = false
@@ -28,7 +28,7 @@ struct AuthenticationTextField: NSViewRepresentable {
             secureField.isEditable = true
             secureField.isSelectable = true
             secureField.font = .systemFont(ofSize: 12)
-            secureField.textColor = .black
+            secureField.textColor = .white
             textField = secureField
         } else {
             let normalField = ClickableNSTextField()
@@ -39,7 +39,7 @@ struct AuthenticationTextField: NSViewRepresentable {
             normalField.isEditable = true
             normalField.isSelectable = true
             normalField.font = .systemFont(ofSize: 12)
-            normalField.textColor = .black
+            normalField.textColor = .white
             textField = normalField
         }
         
@@ -65,9 +65,9 @@ struct AuthenticationTextField: NSViewRepresentable {
     }
     
     class Coordinator: NSObject, NSTextFieldDelegate {
-        var parent: AuthenticationTextField
+        var parent: AlertTextField
         
-        init(_ parent: AuthenticationTextField) {
+        init(_ parent: AlertTextField) {
             self.parent = parent
         }
         

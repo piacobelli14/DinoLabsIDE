@@ -1,13 +1,14 @@
 //
-//  AuthenticationButtonMain.swift
+//  MainButtonMain.swift
 //
-//  Created by Peter Iacobelli on 2/13/25.
+//  Created by Peter Iacobelli on 2/14/25.
 //
+
 
 import SwiftUI
 import AppKit
 
-struct AuthenticationButtonMain: NSViewRepresentable {
+struct MainButtonMain: NSViewRepresentable {
     let action: () -> Void
 
     func makeCoordinator() -> Coordinator {

@@ -1,6 +1,5 @@
 //
 //  ViewPortManager.swift
-//  DinoLabsPlayground
 //
 //  Created by Peter Iacobelli on 2/13/25.
 //
@@ -10,6 +9,7 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let window = NSApplication.shared.windows.first {
+            window.setContentSize(NSSize(width: 1000, height: 700))
             window.minSize = NSSize(width: 800, height: 600)
             window.maxSize = NSSize(width: 1800, height: 1600)
             window.delegate = self

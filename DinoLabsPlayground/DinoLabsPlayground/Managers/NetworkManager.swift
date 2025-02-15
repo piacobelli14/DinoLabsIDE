@@ -1,6 +1,5 @@
 //
 //  NetworkMonitor.swift
-//  DinoLabsPlayground-macOS
 //
 //  Created by Peter Iacobelli on 2/12/25.
 //
@@ -11,10 +10,9 @@ import Network
 class NetworkMonitor: ObservableObject {
     private var monitor: NWPathMonitor
     private var queue: DispatchQueue
-    
-    @Published var isConnected: Bool = true
-    @Published var signalStrength: String = "Unknown"
-    @Published var downloadSpeed: String = "Unknown Mbps"
+    @Published var isConnected: Bool = false
+    @Published var signalStrength: String = "No Connection"
+    @Published var downloadSpeed: String = "Calculating..."
     
     private var speedTestURL: URL {
         URL(string: "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png")!
@@ -23,18 +21,28 @@ class NetworkMonitor: ObservableObject {
     init() {
         monitor = NWPathMonitor()
         queue = DispatchQueue.global(qos: .background)
-        
         monitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
                 self?.isConnected = (path.status == .satisfied)
                 self?.updateSignalStrength()
-                
                 if self?.isConnected == true {
                     self?.startSpeedTest()
+                } else {
+                    self?.downloadSpeed = "No Connection"
                 }
             }
         }
         monitor.start(queue: queue)
+        let currentPath = monitor.currentPath
+        DispatchQueue.main.async {
+            self.isConnected = (currentPath.status == .satisfied)
+            self.updateSignalStrength()
+            if self.isConnected {
+                self.startSpeedTest()
+            } else {
+                self.downloadSpeed = "No Connection"
+            }
+        }
     }
     
     deinit {
@@ -42,9 +50,13 @@ class NetworkMonitor: ObservableObject {
     }
     
     private func updateSignalStrength() {
-        // Since macOS doesn't have telephony information,
-        // we'll simply update based on connection status.
-        signalStrength = isConnected ? "Connected" : "No Connection"
+        if !isConnected {
+            signalStrength = "No Connection"
+        } else {
+            if downloadSpeed == "Calculating..." || downloadSpeed == "No Connection" {
+                signalStrength = "Connected"
+            }
+        }
     }
     
     private func startSpeedTest() {
@@ -59,12 +71,12 @@ class NetworkMonitor: ObservableObject {
             guard error == nil, let data = data else {
                 DispatchQueue.main.async {
                     self.downloadSpeed = "Error"
+                    self.signalStrength = "No Connection"
                 }
                 return
             }
             let elapsedTime = CFAbsoluteTimeGetCurrent() - startTime
             let speedMbps = Double(data.count) / elapsedTime / 1024 / 1024 * 8
-            
             DispatchQueue.main.async {
                 self.downloadSpeed = String(format: "%.2f Mbps", speedMbps)
                 self.updateSignalStrengthBasedOnSpeed(speedMbps)

@@ -7,13 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB5B4AD32D5FC0B100492970 /* AlertCheckField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */; };
+		CB5B4AD52D5FC0C700492970 /* AlertMenuField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */; };
+		CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */; };
+		CB5B4AD92D5FC68C00492970 /* InputFieldManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD82D5FC68C00492970 /* InputFieldManager.swift */; };
+		CB5B4ADB2D5FC6BF00492970 /* InputButtonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4ADA2D5FC6BE00492970 /* InputButtonManager.swift */; };
+		CB5B4ADE2D5FF8CE00492970 /* MainTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4ADD2D5FF8CE00492970 /* MainTextField.swift */; };
+		CB5B4AE02D5FF8E300492970 /* MainButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4ADF2D5FF8E300492970 /* MainButtonMain.swift */; };
+		CB5B4AE32D600C2900492970 /* NavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AE22D600C2900492970 /* NavigationBar.swift */; };
+		CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AE52D601B5F00492970 /* NavigatorButtonMain.swift */; };
+		CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */; };
 		CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */; };
 		CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A72D5D8A19009A0FAF /* ContentView.swift */; };
 		CBEC15AA2D5D8A1D009A0FAF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */; };
 		CBEC15AD2D5D8A1D009A0FAF /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15AC2D5D8A1D009A0FAF /* Preview Assets.xcassets */; };
 		CBEC15BF2D5D8FC7009A0FAF /* DinoLabsPlayground.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */; };
 		CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */; };
-		CBEC15C32D5D9015009A0FAF /* DinoLabsIDEAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */; };
+		CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C22D5D9015009A0FAF /* DinoLabsAlert.swift */; };
 		CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */; };
 		CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */; };
 		CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */; };
@@ -28,9 +38,20 @@
 		CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */; };
 		CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */; };
 		CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */; };
+		CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCheckField.swift; sourceTree = "<group>"; };
+		CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertMenuField.swift; sourceTree = "<group>"; };
+		CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertButtonMain.swift; sourceTree = "<group>"; };
+		CB5B4AD82D5FC68C00492970 /* InputFieldManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputFieldManager.swift; sourceTree = "<group>"; };
+		CB5B4ADA2D5FC6BE00492970 /* InputButtonManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputButtonManager.swift; sourceTree = "<group>"; };
+		CB5B4ADD2D5FF8CE00492970 /* MainTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTextField.swift; sourceTree = "<group>"; };
+		CB5B4ADF2D5FF8E300492970 /* MainButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainButtonMain.swift; sourceTree = "<group>"; };
+		CB5B4AE22D600C2900492970 /* NavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationBar.swift; sourceTree = "<group>"; wrapsLines = 0; };
+		CB5B4AE52D601B5F00492970 /* NavigatorButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigatorButtonMain.swift; sourceTree = "<group>"; };
+		CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundVideoHelper.swift; sourceTree = "<group>"; };
 		CBEC15A22D5D8A19009A0FAF /* Dino Labs Playground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dino Labs Playground.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlaygroundApp.swift; sourceTree = "<group>"; };
 		CBEC15A72D5D8A19009A0FAF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -38,7 +59,7 @@
 		CBEC15AC2D5D8A1D009A0FAF /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlayground.swift; sourceTree = "<group>"; };
 		CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsColorPicker.swift; sourceTree = "<group>"; };
-		CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsIDEAlert.swift; sourceTree = "<group>"; };
+		CBEC15C22D5D9015009A0FAF /* DinoLabsAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsAlert.swift; sourceTree = "<group>"; };
 		CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginAuth.swift; sourceTree = "<group>"; };
 		CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionManager.swift; sourceTree = "<group>"; };
 		CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
@@ -54,6 +75,7 @@
 		CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetAuth.swift; sourceTree = "<group>"; };
 		CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterAuth.swift; sourceTree = "<group>"; };
 		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
+		CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTextField.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +89,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CB5B4ADC2D5FF8B100492970 /* MainHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CB5B4ADD2D5FF8CE00492970 /* MainTextField.swift */,
+				CB5B4ADF2D5FF8E300492970 /* MainButtonMain.swift */,
+			);
+			path = MainHelpers;
+			sourceTree = "<group>";
+		};
+		CB5B4AE12D600C1100492970 /* Navigator */ = {
+			isa = PBXGroup;
+			children = (
+				CB5B4AE42D601B4100492970 /* NavigatorHelpers */,
+				CB5B4AE22D600C2900492970 /* NavigationBar.swift */,
+			);
+			path = Navigator;
+			sourceTree = "<group>";
+		};
+		CB5B4AE42D601B4100492970 /* NavigatorHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CB5B4AE52D601B5F00492970 /* NavigatorButtonMain.swift */,
+			);
+			path = NavigatorHelpers;
+			sourceTree = "<group>";
+		};
 		CBEC15992D5D8A19009A0FAF = {
 			isa = PBXGroup;
 			children = (
@@ -116,6 +164,8 @@
 				CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */,
 				CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */,
 				CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */,
+				CB5B4AD82D5FC68C00492970 /* InputFieldManager.swift */,
+				CB5B4ADA2D5FC6BE00492970 /* InputButtonManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -125,6 +175,7 @@
 			children = (
 				CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */,
 				CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */,
+				CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -151,15 +202,16 @@
 		CBEC15B82D5D8F45009A0FAF /* Content */ = {
 			isa = PBXGroup;
 			children = (
+				CB5B4AE12D600C1100492970 /* Navigator */,
 				CBEC15BD2D5D8FAF009A0FAF /* Text */,
 				CBEC15BC2D5D8FA2009A0FAF /* Tabular */,
 				CBEC15BB2D5D8F9D009A0FAF /* Media */,
 				CBEC15BA2D5D8F96009A0FAF /* Code */,
 				CBEC15B92D5D8F8F009A0FAF /* Account */,
 				CBEC15B72D5D8EC9009A0FAF /* Authentication */,
-				CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */,
+				CBF91B9A2D5EE67A00B0616D /* Main */,
+				CBF91B9B2D5EE68900B0616D /* Alert */,
 				CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */,
-				CBEC15C22D5D9015009A0FAF /* DinoLabsIDEAlert.swift */,
 			);
 			path = Content;
 			sourceTree = "<group>";
@@ -206,6 +258,35 @@
 				CBEC15D72D5E64C7009A0FAF /* AuthenticationButtonMain.swift */,
 			);
 			path = AuthenticationHelpers;
+			sourceTree = "<group>";
+		};
+		CBF91B9A2D5EE67A00B0616D /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				CB5B4ADC2D5FF8B100492970 /* MainHelpers */,
+				CBEC15BE2D5D8FC7009A0FAF /* DinoLabsPlayground.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		CBF91B9B2D5EE68900B0616D /* Alert */ = {
+			isa = PBXGroup;
+			children = (
+				CBF91B9C2D5EE70700B0616D /* AlertHelpers */,
+				CBEC15C22D5D9015009A0FAF /* DinoLabsAlert.swift */,
+			);
+			path = Alert;
+			sourceTree = "<group>";
+		};
+		CBF91B9C2D5EE70700B0616D /* AlertHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */,
+				CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */,
+				CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */,
+				CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */,
+			);
+			path = AlertHelpers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -281,22 +362,33 @@
 			files = (
 				CBEC15BF2D5D8FC7009A0FAF /* DinoLabsPlayground.swift in Sources */,
 				CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */,
+				CB5B4ADB2D5FC6BF00492970 /* InputButtonManager.swift in Sources */,
 				CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */,
+				CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */,
 				CBEC15D82D5E64C7009A0FAF /* AuthenticationButtonMain.swift in Sources */,
 				CBEC15DA2D5E7205009A0FAF /* HoverHelper.swift in Sources */,
 				CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */,
+				CB5B4AE02D5FF8E300492970 /* MainButtonMain.swift in Sources */,
 				CBEC15DC2D5E806E009A0FAF /* ClickHelper.swift in Sources */,
 				CBEC15CD2D5D91A8009A0FAF /* StructManager.swift in Sources */,
 				CBEC15D62D5E5CFA009A0FAF /* AuthenticationTextField.swift in Sources */,
 				CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */,
+				CB5B4AD32D5FC0B100492970 /* AlertCheckField.swift in Sources */,
+				CB5B4AD52D5FC0C700492970 /* AlertMenuField.swift in Sources */,
 				CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */,
+				CB5B4AD92D5FC68C00492970 /* InputFieldManager.swift in Sources */,
 				CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */,
-				CBEC15C32D5D9015009A0FAF /* DinoLabsIDEAlert.swift in Sources */,
+				CB5B4ADE2D5FF8CE00492970 /* MainTextField.swift in Sources */,
+				CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */,
+				CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */,
+				CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */,
 				CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */,
 				CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */,
 				CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */,
+				CB5B4AE32D600C2900492970 /* NavigationBar.swift in Sources */,
 				CBEC15CF2D5D9226009A0FAF /* ViewControl.swift in Sources */,
 				CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */,
+				CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,6 +1,5 @@
 //
 //  SecurityManager.swift
-//  DinoLabsPlayground
 //
 //  Created by Peter Iacobelli on 2/12/25.
 //
@@ -13,29 +12,36 @@ func saveTokenToKeychain(token: String) {
     let query = [
         kSecClass: kSecClassGenericPassword,
         kSecAttrAccount: "authToken",
+        kSecAttrService: Bundle.main.bundleIdentifier ?? "com.dinolabs.playground",
         kSecValueData: tokenData
     ] as CFDictionary
 
-    SecItemDelete(query)
-
-    SecItemAdd(query, nil)
+    deleteTokenFromKeychain()
+    
+    let status = SecItemAdd(query, nil)
+    if status != errSecSuccess {
+        print("Failed to save token to keychain: \(status)")
+    }
 }
 
 func loadTokenFromKeychain() -> String? {
     let query = [
         kSecClass: kSecClassGenericPassword,
         kSecAttrAccount: "authToken",
+        kSecAttrService: Bundle.main.bundleIdentifier ?? "com.dinolabs.playground",
         kSecReturnData: true,
         kSecMatchLimit: kSecMatchLimitOne
     ] as CFDictionary
 
-    var dataTypeRef: AnyObject? = nil
+    var dataTypeRef: AnyObject?
     let status = SecItemCopyMatching(query, &dataTypeRef)
 
     if status == errSecSuccess {
         if let tokenData = dataTypeRef as? Data {
             return String(data: tokenData, encoding: .utf8)
         }
+    } else if status != errSecItemNotFound {
+        print("Failed to load token from keychain: \(status)")
     }
     return nil
 }
@@ -43,10 +49,14 @@ func loadTokenFromKeychain() -> String? {
 func deleteTokenFromKeychain() {
     let query = [
         kSecClass: kSecClassGenericPassword,
-        kSecAttrAccount: "authToken"
+        kSecAttrAccount: "authToken",
+        kSecAttrService: Bundle.main.bundleIdentifier ?? "com.dinolabs.playground"
     ] as CFDictionary
 
     let status = SecItemDelete(query)
+    if status != errSecSuccess && status != errSecItemNotFound {
+        print("Failed to delete token from keychain: \(status)")
+    }
 }
 
 func isTokenExpired(token: String) -> Bool {
