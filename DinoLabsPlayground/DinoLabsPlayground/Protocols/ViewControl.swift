@@ -6,11 +6,11 @@
 
 import Foundation
 
-
-
 enum AppView {
+    case Loading
     case LoginAuth
     case ResetAuth
     case RegisterAuth
     case DinoLabsPlayground
 }
+

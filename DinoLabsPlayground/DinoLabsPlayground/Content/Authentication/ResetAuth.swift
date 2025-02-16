@@ -68,13 +68,13 @@ struct ResetAuth: View {
                                         Text("Password Reset")
                                             .font(.system(size: 32, weight: .bold))
                                             .foregroundColor(Color(hex: 0xf5f5f5))
-                                            .shadow(color: .white.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, geometry.size.height * 0.005)
                                         
                                         Text("Enter the email address associated with your Dino Labs account.")
                                             .font(.system(size: 12, weight: .semibold))
                                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                                            .shadow(color: .gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, 4)
                                         
                                         VStack {
@@ -87,16 +87,7 @@ struct ResetAuth: View {
                                                 .padding(.vertical, 14)
                                                 .padding(.horizontal, 14)
                                                 .frame(width: geometry.size.width * 0.32)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .fill(Color.white)
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 6)
-                                                        .stroke(Color.black, lineWidth: 2)
-                                                        .allowsHitTesting(false)
-                                                )
-                                                .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.5), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                 .padding(.bottom, 4)
                                                 .onSubmit {
                                                     handleEmail()
@@ -116,9 +107,7 @@ struct ResetAuth: View {
                                                 }
                                                     .allowsHitTesting(false)
                                             )
-                                            .background(Color(hex: 0x4E3270))
-                                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                                            .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.5), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -130,13 +119,13 @@ struct ResetAuth: View {
                                         Text("Password Reset")
                                             .font(.system(size: 32, weight: .bold))
                                             .foregroundColor(Color(hex: 0xf5f5f5))
-                                            .shadow(color: .white.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, geometry.size.height * 0.005)
                                         
                                         Text("Enter the six digit code that was sent to your email address.")
                                             .font(.system(size: 12, weight: .semibold))
                                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                                            .shadow(color: .gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, 4)
                                         
                                         VStack {
@@ -149,16 +138,7 @@ struct ResetAuth: View {
                                                 .padding(.vertical, 14)
                                                 .padding(.horizontal, 14)
                                                 .frame(width: geometry.size.width * 0.32)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .fill(Color.white)
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 6)
-                                                        .stroke(Color.black, lineWidth: 2)
-                                                        .allowsHitTesting(false)
-                                                )
-                                                .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                 .padding(.bottom, 4)
                                                 .onSubmit {
                                                     checkResetCode()
@@ -171,13 +151,13 @@ struct ResetAuth: View {
                                         Text("Reset Password")
                                             .font(.system(size: 32, weight: .bold))
                                             .foregroundColor(Color(hex: 0xf5f5f5))
-                                            .shadow(color: .white.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, geometry.size.height * 0.005)
                                         
                                         Text("Enter and confirm your new password.")
                                             .font(.system(size: 12, weight: .semibold))
                                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                                            .shadow(color: .gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                                            .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                             .padding(.bottom, 4)
                                         
                                         VStack {
@@ -192,16 +172,7 @@ struct ResetAuth: View {
                                                     .padding(.vertical, 14)
                                                     .padding(.horizontal, 14)
                                                     .frame(width: geometry.size.width * 0.32)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 8)
-                                                            .fill(Color.white)
-                                                    )
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 6)
-                                                            .stroke(Color.black, lineWidth: 2)
-                                                            .allowsHitTesting(false)
-                                                    )
-                                                    .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                    .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                     .padding(.bottom, 4)
                                                     .onSubmit {
                                                         handlePassword()
@@ -232,16 +203,7 @@ struct ResetAuth: View {
                                                     .padding(.vertical, 14)
                                                     .padding(.horizontal, 14)
                                                     .frame(width: geometry.size.width * 0.32)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 8)
-                                                            .fill(Color.white)
-                                                    )
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 6)
-                                                            .stroke(Color.black, lineWidth: 2)
-                                                            .allowsHitTesting(false)
-                                                    )
-                                                    .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                    .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                     .padding(.bottom, 4)
                                                     .onSubmit {
                                                         handlePassword()
@@ -273,11 +235,9 @@ struct ResetAuth: View {
                                                         .foregroundColor(.white)
                                                     Spacer()
                                                 }
-                                                    .allowsHitTesting(false)
+                                                .allowsHitTesting(false)
                                             )
-                                            .background(Color(hex: 0x4E3270))
-                                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                                            .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -300,9 +260,7 @@ struct ResetAuth: View {
                                     Spacer()
                                 }
                                 .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.7)
-                                .background(Color(hex: 0x171717).opacity(0.9))
-                                .cornerRadius(10)
-                                .shadow(color: .black.opacity(0.6), radius: 10, x: 0, y: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9), borderColor: Color.clear, borderWidth: 0, topLeft: 10, topRight: 10, bottomLeft: 10, bottomRight: 10, shadowColor: .black.opacity(0.6), shadowRadius: 15, shadowX: 0, shadowY: 0)
                                 Spacer()
                             }
                             Spacer()

@@ -27,7 +27,7 @@ struct MainTextField: NSViewRepresentable {
             secureField.focusRingType = .none
             secureField.isEditable = true
             secureField.isSelectable = true
-            secureField.font = .systemFont(ofSize: 12)
+            secureField.font = .systemFont(ofSize: 9, weight: .bold)
             secureField.textColor = .white
             textField = secureField
         } else {
@@ -38,7 +38,7 @@ struct MainTextField: NSViewRepresentable {
             normalField.focusRingType = .none
             normalField.isEditable = true
             normalField.isSelectable = true
-            normalField.font = .systemFont(ofSize: 12)
+            normalField.font = .systemFont(ofSize: 9, weight: .bold)
             normalField.textColor = .white
             textField = normalField
         }
@@ -46,7 +46,7 @@ struct MainTextField: NSViewRepresentable {
         let placeholderColor = NSColor(srgbRed: 192/255, green: 192/255, blue: 192/255, alpha: 1)
         let placeholderAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: placeholderColor,
-            .font: NSFont.systemFont(ofSize: 12)
+            .font: NSFont.systemFont(ofSize: 9, weight: .bold)
         ]
         textField.placeholderAttributedString = NSAttributedString(
             string: placeholder,

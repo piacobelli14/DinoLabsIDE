@@ -11,17 +11,29 @@ struct HoverEffectModifier: ViewModifier {
     let hoverForeground: Color?
     let hoverOpacity: Double?
     let scaleFactor: CGFloat?
+    let cursor: NSCursor?
     
     @State private var isHovered: Bool = false
     
     func body(content: Content) -> some View {
         content
+            .background(isHovered ? (hoverBackground ?? Color.clear) : Color.clear)
+            .overlay(
+                GeometryReader { proxy in
+                    if let cursor = cursor {
+                        Color.clear
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .overlay(
+                                CursorAreaRepresentable(cursor: cursor)
+                            )
+                    }
+                }
+            )
             .onHover { hovering in
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isHovered = hovering
                 }
             }
-            .background(isHovered ? (hoverBackground ?? Color.clear) : Color.clear)
             .foregroundColor(isHovered ? (hoverForeground ?? Color.primary) : Color.primary)
             .opacity(isHovered ? (hoverOpacity ?? 1.0) : 1.0)
             .scaleEffect(isHovered ? (scaleFactor ?? 1.0) : 1.0)
@@ -33,14 +45,16 @@ extension View {
         backgroundColor: Color? = nil,
         foregroundColor: Color? = nil,
         opacity: Double? = nil,
-        scale: CGFloat? = nil
+        scale: CGFloat? = nil,
+        cursor: NSCursor? = nil
     ) -> some View {
         self.modifier(
             HoverEffectModifier(
                 hoverBackground: backgroundColor,
                 hoverForeground: foregroundColor,
                 hoverOpacity: opacity,
-                scaleFactor: scale
+                scaleFactor: scale,
+                cursor: cursor
             )
         )
     }

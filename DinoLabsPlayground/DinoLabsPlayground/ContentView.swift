@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var currentView: AppView = .LoginAuth
+    @State private var currentView: AppView = .Loading
     @State private var authenticatedUsername: String = ""
     @State private var authenticatedOrgID: String = ""
     @State private var isLoggedOut: Bool = false
@@ -16,6 +16,8 @@ struct ContentView: View {
     var body: some View {
         Group {
             switch currentView {
+            case .Loading:
+                ProgressView("Loading...")
             case .LoginAuth:
                 LoginAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
             case .ResetAuth:

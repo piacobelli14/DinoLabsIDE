@@ -1,9 +1,3 @@
-//
-//  ClickHelper.swift
-//
-//  Created by Peter Iacobelli on 2/13/25.
-//
-
 import SwiftUI
 
 struct ClickHelper: ViewModifier {
@@ -11,11 +5,24 @@ struct ClickHelper: ViewModifier {
     let clickForeground: Color?
     let clickOpacity: Double?
     let scaleFactor: CGFloat?
+    let cursor: NSCursor?
     
     @State private var isClicked: Bool = false
     
     func body(content: Content) -> some View {
         content
+            .background(isClicked ? (clickBackground ?? Color.clear) : Color.clear)
+            .overlay(
+                GeometryReader { proxy in
+                    if let cursor = cursor {
+                        Color.clear
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .overlay(
+                                CursorAreaRepresentable(cursor: cursor)
+                            )
+                    }
+                }
+            )
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
@@ -29,7 +36,6 @@ struct ClickHelper: ViewModifier {
                         }
                     }
             )
-            .background(isClicked ? (clickBackground ?? Color.clear) : Color.clear)
             .foregroundColor(isClicked ? (clickForeground ?? Color.primary) : Color.primary)
             .opacity(isClicked ? (clickOpacity ?? 1.0) : 1.0)
             .scaleEffect(isClicked ? (scaleFactor ?? 1.0) : 1.0)
@@ -41,14 +47,16 @@ extension View {
         backgroundColor: Color? = nil,
         foregroundColor: Color? = nil,
         opacity: Double? = nil,
-        scale: CGFloat? = nil
+        scale: CGFloat? = nil,
+        cursor: NSCursor? = nil
     ) -> some View {
         self.modifier(
             ClickHelper(
                 clickBackground: backgroundColor,
                 clickForeground: foregroundColor,
                 clickOpacity: opacity,
-                scaleFactor: scale
+                scaleFactor: scale,
+                cursor: cursor
             )
         )
     }

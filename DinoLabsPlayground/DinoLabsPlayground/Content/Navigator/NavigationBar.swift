@@ -20,7 +20,7 @@ struct NavigationBar: View {
             if isHamburger {
                 VStack(spacing: 0) {
                     Color.clear.frame(height: 50)
-                    Color.black.opacity(0.9)
+                    Color(hex:0x191919).opacity(0.9)
                         .edgesIgnoringSafeArea(.bottom)
                         .overlay(
                             VStack(spacing: 0) {
@@ -80,7 +80,7 @@ struct NavigationBar: View {
                     Text("Dino Labs Web IDE")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(hex: 0xf5f5f5))
-                        .shadow(color: Color.white.opacity(0.5), radius: 1, x: 0, y: 0)
+                        .shadow(color: Color.white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                 }
                 Spacer()
                 HStack {
@@ -97,19 +97,18 @@ struct NavigationBar: View {
                 }
                 .background(Color(hex: 0x222222))
                 .cornerRadius(5)
+                .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 5, topRight: 5, bottomLeft: 5, bottomRight: 5, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
                 .frame(width: 25, height: 25)
-                .shadow(color: Color.white.opacity(0.5), radius: 2, x: 0, y: 0)
                 .overlay(
                     Image(systemName: isHamburger ? "xmark" : "line.horizontal.3")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                        .shadow(color: Color.gray.opacity(0.5), radius: 1, x: 0, y: 0)
                         .allowsHitTesting(false)
                 )
             }
             .padding()
             .frame(height: 50)
-            .background(Color.black)
+            .background(Color(hex: 0x191919))
             .overlay(
                 Rectangle()
                     .frame(height: 0.5)
@@ -158,7 +157,7 @@ struct NavigationBar: View {
         
         let status = SecItemDelete(query)
         if status != errSecSuccess && status != errSecItemNotFound {
-            print("Failed to delete token from keychain: \(status)")
+            return
         }
         
         withAnimation {
@@ -171,26 +170,27 @@ struct NavigationBar: View {
 extension View {
     func applyPopoutButtonStyle(icon: String, text: String, width: CGFloat) -> some View {
         self
-            .background(Color(hex:0x111111))
-            .frame(width: width, height: 60)
+            .background(Color(hex:0x242424))
+            .containerHelper(backgroundColor: Color(hex:0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6)
+            .frame(width: width, height: 50)
             .overlay(
                 HStack {
                     Image(systemName: icon)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                        .shadow(color: Color.gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                        .shadow(color: Color.gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                         .allowsHitTesting(false)
                         .padding(.trailing, 8)
                     Text(text)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Color(hex: 0xced6dd))
-                        .shadow(color: Color.gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                        .shadow(color: Color.gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                         .allowsHitTesting(false)
                     Spacer()
                     Image(systemName: "arrow.up.forward")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                        .shadow(color: Color.gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                        .shadow(color: Color.gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                         .allowsHitTesting(false)
                 }
                 .padding(.horizontal, 20)

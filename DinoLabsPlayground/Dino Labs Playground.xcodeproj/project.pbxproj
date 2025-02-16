@@ -39,6 +39,8 @@
 		CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */; };
 		CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */; };
 		CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */; };
+		CBFDF9D32D612FD0008C580D /* CursorHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFDF9D22D612FD0008C580D /* CursorHelper.swift */; };
+		CBFDF9D52D614AF4008C580D /* ContainerHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +78,8 @@
 		CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterAuth.swift; sourceTree = "<group>"; };
 		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
 		CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTextField.swift; sourceTree = "<group>"; };
+		CBFDF9D22D612FD0008C580D /* CursorHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHelper.swift; sourceTree = "<group>"; };
+		CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -173,9 +177,11 @@
 		CBEC15B52D5D8EA9009A0FAF /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				CBFDF9D22D612FD0008C580D /* CursorHelper.swift */,
 				CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */,
 				CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */,
 				CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */,
+				CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -365,6 +371,7 @@
 				CB5B4ADB2D5FC6BF00492970 /* InputButtonManager.swift in Sources */,
 				CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */,
 				CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */,
+				CBFDF9D52D614AF4008C580D /* ContainerHelper.swift in Sources */,
 				CBEC15D82D5E64C7009A0FAF /* AuthenticationButtonMain.swift in Sources */,
 				CBEC15DA2D5E7205009A0FAF /* HoverHelper.swift in Sources */,
 				CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */,
@@ -377,6 +384,7 @@
 				CB5B4AD52D5FC0C700492970 /* AlertMenuField.swift in Sources */,
 				CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */,
 				CB5B4AD92D5FC68C00492970 /* InputFieldManager.swift in Sources */,
+				CBFDF9D32D612FD0008C580D /* CursorHelper.swift in Sources */,
 				CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */,
 				CB5B4ADE2D5FF8CE00492970 /* MainTextField.swift in Sources */,
 				CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */,

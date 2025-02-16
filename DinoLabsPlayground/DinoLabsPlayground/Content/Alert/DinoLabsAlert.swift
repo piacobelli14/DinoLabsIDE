@@ -99,8 +99,7 @@ struct DinoLabsAlert: View {
                             Text(title)
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(Color(hex: 0xf5f5f5))
-                                .shadow(color: .white.opacity(0.5),
-                                        radius: 1, x: 0, y: 0)
+                                .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                 .padding(.bottom, geometry.size.height * 0.005)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -111,8 +110,7 @@ struct DinoLabsAlert: View {
                         Text(message)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                            .shadow(color: .gray.opacity(0.5),
-                                    radius: 1, x: 0, y: 0)
+                            .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(width: geometry.size.width * 0.4)
@@ -139,16 +137,7 @@ struct DinoLabsAlert: View {
                             .padding(.vertical, 10)
                             .padding(.horizontal, 10)
                             .frame(minWidth: 250, maxWidth: 350, maxHeight: 35)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(hex: 0x222222))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .shadow(color: .white.opacity(0.6),
-                                            radius: 1, x: 0, y: 0)
-                            )
+                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
                             .padding(.bottom, 4)
                             
                         case "checkbox":
@@ -165,8 +154,7 @@ struct DinoLabsAlert: View {
                                 .truncationMode(.tail)
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
-                                .shadow(color: .gray.opacity(0.5),
-                                        radius: 1, x: 0, y: 0)
+                                .shadow(color: .gray.opacity(0.4), radius: 0.5, x: 0, y: 0)
                                 .fixedSize()
                                 .frame(maxWidth: 350, maxHeight: 35)
                                 Spacer()
@@ -193,16 +181,7 @@ struct DinoLabsAlert: View {
                             .padding(.vertical, 10)
                             .padding(.horizontal, 10)
                             .frame(minWidth: 250, maxWidth: 350, maxHeight: 35)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(hex: 0x222222))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .shadow(color: .white.opacity(0.6),
-                                            radius: 1, x: 0, y: 0)
-                            )
+                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
                             .padding(.bottom, 4)
                         }
                     }
@@ -223,9 +202,7 @@ struct DinoLabsAlert: View {
                                 .foregroundColor(.white)
                                 .allowsHitTesting(false)
                         )
-                        .background(Color(hex:0xAD6ADD))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .shadow(color: .white.opacity(1), radius: 2, x: 0, y: 0)
+                        .containerHelper(backgroundColor: Color(hex: 0xAD6ADD), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                         .hoverEffect(opacity: 0.5)
                         .clickEffect(opacity: 0.1)
                         
@@ -238,12 +215,10 @@ struct DinoLabsAlert: View {
                             .overlay(
                                 Text("Cancel")
                                     .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(Color(hex:0x191919))
+                                    .foregroundColor(Color(hex: 0x191919))
                                     .allowsHitTesting(false)
                             )
-                            .background(Color(hex:0xD8D8D8))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .shadow(color: .white.opacity(1), radius: 2, x: 0, y: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0xD8D8D8), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                             .hoverEffect(opacity: 0.5)
                             .clickEffect(opacity: 0.1)
                         }
@@ -255,12 +230,7 @@ struct DinoLabsAlert: View {
                 .padding(.vertical, geometry.size.height * 0.05)
                 .padding(.horizontal, geometry.size.width * 0.1)
                 .frame(minWidth: 300, maxWidth: 350)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(hex: 0x222222))
-                        .shadow(color: Color(hex:0xc1c1c1).opacity(0.2),
-                                radius: 6, x: 0, y: 0)
-                )
+                .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 10, topRight: 10, bottomLeft: 10, bottomRight: 10, shadowColor: .black.opacity(0.8), shadowRadius: 7.5, shadowX: 0, shadowY: 0)
             }
         )
     }

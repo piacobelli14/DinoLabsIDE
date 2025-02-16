@@ -69,13 +69,13 @@ struct LoginAuth: View {
                                     Text("Login to Dino Labs")
                                         .font(.system(size: 32, weight: .bold))
                                         .foregroundColor(Color(hex:0xf5f5f5))
-                                        .shadow(color: .white.opacity(0.5), radius: 1, x: 0, y: 0)
+                                        .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                         .padding(.bottom, geometry.size.height * 0.005)
                                     
                                     Text("Use your Dino Labs Credentials or create an account below.")
                                         .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(Color(hex:0xf5f5f5).opacity(0.6))
-                                        .shadow(color: .gray.opacity(0.5), radius: 1, x: 0, y: 0)
+                                        .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                     
                                     VStack {
                                         AuthenticationTextField(placeholder: "Email Address or Username", text: $email)
@@ -87,16 +87,7 @@ struct LoginAuth: View {
                                             .padding(.vertical, 14)
                                             .padding(.horizontal, 14)
                                             .frame(width: geometry.size.width * 0.32)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .fill(Color.white)
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(Color.black, lineWidth: 2)
-                                                    .allowsHitTesting(false)
-                                            )
-                                            .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                            .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 4)
                                             .onSubmit {
                                                 isEmail = true
@@ -119,15 +110,7 @@ struct LoginAuth: View {
                                                     .padding(.vertical, 14)
                                                     .padding(.horizontal, 14)
                                                     .frame(width: geometry.size.width * 0.32)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 8)
-                                                            .fill(Color.white)
-                                                    )
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 6)
-                                                            .stroke(Color.black, lineWidth: 2)
-                                                    )
-                                                    .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                    .containerHelper(backgroundColor: Color.white, borderColor: Color.black, borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                     .padding(.bottom, 4)
                                                     .onSubmit {
                                                         authenticateUser()
@@ -147,7 +130,6 @@ struct LoginAuth: View {
                                                     .padding(.trailing, 8)
                                                 }
                                                 
-                                                
                                                 AuthenticationButtonMain {
                                                     authenticateUser()
                                                 }
@@ -158,9 +140,7 @@ struct LoginAuth: View {
                                                         .foregroundColor(.white)
                                                         .allowsHitTesting(false)
                                                 )
-                                                .background(Color(hex:0x4E3270))
-                                                .clipShape(RoundedRectangle(cornerRadius: 6))
-                                                .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                                .containerHelper(backgroundColor: Color(hex:0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                 .padding(.bottom, 2)
                                                 .hoverEffect(opacity: 0.5)
                                                 .clickEffect(opacity: 0.1)
@@ -195,14 +175,8 @@ struct LoginAuth: View {
                                                     .padding(.horizontal, 14)
                                                     .allowsHitTesting(false)
                                             )
-                                            .hoverEffect(
-                                                opacity: 0.5,
-                                                scale: 1.05
-                                            )
-                                            .clickEffect(
-                                                opacity: 0.1
-                                            )
-                                            
+                                            .hoverEffect(opacity: 0.5, scale: 1.05)
+                                            .clickEffect(opacity: 0.1)
                                             
                                         } else {
                                             AuthenticationButtonMain {
@@ -224,9 +198,7 @@ struct LoginAuth: View {
                                                 }
                                                     .allowsHitTesting(false)
                                             )
-                                            .background(Color(hex:0x4E3270))
-                                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                                            .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                            .containerHelper(backgroundColor: Color(hex:0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -250,9 +222,7 @@ struct LoginAuth: View {
                                                 }
                                                     .allowsHitTesting(false)
                                             )
-                                            .background(Color(hex:0x232729))
-                                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                                            .shadow(color: .white.opacity(0.6), radius: 1, x: 0, y: 0)
+                                            .containerHelper(backgroundColor: Color(hex:0x232729), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -288,22 +258,15 @@ struct LoginAuth: View {
                                                     .padding(.horizontal, 14)
                                                     .allowsHitTesting(false)
                                             )
-                                            .hoverEffect(
-                                                opacity: 0.5,
-                                                scale: 1.05
-                                            )
-                                            .clickEffect(
-                                                opacity: 0.1
-                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.05)
+                                            .clickEffect(opacity: 0.1)
                                         }
                                     }
                                     .padding(.top, geometry.size.height * 0.02)
                                     Spacer()
                                 }
                                 .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.7)
-                                .background(Color(hex: 0x171717).opacity(0.9))
-                                .cornerRadius(10)
-                                .shadow(color: .black.opacity(0.6), radius: 10, x: 0, y: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9), borderColor: Color.clear, borderWidth: 0, topLeft: 10, topRight: 10, bottomLeft: 10, bottomRight: 10, shadowColor: .black.opacity(0.6), shadowRadius: 15, shadowX: 0, shadowY: 0)
                                 Spacer()
                             }
                             Spacer()
@@ -380,15 +343,11 @@ struct LoginAuth: View {
                 }
             default:
                 if let data = data {
-                    DispatchQueue.global(qos: .userInitiated).async {
+                    DispatchQueue.main.async {
                         if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
-                            DispatchQueue.main.async {
-                                self.errorMessage = errorResponse.message
-                            }
+                            self.errorMessage = errorResponse.message
                         } else {
-                            DispatchQueue.main.async {
-                                self.errorMessage = "An error occurred. Please try again."
-                            }
+                            self.errorMessage = "An error occurred. Please try again."
                         }
                     }
                 } else {

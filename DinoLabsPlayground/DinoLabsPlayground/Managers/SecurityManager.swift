@@ -20,7 +20,7 @@ func saveTokenToKeychain(token: String) {
     
     let status = SecItemAdd(query, nil)
     if status != errSecSuccess {
-        print("Failed to save token to keychain: \(status)")
+        return
     }
 }
 
@@ -41,7 +41,7 @@ func loadTokenFromKeychain() -> String? {
             return String(data: tokenData, encoding: .utf8)
         }
     } else if status != errSecItemNotFound {
-        print("Failed to load token from keychain: \(status)")
+        return
     }
     return nil
 }
@@ -55,7 +55,7 @@ func deleteTokenFromKeychain() {
 
     let status = SecItemDelete(query)
     if status != errSecSuccess && status != errSecItemNotFound {
-        print("Failed to delete token from keychain: \(status)")
+        return
     }
 }
 
