@@ -40,9 +40,7 @@ func loadTokenFromKeychain() -> String? {
         if let tokenData = dataTypeRef as? Data {
             return String(data: tokenData, encoding: .utf8)
         }
-    } else if status != errSecItemNotFound {
-        return
-    }
+    } 
     return nil
 }
 

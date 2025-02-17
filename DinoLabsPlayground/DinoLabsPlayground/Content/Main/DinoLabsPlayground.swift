@@ -158,6 +158,28 @@ struct DinoLabsPlayground: View {
         "git": "githubExtension"
     ]
     
+    /*Test Data*/
+    
+    @State private var sampleData: [DoughnutData] = [
+        DoughnutData(value: 1, name: "C"),
+        DoughnutData(value: 2, name: "Rust"),
+        DoughnutData(value: 3, name: "Swift"),
+        DoughnutData(value: 4, name: "Python"),
+        DoughnutData(value: 5, name: "Kotlin")
+    ]
+    
+    @State private var series1: [LineChartDataPoint] = (0..<30).map { i in
+        LineChartDataPoint(date: Calendar.current.date(byAdding: .day, value: i, to: Date())!,
+                           value: Double.random(in: 50...150))
+    }
+    @State private var series2: [LineChartDataPoint] = (0..<30).map { i in
+        LineChartDataPoint(date: Calendar.current.date(byAdding: .day, value: i, to: Date())!,
+                           value: Double.random(in: 100...200))
+    }
+    
+    /*End Test Data*/
+    
+    
     private func getIcon(for item: FileItem) -> String {
         if item.isDirectory {
             return "folder"
@@ -230,6 +252,7 @@ struct DinoLabsPlayground: View {
                     HStack(spacing: 0) {
                         VStack(spacing: 0) {
                             HStack {
+                                
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.05)
@@ -318,7 +341,7 @@ struct DinoLabsPlayground: View {
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.15)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0 * 1.5, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0 * 1.5, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
@@ -496,7 +519,7 @@ struct DinoLabsPlayground: View {
                                         topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                         shadowColor: .white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
                                     )
-                                    .padding(.bottom, 10)
+                                    .padding(.bottom, 6)
                                     
                                     HStack(spacing: 0) {
                                         MainTextField(placeholder: "Replace with...", text: $directoryItemSearch)
@@ -588,6 +611,12 @@ struct DinoLabsPlayground: View {
                                         Spacer()
                                         ProgressView()
                                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .padding(20)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .fill(Color.black.opacity(0.5))
+                                            )
+                                            .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 3)
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * leftPanelWidthRatio,
@@ -661,6 +690,31 @@ struct DinoLabsPlayground: View {
                             )
                             
                             HStack {
+                                HStack {
+                                    MainButtonMain {
+                                        
+                                    }
+                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(
+                                        Image(systemName: "person.circle")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                }
+                                .frame(height: (geometry.size.height - 50) * 0.05)
+                                .padding(.horizontal, 10)
+                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(width: 0.5)
+                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    alignment: .trailing
+                                )
+                                    
+                                Spacer()
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.05)
@@ -700,13 +754,101 @@ struct DinoLabsPlayground: View {
                             )
                             
                             VStack {
-                                Button("Show Alert Modal") {
+                                /*Button("Show Alert Modal") {
                                     alertTitle = "Alert Title"
                                     alertMessage = "Directory or File loaded. Now showing alert."
                                     alertInputs = [DinoLabsAlertInput(name: "Username", type: "text", defaultValue: "")]
                                     showCancelButton = true
                                     showAlert = true
+                                }*/
+                                Spacer()
+                                
+                                HStack {
+                                    Spacer()
+                                    
+                                    VStack {
+                                        
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
+                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                    .containerHelper(
+                                        backgroundColor: Color(hex:0x111111),
+                                        borderColor: Color.clear,
+                                        borderWidth: 0,
+                                        topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                        shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                    )
+                                    
+                                    Spacer()
+                                    
+                                    VStack {
+                                        
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
+                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                    .containerHelper(
+                                        backgroundColor: Color(hex:0x111111),
+                                        borderColor: Color.clear,
+                                        borderWidth: 0,
+                                        topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                        shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                    )
+                                    
+                                    Spacer()
                                 }
+                                .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
+                                .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                
+                                Spacer()
+                                
+                                HStack {
+                                    Spacer()
+                                    
+                                    VStack {
+                                        
+                                        LineChartView(series1Name: "Series 1",
+                                                             series1Data: series1,
+                                                             series2Name: "",
+                                                             series2Data: nil,
+                                                             showGrid: false)
+                                        
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
+                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                    .containerHelper(
+                                        backgroundColor: Color(hex:0x111111),
+                                        borderColor: Color.clear,
+                                        borderWidth: 0,
+                                        topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                        shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                    )
+                                    
+                                    Spacer()
+                                    
+                                    VStack {
+                                        
+                                        DoughnutPlot(cellType: "languageUsage",
+                                                     data: sampleData,
+                                                     organizationName: "",
+                                                     fontSizeMultiplier: 1.0)
+                                        
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
+                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                    .containerHelper(
+                                        backgroundColor: Color(hex:0x111111),
+                                        borderColor: Color.clear,
+                                        borderWidth: 0,
+                                        topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                        shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                    )
+                                    
+                                    Spacer()
+                                }
+                                .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
+                                .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                
+                                Spacer()
                             }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
                                    height: (geometry.size.height - 50) * 0.9)
@@ -719,6 +861,58 @@ struct DinoLabsPlayground: View {
                             )
                             
                             HStack {
+                                Spacer()
+                                
+                                HStack {
+                                    MainButtonMain {
+                                        
+                                    }
+                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(
+                                        Image(systemName: "magnifyingglass")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                    
+                                    MainButtonMain {
+                                        
+                                    }
+                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(
+                                        Image(systemName: "plus.magnifyingglass")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                    
+                                    MainButtonMain {
+                                        
+                                    }
+                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(
+                                        Image(systemName: "arrow.clockwise")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                }
+                                .frame(height: (geometry.size.height - 50) * 0.05)
+                                .padding(.horizontal, 10)
+                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(width: 0.5)
+                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    alignment: .leading
+                                )
+                                
                             }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
                                    height: (geometry.size.height - 50) * 0.05)

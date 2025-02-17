@@ -95,8 +95,6 @@ struct NavigationBar: View {
                 NavigatorButtonMain {
                     isHamburger.toggle()
                 }
-                .background(Color(hex: 0x222222))
-                .cornerRadius(5)
                 .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 5, topRight: 5, bottomLeft: 5, bottomRight: 5, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
                 .frame(width: 25, height: 25)
                 .overlay(
@@ -104,6 +102,7 @@ struct NavigationBar: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
                         .allowsHitTesting(false)
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                 )
             }
             .padding()

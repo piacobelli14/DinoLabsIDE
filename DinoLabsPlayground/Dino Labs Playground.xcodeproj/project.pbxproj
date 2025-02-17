@@ -25,7 +25,7 @@
 		CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */; };
 		CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C22D5D9015009A0FAF /* DinoLabsAlert.swift */; };
 		CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */; };
-		CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */; };
+		CBEC15C72D5D90F3009A0FAF /* DateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C62D5D90F3009A0FAF /* DateManager.swift */; };
 		CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */; };
 		CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */; };
 		CBEC15CD2D5D91A8009A0FAF /* StructManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */; };
@@ -39,6 +39,9 @@
 		CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */; };
 		CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */; };
 		CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */; };
+		CBFD7B6F2D624F6200418304 /* DoughnutHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */; };
+		CBFD7B712D62909900418304 /* LineHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFD7B702D62909900418304 /* LineHelper.swift */; };
+		CBFD7B732D62A42C00418304 /* ColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFD7B722D62A42C00418304 /* ColorManager.swift */; };
 		CBFDF9D32D612FD0008C580D /* CursorHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFDF9D22D612FD0008C580D /* CursorHelper.swift */; };
 		CBFDF9D52D614AF4008C580D /* ContainerHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */; };
 /* End PBXBuildFile section */
@@ -63,7 +66,7 @@
 		CBEC15C02D5D8FE0009A0FAF /* DinoLabsColorPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsColorPicker.swift; sourceTree = "<group>"; };
 		CBEC15C22D5D9015009A0FAF /* DinoLabsAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsAlert.swift; sourceTree = "<group>"; };
 		CBEC15C42D5D906F009A0FAF /* LoginAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginAuth.swift; sourceTree = "<group>"; };
-		CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionManager.swift; sourceTree = "<group>"; };
+		CBEC15C62D5D90F3009A0FAF /* DateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateManager.swift; sourceTree = "<group>"; };
 		CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
 		CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
 		CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructManager.swift; sourceTree = "<group>"; };
@@ -78,6 +81,9 @@
 		CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterAuth.swift; sourceTree = "<group>"; };
 		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
 		CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTextField.swift; sourceTree = "<group>"; };
+		CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughnutHelper.swift; sourceTree = "<group>"; };
+		CBFD7B702D62909900418304 /* LineHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineHelper.swift; sourceTree = "<group>"; };
+		CBFD7B722D62A42C00418304 /* ColorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorManager.swift; sourceTree = "<group>"; };
 		CBFDF9D22D612FD0008C580D /* CursorHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHelper.swift; sourceTree = "<group>"; };
 		CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -163,13 +169,14 @@
 		CBEC15B32D5D8E96009A0FAF /* Managers */ = {
 			isa = PBXGroup;
 			children = (
-				CBEC15C62D5D90F3009A0FAF /* ExtensionManager.swift */,
 				CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */,
 				CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */,
 				CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */,
 				CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */,
 				CB5B4AD82D5FC68C00492970 /* InputFieldManager.swift */,
 				CB5B4ADA2D5FC6BE00492970 /* InputButtonManager.swift */,
+				CBEC15C62D5D90F3009A0FAF /* DateManager.swift */,
+				CBFD7B722D62A42C00418304 /* ColorManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -177,6 +184,7 @@
 		CBEC15B52D5D8EA9009A0FAF /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				CBFD7B6D2D624F4E00418304 /* PlottingHelpers */,
 				CBFDF9D22D612FD0008C580D /* CursorHelper.swift */,
 				CBEC15D92D5E7205009A0FAF /* HoverHelper.swift */,
 				CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */,
@@ -295,6 +303,15 @@
 			path = AlertHelpers;
 			sourceTree = "<group>";
 		};
+		CBFD7B6D2D624F4E00418304 /* PlottingHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */,
+				CBFD7B702D62909900418304 /* LineHelper.swift */,
+			);
+			name = PlottingHelpers;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -385,16 +402,19 @@
 				CBEC15C92D5D9159009A0FAF /* SecurityManager.swift in Sources */,
 				CB5B4AD92D5FC68C00492970 /* InputFieldManager.swift in Sources */,
 				CBFDF9D32D612FD0008C580D /* CursorHelper.swift in Sources */,
-				CBEC15C72D5D90F3009A0FAF /* ExtensionManager.swift in Sources */,
+				CBEC15C72D5D90F3009A0FAF /* DateManager.swift in Sources */,
 				CB5B4ADE2D5FF8CE00492970 /* MainTextField.swift in Sources */,
 				CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */,
 				CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */,
 				CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */,
+				CBFD7B712D62909900418304 /* LineHelper.swift in Sources */,
+				CBFD7B732D62A42C00418304 /* ColorManager.swift in Sources */,
 				CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */,
 				CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */,
 				CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */,
 				CB5B4AE32D600C2900492970 /* NavigationBar.swift in Sources */,
 				CBEC15CF2D5D9226009A0FAF /* ViewControl.swift in Sources */,
+				CBFD7B6F2D624F6200418304 /* DoughnutHelper.swift in Sources */,
 				CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */,
 				CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */,
 			);
