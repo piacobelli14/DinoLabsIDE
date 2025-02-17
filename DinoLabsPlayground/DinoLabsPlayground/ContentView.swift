@@ -106,9 +106,11 @@ struct ContentView: View {
 
         if let username = dict["userid"] as? String {
             authenticatedUsername = username
+            UserDefaults.standard.set(username, forKey: "userID")
         }
         if let orgID = dict["orgid"] as? String {
             authenticatedOrgID = orgID
+            UserDefaults.standard.set(orgID, forKey: "orgID")
         }
         if let isAdmin = dict["isadmin"] as? Bool {
             auth.isAdmin = isAdmin
@@ -123,4 +125,5 @@ struct ContentView: View {
         }
         auth.token = token
     }
+
 }

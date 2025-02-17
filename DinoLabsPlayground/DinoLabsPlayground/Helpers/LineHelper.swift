@@ -7,29 +7,30 @@
 import SwiftUI
 import Combine
 
-struct LineChartDataPoint: Identifiable {
-    let id = UUID()
+struct LineChartDataPoint: Identifiable, Equatable {
+    var id: String { "\(date.timeIntervalSince1970)-\(value)" }
     let date: Date
     let value: Double
 }
 
 struct LineChartView: View {
     let series1Name: String
-    let series1Data: [LineChartDataPoint]
+    @Binding var series1Data: [LineChartDataPoint]
     let series2Name: String?
-    let series2Data: [LineChartDataPoint]?
+    @Binding var series2Data: [LineChartDataPoint]?
     let showGrid: Bool
     private let series1Color = Color(hex: 0x9b59b6)
     private let series2Color = Color(hex: 0x3498db)
     private let axisColor = Color.white.opacity(0.2)
     private let horizontalPadding: CGFloat = 15
-    private let verticalPadding: CGFloat = 30
+    private let verticalPadding: CGFloat = 25
     private let lineWidth: CGFloat = 3
     private let symbolSize: CGFloat = 8
     private let gridLineWidth: CGFloat = 1.5
     private let axisFontSize: CGFloat = 12
     @State private var combinedHoverData: (date: Date, series1Value: Double, series2Value: Double?, index: Int, availableCount: Int)? = nil
     @State private var hoverLocation: CGPoint = .zero
+    @State private var updateID = UUID()
     
     var body: some View {
         GeometryReader { geo in
@@ -85,10 +86,10 @@ struct LineChartView: View {
                     
                     LineTooltipWrapper(
                         content: LineTooltipView(date: hd.date,
-                                                     series1Name: series1Name,
-                                                     series1Value: hd.series1Value,
-                                                     series2Name: series2Name,
-                                                     series2Value: hd.series2Value),
+                                                 series1Name: series1Name,
+                                                 series1Value: hd.series1Value,
+                                                 series2Name: series2Name,
+                                                 series2Value: hd.series2Value),
                         containerSize: geo.size,
                         proposedPosition: CGPoint(x: tooltipX, y: tooltipY)
                     )
@@ -143,6 +144,10 @@ struct LineChartView: View {
         }
         .padding(.horizontal, horizontalPadding)
         .padding(.vertical, verticalPadding)
+        .id(updateID)
+        .onChange(of: series1Data) { _ in
+            updateID = UUID()
+        }
     }
     
     private func chartContent(geo: GeometryProxy) -> some View {
@@ -158,10 +163,12 @@ struct LineChartView: View {
         let minLabelSpacing: CGFloat = 50
         var displayedIndices: [Int] = []
         if count > 0 { displayedIndices.append(0) }
-        for i in 1..<count-1 {
-            if let last = displayedIndices.last,
-               xPositions[i] - xPositions[last] >= minLabelSpacing {
-                displayedIndices.append(i)
+        if count > 1 {
+            for i in 1..<(count - 1) {
+                if let last = displayedIndices.last,
+                   xPositions[i] - xPositions[last] >= minLabelSpacing {
+                    displayedIndices.append(i)
+                }
             }
         }
         if count > 1, displayedIndices.last != count - 1 {
@@ -208,7 +215,6 @@ struct LineChartView: View {
             }
         }
     }
-
     
     private func nearestDataPoint(to location: CGPoint,
                                   in size: CGSize,
@@ -272,8 +278,20 @@ struct LineAndAreaView: View {
                 }
                 .fill(lineColor.opacity(0.3))
                 
-                smoothedPath(for: points)
-                    .stroke(lineColor, style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round))
+                Group {
+                    let drawnPath = smoothedPath(for: points, alpha: 0.5)
+                    let hitTestCGPath = drawnPath.cgPath.copy(
+                        strokingWithWidth: lineWidth + 10,
+                        lineCap: .round,
+                        lineJoin: .round,
+                        miterLimit: 10
+                    )
+                    let hitTestPath = Path(hitTestCGPath)
+                    
+                    drawnPath
+                        .stroke(lineColor, style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round))
+                        .contentShape(hitTestPath)
+                }
             }
         }
     }
@@ -300,16 +318,6 @@ private func smoothedPath(for points: [CGPoint], alpha: CGFloat = 0.5) -> Path {
             x: p2.x - alpha * (p3.x - p1.x) * b2,
             y: p2.y - alpha * (p3.y - p1.y) * b2)
         path.addCurve(to: p2, control1: cp1, control2: cp2)
-    }
-    return path
-}
-
-private func polylinePath(for points: [CGPoint]) -> Path {
-    var path = Path()
-    guard let first = points.first else { return path }
-    path.move(to: first)
-    for pt in points.dropFirst() {
-        path.addLine(to: pt)
     }
     return path
 }
@@ -443,11 +451,7 @@ struct LineTooltipWrapper<Content: View>: View {
                             tooltipSize = proxy.size
                         }
                         .onChange(of: proxy.size) { newSize in
-                            if tooltipSize != newSize {
-                                DispatchQueue.main.async {
-                                    tooltipSize = newSize
-                                }
-                            }
+                            tooltipSize = newSize
                         }
                 }
             )

@@ -87,9 +87,10 @@ struct AnimatedPieChart: View {
     @State private var hoveredIndex: Int? = nil
     @State private var mouseLocation: CGPoint = .zero
     @State private var mouseAngle: Double = 0.0
+
     private let displayDuration: TimeInterval = 2.0
     private let fadeDuration: TimeInterval = 0.5
-    
+
     private let colors: [Color] = [
         Color(hex: "#2ecc71"),
         Color(hex: "#148444"),
@@ -103,6 +104,8 @@ struct AnimatedPieChart: View {
         Color.green
     ]
     
+    @State private var timer = Timer.publish(every: 2.0, on: .main, in: .common).autoconnect()
+
     private func normalized(_ angle: Double) -> Double {
         var a = angle.truncatingRemainder(dividingBy: 360)
         if a < 0 { a += 360 }
@@ -126,12 +129,11 @@ struct AnimatedPieChart: View {
                     let isActiveOrHovered = (i == activeIndex || i == hoveredIndex)
                     
                     DonutSegment(startAngle: startDeg, endAngle: endDeg)
-                        .fill(colorForIndex(i))
+                        .fill(colors[i % colors.count])
                         .scaleEffect(isActiveOrHovered ? 1.05 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isActiveOrHovered)
-                        .shadow(color: Color(hex:0x414141).opacity(0.9), radius: 5)
+                        .shadow(color: Color(hex: 0x414141).opacity(0.9), radius: 5)
                         .opacity(isActiveOrHovered ? 1.0 : 0.9)
-                        .hoverEffect(cursor: .pointingHand)
                 }
                 
                 Text(visible ? "\(Int(currentValue))" : "")
@@ -157,7 +159,7 @@ struct AnimatedPieChart: View {
                     )
                     
                     DoughnutTooltipWrapper(
-                        content: DoughnutTooltipView(name: data[index].name, value: data[index].value, color: colorForIndex(index)),
+                        content: DoughnutTooltipView(name: data[index].name, value: data[index].value, color: colors[index % colors.count]),
                         containerSize: geo.size,
                         proposedPosition: proposedPosition
                     )
@@ -204,32 +206,23 @@ struct AnimatedPieChart: View {
                 hoveredIndex = foundIndex
             })
             .cursorOnHover(hovered: hoveredIndex != nil)
-            .onAppear {
+            .onReceive(timer) { _ in
                 guard !data.isEmpty else { return }
-                currentValue = data[0].value
-                
                 if data.count < 2 { return }
-                
-                Timer.scheduledTimer(withTimeInterval: displayDuration, repeats: true) { _ in
-                    withAnimation { visible = false }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + fadeDuration) {
-                        activeIndex = (activeIndex + 1) % data.count
-                        currentValue = data[activeIndex].value
-                        withAnimation { visible = true }
-                    }
+                withAnimation { visible = false }
+                DispatchQueue.main.asyncAfter(deadline: .now() + fadeDuration) {
+                    activeIndex = (activeIndex + 1) % data.count
+                    currentValue = data[activeIndex].value
+                    withAnimation { visible = true }
                 }
             }
         }
-    }
-    
-    private func colorForIndex(_ i: Int) -> Color {
-        return colors[i % colors.count]
     }
 }
 
 struct DoughnutPlot: View {
     let cellType: String
-    @State var data: [DoughnutData]
+    @Binding var data: [DoughnutData]
     let organizationName: String
     let fontSizeMultiplier: CGFloat
     
@@ -259,13 +252,11 @@ struct DoughnutTooltipView: View {
                 Text("Count: ")
                     .foregroundColor(color)
                     .font(.system(size: 12, weight: .semibold))
-                
                 Text("\(Int(value))")
                     .foregroundColor(.white)
                     .font(.system(size: 12, weight: .heavy))
                     .padding(.leading, 2)
             }
-            .font(.system(size: 14, weight: .semibold))
             .fixedSize(horizontal: true, vertical: false)
         }
         .fixedSize(horizontal: true, vertical: false)

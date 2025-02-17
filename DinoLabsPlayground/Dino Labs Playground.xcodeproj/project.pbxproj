@@ -82,7 +82,7 @@
 		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
 		CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTextField.swift; sourceTree = "<group>"; };
 		CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughnutHelper.swift; sourceTree = "<group>"; };
-		CBFD7B702D62909900418304 /* LineHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineHelper.swift; sourceTree = "<group>"; };
+		CBFD7B702D62909900418304 /* LineHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineHelper.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CBFD7B722D62A42C00418304 /* ColorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorManager.swift; sourceTree = "<group>"; };
 		CBFDF9D22D612FD0008C580D /* CursorHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHelper.swift; sourceTree = "<group>"; };
 		CBFDF9D42D614AF4008C580D /* ContainerHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerHelper.swift; sourceTree = "<group>"; };
