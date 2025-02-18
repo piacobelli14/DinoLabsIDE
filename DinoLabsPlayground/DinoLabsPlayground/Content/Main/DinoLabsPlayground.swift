@@ -29,6 +29,61 @@ struct LanguageUsage: Identifiable {
     var percentage: Double = 0.0
 }
 
+struct FileItem: Identifiable {
+    let id: URL
+    let url: URL
+    let isDirectory: Bool
+    var children: [FileItem]?
+}
+
+func editorPlaceholderText(for fileURL: URL) -> String {
+    let ext = fileURL.pathExtension.lowercased()
+    if ["csv"].contains(ext) {
+         return "Currently editing tabular file"
+    }
+    if ["txt", "md"].contains(ext) {
+         return "Currently editing text file"
+    }
+    if ["png", "jpg", "jpeg", "gif", "svg", "bmp"].contains(ext) {
+         return "Currently editing image file"
+    }
+    if ["mp4", "mkv", "avi", "mov", "webm"].contains(ext) {
+         return "Currently editing video file"
+    }
+    if ["mp3", "wav", "flac"].contains(ext) {
+         return "Currently editing audio file"
+    }
+    let languageMapping: [String: String] = [
+         "js": "Javascript",
+         "jsx": "Javascript",
+         "ts": "Typescript",
+         "tsx": "Typescript",
+         "html": "HTML",
+         "css": "CSS",
+         "json": "JSON",
+         "xml": "XML",
+         "py": "Python",
+         "php": "PHP",
+         "swift": "Swift",
+         "c": "C",
+         "cpp": "C++",
+         "h": "C++",
+         "cs": "C#",
+         "rs": "Rust",
+         "bash": "Bash",
+         "sh": "Shell",
+         "zsh": "Shell",
+         "mc": "Monkey C",
+         "mcgen": "Monkey C",
+         "sql": "SQL",
+         "asm": "Assembly"
+    ]
+    if let language = languageMapping[ext] {
+         return "Currently editing \(language) file"
+    }
+    return "Currently editing file"
+}
+
 func colorForLanguage(_ language: String) -> Color {
     let languageColors: [String: String] = [
         "Javascript": "EB710E",
@@ -50,19 +105,11 @@ func colorForLanguage(_ language: String) -> Color {
         "SQL": "c5b7db",
         "Assembly": "5d9ca3"
     ]
-    
     if let hexString = languageColors[language],
        let intValue = Int(hexString, radix: 16) {
         return Color(hex: UInt(intValue), alpha: 1.0)
     }
     return Color(hex: UInt(0x95a5a6), alpha: 1.0)
-}
-
-struct FileItem: Identifiable {
-    let id: URL
-    let url: URL
-    let isDirectory: Bool
-    var children: [FileItem]?
 }
 
 struct CollapsibleItemView: View {
@@ -79,16 +126,16 @@ struct CollapsibleItemView: View {
     let onRevealInFinder: (FileItem) -> Void
     let isPasteEnabled: Bool
     @State private var isDragOver: Bool = false
-    let onDropItem: (URL, FileItem) -> Bool
     @State private var isHovered: Bool = false
     @State private var isExpanded: Bool = false
-    
+    let onDropItem: (URL, FileItem) -> Bool
+    let onOpenFile: (FileItem) -> Void
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 0) {
                 Color.clear
                     .frame(width: CGFloat(level) * 16, height: 1)
-                
                 if item.isDirectory {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .resizable()
@@ -104,7 +151,6 @@ struct CollapsibleItemView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .padding(.trailing, 8)
                 }
-                
                 Text(item.url.lastPathComponent)
                     .foregroundColor(.white.opacity(0.8))
                     .font(.system(size: 10, weight: .semibold))
@@ -125,6 +171,8 @@ struct CollapsibleItemView: View {
             .onTapGesture {
                 if item.isDirectory {
                     isExpanded.toggle()
+                } else {
+                    onOpenFile(item)
                 }
             }
             .onDrag {
@@ -186,7 +234,6 @@ struct CollapsibleItemView: View {
                 }
                 return false
             }
-            
             if item.isDirectory, isExpanded, let kids = item.children {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(kids) { child in
@@ -203,7 +250,8 @@ struct CollapsibleItemView: View {
                             onRename: onRename,
                             onRevealInFinder: onRevealInFinder,
                             isPasteEnabled: isPasteEnabled,
-                            onDropItem: onDropItem
+                            onDropItem: onDropItem,
+                            onOpenFile: onOpenFile
                         )
                     }
                 }
@@ -251,6 +299,19 @@ struct DinoLabsPlayground: View {
     @State private var onConfirmAction: (([String: Any]?) -> Void)? = nil
     @State private var clipboardItem: URL? = nil
     @State private var clipboardOperation: String? = nil
+    @State private var draggingTab: IDEFileTab? = nil
+    @State private var openTabs: [IDEFileTab] = []
+    @State private var activeTabId: UUID? = nil
+    @State private var personalUsageData: [LineChartDataPoint] = []
+    @State private var personalUsageByDay: [LineChartDataPoint] = []
+    @State private var usageLanguagesData: [LanguageUsage] = []
+    @State private var usageDoughnutData: [DoughnutData] = []
+    
+    struct IDEFileTab: Identifiable, Hashable {
+        let id = UUID()
+        let fileName: String
+        let fileURL: URL
+    }
     
     private let extensionToImageMap: [String: String] = [
         "js": "javascript",
@@ -315,10 +376,6 @@ struct DinoLabsPlayground: View {
         "git": "githubExtension"
     ]
     
-    @State private var personalUsageData: [LineChartDataPoint] = []
-    @State private var personalUsageByDay: [LineChartDataPoint] = []
-    @State private var usageLanguagesData: [LanguageUsage] = []
-    @State private var usageDoughnutData: [DoughnutData] = []
     
     private func addFile(to item: FileItem) {
         alertTitle = "Create New File"
@@ -332,16 +389,13 @@ struct DinoLabsPlayground: View {
             )
         ]
         showCancelButton = true
-        
         onConfirmAction = { result in
             guard let values = result,
                   let fileName = values["New file name..."] as? String,
                   !fileName.isEmpty else { return }
-            
             let parentURL = item.isDirectory
                 ? item.url
                 : item.url.deletingLastPathComponent()
-            
             let newFileURL = parentURL.appendingPathComponent(fileName)
             let fm = FileManager.default
             if fm.fileExists(atPath: newFileURL.path) {
@@ -353,7 +407,6 @@ struct DinoLabsPlayground: View {
             fm.createFile(atPath: newFileURL.path, contents: nil, attributes: nil)
             reloadDirectory()
         }
-        
         showAlert = true
     }
     
@@ -369,16 +422,13 @@ struct DinoLabsPlayground: View {
             )
         ]
         showCancelButton = true
-        
         onConfirmAction = { result in
             guard let values = result,
                   let folderName = values["New folder name..."] as? String,
                   !folderName.isEmpty else { return }
-            
             let parentURL = item.isDirectory
                 ? item.url
                 : item.url.deletingLastPathComponent()
-            
             let newFolderURL = parentURL.appendingPathComponent(folderName)
             let fm = FileManager.default
             if fm.fileExists(atPath: newFolderURL.path) {
@@ -393,19 +443,16 @@ struct DinoLabsPlayground: View {
             } catch {
             }
         }
-        
         showAlert = true
     }
     
     private func deleteItem(_ item: FileItem) {
         let typeLabel = item.isDirectory ? "folder" : "file"
         let name = item.url.lastPathComponent
-        
         alertTitle = "Confirm Delete"
         alertMessage = "Are you sure you want to delete the \(typeLabel) \"\(name)\"?"
         alertInputs = []
         showCancelButton = true
-        
         onConfirmAction = { _ in
             let fm = FileManager.default
             do {
@@ -414,7 +461,6 @@ struct DinoLabsPlayground: View {
             } catch {
             }
         }
-        
         showAlert = true
     }
     
@@ -469,12 +515,10 @@ struct DinoLabsPlayground: View {
             )
         ]
         showCancelButton = true
-        
         onConfirmAction = { result in
             guard let values = result,
                   let newName = values["Enter new name..."] as? String,
                   !newName.isEmpty else { return }
-            
             let fm = FileManager.default
             let parentURL = item.url.deletingLastPathComponent()
             let newURL = parentURL.appendingPathComponent(newName)
@@ -490,7 +534,6 @@ struct DinoLabsPlayground: View {
             } catch {
             }
         }
-        
         showAlert = true
     }
     
@@ -546,21 +589,17 @@ struct DinoLabsPlayground: View {
         }
     }
     
-    private func getIcon(for item: FileItem) -> String {
-        if item.isDirectory {
-            return "folder"
-        } else {
-            let name = item.url.lastPathComponent.lowercased()
-            if name == "dockerfile" {
-                return extensionToImageMap["dockerfile"] ?? extensionToImageMap["default"]!
-            } else if name == "makefile" {
-                return extensionToImageMap["makefile"] ?? extensionToImageMap["default"]!
-            } else if name.hasPrefix(".git") {
-                return extensionToImageMap["git"] ?? extensionToImageMap["default"]!
-            }
-            let ext = item.url.pathExtension.lowercased()
-            return extensionToImageMap[ext] ?? extensionToImageMap["default"]!
+    private func getIcon(forFileURL url: URL) -> String {
+        let name = url.lastPathComponent.lowercased()
+        if name == "dockerfile" {
+            return extensionToImageMap["dockerfile"] ?? extensionToImageMap["default"]!
+        } else if name == "makefile" {
+            return extensionToImageMap["makefile"] ?? extensionToImageMap["default"]!
+        } else if name.hasPrefix(".git") {
+            return extensionToImageMap["git"] ?? extensionToImageMap["default"]!
         }
+        let ext = url.pathExtension.lowercased()
+        return extensionToImageMap[ext] ?? extensionToImageMap["default"]!
     }
     
     private func loadFileItems(from url: URL) -> [FileItem] {
@@ -619,13 +658,34 @@ struct DinoLabsPlayground: View {
         return path
     }
     
+    private func openFileTab(url: URL) {
+        if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
+            activeTabId = existingTab.id
+            noFileSelected = false
+        } else {
+            let newTab = IDEFileTab(fileName: url.lastPathComponent, fileURL: url)
+            openTabs.append(newTab)
+            activeTabId = newTab.id
+            noFileSelected = false
+        }
+    }
+    
+    private func closeTab(_ tab: IDEFileTab) {
+        openTabs.removeAll { $0.id == tab.id }
+        if openTabs.isEmpty {
+            activeTabId = nil
+            noFileSelected = true
+        } else {
+            activeTabId = openTabs.last?.id
+            noFileSelected = false
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
-                
                 VStack(spacing: 0) {
                     Spacer().frame(height: 50)
-                    
                     HStack(spacing: 0) {
                         VStack(spacing: 0) {
                             HStack { }
@@ -638,7 +698,6 @@ struct DinoLabsPlayground: View {
                                         .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                     alignment: .bottom
                                 )
-                            
                             VStack(alignment: .leading, spacing: 0) {
                                 MainButtonMain {
                                     loadDirectory()
@@ -655,7 +714,6 @@ struct DinoLabsPlayground: View {
                                             .foregroundColor(.white.opacity(0.8))
                                             .padding(.trailing, 4)
                                             .allowsHitTesting(false)
-                                        
                                         Text("Load Directory")
                                             .foregroundColor(.white.opacity(0.8))
                                             .font(.system(size: 9, weight: .semibold))
@@ -673,7 +731,6 @@ struct DinoLabsPlayground: View {
                                         .foregroundColor(Color(hex:0xc1c1c1).opacity(0.2)),
                                     alignment: .bottom
                                 )
-                                
                                 MainButtonMain {
                                     loadFile()
                                 }
@@ -689,14 +746,12 @@ struct DinoLabsPlayground: View {
                                             .foregroundColor(.white.opacity(0.8))
                                             .allowsHitTesting(false)
                                             .padding(.trailing, 4)
-                                        
                                         Text("Load File")
                                             .foregroundColor(.white.opacity(0.8))
                                             .font(.system(size: 9, weight: .semibold))
                                             .lineLimit(1)
                                             .truncationMode(.tail)
                                             .allowsHitTesting(false)
-                                        
                                         Spacer()
                                     }
                                     .padding(.leading, 10)
@@ -708,7 +763,6 @@ struct DinoLabsPlayground: View {
                                         .foregroundColor(Color(hex:0xc1c1c1).opacity(0.2)),
                                     alignment: .bottom
                                 )
-                                
                                 Spacer()
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
@@ -720,7 +774,6 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             HStack(spacing: 0) {
                                 MainButtonMain {
                                     isReplace.toggle()
@@ -738,7 +791,6 @@ struct DinoLabsPlayground: View {
                                     }
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                 )
-                                
                                 MainButtonMain {
                                     isReplace.toggle()
                                 }
@@ -765,7 +817,6 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             VStack {
                                 if !isReplace {
                                     HStack(spacing: 0) {
@@ -779,7 +830,6 @@ struct DinoLabsPlayground: View {
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.80, height: 32)
                                             .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
-                                        
                                         HStack {
                                             MainButtonMain {
                                                 isCaseSensitive.toggle()
@@ -810,7 +860,6 @@ struct DinoLabsPlayground: View {
                                             topLeft: 0, topRight: 6, bottomLeft: 0, bottomRight: 6,
                                             shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
                                         )
-                                            
                                     }
                                     .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.9)
                                     .onChange(of: directoryItemSearch) { newValue in
@@ -829,7 +878,6 @@ struct DinoLabsPlayground: View {
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
                                     )
                                 }
-                                
                                 if isReplace {
                                     HStack(spacing: 0) {
                                         MainTextField(placeholder: "Search all files...", text: $directoryItemSearch)
@@ -842,7 +890,6 @@ struct DinoLabsPlayground: View {
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.65, height: 32)
                                             .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
-                                        
                                         HStack {
                                             MainButtonMain {
                                                 isCaseSensitive.toggle()
@@ -883,7 +930,6 @@ struct DinoLabsPlayground: View {
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
                                     )
                                     .padding(.bottom, 6)
-                                    
                                     HStack(spacing: 0) {
                                         MainTextField(placeholder: "Replace with...", text: $directoryItemSearch)
                                             .lineLimit(1)
@@ -895,7 +941,6 @@ struct DinoLabsPlayground: View {
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.65, height: 32)
                                             .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
-                                        
                                         HStack {
                                             MainButtonMain {
                                             }
@@ -911,7 +956,6 @@ struct DinoLabsPlayground: View {
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
-                                            
                                             MainButtonMain {
                                             }
                                             .lineLimit(1)
@@ -936,7 +980,6 @@ struct DinoLabsPlayground: View {
                                             topLeft: 0, topRight: 6, bottomLeft: 0, bottomRight: 6,
                                             shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
                                         )
-                                            
                                     }
                                     .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.9)
                                     .containerHelper(
@@ -957,7 +1000,6 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             VStack(spacing: 0) {
                                 if isNavigatorLoading {
                                     HStack {
@@ -982,7 +1024,6 @@ struct DinoLabsPlayground: View {
                                             .frame(width: 8, height: 8, alignment: .center)
                                             .foregroundColor(.white.opacity(0.8))
                                             .padding(.trailing, 8)
-                                        
                                         Text(root.url.lastPathComponent)
                                             .foregroundColor(.white)
                                             .font(.system(size: 10, weight: .semibold))
@@ -997,7 +1038,6 @@ struct DinoLabsPlayground: View {
                                     .onTapGesture {
                                         rootIsExpanded.toggle()
                                     }
-                                    
                                     if rootIsExpanded {
                                         ScrollView([.vertical, .horizontal], showsIndicators: true) {
                                             ScrollViewReader { proxy in
@@ -1005,12 +1045,13 @@ struct DinoLabsPlayground: View {
                                                     Color.clear
                                                         .frame(height: 0)
                                                         .id("top")
-                                                    
                                                     ForEach(displayedChildren) { child in
                                                         CollapsibleItemView(
                                                             item: child,
                                                             level: 1,
-                                                            getIcon: getIcon,
+                                                            getIcon: { fileItem in
+                                                                getIcon(forFileURL: fileItem.url)
+                                                            },
                                                             onAddFile: addFile,
                                                             onAddFolder: addFolder,
                                                             onDeleteItem: deleteItem,
@@ -1020,7 +1061,10 @@ struct DinoLabsPlayground: View {
                                                             onRename: renameItem,
                                                             onRevealInFinder: revealInFinder,
                                                             isPasteEnabled: (clipboardItem != nil),
-                                                            onDropItem: handleDropItem
+                                                            onDropItem: handleDropItem,
+                                                            onOpenFile: { fileItem in
+                                                                openFileTab(url: fileItem.url)
+                                                            }
                                                         )
                                                     }
                                                 }
@@ -1054,11 +1098,9 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             HStack {
                                 HStack {
                                     MainButtonMain {
-                                        
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                     .frame(width: 18, height: 18)
@@ -1079,7 +1121,6 @@ struct DinoLabsPlayground: View {
                                         .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                     alignment: .trailing
                                 )
-                                
                                 Spacer()
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
@@ -1091,7 +1132,6 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                         }
                         .contextMenu {
                             if let root = fileItems.first {
@@ -1105,32 +1145,26 @@ struct DinoLabsPlayground: View {
                                     deleteItem(root)
                                 }
                                 Divider()
-                                
                                 Button("Cut") {
                                     cutItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Copy") {
                                     copyItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Paste") {
                                     pasteItem(root)
                                 }
                                 .disabled(clipboardItem == nil || !root.isDirectory)
-                                
                                 Button("Rename") {
                                     renameItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Reveal in Finder") {
                                     revealInFinder(root)
                                 }
                                 .disabled(true)
-                                
                                 Divider()
                                 Button("Copy Relative Path") {
                                     let relative = relativePath(itemURL: root.url)
@@ -1146,19 +1180,16 @@ struct DinoLabsPlayground: View {
                                 Button("Add Folder") {}.disabled(true)
                                 Button("Delete") {}.disabled(true)
                                 Divider()
-                                
                                 Button("Cut") {}.disabled(true)
                                 Button("Copy") {}.disabled(true)
                                 Button("Paste") {}.disabled(true)
                                 Button("Rename") {}.disabled(true)
                                 Button("Reveal in Finder") {}.disabled(true)
-                                
                                 Divider()
                                 Button("Copy Relative Path") {}.disabled(true)
                                 Button("Copy Full Path") {}.disabled(true)
                             }
                         }
-                        
                         Rectangle()
                             .foregroundColor(Color(hex:0xc1c1c1).opacity(0.1))
                             .frame(width: 2)
@@ -1171,26 +1202,117 @@ struct DinoLabsPlayground: View {
                             )
                             .hoverEffect(opacity: 0.5, cursor: .resizeLeftRight)
                             .clickEffect(opacity: 1.0, cursor: .resizeLeftRight)
-                        
                         VStack(spacing: 0) {
-                            HStack { }
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 0) {
+                                    if openTabs.isEmpty {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "wand.and.stars")
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(width: 12, height: 12)
+                                                .padding(.trailing, 4)
+                                                .allowsHitTesting(false)
+                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            Text("Get Started")
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .font(.system(size: 9, weight: .bold))
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                                .allowsHitTesting(false)
+                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                        }
+                                        .frame(height: (geometry.size.height - 50) * 0.05)
+                                        .padding(.horizontal, 12)
+                                        .background(Color(hex: 0xAD6ADD).opacity(0.2))
+                                        .overlay(
+                                            Rectangle()
+                                                .frame(width: 0.5)
+                                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                                            alignment: .trailing
+                                        )
+                                    } else {
+                                        ForEach(openTabs) { tab in
+                                            HStack(spacing: 4) {
+                                                Image(getIcon(forFileURL: tab.fileURL))
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fit)
+                                                    .frame(width: 12, height: 12)
+                                                    .padding(.trailing, 4)
+                                                    .allowsHitTesting(false)
+                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                                Text(tab.fileName)
+                                                    .foregroundColor(.white.opacity(0.8))
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .lineLimit(1)
+                                                    .allowsHitTesting(false)
+                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                                Button(action: {
+                                                    closeTab(tab)
+                                                }) {
+                                                    Image(systemName: "xmark")
+                                                        .font(.system(size: 8, weight: .bold))
+                                                        .foregroundColor(.white.opacity(0.8))
+                                                        .allowsHitTesting(false)
+                                                        .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                                }
+                                                .buttonStyle(PlainButtonStyle())
+                                                .padding(.leading, 6)
+                                            }
+                                            .frame(height: (geometry.size.height - 50) * 0.05)
+                                            .padding(.horizontal, 12)
+                                            .background(activeTabId == tab.id ? Color(hex: 0xAD6ADD).opacity(0.2) : Color(hex: 0xFFFFFF).opacity(0.05))
+                                            .overlay(
+                                                Rectangle()
+                                                    .frame(width: 0.5)
+                                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                                                alignment: .trailing
+                                            )
+                                            .onTapGesture {
+                                                activeTabId = tab.id
+                                                noFileSelected = false
+                                            }
+                                            .onDrag {
+                                                self.draggingTab = tab
+                                                return NSItemProvider(object: tab.id.uuidString as NSString)
+                                            }
+                                            .onDrop(of: ["public.text"],
+                                                    delegate: TabDropDelegate(item: tab,
+                                                                             currentTabs: $openTabs,
+                                                                             draggingTab: $draggingTab))
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
                                    height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717),
+                                             borderColor: Color.clear,
+                                             borderWidth: 0,
+                                             topLeft: 0,
+                                             topRight: 0,
+                                             bottomLeft: 0,
+                                             bottomRight: 0,
+                                             shadowColor: .clear,
+                                             shadowRadius: 0,
+                                             shadowX: 0,
+                                             shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             VStack {
-                                if noFileSelected {
+                                if let activeTab = openTabs.first(where: { $0.id == activeTabId }) {
+                                    Text(editorPlaceholderText(for: activeTab.fileURL))
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14))
+                                } else if noFileSelected {
                                     Spacer()
-                                    
                                     HStack {
                                         Spacer()
-                                        
                                         VStack {
                                             HStack {
                                                 VStack(alignment: .leading, spacing: 0) {
@@ -1199,11 +1321,9 @@ struct DinoLabsPlayground: View {
                                                         .foregroundColor(Color.white.opacity(0.9))
                                                         .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                                         .padding(.bottom, 8)
-                                                    
                                                     Text("Version 1.0.0 (Beta)")
                                                         .font(.system(size: 14, weight: .regular))
                                                         .foregroundColor(Color.white.opacity(0.6))
-                                                    
                                                     HStack {
                                                         VStack(alignment: .leading) {
                                                             MainButtonMain {
@@ -1221,7 +1341,6 @@ struct DinoLabsPlayground: View {
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .padding(.trailing, 4)
                                                                         .allowsHitTesting(false)
-                                                                    
                                                                     Text("Load Directory")
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .font(.system(size: 12, weight: .semibold))
@@ -1234,7 +1353,6 @@ struct DinoLabsPlayground: View {
                                                             )
                                                             .padding(.leading, 8)
                                                             .padding(.vertical, 2)
-                                                            
                                                             MainButtonMain {
                                                                 loadFile()
                                                             }
@@ -1249,7 +1367,6 @@ struct DinoLabsPlayground: View {
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .padding(.trailing, 4)
                                                                         .allowsHitTesting(false)
-                                                                    
                                                                     Text("Load File")
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .font(.system(size: 12, weight: .semibold))
@@ -1271,9 +1388,7 @@ struct DinoLabsPlayground: View {
                                             }
                                             .padding(.leading, 20)
                                             .padding(.top, 20)
-                                            
                                             Spacer()
-                                            
                                         }
                                         .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
                                         .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
@@ -1284,9 +1399,7 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
-                                        
                                         VStack {
                                             if usageLanguagesData.isEmpty {
                                                 HStack {
@@ -1343,17 +1456,13 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                                     .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    
                                     Spacer()
-                                    
                                     HStack {
                                         Spacer()
-                                        
                                         VStack {
                                             if personalUsageData.isEmpty {
                                                 HStack {
@@ -1370,7 +1479,6 @@ struct DinoLabsPlayground: View {
                                                             .foregroundColor(Color.white.opacity(0.7))
                                                             .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                                             .padding(.bottom, 4)
-                                                        
                                                         Text("Edits Saved In Last 30 Days")
                                                             .font(.system(size: 10, weight: .regular))
                                                             .foregroundColor(Color.white.opacity(0.5))
@@ -1379,7 +1487,6 @@ struct DinoLabsPlayground: View {
                                                 }
                                                 .padding(.leading, 20)
                                                 .padding(.top, 20)
-                                                
                                                 LineChartView(series1Name: "Edits Saved",
                                                               series1Data: $personalUsageData,
                                                               series2Name: nil,
@@ -1396,9 +1503,7 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
-                                        
                                         VStack {
                                             if usageDoughnutData.isEmpty {
                                                 HStack {
@@ -1423,12 +1528,10 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                                     .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    
                                     Spacer()
                                 }
                             }
@@ -1441,10 +1544,8 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             HStack {
                                 Spacer()
-                                
                                 HStack {
                                     MainButtonMain {
                                     }
@@ -1457,7 +1558,6 @@ struct DinoLabsPlayground: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
                                     MainButtonMain {
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
@@ -1469,7 +1569,6 @@ struct DinoLabsPlayground: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
                                     MainButtonMain {
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
@@ -1514,32 +1613,26 @@ struct DinoLabsPlayground: View {
                                     deleteItem(root)
                                 }
                                 Divider()
-                                
                                 Button("Cut") {
                                     cutItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Copy") {
                                     copyItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Paste") {
                                     pasteItem(root)
                                 }
                                 .disabled(clipboardItem == nil || !root.isDirectory)
-                                
                                 Button("Rename") {
                                     renameItem(root)
                                 }
                                 .disabled(true)
-                                
                                 Button("Reveal in Finder") {
                                     revealInFinder(root)
                                 }
                                 .disabled(true)
-                                
                                 Divider()
                                 Button("Copy Relative Path") {
                                     let relative = relativePath(itemURL: root.url)
@@ -1555,19 +1648,16 @@ struct DinoLabsPlayground: View {
                                 Button("Add Folder") {}.disabled(true)
                                 Button("Delete") {}.disabled(true)
                                 Divider()
-                                
                                 Button("Cut") {}.disabled(true)
                                 Button("Copy") {}.disabled(true)
                                 Button("Paste") {}.disabled(true)
                                 Button("Rename") {}.disabled(true)
                                 Button("Reveal in Finder") {}.disabled(true)
-                                
                                 Divider()
                                 Button("Copy Relative Path") {}.disabled(true)
                                 Button("Copy Full Path") {}.disabled(true)
                             }
                         }
-                        
                         Rectangle()
                             .foregroundColor(Color(hex:0xc1c1c1).opacity(0.1))
                             .frame(width: 2)
@@ -1580,7 +1670,6 @@ struct DinoLabsPlayground: View {
                             )
                             .hoverEffect(opacity: 0.5, cursor: .resizeLeftRight)
                             .clickEffect(opacity: 1.0, cursor: .resizeLeftRight)
-                        
                         VStack(spacing: 0) {
                             HStack { }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
@@ -1592,14 +1681,11 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             VStack {
                                 if noFileSelected {
                                     Spacer()
-                                    
                                     HStack {
                                         Spacer()
-                                        
                                         VStack {
                                             HStack {
                                                 VStack(alignment: .leading, spacing: 0) {
@@ -1608,11 +1694,9 @@ struct DinoLabsPlayground: View {
                                                         .foregroundColor(Color.white.opacity(0.9))
                                                         .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                                         .padding(.bottom, 8)
-                                                    
                                                     Text("Version 1.0.0 (Beta)")
                                                         .font(.system(size: 14, weight: .regular))
                                                         .foregroundColor(Color.white.opacity(0.6))
-                                                    
                                                     HStack {
                                                         VStack(alignment: .leading) {
                                                             MainButtonMain {
@@ -1630,7 +1714,6 @@ struct DinoLabsPlayground: View {
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .padding(.trailing, 4)
                                                                         .allowsHitTesting(false)
-                                                                    
                                                                     Text("Load Directory")
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .font(.system(size: 12, weight: .semibold))
@@ -1643,7 +1726,6 @@ struct DinoLabsPlayground: View {
                                                             )
                                                             .padding(.leading, 8)
                                                             .padding(.vertical, 2)
-                                                            
                                                             MainButtonMain {
                                                                 loadFile()
                                                             }
@@ -1658,7 +1740,6 @@ struct DinoLabsPlayground: View {
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .padding(.trailing, 4)
                                                                         .allowsHitTesting(false)
-                                                                    
                                                                     Text("Load File")
                                                                         .foregroundColor(Color(hex:0x9b59b6))
                                                                         .font(.system(size: 12, weight: .semibold))
@@ -1680,9 +1761,7 @@ struct DinoLabsPlayground: View {
                                             }
                                             .padding(.leading, 20)
                                             .padding(.top, 20)
-                                            
                                             Spacer()
-                                            
                                         }
                                         .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
                                         .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
@@ -1693,9 +1772,7 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
-                                        
                                         VStack {
                                             if usageLanguagesData.isEmpty {
                                                 HStack {
@@ -1752,17 +1829,13 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                                     .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    
                                     Spacer()
-                                    
                                     HStack {
                                         Spacer()
-                                        
                                         VStack {
                                             if personalUsageData.isEmpty {
                                                 HStack {
@@ -1779,7 +1852,6 @@ struct DinoLabsPlayground: View {
                                                             .foregroundColor(Color.white.opacity(0.7))
                                                             .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                                             .padding(.bottom, 4)
-                                                        
                                                         Text("Edits Saved In Last 30 Days")
                                                             .font(.system(size: 10, weight: .regular))
                                                             .foregroundColor(Color.white.opacity(0.5))
@@ -1788,7 +1860,6 @@ struct DinoLabsPlayground: View {
                                                 }
                                                 .padding(.leading, 20)
                                                 .padding(.top, 20)
-                                                
                                                 LineChartView(series1Name: "Edits Saved",
                                                               series1Data: $personalUsageData,
                                                               series2Name: nil,
@@ -1805,9 +1876,7 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
-                                        
                                         VStack {
                                             if usageDoughnutData.isEmpty {
                                                 HStack {
@@ -1832,12 +1901,10 @@ struct DinoLabsPlayground: View {
                                             topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                             shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
                                         )
-                                        
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                                     .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    
                                     Spacer()
                                 }
                             }
@@ -1850,10 +1917,8 @@ struct DinoLabsPlayground: View {
                                     .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
-                            
                             HStack {
                                 Spacer()
-                                
                                 HStack {
                                     MainButtonMain {
                                     }
@@ -1866,7 +1931,6 @@ struct DinoLabsPlayground: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
                                     MainButtonMain {
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
@@ -1878,7 +1942,6 @@ struct DinoLabsPlayground: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
                                     MainButtonMain {
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
@@ -1912,13 +1975,10 @@ struct DinoLabsPlayground: View {
                             )
                         }
                     }
-                    
                     Spacer()
                 }
-                
                 NavigationBar(geometry: geometry, currentView: $currentView)
                     .frame(width: geometry.size.width)
-                
                 DinoLabsAlert(
                     geometry: geometry,
                     visible: showAlert,
@@ -1944,7 +2004,7 @@ struct DinoLabsPlayground: View {
         }
     }
     
-    func fetchUsageData() {
+    private func fetchUsageData() {
         guard let url = URL(string: "https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/usage-info") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -1956,7 +2016,6 @@ struct DinoLabsPlayground: View {
         let organizationID = UserDefaults.standard.string(forKey: "orgID") ?? "orgID_placeholder"
         let body: [String: Any] = ["userID": userID, "organizationID": organizationID]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data else { return }
             do {
@@ -1970,7 +2029,7 @@ struct DinoLabsPlayground: View {
         }.resume()
     }
     
-    func processUsageResponse(response: UsageResponse) {
+    private func processUsageResponse(response: UsageResponse) {
         var totalLanguageCount = 0
         var langs: [LanguageUsage] = []
         if let usageLangs = response.usageLanguages {
@@ -1990,7 +2049,6 @@ struct DinoLabsPlayground: View {
         }
         usageLanguagesData = langs
         usageDoughnutData = langs.map { DoughnutData(value: Double($0.count), name: $0.language) }
-        
         var lineData: [LineChartDataPoint] = []
         if let personalInfo = response.personalUsageInfo {
             let dateFormatter = ISO8601DateFormatter()
@@ -2007,7 +2065,7 @@ struct DinoLabsPlayground: View {
         personalUsageByDay = lineData
     }
     
-    func loadDirectory() {
+    private func loadDirectory() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -2033,7 +2091,7 @@ struct DinoLabsPlayground: View {
         }
     }
     
-    func loadFile() {
+    private func loadFile() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
