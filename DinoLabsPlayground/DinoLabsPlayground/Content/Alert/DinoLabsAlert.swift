@@ -103,7 +103,7 @@ struct DinoLabsAlert: View {
                                 .padding(.bottom, geometry.size.height * 0.005)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
-                                .frame(width: geometry.size.width * 0.4)
+                                .frame(width: geometry.size.width * 0.32)
                                 .frame(maxWidth: 100)
                         }
                         
@@ -112,9 +112,9 @@ struct DinoLabsAlert: View {
                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
                             .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                             .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(width: geometry.size.width * 0.4)
-                            .frame(maxWidth: 350)
+                            .frame(width: geometry.size.width * 0.32)
+                            .frame(maxWidth: 300)
+                            .padding(.horizontal, 8)
                     }
                     .padding(.bottom, 20)
                     
