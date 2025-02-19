@@ -1,6 +1,5 @@
 //
 //  TabHelper.swift
-//  Dino Labs Playground
 //
 //  Created by Peter Iacobelli on 2/18/25.
 //
@@ -9,9 +8,9 @@ import Foundation
 import SwiftUI
 
 struct TabDropDelegate: DropDelegate {
-    let item: DinoLabsPlayground.IDEFileTab
-    @Binding var currentTabs: [DinoLabsPlayground.IDEFileTab]
-    @Binding var draggingTab: DinoLabsPlayground.IDEFileTab?
+    let item: FileTab
+    @Binding var currentTabs: [FileTab]
+    @Binding var draggingTab: FileTab?
     
     func dropEntered(info: DropInfo) {
         guard let dragging = draggingTab,

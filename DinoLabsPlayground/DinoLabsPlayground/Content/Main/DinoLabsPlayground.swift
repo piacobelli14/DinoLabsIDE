@@ -36,6 +36,12 @@ struct FileItem: Identifiable {
     var children: [FileItem]?
 }
 
+struct FileTab: Identifiable, Hashable {
+    let id = UUID()
+    let fileName: String
+    let fileURL: URL
+}
+
 func editorPlaceholderText(for fileURL: URL) -> String {
     let ext = fileURL.pathExtension.lowercased()
     if ["csv"].contains(ext) {
@@ -273,45 +279,50 @@ struct CollapsibleItemView: View {
 
 struct DinoLabsPlayground: View {
     @Binding var currentView: AppView
+    @State private var leftPanelWidthRatio: CGFloat = 0.25
+    @State private var isNavigatorLoading: Bool = false
     static var loadedRootURL: URL? = nil
-    
     @State private var directoryURL: URL? = nil {
         didSet {
             DinoLabsPlayground.loadedRootURL = directoryURL
         }
     }
+    @State private var rootIsExpanded: Bool = true
+    @State private var fileItems: [FileItem] = []
     @State private var fileURL: URL? = nil
+    @State private var noFileSelected: Bool = true
+    @State private var clipboardItem: URL? = nil
+    @State private var clipboardOperation: String? = nil
+    @State private var isReplace: Bool = false
+    @State private var isSearchLoading: Bool = false
+    @State private var searchProgress: Double = 0.0
+    @State private var searchETA: String = ""
+    @State private var isReplaceAllLoading: Bool = false
+    @State private var replaceProgress: Double = 0.0
+    @State private var replaceETA: String = ""
+    @State private var isSearchCaseSensitive: Bool = true
+    @State private var isReplaceCaseSensitive: Bool = true
+    @State private var filteredSearch: String = ""
+    @State private var directoryItemSearch: String = ""
+    @State private var searchQuery: String = ""
+    @State private var replaceQuery: String = ""
+    @State private var searchDebounceTask: DispatchWorkItem? = nil
+    @State private var replaceDebounceTask: DispatchWorkItem? = nil
+    @State private var searchResults: [SearchResult] = []
+    @State private var groupedSearchResults: [FileSearchResult] = []
     @State private var showAlert: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @State private var alertInputs: [DinoLabsAlertInput] = []
     @State private var showCancelButton: Bool = false
-    @State private var leftPanelWidthRatio: CGFloat = 0.25
-    @State private var fileItems: [FileItem] = []
-    @State private var rootIsExpanded: Bool = true
-    @State private var isNavigatorLoading: Bool = false
-    @State private var isReplace: Bool = false
-    @State private var isCaseSensitive: Bool = true
-    @State private var directoryItemSearch: String = ""
-    @State private var debouncedSearch: String = ""
-    @State private var searchDebounceTask: DispatchWorkItem? = nil
-    @State private var noFileSelected: Bool = true
     @State private var onConfirmAction: (([String: Any]?) -> Void)? = nil
-    @State private var clipboardItem: URL? = nil
-    @State private var clipboardOperation: String? = nil
-    @State private var draggingTab: IDEFileTab? = nil
-    @State private var openTabs: [IDEFileTab] = []
+    @State private var draggingTab: FileTab? = nil
+    @State private var openTabs: [FileTab] = []
     @State private var activeTabId: UUID? = nil
     @State private var personalUsageData: [LineChartDataPoint] = []
     @State private var personalUsageByDay: [LineChartDataPoint] = []
     @State private var usageLanguagesData: [LanguageUsage] = []
     @State private var usageDoughnutData: [DoughnutData] = []
-    
-    struct IDEFileTab: Identifiable, Hashable {
-        let id = UUID()
-        let fileName: String
-        let fileURL: URL
-    }
     
     private let extensionToImageMap: [String: String] = [
         "js": "javascript",
@@ -622,7 +633,7 @@ struct DinoLabsPlayground: View {
         if query.isEmpty { return item }
         let name = item.url.lastPathComponent
         let matches: Bool
-        if isCaseSensitive {
+        if isSearchCaseSensitive {
             matches = name.contains(query)
         } else {
             matches = name.lowercased().contains(query.lowercased())
@@ -642,13 +653,213 @@ struct DinoLabsPlayground: View {
     
     private var displayedChildren: [FileItem] {
         guard let root = fileItems.first else { return [] }
-        if debouncedSearch.isEmpty {
+        if filteredSearch.isEmpty {
             return root.children ?? []
         } else {
-            return (root.children ?? []).compactMap { filteredFileItem($0, query: debouncedSearch) }
+            return (root.children ?? []).compactMap { filteredFileItem($0, query: filteredSearch) }
         }
     }
     
+    private func searchInFile(_ file: FileItem, query: String) -> [SearchResult] {
+        guard !file.isDirectory, let content = try? String(contentsOf: file.url) else { return [] }
+        var results: [SearchResult] = []
+        let lines = content.components(separatedBy: .newlines)
+        for (index, line) in lines.enumerated() {
+            let matchFound = isReplaceCaseSensitive ? line.contains(query) : line.lowercased().contains(query.lowercased())
+            if matchFound {
+                results.append(SearchResult(fileURL: file.url, line: line, lineNumber: index + 1))
+            }
+        }
+        return results
+    }
+
+    private func searchFiles(in items: [FileItem], query: String) -> [SearchResult] {
+        var results: [SearchResult] = []
+        for item in items {
+            if item.isDirectory, let children = item.children {
+                results.append(contentsOf: searchFiles(in: children, query: query))
+            } else {
+                results.append(contentsOf: searchInFile(item, query: query))
+            }
+        }
+        return results
+    }
+    
+    
+    private func flattenFiles(from item: FileItem) -> [FileItem] {
+        if item.isDirectory, let children = item.children {
+            return children.flatMap { flattenFiles(from: $0) }
+        } else {
+            return [item]
+        }
+    }
+
+    private func performSearch() {
+        guard !searchQuery.isEmpty, let root = fileItems.first else {
+            groupedSearchResults = []
+            return
+        }
+        isSearchLoading = true
+        searchProgress = 0.0
+        searchETA = "Calculating..."
+        Task.detached(priority: .userInitiated) {
+            let allFiles = self.flattenFiles(from: root).filter { file in
+                let allowedExtensions = ["txt", "md", "swift", "js", "json", "html", "css", "py", "java", "c", "cpp"]
+                return allowedExtensions.contains(file.url.pathExtension.lowercased())
+            }
+            let totalFiles = allFiles.count
+            let batchSize = 50
+            let startTime = Date()
+            var allResults: [SearchResult] = []
+            for batchStart in stride(from: 0, to: totalFiles, by: batchSize) {
+                let batchFiles = Array(allFiles[batchStart..<min(batchStart + batchSize, totalFiles)])
+                let batchResults = await withTaskGroup(of: [SearchResult].self) { group -> [SearchResult] in
+                    for file in batchFiles {
+                        group.addTask {
+                            var fileResults: [SearchResult] = []
+                            if let fileData = try? Data(contentsOf: file.url, options: .mappedIfSafe),
+                               let content = String(data: fileData, encoding: .utf8) {
+                                let lines = content.components(separatedBy: .newlines)
+                                for (index, line) in lines.enumerated() {
+                                    let matchFound = self.isSearchCaseSensitive ? line.contains(self.searchQuery) : line.lowercased().contains(self.searchQuery.lowercased())
+                                    if matchFound {
+                                        fileResults.append(SearchResult(fileURL: file.url, line: line, lineNumber: index + 1))
+                                    }
+                                }
+                            }
+                            return fileResults
+                        }
+                    }
+                    var batchAccumulated: [SearchResult] = []
+                    for await results in group {
+                        batchAccumulated.append(contentsOf: results)
+                    }
+                    return batchAccumulated
+                }
+                allResults.append(contentsOf: batchResults)
+                let progress = Double(min(batchStart + batchSize, totalFiles)) / Double(totalFiles)
+                let elapsed = Date().timeIntervalSince(startTime)
+                let averageTimePerFile = elapsed / Double(max(batchStart + batchSize, 1))
+                let remainingFiles = Double(totalFiles) - Double(batchStart + batchSize)
+                let estimatedRemainingTime = averageTimePerFile * remainingFiles
+                let etaString = String(format: "%.1f sec remaining", estimatedRemainingTime)
+                let grouped = Dictionary(grouping: allResults, by: { $0.fileURL })
+                let fileResults = grouped.map { FileSearchResult(id: $0.key, fileURL: $0.key, results: $0.value, isExpanded: true) }
+                await MainActor.run {
+                    self.groupedSearchResults = fileResults
+                    self.searchProgress = progress
+                    self.searchETA = etaString
+                }
+                try? await Task.sleep(nanoseconds: 20000000)
+            }
+            await MainActor.run {
+                self.isSearchLoading = false
+            }
+        }
+    }
+    
+    private func performReplace() {
+        guard !searchQuery.isEmpty else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let files = Dictionary(grouping: searchResults, by: { $0.fileURL }).keys
+            for fileURL in files {
+                if var content = try? String(contentsOf: fileURL) {
+                    let options: String.CompareOptions = isReplaceCaseSensitive ? [] : [.caseInsensitive]
+                    let newContent = content.replacingOccurrences(of: searchQuery, with: replaceQuery, options: options, range: nil)
+                    try? newContent.write(to: fileURL, atomically: true, encoding: .utf8)
+                }
+            }
+            
+            let updatedResults = searchFiles(in: fileItems.first?.children ?? [], query: searchQuery)
+            DispatchQueue.main.async {
+                searchResults = updatedResults
+                reloadDirectory()
+            }
+        }
+    }
+    
+    private func performReplaceAll() {
+        guard !searchQuery.isEmpty, let root = fileItems.first else {
+            return
+        }
+        isReplaceAllLoading = true
+        replaceProgress = 0.0
+        replaceETA = "Calculating..."
+        Task.detached(priority: .userInitiated) {
+            let allowedExtensions = ["txt", "md", "swift", "js", "json", "html", "css", "py", "java", "c", "cpp"]
+            let allFiles = self.flattenFiles(from: root).filter { allowedExtensions.contains($0.url.pathExtension.lowercased()) }
+            let totalFiles = allFiles.count
+            let batchSize = 50
+            let startTime = Date()
+            for batchStart in stride(from: 0, to: totalFiles, by: batchSize) {
+                let batchFiles = Array(allFiles[batchStart..<min(batchStart + batchSize, totalFiles)])
+                await withTaskGroup(of: Void.self) { group in
+                    for file in batchFiles {
+                        group.addTask {
+                            if let fileData = try? Data(contentsOf: file.url, options: .mappedIfSafe),
+                               var content = String(data: fileData, encoding: .utf8) {
+                                let options: String.CompareOptions = self.isReplaceCaseSensitive ? [] : [.caseInsensitive]
+                                if content.range(of: self.searchQuery, options: options) != nil {
+                                    let newContent = content.replacingOccurrences(of: self.searchQuery, with: self.replaceQuery, options: options, range: nil)
+                                    try? newContent.write(to: file.url, atomically: true, encoding: .utf8)
+                                }
+                            }
+                        }
+                    }
+                    for await _ in group {}
+                }
+                let progress = Double(min(batchStart + batchSize, totalFiles)) / Double(totalFiles)
+                let elapsed = Date().timeIntervalSince(startTime)
+                let averageTimePerFile = elapsed / Double(max(batchStart + batchSize, 1))
+                let remainingFiles = Double(totalFiles) - Double(batchStart + batchSize)
+                let estimatedRemainingTime = averageTimePerFile * remainingFiles
+                let etaString = String(format: "%.1f sec remaining", estimatedRemainingTime)
+                await MainActor.run {
+                    self.replaceProgress = progress
+                    self.replaceETA = etaString
+                }
+                try? await Task.sleep(nanoseconds: 20000000)
+            }
+            var allResults: [SearchResult] = []
+            let batchSizeResults = 50
+            for batchStart in stride(from: 0, to: totalFiles, by: batchSizeResults) {
+                let batchFiles = Array(allFiles[batchStart..<min(batchStart + batchSizeResults, totalFiles)])
+                let batchResults = await withTaskGroup(of: [SearchResult].self) { group -> [SearchResult] in
+                    for file in batchFiles {
+                        group.addTask {
+                            var fileResults: [SearchResult] = []
+                            if let fileData = try? Data(contentsOf: file.url, options: .mappedIfSafe),
+                               let content = String(data: fileData, encoding: .utf8) {
+                                let lines = content.components(separatedBy: .newlines)
+                                for (index, line) in lines.enumerated() {
+                                    let matchFound = self.isReplaceCaseSensitive ? line.contains(self.searchQuery) : line.lowercased().contains(self.searchQuery.lowercased())
+                                    if matchFound {
+                                        fileResults.append(SearchResult(fileURL: file.url, line: line, lineNumber: index + 1))
+                                    }
+                                }
+                            }
+                            return fileResults
+                        }
+                    }
+                    var batchAccumulated: [SearchResult] = []
+                    for await results in group {
+                        batchAccumulated.append(contentsOf: results)
+                    }
+                    return batchAccumulated
+                }
+                allResults.append(contentsOf: batchResults)
+                try? await Task.sleep(nanoseconds: 20000000)
+            }
+            let grouped = Dictionary(grouping: allResults, by: { $0.fileURL })
+            let fileResults = grouped.map { FileSearchResult(id: $0.key, fileURL: $0.key, results: $0.value, isExpanded: true) }
+            await MainActor.run {
+                self.groupedSearchResults = fileResults
+                self.reloadDirectory()
+                self.isReplaceAllLoading = false
+            }
+        }
+    }
+
     func relativePath(itemURL: URL) -> String {
         guard let root = DinoLabsPlayground.loadedRootURL else { return itemURL.path }
         let rootName = root.lastPathComponent
@@ -663,14 +874,14 @@ struct DinoLabsPlayground: View {
             activeTabId = existingTab.id
             noFileSelected = false
         } else {
-            let newTab = IDEFileTab(fileName: url.lastPathComponent, fileURL: url)
+            let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
             openTabs.append(newTab)
             activeTabId = newTab.id
             noFileSelected = false
         }
     }
     
-    private func closeTab(_ tab: IDEFileTab) {
+    private func closeTab(_ tab: FileTab) {
         openTabs.removeAll { $0.id == tab.id }
         if openTabs.isEmpty {
             activeTabId = nil
@@ -832,7 +1043,7 @@ struct DinoLabsPlayground: View {
                                             .hoverEffect(opacity: 0.8)
                                         HStack {
                                             MainButtonMain {
-                                                isCaseSensitive.toggle()
+                                                isSearchCaseSensitive.toggle()
                                             }
                                             .lineLimit(1)
                                             .truncationMode(.tail)
@@ -841,8 +1052,8 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 8))
                                             .overlay(
                                                 Image(systemName: "a.square.fill")
-                                                    .font(.system(size: 12, weight: .semibold))
-                                                    .foregroundColor(isCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(isSearchCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(
@@ -865,7 +1076,7 @@ struct DinoLabsPlayground: View {
                                     .onChange(of: directoryItemSearch) { newValue in
                                         searchDebounceTask?.cancel()
                                         let task = DispatchWorkItem {
-                                            debouncedSearch = newValue
+                                            filteredSearch = newValue
                                         }
                                         searchDebounceTask = task
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
@@ -880,7 +1091,7 @@ struct DinoLabsPlayground: View {
                                 }
                                 if isReplace {
                                     HStack(spacing: 0) {
-                                        MainTextField(placeholder: "Search all files...", text: $directoryItemSearch)
+                                        MainTextField(placeholder: "Search all files...", text: $searchQuery)
                                             .lineLimit(1)
                                             .truncationMode(.tail)
                                             .textFieldStyle(PlainTextFieldStyle())
@@ -890,9 +1101,37 @@ struct DinoLabsPlayground: View {
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.65, height: 32)
                                             .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
+                                            .onChange(of: searchQuery) { newVal in
+                                                replaceDebounceTask?.cancel()
+                                                let task = DispatchWorkItem {
+                                                    performSearch()
+                                                }
+                                                replaceDebounceTask = task
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: task)
+                                            }
                                         HStack {
                                             MainButtonMain {
-                                                isCaseSensitive.toggle()
+                                                performSearch()
+                                            }
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 8))
+                                            .overlay(
+                                                Image(systemName: "magnifyingglass")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex:0xf5f5f5))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(
+                                                opacity: 0.6,
+                                                scale: 1.05,
+                                                cursor: .pointingHand
+                                            )
+                                            
+                                            MainButtonMain {
+                                                isReplaceCaseSensitive.toggle()
                                             }
                                             .lineLimit(1)
                                             .truncationMode(.tail)
@@ -901,8 +1140,8 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 8))
                                             .overlay(
                                                 Image(systemName: "a.square.fill")
-                                                    .font(.system(size: 12, weight: .semibold))
-                                                    .foregroundColor(isCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(isReplaceCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(
@@ -930,8 +1169,10 @@ struct DinoLabsPlayground: View {
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
                                     )
                                     .padding(.bottom, 6)
+                                    
+                                    
                                     HStack(spacing: 0) {
-                                        MainTextField(placeholder: "Replace with...", text: $directoryItemSearch)
+                                        MainTextField(placeholder: "Replace with...", text: $replaceQuery)
                                             .lineLimit(1)
                                             .truncationMode(.tail)
                                             .textFieldStyle(PlainTextFieldStyle())
@@ -943,6 +1184,7 @@ struct DinoLabsPlayground: View {
                                             .hoverEffect(opacity: 0.8)
                                         HStack {
                                             MainButtonMain {
+                                                performReplace()
                                             }
                                             .lineLimit(1)
                                             .truncationMode(.tail)
@@ -951,12 +1193,19 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 8))
                                             .overlay(
                                                 Image(systemName: "square.fill")
-                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .font(.system(size: 10, weight: .semibold))
                                                     .foregroundColor(Color(hex:0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
-                                            .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                            .disabled(searchQuery.isEmpty || replaceQuery.isEmpty)
+                                            .hoverEffect(
+                                                opacity: 0.6,
+                                                scale: 1.05,
+                                                cursor: .pointingHand
+                                            )
+                                            
                                             MainButtonMain {
+                                                performReplaceAll()
                                             }
                                             .lineLimit(1)
                                             .truncationMode(.tail)
@@ -964,12 +1213,17 @@ struct DinoLabsPlayground: View {
                                             .foregroundColor(.white)
                                             .font(.system(size: 8))
                                             .overlay(
-                                                Image(systemName: "square.grid.3x3.square")
-                                                    .font(.system(size: 14, weight: .semibold))
+                                                Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                                                    .font(.system(size: 10, weight: .semibold))
                                                     .foregroundColor(Color(hex:0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
-                                            .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                            .disabled(searchQuery.isEmpty || replaceQuery.isEmpty)
+                                            .hoverEffect(
+                                                opacity: 0.6,
+                                                scale: 1.05,
+                                                cursor: .pointingHand
+                                            )
                                         }
                                         .padding(.horizontal, 10)
                                         .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.35, height: 32)
@@ -989,7 +1243,9 @@ struct DinoLabsPlayground: View {
                                         topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
                                     )
+                                    .padding(.bottom, 6)
                                 }
+
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: !isReplace ? (geometry.size.height - 50) * 0.1 : (geometry.size.height - 50) * 0.2)
@@ -1002,85 +1258,116 @@ struct DinoLabsPlayground: View {
                             )
                             VStack(spacing: 0) {
                                 if isNavigatorLoading {
-                                    HStack {
+                                    VStack {
                                         Spacer()
                                         ProgressView()
                                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            .padding(20)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .fill(Color.black.opacity(0.5))
-                                            )
-                                            .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 3)
                                         Spacer()
                                     }
                                     .frame(width: geometry.size.width * leftPanelWidthRatio,
                                            height: !isReplace ? (geometry.size.height - 50) * 0.6 : (geometry.size.height - 50) * 0.5)
                                 } else if let root = fileItems.first {
-                                    HStack(alignment: .center, spacing: 0) {
-                                        Image(systemName: rootIsExpanded ? "chevron.down" : "chevron.right")
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(width: 8, height: 8, alignment: .center)
-                                            .foregroundColor(.white.opacity(0.8))
-                                            .padding(.trailing, 8)
-                                        Text(root.url.lastPathComponent)
-                                            .foregroundColor(.white)
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
+                                    if !isReplace {
+                                        HStack(alignment: .center, spacing: 0) {
+                                            Image(systemName: rootIsExpanded ? "chevron.down" : "chevron.right")
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(width: 8, height: 8, alignment: .center)
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .padding(.trailing, 8)
+                                            Text(root.url.lastPathComponent)
+                                                .foregroundColor(.white)
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                        }
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .containerHelper(backgroundColor: Color(hex:0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.6, scale: 1.02, cursor: .pointingHand)
+                                        .onTapGesture {
+                                            rootIsExpanded.toggle()
+                                        }
                                     }
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .containerHelper(backgroundColor: Color(hex:0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.6, scale: 1.02, cursor: .pointingHand)
-                                    .onTapGesture {
-                                        rootIsExpanded.toggle()
-                                    }
+                                
                                     if rootIsExpanded {
-                                        ScrollView([.vertical, .horizontal], showsIndicators: true) {
-                                            ScrollViewReader { proxy in
-                                                VStack(spacing: 0) {
-                                                    Color.clear
-                                                        .frame(height: 0)
-                                                        .id("top")
-                                                    ForEach(displayedChildren) { child in
-                                                        CollapsibleItemView(
-                                                            item: child,
-                                                            level: 1,
-                                                            getIcon: { fileItem in
-                                                                getIcon(forFileURL: fileItem.url)
-                                                            },
-                                                            onAddFile: addFile,
-                                                            onAddFolder: addFolder,
-                                                            onDeleteItem: deleteItem,
-                                                            onCut: cutItem,
-                                                            onCopy: copyItem,
-                                                            onPaste: pasteItem,
-                                                            onRename: renameItem,
-                                                            onRevealInFinder: revealInFinder,
-                                                            isPasteEnabled: (clipboardItem != nil),
-                                                            onDropItem: handleDropItem,
-                                                            onOpenFile: { fileItem in
-                                                                openFileTab(url: fileItem.url)
+                                        if isReplace {
+                                            if isReplaceAllLoading {
+                                                VStack {
+                                                    Spacer()
+                                                    ProgressView()
+                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                    Spacer()
+                                                }
+                                            } else if isSearchLoading {
+                                                VStack {
+                                                    Spacer()
+                                                    ProgressView()
+                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                    Spacer()
+                                                }
+                                            } else {
+                                                if groupedSearchResults.isEmpty {
+                                                    Text("No matches found.")
+                                                        .foregroundColor(.white.opacity(0.6))
+                                                        .font(.system(size: 10))
+                                                        .padding()
+                                                } else {
+                                                    AdvancedVirtualizedSearchResultsView(
+                                                        searchResults: $groupedSearchResults,
+                                                        searchQuery: searchQuery,
+                                                        isCaseSensitive: isSearchCaseSensitive,
+                                                        onOpenFile: { fileURL in
+                                                            openFileTab(url: fileURL)
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            ScrollView([.vertical, .horizontal], showsIndicators: true) {
+                                                ScrollViewReader { proxy in
+                                                    HStack(spacing: 0) {
+                                                        VStack(spacing: 0) {
+                                                            Color.clear
+                                                                .frame(height: 0)
+                                                                .id("top")
+                                                            
+                                                            ForEach(displayedChildren) { child in
+                                                                CollapsibleItemView(
+                                                                    item: child,
+                                                                    level: 1,
+                                                                    getIcon: { fileItem in getIcon(forFileURL: fileItem.url) },
+                                                                    onAddFile: addFile,
+                                                                    onAddFolder: addFolder,
+                                                                    onDeleteItem: deleteItem,
+                                                                    onCut: cutItem,
+                                                                    onCopy: copyItem,
+                                                                    onPaste: pasteItem,
+                                                                    onRename: renameItem,
+                                                                    onRevealInFinder: revealInFinder,
+                                                                    isPasteEnabled: (clipboardItem != nil),
+                                                                    onDropItem: handleDropItem,
+                                                                    onOpenFile: { fileItem in openFileTab(url: fileItem.url) }
+                                                                )
                                                             }
-                                                        )
+                                                            Spacer()
+                                                        }
+                                                        .padding(.vertical, 6)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        Spacer(minLength: 0)
                                                     }
-                                                }
-                                                .frame(
-                                                    minWidth: geometry.size.width * leftPanelWidthRatio,
-                                                    minHeight: (geometry.size.height - 50) * 0.55,
-                                                    alignment: .topLeading
-                                                )
-                                                .padding(.bottom, 8)
-                                                .onChange(of: debouncedSearch) { _ in
-                                                    proxy.scrollTo("top", anchor: .topLeading)
-                                                }
-                                                .onAppear {
-                                                    DispatchQueue.main.async {
+                                                    .frame(
+                                                        minWidth: geometry.size.width * leftPanelWidthRatio,
+                                                        minHeight: (geometry.size.height - 50) * 0.55,
+                                                        alignment: .leading
+                                                    )
+                                                    .padding(.bottom, 8)
+                                                    .onChange(of: groupedSearchResults) { _ in
                                                         proxy.scrollTo("top", anchor: .topLeading)
                                                     }
+                                                    
+                                                    
                                                 }
                                             }
                                         }
@@ -1552,7 +1839,7 @@ struct DinoLabsPlayground: View {
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                     .frame(width: 18, height: 18)
                                     .overlay(
-                                        Image(systemName: "magnifyingglass")
+                                        Image(systemName: "minus.magnifyingglass")
                                             .font(.system(size: 9, weight: .semibold))
                                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                             .allowsHitTesting(false)
@@ -2097,7 +2384,9 @@ struct DinoLabsPlayground: View {
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK {
-            fileURL = panel.urls.first
+            if let url = panel.urls.first {
+                openFileTab(url: url)
+            }
         }
     }
 }
