@@ -92,14 +92,14 @@ struct AnimatedPieChart: View {
     private let fadeDuration: TimeInterval = 0.5
 
     private let colors: [Color] = [
-        Color(hex: "#2ecc71"),
-        Color(hex: "#148444"),
-        Color(hex: "#0F6340"),
-        Color(hex: "#208BB9"),
-        Color(hex: "#2042B9"),
-        Color(hex: "#3520B9"),
-        Color(hex: "#6320B9"),
-        Color(hex: "#9120B9"),
+        Color(hex: 0x2ecc71),
+        Color(hex: 0x148444),
+        Color(hex: 0x0F6340),
+        Color(hex: 0x208BB9),
+        Color(hex: 0x2042B9),
+        Color(hex: 0x3520B9),
+        Color(hex: 0x6320B9),
+        Color(hex: 0x9120B9),
         Color.blue,
         Color.green
     ]
@@ -264,7 +264,7 @@ struct DoughnutTooltipView: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color(hex: "#1E1E1E"))
+                .fill(Color(hex: 0x1E1E1E))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)

@@ -24,8 +24,9 @@ struct ContentView: View {
                 ResetAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
             case .RegisterAuth:
                 RegisterAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
+
             case .DinoLabsPlayground:
-                DinoLabsPlayground(currentView: $currentView)
+                DinoLabsPlayground(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
                     .onAppear {
                         checkToken()
                     }

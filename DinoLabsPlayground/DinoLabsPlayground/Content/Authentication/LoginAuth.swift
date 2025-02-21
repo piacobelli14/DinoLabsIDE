@@ -68,13 +68,13 @@ struct LoginAuth: View {
                                     
                                     Text("Login to Dino Labs")
                                         .font(.system(size: 32, weight: .bold))
-                                        .foregroundColor(Color(hex:0xf5f5f5))
+                                        .foregroundColor(Color(hex: 0xf5f5f5))
                                         .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                         .padding(.bottom, geometry.size.height * 0.005)
                                     
                                     Text("Use your Dino Labs Credentials or create an account below.")
                                         .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(Color(hex:0xf5f5f5).opacity(0.6))
+                                        .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
                                         .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                                     
                                     VStack {
@@ -140,7 +140,7 @@ struct LoginAuth: View {
                                                         .foregroundColor(.white)
                                                         .allowsHitTesting(false)
                                                 )
-                                                .containerHelper(backgroundColor: Color(hex:0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
+                                                .containerHelper(backgroundColor: Color(hex: 0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                                 .padding(.bottom, 2)
                                                 .hoverEffect(opacity: 0.5)
                                                 .clickEffect(opacity: 0.1)
@@ -150,7 +150,7 @@ struct LoginAuth: View {
                                                 if let error = errorMessage {
                                                     Spacer()
                                                     Text(error)
-                                                        .foregroundColor(Color(hex:0xE54B4B))
+                                                        .foregroundColor(Color(hex: 0xE54B4B))
                                                         .font(.system(size: 12, weight: .bold))
                                                     Spacer()
                                                 }
@@ -198,7 +198,7 @@ struct LoginAuth: View {
                                                 }
                                                     .allowsHitTesting(false)
                                             )
-                                            .containerHelper(backgroundColor: Color(hex:0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x4E3270), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -222,7 +222,7 @@ struct LoginAuth: View {
                                                 }
                                                     .allowsHitTesting(false)
                                             )
-                                            .containerHelper(backgroundColor: Color(hex:0x232729), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x232729), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.6), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                                             .padding(.bottom, 2)
                                             .hoverEffect(opacity: 0.5)
                                             .clickEffect(opacity: 0.1)
@@ -231,7 +231,7 @@ struct LoginAuth: View {
                                                 if let error = errorMessage {
                                                     Spacer()
                                                     Text(error)
-                                                        .foregroundColor(Color(hex:0xE54B4B))
+                                                        .foregroundColor(Color(hex: 0xE54B4B))
                                                         .font(.system(size: 12, weight: .bold))
                                                     Spacer()
                                                 }
@@ -251,7 +251,7 @@ struct LoginAuth: View {
                                                         .foregroundColor(.white)
                                                     Text("Create an Account")
                                                         .font(.system(size: 12 * 0.018, weight: .semibold))
-                                                        .foregroundColor(Color(hex:0xD8C1F5))
+                                                        .foregroundColor(Color(hex: 0xD8C1F5))
                                                     Spacer()
                                                 }
                                                     .padding(.vertical, 14)

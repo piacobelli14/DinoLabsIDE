@@ -145,7 +145,7 @@ struct RegisterAuth: View {
                                                     Spacer()
                                                     Text(profileImage != nil ? "Change Your Photo" : "Choose a Photo")
                                                         .font(.system(size: 12, weight: .bold))
-                                                        .foregroundColor(profileImage != nil ? .white : Color(hex:0x222222))
+                                                        .foregroundColor(profileImage != nil ? .white : Color(hex: 0x222222))
                                                     Spacer()
                                                 }
                                                 .allowsHitTesting(false)
@@ -277,7 +277,7 @@ struct RegisterAuth: View {
                                         if let error = errorMessage, !error.isEmpty {
                                             Spacer()
                                             Text(error)
-                                                .foregroundColor(Color(hex:0xE54B4B))
+                                                .foregroundColor(Color(hex: 0xE54B4B))
                                                 .font(.system(size: 12, weight: .bold))
                                             Spacer()
                                         }

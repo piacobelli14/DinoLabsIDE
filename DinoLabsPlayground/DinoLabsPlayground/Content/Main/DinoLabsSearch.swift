@@ -227,9 +227,9 @@ class SearchResultItem: NSCollectionViewItem {
     override func loadView() {
         self.view = HoverEffectView(frame: .zero)
         if let layer = self.view.layer {
-            layer.backgroundColor = NSColor(calibratedRed: 23/255.0,
-                                            green: 23/255.0,
-                                            blue: 23/255.0,
+            layer.backgroundColor = NSColor(calibratedRed: 20/255.0,
+                                            green: 20/255.0,
+                                            blue: 20/255.0,
                                             alpha: 1.0).cgColor
         }
         
@@ -284,9 +284,9 @@ class SearchResultHeaderView: HoverEffectView {
     
     private func setupHeader() {
         if let layer = self.layer {
-            layer.backgroundColor = NSColor(calibratedRed: 33/255.0,
-                                            green: 33/255.0,
-                                            blue: 33/255.0,
+            layer.backgroundColor = NSColor(calibratedRed: 23/255.0,
+                                            green: 23/255.0,
+                                            blue: 23/255.0,
                                             alpha: 1.0).cgColor
         }
         chevronImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -354,9 +354,9 @@ struct AdvancedVirtualizedSearchResultsView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView(frame: .zero)
         scrollView.drawsBackground = true
-        scrollView.backgroundColor = NSColor(calibratedRed: 23/255.0,
-                                             green: 23/255.0,
-                                             blue: 23/255.0,
+        scrollView.backgroundColor = NSColor(calibratedRed: 20/255.0,
+                                             green: 20/255.0,
+                                             blue: 20/255.0,
                                              alpha: 1.0)
         let collectionView = NSCollectionView(frame: .zero)
         let layout = NSCollectionViewFlowLayout()

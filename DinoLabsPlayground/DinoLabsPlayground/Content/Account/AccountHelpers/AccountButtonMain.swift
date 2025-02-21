@@ -1,13 +1,14 @@
 //
-//  MainButtonMain.swift
+//  AccountMainButton.swift
+//  Dino Labs Playground
 //
-//  Created by Peter Iacobelli on 2/14/25.
+//  Created by Peter Iacobelli on 2/20/25.
 //
 
 import SwiftUI
 import AppKit
 
-struct MainButtonMain: NSViewRepresentable {
+struct AccountButtonMain: NSViewRepresentable {
     let action: () -> Void
 
     func makeCoordinator() -> Coordinator {

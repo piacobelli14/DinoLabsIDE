@@ -249,7 +249,7 @@ struct ResetAuth: View {
                                         if let error = errorMessage, !error.isEmpty {
                                             Spacer()
                                             Text(error)
-                                                .foregroundColor(Color(hex:0xE54B4B))
+                                                .foregroundColor(Color(hex: 0xE54B4B))
                                                 .font(.system(size: 12, weight: .bold))
                                             Spacer()
                                         }

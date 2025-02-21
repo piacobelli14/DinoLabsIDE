@@ -166,7 +166,8 @@ struct LineChartView: View {
         if count > 1 {
             for i in 1..<(count - 1) {
                 if let last = displayedIndices.last,
-                   xPositions[i] - xPositions[last] >= minLabelSpacing {
+                   (xPositions[i] - xPositions[last] >= minLabelSpacing) &&
+                   (xPositions[count - 1] - xPositions[i] >= minLabelSpacing) {
                     displayedIndices.append(i)
                 }
             }
@@ -416,7 +417,7 @@ struct LineTooltipView: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color(hex: "#1E1E1E"))
+                .fill(Color(hex: 0x1E1E1E))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)

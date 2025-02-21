@@ -279,6 +279,8 @@ struct CollapsibleItemView: View {
 
 struct DinoLabsPlayground: View {
     @Binding var currentView: AppView
+    @Binding var authenticatedUsername: String
+    @Binding var authenticatedOrgID: String
     @State private var leftPanelWidthRatio: CGFloat = 0.25
     @State private var isNavigatorLoading: Bool = false
     static var loadedRootURL: URL? = nil
@@ -291,6 +293,7 @@ struct DinoLabsPlayground: View {
     @State private var fileItems: [FileItem] = []
     @State private var fileURL: URL? = nil
     @State private var noFileSelected: Bool = true
+    @State private var isAccount: Bool = false
     @State private var clipboardItem: URL? = nil
     @State private var clipboardOperation: String? = nil
     @State private var isReplace: Bool = false
@@ -902,11 +905,11 @@ struct DinoLabsPlayground: View {
                             HStack { }
                                 .frame(width: geometry.size.width * leftPanelWidthRatio,
                                        height: (geometry.size.height - 50) * 0.05)
-                                .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     Rectangle()
                                         .frame(height: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                     alignment: .bottom
                                 )
                             VStack(alignment: .leading, spacing: 0) {
@@ -915,7 +918,7 @@ struct DinoLabsPlayground: View {
                                 }
                                 .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
                                 .padding(.vertical, 10)
-                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     HStack {
                                         Image(systemName: "folder.fill")
@@ -939,7 +942,7 @@ struct DinoLabsPlayground: View {
                                 .overlay(
                                     Rectangle()
                                         .frame(height: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.2)),
+                                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                                     alignment: .bottom
                                 )
                                 MainButtonMain {
@@ -947,7 +950,7 @@ struct DinoLabsPlayground: View {
                                 }
                                 .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
                                 .padding(.vertical, 10)
-                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     HStack {
                                         Image(systemName: "doc.text")
@@ -971,18 +974,18 @@ struct DinoLabsPlayground: View {
                                 .overlay(
                                     Rectangle()
                                         .frame(height: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.2)),
+                                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                                     alignment: .bottom
                                 )
                                 Spacer()
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.15)
-                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                             HStack(spacing: 0) {
@@ -990,7 +993,7 @@ struct DinoLabsPlayground: View {
                                     isReplace.toggle()
                                 }
                                 .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.5)
-                                .containerHelper(backgroundColor: isReplace ? Color.clear : Color(hex:0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: isReplace ? Color.clear : Color(hex: 0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     HStack {
                                         Text("Search")
@@ -1006,7 +1009,7 @@ struct DinoLabsPlayground: View {
                                     isReplace.toggle()
                                 }
                                 .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.5)
-                                .containerHelper(backgroundColor: !isReplace ? Color.clear : Color(hex:0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: !isReplace ? Color.clear : Color(hex: 0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     HStack {
                                         Text("Search & Replace")
@@ -1021,11 +1024,11 @@ struct DinoLabsPlayground: View {
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                             VStack {
@@ -1039,7 +1042,7 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 10, weight: .heavy))
                                             .padding(.horizontal, 10)
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.80, height: 32)
-                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
                                         HStack {
                                             MainButtonMain {
@@ -1053,7 +1056,7 @@ struct DinoLabsPlayground: View {
                                             .overlay(
                                                 Image(systemName: "a.square.fill")
                                                     .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(isSearchCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
+                                                    .foregroundColor(isSearchCaseSensitive ? Color(hex: 0x5C2BE2) : Color(hex: 0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(
@@ -1066,7 +1069,7 @@ struct DinoLabsPlayground: View {
                                         .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.2, height: 32)
                                         .containerHelper(
                                             backgroundColor: Color(hex: 0x222222),
-                                            borderColor: Color(hex:0x616161),
+                                            borderColor: Color(hex: 0x616161),
                                             borderWidth: 1,
                                             topLeft: 0, topRight: 6, bottomLeft: 0, bottomRight: 6,
                                             shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
@@ -1083,7 +1086,7 @@ struct DinoLabsPlayground: View {
                                     }
                                     .containerHelper(
                                         backgroundColor: Color.clear,
-                                        borderColor: Color(hex:0x616161),
+                                        borderColor: Color(hex: 0x616161),
                                         borderWidth: 1,
                                         topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
@@ -1099,7 +1102,7 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 8, weight: .semibold))
                                             .padding(.horizontal, 10)
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.65, height: 32)
-                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
                                             .onChange(of: searchQuery) { newVal in
                                                 replaceDebounceTask?.cancel()
@@ -1121,7 +1124,7 @@ struct DinoLabsPlayground: View {
                                             .overlay(
                                                 Image(systemName: "magnifyingglass")
                                                     .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(Color(hex:0xf5f5f5))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(
@@ -1141,7 +1144,7 @@ struct DinoLabsPlayground: View {
                                             .overlay(
                                                 Image(systemName: "a.square.fill")
                                                     .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(isReplaceCaseSensitive ? Color(hex:0x5C2BE2) : Color(hex:0xf5f5f5))
+                                                    .foregroundColor(isReplaceCaseSensitive ? Color(hex: 0x5C2BE2) : Color(hex: 0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .hoverEffect(
@@ -1154,7 +1157,7 @@ struct DinoLabsPlayground: View {
                                         .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.35, height: 32)
                                         .containerHelper(
                                             backgroundColor: Color(hex: 0x222222),
-                                            borderColor: Color(hex:0x616161),
+                                            borderColor: Color(hex: 0x616161),
                                             borderWidth: 1,
                                             topLeft: 0, topRight: 6, bottomLeft: 0, bottomRight: 6,
                                             shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
@@ -1163,7 +1166,7 @@ struct DinoLabsPlayground: View {
                                     .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.9)
                                     .containerHelper(
                                         backgroundColor: Color.clear,
-                                        borderColor: Color(hex:0x616161),
+                                        borderColor: Color(hex: 0x616161),
                                         borderWidth: 1,
                                         topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
@@ -1180,7 +1183,7 @@ struct DinoLabsPlayground: View {
                                             .font(.system(size: 8, weight: .semibold))
                                             .padding(.horizontal, 10)
                                             .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.65, height: 32)
-                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 6, topRight: 0, bottomLeft: 6, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
                                         HStack {
                                             MainButtonMain {
@@ -1194,7 +1197,7 @@ struct DinoLabsPlayground: View {
                                             .overlay(
                                                 Image(systemName: "square.fill")
                                                     .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(Color(hex:0xf5f5f5))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .disabled(searchQuery.isEmpty || replaceQuery.isEmpty)
@@ -1215,7 +1218,7 @@ struct DinoLabsPlayground: View {
                                             .overlay(
                                                 Image(systemName: "square.grid.3x1.below.line.grid.1x2")
                                                     .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(Color(hex:0xf5f5f5))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5))
                                                     .allowsHitTesting(false)
                                             )
                                             .disabled(searchQuery.isEmpty || replaceQuery.isEmpty)
@@ -1229,7 +1232,7 @@ struct DinoLabsPlayground: View {
                                         .frame(width: (geometry.size.width * leftPanelWidthRatio * 0.9) * 0.35, height: 32)
                                         .containerHelper(
                                             backgroundColor: Color(hex: 0x222222),
-                                            borderColor: Color(hex:0x616161),
+                                            borderColor: Color(hex: 0x616161),
                                             borderWidth: 1,
                                             topLeft: 0, topRight: 6, bottomLeft: 0, bottomRight: 6,
                                             shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
@@ -1238,7 +1241,7 @@ struct DinoLabsPlayground: View {
                                     .frame(width: (geometry.size.width * leftPanelWidthRatio) * 0.9)
                                     .containerHelper(
                                         backgroundColor: Color.clear,
-                                        borderColor: Color(hex:0x616161),
+                                        borderColor: Color(hex: 0x616161),
                                         borderWidth: 1,
                                         topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
                                         shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
@@ -1249,11 +1252,11 @@ struct DinoLabsPlayground: View {
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: !isReplace ? (geometry.size.height - 50) * 0.1 : (geometry.size.height - 50) * 0.2)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                             VStack(spacing: 0) {
@@ -1284,7 +1287,7 @@ struct DinoLabsPlayground: View {
                                         .padding(.vertical, 6)
                                         .padding(.horizontal, 12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .containerHelper(backgroundColor: Color(hex:0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                        .containerHelper(backgroundColor: Color(hex: 0x212121), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                         .hoverEffect(opacity: 0.6, scale: 1.02, cursor: .pointingHand)
                                         .onTapGesture {
                                             rootIsExpanded.toggle()
@@ -1353,7 +1356,8 @@ struct DinoLabsPlayground: View {
                                                             }
                                                             Spacer()
                                                         }
-                                                        .padding(.vertical, 6)
+                                                        .padding(.top, 10)
+                                                        .padding(.bottom, 4)
                                                         .frame(maxWidth: .infinity, alignment: .leading)
                                                         Spacer(minLength: 0)
                                                     }
@@ -1378,45 +1382,52 @@ struct DinoLabsPlayground: View {
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: !isReplace ? (geometry.size.height - 50) * 0.6 : (geometry.size.height - 50) * 0.5)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                             HStack {
                                 HStack {
                                     MainButtonMain {
+                                        if !isAccount {
+                                            noFileSelected = false
+                                            isAccount = true
+                                        } else {
+                                            noFileSelected = true
+                                            isAccount = false
+                                        }
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                     .frame(width: 18, height: 18)
                                     .overlay(
                                         Image(systemName: "person.circle")
                                             .font(.system(size: 11, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .foregroundColor(isAccount ? Color(hex: 0xAD6ADD) : Color(hex: 0xf5f5f5).opacity(0.8))
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                 }
                                 .frame(height: (geometry.size.height - 50) * 0.05)
                                 .padding(.horizontal, 10)
-                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     Rectangle()
                                         .frame(width: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                     alignment: .trailing
                                 )
                                 Spacer()
                             }
                             .frame(width: geometry.size.width * leftPanelWidthRatio,
                                    height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                         }
@@ -1478,7 +1489,7 @@ struct DinoLabsPlayground: View {
                             }
                         }
                         Rectangle()
-                            .foregroundColor(Color(hex:0xc1c1c1).opacity(0.1))
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.1))
                             .frame(width: 2)
                             .gesture(
                                 DragGesture()
@@ -1492,7 +1503,7 @@ struct DinoLabsPlayground: View {
                         VStack(spacing: 0) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 0) {
-                                    if openTabs.isEmpty {
+                                    if noFileSelected {
                                         HStack(spacing: 4) {
                                             Image(systemName: "wand.and.stars")
                                                 .resizable()
@@ -1502,6 +1513,32 @@ struct DinoLabsPlayground: View {
                                                 .allowsHitTesting(false)
                                                 .hoverEffect(opacity: 0.8, cursor: .pointingHand)
                                             Text("Get Started")
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .font(.system(size: 9, weight: .bold))
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                                .allowsHitTesting(false)
+                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                        }
+                                        .frame(height: (geometry.size.height - 50) * 0.05)
+                                        .padding(.horizontal, 12)
+                                        .background(Color(hex: 0xAD6ADD).opacity(0.2))
+                                        .overlay(
+                                            Rectangle()
+                                                .frame(width: 0.5)
+                                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                                            alignment: .trailing
+                                        )
+                                    } else if isAccount {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "person.circle")
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(width: 12, height: 12)
+                                                .padding(.trailing, 4)
+                                                .allowsHitTesting(false)
+                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            Text("My Account")
                                                 .foregroundColor(.white.opacity(0.8))
                                                 .font(.system(size: 9, weight: .bold))
                                                 .lineLimit(1)
@@ -1592,243 +1629,260 @@ struct DinoLabsPlayground: View {
                                 alignment: .bottom
                             )
                             VStack {
-                                if let activeTab = openTabs.first(where: { $0.id == activeTabId }) {
-                                    Text(editorPlaceholderText(for: activeTab.fileURL))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 14))
-                                } else if noFileSelected {
+                                if isAccount {
                                     Spacer()
-                                    HStack {
+                                    DinoLabsAccount(
+                                        geometry: geometry,
+                                        authenticatedUsername: $authenticatedUsername,
+                                        authenticatedOrgID: $authenticatedOrgID,
+                                        isAccount: $isAccount,
+                                        leftPanelWidthRatio: $leftPanelWidthRatio,
+                                        showAlert: $showAlert,
+                                        alertTitle: $alertTitle,
+                                        alertMessage: $alertMessage,
+                                        personalUsageData: $personalUsageData
+                                    )
+                                    Spacer()
+                                } else {
+                                    if let activeTab = openTabs.first(where: { $0.id == activeTabId }) {
+                                        Text(editorPlaceholderText(for: activeTab.fileURL))
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 14))
+                                    } else if noFileSelected {
                                         Spacer()
-                                        VStack {
-                                            HStack {
-                                                VStack(alignment: .leading, spacing: 0) {
-                                                    Text("Dino Labs Playground")
-                                                        .font(.system(size: 24, weight: .semibold))
-                                                        .foregroundColor(Color.white.opacity(0.9))
-                                                        .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                                                        .padding(.bottom, 8)
-                                                    Text("Version 1.0.0 (Beta)")
-                                                        .font(.system(size: 14, weight: .regular))
-                                                        .foregroundColor(Color.white.opacity(0.6))
-                                                    HStack {
-                                                        VStack(alignment: .leading) {
-                                                            MainButtonMain {
-                                                                loadDirectory()
-                                                            }
-                                                            .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
-                                                            .padding(.vertical, 10)
-                                                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                                            .overlay(
-                                                                HStack {
-                                                                    Image(systemName: "folder.fill")
-                                                                        .resizable()
-                                                                        .aspectRatio(contentMode: .fit)
-                                                                        .frame(width: 12, height: 12)
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .padding(.trailing, 4)
-                                                                        .allowsHitTesting(false)
-                                                                    Text("Load Directory")
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                        .lineLimit(1)
-                                                                        .truncationMode(.tail)
-                                                                        .allowsHitTesting(false)
-                                                                    Spacer()
-                                                                }
-                                                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                                            )
-                                                            .padding(.leading, 8)
-                                                            .padding(.vertical, 2)
-                                                            MainButtonMain {
-                                                                loadFile()
-                                                            }
-                                                            .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
-                                                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                                            .overlay(
-                                                                HStack {
-                                                                    Image(systemName: "doc.text")
-                                                                        .resizable()
-                                                                        .aspectRatio(contentMode: .fit)
-                                                                        .frame(width: 12, height: 12)
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .padding(.trailing, 4)
-                                                                        .allowsHitTesting(false)
-                                                                    Text("Load File")
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                        .lineLimit(1)
-                                                                        .truncationMode(.tail)
-                                                                        .allowsHitTesting(false)
-                                                                    Spacer()
-                                                                }
-                                                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                                            )
-                                                            .padding(.leading, 8)
-                                                            .padding(.vertical, 2)
-                                                        }
-                                                        Spacer()
-                                                    }
-                                                    .padding(.top, 30)
-                                                }
-                                                Spacer()
-                                            }
-                                            .padding(.leading, 20)
-                                            .padding(.top, 20)
+                                        HStack {
                                             Spacer()
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                        VStack {
-                                            if usageLanguagesData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
-                                                }
-                                            } else {
-                                                ScrollView {
-                                                    VStack(alignment: .leading) {
-                                                        ForEach(usageLanguagesData.prefix(5)) { language in
-                                                            VStack(alignment: .leading) {
-                                                                HStack {
-                                                                    Text(language.language)
-                                                                        .foregroundColor(.white.opacity(0.7))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                    Spacer()
-                                                                    Text(String(format: "%.1f%%", language.percentage))
-                                                                        .foregroundColor(.white.opacity(0.7))
-                                                                        .font(.system(size: 10, weight: .regular))
-                                                                }
-                                                                .padding(.bottom, 2)
-                                                                GeometryReader { geo in
-                                                                    ZStack(alignment: .leading) {
-                                                                        Rectangle()
-                                                                            .frame(width: geo.size.width, height: 10)
-                                                                            .foregroundColor(Color(hex: 0x616161).opacity(0.4))
-                                                                            .cornerRadius(4)
-                                                                        Rectangle()
-                                                                            .frame(width: geo.size.width * CGFloat(language.percentage / 100.0), height: 10)
-                                                                            .foregroundColor(colorForLanguage(language.language))
-                                                                            .cornerRadius(4)
-                                                                    }
-                                                                }
-                                                                .frame(height: 6)
-                                                            }
-                                                            .padding(.vertical, 8)
-                                                            .padding(.horizontal, 14)
-                                                        }
-                                                    }
-                                                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                                                    .padding(.horizontal, 10)
-                                                    .padding(.vertical, 8)
-                                                }
-                                            }
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                    }
-                                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
-                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    Spacer()
-                                    HStack {
-                                        Spacer()
-                                        VStack {
-                                            if personalUsageData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
-                                                }
-                                            } else {
+                                            VStack {
                                                 HStack {
                                                     VStack(alignment: .leading, spacing: 0) {
-                                                        Text("Personal Usage")
-                                                            .font(.system(size: 18, weight: .semibold))
-                                                            .foregroundColor(Color.white.opacity(0.7))
+                                                        Text("Dino Labs Playground")
+                                                            .font(.system(size: 24, weight: .semibold))
+                                                            .foregroundColor(Color.white.opacity(0.9))
                                                             .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                                                            .padding(.bottom, 4)
-                                                        Text("Edits Saved In Last 30 Days")
-                                                            .font(.system(size: 10, weight: .regular))
-                                                            .foregroundColor(Color.white.opacity(0.5))
+                                                            .padding(.bottom, 8)
+                                                        Text("Version 1.0.0 (Beta)")
+                                                            .font(.system(size: 14, weight: .regular))
+                                                            .foregroundColor(Color.white.opacity(0.6))
+                                                        HStack {
+                                                            VStack(alignment: .leading) {
+                                                                MainButtonMain {
+                                                                    loadDirectory()
+                                                                }
+                                                                .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
+                                                                .padding(.vertical, 10)
+                                                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                                                .overlay(
+                                                                    HStack {
+                                                                        Image(systemName: "folder.fill")
+                                                                            .resizable()
+                                                                            .aspectRatio(contentMode: .fit)
+                                                                            .frame(width: 12, height: 12)
+                                                                            .foregroundColor(Color(hex: 0x9b59b6))
+                                                                            .padding(.trailing, 4)
+                                                                            .allowsHitTesting(false)
+                                                                        Text("Load Directory")
+                                                                            .foregroundColor(Color(hex: 0x9b59b6))
+                                                                            .font(.system(size: 12, weight: .semibold))
+                                                                            .lineLimit(1)
+                                                                            .truncationMode(.tail)
+                                                                            .allowsHitTesting(false)
+                                                                        Spacer()
+                                                                    }
+                                                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                                                )
+                                                                .padding(.leading, 8)
+                                                                .padding(.vertical, 2)
+                                                                
+                                                                MainButtonMain {
+                                                                    loadFile()
+                                                                }
+                                                                .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
+                                                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                                                .overlay(
+                                                                    HStack {
+                                                                        Image(systemName: "doc.text")
+                                                                            .resizable()
+                                                                            .aspectRatio(contentMode: .fit)
+                                                                            .frame(width: 12, height: 12)
+                                                                            .foregroundColor(Color(hex: 0x9b59b6))
+                                                                            .padding(.trailing, 4)
+                                                                            .allowsHitTesting(false)
+                                                                        Text("Load File")
+                                                                            .foregroundColor(Color(hex: 0x9b59b6))
+                                                                            .font(.system(size: 12, weight: .semibold))
+                                                                            .lineLimit(1)
+                                                                            .truncationMode(.tail)
+                                                                            .allowsHitTesting(false)
+                                                                        Spacer()
+                                                                    }
+                                                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                                                )
+                                                                .padding(.leading, 8)
+                                                                .padding(.vertical, 2)
+                                                            }
+                                                            Spacer()
+                                                        }
+                                                        .padding(.top, 30)
                                                     }
                                                     Spacer()
                                                 }
                                                 .padding(.leading, 20)
                                                 .padding(.top, 20)
-                                                LineChartView(series1Name: "Edits Saved",
-                                                              series1Data: $personalUsageData,
-                                                              series2Name: nil,
-                                                              series2Data: .constant(nil),
-                                                              showGrid: false)
+                                                Spacer()
                                             }
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                        VStack {
-                                            if usageDoughnutData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
+                                            .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
+                                            .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                            .containerHelper(
+                                                backgroundColor: Color(hex: 0x111111),
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                                shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                            )
+                                            Spacer()
+                                            VStack {
+                                                if usageLanguagesData.isEmpty {
+                                                    HStack {
+                                                        Spacer()
+                                                        ProgressView()
+                                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                        Spacer()
+                                                    }
+                                                } else {
+                                                    ScrollView {
+                                                        VStack(alignment: .leading) {
+                                                            ForEach(usageLanguagesData.prefix(5)) { language in
+                                                                VStack(alignment: .leading) {
+                                                                    HStack {
+                                                                        Text(language.language)
+                                                                            .foregroundColor(.white.opacity(0.7))
+                                                                            .font(.system(size: 12, weight: .semibold))
+                                                                        Spacer()
+                                                                        Text(String(format: "%.1f%%", language.percentage))
+                                                                            .foregroundColor(.white.opacity(0.7))
+                                                                            .font(.system(size: 10, weight: .regular))
+                                                                    }
+                                                                    .padding(.bottom, 2)
+                                                                    GeometryReader { geo in
+                                                                        ZStack(alignment: .leading) {
+                                                                            Rectangle()
+                                                                                .frame(width: geo.size.width, height: 10)
+                                                                                .foregroundColor(Color(hex: 0x616161).opacity(0.4))
+                                                                                .cornerRadius(4)
+                                                                            Rectangle()
+                                                                                .frame(width: geo.size.width * CGFloat(language.percentage / 100.0), height: 10)
+                                                                                .foregroundColor(colorForLanguage(language.language))
+                                                                                .cornerRadius(4)
+                                                                        }
+                                                                    }
+                                                                    .frame(height: 6)
+                                                                }
+                                                                .padding(.vertical, 8)
+                                                                .padding(.horizontal, 14)
+                                                            }
+                                                        }
+                                                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 8)
+                                                    }
                                                 }
-                                            } else {
-                                                DoughnutPlot(cellType: "languageUsage",
-                                                             data: $usageDoughnutData,
-                                                             organizationName: "",
-                                                             fontSizeMultiplier: 1.0)
                                             }
+                                            .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
+                                            .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                            .containerHelper(
+                                                backgroundColor: Color(hex: 0x111111),
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                                shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                            )
+                                            Spacer()
                                         }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
+                                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                                         .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
+                                        Spacer()
+                                        HStack {
+                                            Spacer()
+                                            VStack {
+                                                if personalUsageData.isEmpty {
+                                                    HStack {
+                                                        Spacer()
+                                                        ProgressView()
+                                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                        Spacer()
+                                                    }
+                                                } else {
+                                                    HStack {
+                                                        VStack(alignment: .leading, spacing: 0) {
+                                                            Text("Personal Usage")
+                                                                .font(.system(size: 18, weight: .semibold))
+                                                                .foregroundColor(Color.white.opacity(0.7))
+                                                                .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
+                                                                .padding(.bottom, 4)
+                                                            Text("Edits Saved In Last 30 Days")
+                                                                .font(.system(size: 10, weight: .regular))
+                                                                .foregroundColor(Color.white.opacity(0.5))
+                                                        }
+                                                        Spacer()
+                                                    }
+                                                    .padding(.leading, 20)
+                                                    .padding(.top, 20)
+                                                    LineChartView(series1Name: "Edits Saved",
+                                                                  series1Data: $personalUsageData,
+                                                                  series2Name: nil,
+                                                                  series2Data: .constant(nil),
+                                                                  showGrid: false)
+                                                }
+                                            }
+                                            .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
+                                            .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                            .containerHelper(
+                                                backgroundColor: Color(hex: 0x111111),
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                                shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                            )
+                                            Spacer()
+                                            VStack {
+                                                if usageDoughnutData.isEmpty {
+                                                    HStack {
+                                                        Spacer()
+                                                        ProgressView()
+                                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                        Spacer()
+                                                    }
+                                                } else {
+                                                    DoughnutPlot(cellType: "languageUsage",
+                                                                 data: $usageDoughnutData,
+                                                                 organizationName: "",
+                                                                 fontSizeMultiplier: 1.0)
+                                                }
+                                            }
+                                            .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
+                                            .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
+                                            .containerHelper(
+                                                backgroundColor: Color(hex: 0x111111),
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
+                                                shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
+                                            )
+                                            Spacer()
+                                        }
+                                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
+                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
                                         Spacer()
                                     }
-                                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
-                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    Spacer()
                                 }
                             }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
                                    height: (geometry.size.height - 50) * 0.9)
-                            .containerHelper(backgroundColor: Color(hex:0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                             HStack {
@@ -1870,21 +1924,21 @@ struct DinoLabsPlayground: View {
                                 }
                                 .frame(height: (geometry.size.height - 50) * 0.05)
                                 .padding(.horizontal, 10)
-                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                .containerHelper(backgroundColor: Color(hex: 0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                                 .overlay(
                                     Rectangle()
                                         .frame(width: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                     alignment: .leading
                                 )
                             }
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
                                    height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                             .overlay(
                                 Rectangle()
                                     .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
+                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                                 alignment: .bottom
                             )
                         }
@@ -1946,7 +2000,7 @@ struct DinoLabsPlayground: View {
                             }
                         }
                         Rectangle()
-                            .foregroundColor(Color(hex:0xc1c1c1).opacity(0.1))
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.1))
                             .frame(width: 2)
                             .gesture(
                                 DragGesture()
@@ -1957,310 +2011,7 @@ struct DinoLabsPlayground: View {
                             )
                             .hoverEffect(opacity: 0.5, cursor: .resizeLeftRight)
                             .clickEffect(opacity: 1.0, cursor: .resizeLeftRight)
-                        VStack(spacing: 0) {
-                            HStack { }
-                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
-                                   height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
-                                alignment: .bottom
-                            )
-                            VStack {
-                                if noFileSelected {
-                                    Spacer()
-                                    HStack {
-                                        Spacer()
-                                        VStack {
-                                            HStack {
-                                                VStack(alignment: .leading, spacing: 0) {
-                                                    Text("Dino Labs Playground")
-                                                        .font(.system(size: 24, weight: .semibold))
-                                                        .foregroundColor(Color.white.opacity(0.9))
-                                                        .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                                                        .padding(.bottom, 8)
-                                                    Text("Version 1.0.0 (Beta)")
-                                                        .font(.system(size: 14, weight: .regular))
-                                                        .foregroundColor(Color.white.opacity(0.6))
-                                                    HStack {
-                                                        VStack(alignment: .leading) {
-                                                            MainButtonMain {
-                                                                loadDirectory()
-                                                            }
-                                                            .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
-                                                            .padding(.vertical, 10)
-                                                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                                            .overlay(
-                                                                HStack {
-                                                                    Image(systemName: "folder.fill")
-                                                                        .resizable()
-                                                                        .aspectRatio(contentMode: .fit)
-                                                                        .frame(width: 12, height: 12)
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .padding(.trailing, 4)
-                                                                        .allowsHitTesting(false)
-                                                                    Text("Load Directory")
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                        .lineLimit(1)
-                                                                        .truncationMode(.tail)
-                                                                        .allowsHitTesting(false)
-                                                                    Spacer()
-                                                                }
-                                                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                                            )
-                                                            .padding(.leading, 8)
-                                                            .padding(.vertical, 2)
-                                                            MainButtonMain {
-                                                                loadFile()
-                                                            }
-                                                            .frame(width: (geometry.size.width * leftPanelWidthRatio), height: 12)
-                                                            .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                                            .overlay(
-                                                                HStack {
-                                                                    Image(systemName: "doc.text")
-                                                                        .resizable()
-                                                                        .aspectRatio(contentMode: .fit)
-                                                                        .frame(width: 12, height: 12)
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .padding(.trailing, 4)
-                                                                        .allowsHitTesting(false)
-                                                                    Text("Load File")
-                                                                        .foregroundColor(Color(hex:0x9b59b6))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                        .lineLimit(1)
-                                                                        .truncationMode(.tail)
-                                                                        .allowsHitTesting(false)
-                                                                    Spacer()
-                                                                }
-                                                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                                            )
-                                                            .padding(.leading, 8)
-                                                            .padding(.vertical, 2)
-                                                        }
-                                                        Spacer()
-                                                    }
-                                                    .padding(.top, 30)
-                                                }
-                                                Spacer()
-                                            }
-                                            .padding(.leading, 20)
-                                            .padding(.top, 20)
-                                            Spacer()
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                        VStack {
-                                            if usageLanguagesData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
-                                                }
-                                            } else {
-                                                ScrollView {
-                                                    VStack(alignment: .leading) {
-                                                        ForEach(usageLanguagesData.prefix(5)) { language in
-                                                            VStack(alignment: .leading) {
-                                                                HStack {
-                                                                    Text(language.language)
-                                                                        .foregroundColor(.white.opacity(0.7))
-                                                                        .font(.system(size: 12, weight: .semibold))
-                                                                    Spacer()
-                                                                    Text(String(format: "%.1f%%", language.percentage))
-                                                                        .foregroundColor(.white.opacity(0.7))
-                                                                        .font(.system(size: 10, weight: .regular))
-                                                                }
-                                                                .padding(.bottom, 2)
-                                                                GeometryReader { geo in
-                                                                    ZStack(alignment: .leading) {
-                                                                        Rectangle()
-                                                                            .frame(width: geo.size.width, height: 10)
-                                                                            .foregroundColor(Color(hex: 0x616161).opacity(0.4))
-                                                                            .cornerRadius(4)
-                                                                        Rectangle()
-                                                                            .frame(width: geo.size.width * CGFloat(language.percentage / 100.0), height: 10)
-                                                                            .foregroundColor(colorForLanguage(language.language))
-                                                                            .cornerRadius(4)
-                                                                    }
-                                                                }
-                                                                .frame(height: 6)
-                                                            }
-                                                            .padding(.vertical, 8)
-                                                            .padding(.horizontal, 14)
-                                                        }
-                                                    }
-                                                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                                                    .padding(.horizontal, 10)
-                                                    .padding(.vertical, 8)
-                                                }
-                                            }
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                    }
-                                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
-                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    Spacer()
-                                    HStack {
-                                        Spacer()
-                                        VStack {
-                                            if personalUsageData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
-                                                }
-                                            } else {
-                                                HStack {
-                                                    VStack(alignment: .leading, spacing: 0) {
-                                                        Text("Personal Usage")
-                                                            .font(.system(size: 18, weight: .semibold))
-                                                            .foregroundColor(Color.white.opacity(0.7))
-                                                            .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                                                            .padding(.bottom, 4)
-                                                        Text("Edits Saved In Last 30 Days")
-                                                            .font(.system(size: 10, weight: .regular))
-                                                            .foregroundColor(Color.white.opacity(0.5))
-                                                    }
-                                                    Spacer()
-                                                }
-                                                .padding(.leading, 20)
-                                                .padding(.top, 20)
-                                                LineChartView(series1Name: "Edits Saved",
-                                                              series1Data: $personalUsageData,
-                                                              series2Name: nil,
-                                                              series2Data: .constant(nil),
-                                                              showGrid: false)
-                                            }
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                        VStack {
-                                            if usageDoughnutData.isEmpty {
-                                                HStack {
-                                                    Spacer()
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                    Spacer()
-                                                }
-                                            } else {
-                                                DoughnutPlot(cellType: "languageUsage",
-                                                             data: $usageDoughnutData,
-                                                             organizationName: "",
-                                                             fontSizeMultiplier: 1.0)
-                                            }
-                                        }
-                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                                        .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                        .containerHelper(
-                                            backgroundColor: Color(hex:0x111111),
-                                            borderColor: Color.clear,
-                                            borderWidth: 0,
-                                            topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6,
-                                            shadowColor: .black, shadowRadius: 2, shadowX: 0, shadowY: 0
-                                        )
-                                        Spacer()
-                                    }
-                                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
-                                    .frame(height: ((geometry.size.height - 50) * 0.9) * 0.44)
-                                    Spacer()
-                                }
-                            }
-                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
-                                   height: (geometry.size.height - 50) * 0.9)
-                            .containerHelper(backgroundColor: Color(hex:0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
-                                alignment: .bottom
-                            )
-                            HStack {
-                                Spacer()
-                                HStack {
-                                    MainButtonMain {
-                                    }
-                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                    .frame(width: 18, height: 18)
-                                    .overlay(
-                                        Image(systemName: "magnifyingglass")
-                                            .font(.system(size: 9, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    MainButtonMain {
-                                    }
-                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                    .frame(width: 18, height: 18)
-                                    .overlay(
-                                        Image(systemName: "plus.magnifyingglass")
-                                            .font(.system(size: 9, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    MainButtonMain {
-                                    }
-                                    .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                    .frame(width: 18, height: 18)
-                                    .overlay(
-                                        Image(systemName: "arrow.clockwise")
-                                            .font(.system(size: 9, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                }
-                                .frame(height: (geometry.size.height - 50) * 0.05)
-                                .padding(.horizontal, 10)
-                                .containerHelper(backgroundColor: Color(hex:0x111111), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                                .overlay(
-                                    Rectangle()
-                                        .frame(width: 0.5)
-                                        .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
-                                    alignment: .leading
-                                )
-                            }
-                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio),
-                                   height: (geometry.size.height - 50) * 0.05)
-                            .containerHelper(backgroundColor: Color(hex:0x171717), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 0.5)
-                                    .foregroundColor(Color(hex:0xc1c1c1).opacity(0.4)),
-                                alignment: .bottom
-                            )
-                        }
+                        
                     }
                     Spacer()
                 }

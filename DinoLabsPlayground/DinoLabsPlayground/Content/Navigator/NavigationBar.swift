@@ -20,7 +20,7 @@ struct NavigationBar: View {
             if isHamburger {
                 VStack(spacing: 0) {
                     Color.clear.frame(height: 50)
-                    Color(hex:0x191919).opacity(0.9)
+                    Color(hex: 0x191919).opacity(0.9)
                         .edgesIgnoringSafeArea(.bottom)
                         .overlay(
                             VStack(spacing: 0) {
@@ -169,8 +169,8 @@ struct NavigationBar: View {
 extension View {
     func applyPopoutButtonStyle(icon: String, text: String, width: CGFloat) -> some View {
         self
-            .background(Color(hex:0x242424))
-            .containerHelper(backgroundColor: Color(hex:0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6)
+            .background(Color(hex: 0x242424))
+            .containerHelper(backgroundColor: Color(hex: 0x242424), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6)
             .frame(width: width, height: 50)
             .overlay(
                 HStack {

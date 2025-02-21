@@ -137,7 +137,7 @@ struct DinoLabsAlert: View {
                             .padding(.vertical, 10)
                             .padding(.horizontal, 10)
                             .frame(minWidth: 250, maxWidth: 350, maxHeight: 35)
-                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
                             .padding(.bottom, 4)
                             
                         case "checkbox":
@@ -181,7 +181,7 @@ struct DinoLabsAlert: View {
                             .padding(.vertical, 10)
                             .padding(.horizontal, 10)
                             .frame(minWidth: 250, maxWidth: 350, maxHeight: 35)
-                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex:0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 2, topLeft: 8, topRight: 8, bottomLeft: 8, bottomRight: 8, shadowColor: .white.opacity(0.4), shadowRadius: 2, shadowX: 0, shadowY: 0)
                             .padding(.bottom, 4)
                         }
                     }
