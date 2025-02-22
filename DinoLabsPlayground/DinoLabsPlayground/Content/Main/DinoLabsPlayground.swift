@@ -289,6 +289,9 @@ struct DinoLabsPlayground: View {
             DinoLabsPlayground.loadedRootURL = directoryURL
         }
     }
+    @State private var userKeyBinds: [String: String] = [:]
+    @State private var userZoomLevel: Double = 1.0
+    @State private var userColorTheme: String = "default"
     @State private var rootIsExpanded: Bool = true
     @State private var fileItems: [FileItem] = []
     @State private var fileURL: URL? = nil
@@ -1639,6 +1642,9 @@ struct DinoLabsPlayground: View {
                                         showAlert: $showAlert,
                                         alertTitle: $alertTitle,
                                         alertMessage: $alertMessage,
+                                        keyBinds: $userKeyBinds,
+                                        zoomLevel: $userZoomLevel,
+                                        colorTheme: $userColorTheme,
                                         personalUsageData: $personalUsageData
                                     )
                                     Spacer()
@@ -1653,8 +1659,12 @@ struct DinoLabsPlayground: View {
                                         
                                         if codeExtensions.contains(ext) {
                                             let language = codeLanguage(for: ext)
-                                            IDEView(fileURL: activeTab.fileURL, programmingLanguage: language)
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            IDEView(fileURL: activeTab.fileURL, programmingLanguage: language, 
+                                                    keyBinds: $userKeyBinds,
+                                                    zoomLevel: $userZoomLevel,
+                                                    colorTheme: $userColorTheme
+                                            )
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         } else {
                                             Text(editorPlaceholderText(for: activeTab.fileURL))
                                                 .foregroundColor(.white)

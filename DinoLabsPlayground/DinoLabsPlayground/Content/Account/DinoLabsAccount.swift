@@ -16,6 +16,9 @@ struct DinoLabsAccount: View {
     @Binding var showAlert: Bool
     @Binding var alertTitle: String
     @Binding var alertMessage: String
+    @Binding var keyBinds: [String: String]
+    @Binding var zoomLevel: Double
+    @Binding var colorTheme: String
     @Binding var personalUsageData: [LineChartDataPoint]
     @State private var selectedState: String = "none"
     @State private var firstName: String = ""
@@ -37,7 +40,6 @@ struct DinoLabsAccount: View {
     @State private var role: String = ""
     @State private var isAdmin: String = ""
     @State private var isEditingKeyBinds: String? = nil
-    @State private var keyBinds: [String: String] = [:]
     private let defaultKeyBinds: [String: String] = [
         "save": "s",
         "undo": "z",
@@ -58,8 +60,6 @@ struct DinoLabsAccount: View {
         "search": "Search",
         "selectAll": "Select All"
     ]
-    @State private var zoomLevel: Double = 1.0
-    @State private var colorTheme: String = "default"
     
     
     var body: some View {
