@@ -120,6 +120,13 @@ struct IDEEditorView: NSViewRepresentable {
         let ruler = IDECenteredLineNumberRuler(textView: textView, theme: theme, zoomLevel: zoomLevel)
         scrollView.verticalRulerView = ruler
         
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: scrollView.contentView, queue: .main) { _ in
+            if let textView = scrollView.documentView as? IDETextView {
+                context.coordinator.applySyntaxHighlighting(to: textView)
+            }
+        }
+        
         return scrollView
     }
     
@@ -136,6 +143,7 @@ struct IDEEditorView: NSViewRepresentable {
     
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: IDEEditorView
+        private var pendingHighlightWorkItem: DispatchWorkItem?
         
         init(_ parent: IDEEditorView) {
             self.parent = parent
@@ -144,64 +152,100 @@ struct IDEEditorView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
-            applySyntaxHighlighting(to: textView)
-            textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
+            pendingHighlightWorkItem?.cancel()
+            let currentText = textView.string
+            let workItem = DispatchWorkItem { [weak self, weak textView] in
+                guard let self = self, let textView = textView else { return }
+                if textView.string == currentText {
+                    self.applySyntaxHighlightingInternal(on: textView, withReferenceText: currentText)
+                }
+            }
+            pendingHighlightWorkItem = workItem
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.05, execute: workItem)
         }
         
         func applySyntaxHighlighting(to textView: NSTextView) {
-            let codeStr = textView.string
-            let lang = parent.programmingLanguage
-            guard let layoutManager = textView.layoutManager else { return }
-            let paragraphStyle = textView.defaultParagraphStyle
+            pendingHighlightWorkItem?.cancel()
+            let currentText = textView.string
+            let workItem = DispatchWorkItem { [weak self, weak textView] in
+                guard let self = self, let textView = textView else { return }
+                if textView.string == currentText {
+                    self.applySyntaxHighlightingInternal(on: textView, withReferenceText: currentText)
+                }
+            }
+            pendingHighlightWorkItem = workItem
+            DispatchQueue.global(qos: .userInitiated).async(execute: workItem)
+        }
+        
+        private func applySyntaxHighlightingInternal(on textView: NSTextView, withReferenceText currentText: String) {
+            guard let layoutManager = textView.layoutManager,
+                  let textContainer = textView.textContainer else { return }
+            
+            let visibleRect = textView.visibleRect
+            let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+            let visibleCharRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+            
+            let fullText = textView.string as NSString
+            let visibleLineRange = fullText.lineRange(for: visibleCharRange)
+            let visibleText = fullText.substring(with: visibleLineRange)
+            
+            let tokens = SwiftParser.tokenize(visibleText, language: parent.programmingLanguage)
+            let paragraphStyle = textView.defaultParagraphStyle ?? NSParagraphStyle()
             let font = NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(parent.zoomLevel), weight: .semibold)
             let lineHeight: CGFloat = 20.0
             let actualLineHeight = layoutManager.defaultLineHeight(for: font)
             let baselineOffset = (lineHeight - actualLineHeight) / 2.0
             
-            let tokens = SwiftParser.tokenize(codeStr, language: lang)
-            let attributed = NSMutableAttributedString()
+            let newVisibleAttributed = NSMutableAttributedString()
             var currentLine = 1
-            
             for token in tokens {
                 if token.lineNumber > currentLine {
                     let needed = token.lineNumber - currentLine
                     for _ in 0..<needed {
                         let newlineAttr = NSAttributedString(
                             string: "\n",
-                            attributes: [.paragraphStyle: paragraphStyle as Any]
+                            attributes: [.paragraphStyle: paragraphStyle]
                         )
-                        attributed.append(newlineAttr)
+                        newVisibleAttributed.append(newlineAttr)
                     }
                     currentLine = token.lineNumber
                 }
-                
                 let color = ThemeColorProvider.tokenColor(for: token.type, theme: parent.theme)
                 let attrs: [NSAttributedString.Key: Any] = [
                     .foregroundColor: color,
                     .font: font,
-                    .paragraphStyle: paragraphStyle ?? NSParagraphStyle(),
+                    .paragraphStyle: paragraphStyle,
                     .baselineOffset: baselineOffset
                 ]
-                attributed.append(NSAttributedString(string: token.value, attributes: attrs))
+                newVisibleAttributed.append(NSAttributedString(string: token.value, attributes: attrs))
             }
             
-            let totalLines = codeStr.components(separatedBy: .newlines).count
-            if totalLines > currentLine {
-                let diff = totalLines - currentLine
+            let visibleLinesCount = visibleText.components(separatedBy: "\n").count
+            if visibleLinesCount > currentLine {
+                let diff = visibleLinesCount - currentLine
                 for _ in 0..<diff {
                     let newlineAttr = NSAttributedString(
                         string: "\n",
-                        attributes: [.paragraphStyle: paragraphStyle as Any]
+                        attributes: [.paragraphStyle: paragraphStyle]
                     )
-                    attributed.append(newlineAttr)
+                    newVisibleAttributed.append(newlineAttr)
                 }
             }
             
             let selRange = textView.selectedRange()
-            textView.textStorage?.beginEditing()
-            textView.textStorage?.setAttributedString(attributed)
-            textView.textStorage?.endEditing()
-            textView.setSelectedRange(selRange)
+            DispatchQueue.main.async {
+                if textView.string == currentText {
+                    textView.alphaValue = 0.0
+                    let undoManager = textView.undoManager
+                    undoManager?.disableUndoRegistration()
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.replaceCharacters(in: visibleLineRange, with: newVisibleAttributed)
+                    textView.textStorage?.endEditing()
+                    textView.setSelectedRange(selRange)
+                    textView.alphaValue = 1.0
+                    undoManager?.enableUndoRegistration()
+                }
+            }
         }
     }
 }
@@ -369,8 +413,15 @@ class IDETextView: NSTextView {
         customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
         customMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: customKeyBinds["paste"] ?? "")
         customMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: customKeyBinds["cut"] ?? "")
-        customMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: customKeyBinds["undo"] ?? "")
-        customMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: customKeyBinds["redo"] ?? "")
+        
+        let undoItem = NSMenuItem(title: "Undo", action: #selector(customUndo(_:)), keyEquivalent: customKeyBinds["undo"] ?? "")
+        undoItem.target = self
+        customMenu.addItem(undoItem)
+        
+        let redoItem = NSMenuItem(title: "Redo", action: #selector(customRedo(_:)), keyEquivalent: customKeyBinds["redo"] ?? "")
+        redoItem.target = self
+        customMenu.addItem(redoItem)
+        
         return customMenu
     }
     
@@ -379,6 +430,14 @@ class IDETextView: NSTextView {
             return false
         }
         return super.validateMenuItem(menuItem)
+    }
+    
+    @objc func customUndo(_ sender: Any?) {
+        self.undoManager?.undo()
+    }
+    
+    @objc func customRedo(_ sender: Any?) {
+        self.undoManager?.redo()
     }
 }
 
