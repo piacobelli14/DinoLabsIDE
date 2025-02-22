@@ -29,7 +29,7 @@ struct LanguageUsage: Identifiable {
     var percentage: Double = 0.0
 }
 
-struct FileItem: Identifiable {
+struct FileItem: Identifiable, Equatable {
     let id: URL
     let url: URL
     let isDirectory: Bool
@@ -1330,48 +1330,47 @@ struct DinoLabsPlayground: View {
                                         } else {
                                             ScrollView([.vertical, .horizontal], showsIndicators: true) {
                                                 ScrollViewReader { proxy in
-                                                    HStack(spacing: 0) {
-                                                        VStack(spacing: 0) {
-                                                            Color.clear
-                                                                .frame(height: 0)
-                                                                .id("top")
-                                                            
-                                                            ForEach(displayedChildren) { child in
-                                                                CollapsibleItemView(
-                                                                    item: child,
-                                                                    level: 1,
-                                                                    getIcon: { fileItem in getIcon(forFileURL: fileItem.url) },
-                                                                    onAddFile: addFile,
-                                                                    onAddFolder: addFolder,
-                                                                    onDeleteItem: deleteItem,
-                                                                    onCut: cutItem,
-                                                                    onCopy: copyItem,
-                                                                    onPaste: pasteItem,
-                                                                    onRename: renameItem,
-                                                                    onRevealInFinder: revealInFinder,
-                                                                    isPasteEnabled: (clipboardItem != nil),
-                                                                    onDropItem: handleDropItem,
-                                                                    onOpenFile: { fileItem in openFileTab(url: fileItem.url) }
-                                                                )
-                                                            }
-                                                            Spacer()
+                                                    VStack(spacing: 0) {
+                                                        Color.clear
+                                                            .frame(height: 0)
+                                                            .id("top")
+                                                        ForEach(displayedChildren) { child in
+                                                            CollapsibleItemView(
+                                                                item: child,
+                                                                level: 1,
+                                                                getIcon: { fileItem in
+                                                                    getIcon(forFileURL: fileItem.url)
+                                                                },
+                                                                onAddFile: addFile,
+                                                                onAddFolder: addFolder,
+                                                                onDeleteItem: deleteItem,
+                                                                onCut: cutItem,
+                                                                onCopy: copyItem,
+                                                                onPaste: pasteItem,
+                                                                onRename: renameItem,
+                                                                onRevealInFinder: revealInFinder,
+                                                                isPasteEnabled: (clipboardItem != nil),
+                                                                onDropItem: handleDropItem,
+                                                                onOpenFile: { fileItem in
+                                                                    openFileTab(url: fileItem.url)
+                                                                }
+                                                            )
                                                         }
-                                                        .padding(.top, 10)
-                                                        .padding(.bottom, 4)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        Spacer(minLength: 0)
                                                     }
                                                     .frame(
                                                         minWidth: geometry.size.width * leftPanelWidthRatio,
                                                         minHeight: (geometry.size.height - 50) * 0.55,
-                                                        alignment: .leading
+                                                        alignment: .topLeading
                                                     )
                                                     .padding(.bottom, 8)
                                                     .onChange(of: groupedSearchResults) { _ in
                                                         proxy.scrollTo("top", anchor: .topLeading)
                                                     }
-                                                    
-                                                    
+                                                    .onAppear {
+                                                        DispatchQueue.main.async {
+                                                            proxy.scrollTo("top", anchor: .topLeading)
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -1645,9 +1644,23 @@ struct DinoLabsPlayground: View {
                                     Spacer()
                                 } else {
                                     if let activeTab = openTabs.first(where: { $0.id == activeTabId }) {
-                                        Text(editorPlaceholderText(for: activeTab.fileURL))
-                                            .foregroundColor(.white)
-                                            .font(.system(size: 14))
+                                        let ext = activeTab.fileURL.pathExtension.lowercased()
+                                        let codeExtensions: Set<String> = [
+                                            "js", "jsx", "ts", "tsx", "html", "css", "json", "xml",
+                                            "py", "php", "swift", "c", "cpp", "h", "cs", "rs",
+                                            "bash", "sh", "zsh", "mc", "mcgen", "sql", "asm"
+                                        ]
+                                        
+                                        if codeExtensions.contains(ext) {
+                                            let language = codeLanguage(for: ext)
+                                            IDEView(fileURL: activeTab.fileURL, programmingLanguage: language)
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        } else {
+                                            Text(editorPlaceholderText(for: activeTab.fileURL))
+                                                .foregroundColor(.white)
+                                                .font(.system(size: 14))
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        }
                                     } else if noFileSelected {
                                         Spacer()
                                         HStack {
@@ -2140,4 +2153,34 @@ struct DinoLabsPlayground: View {
             }
         }
     }
+    
+    private func codeLanguage(for fileExtension: String) -> String {
+        let languageMapping: [String: String] = [
+            "js": "Javascript",
+            "jsx": "Javascript",
+            "ts": "Typescript",
+            "tsx": "Typescript",
+            "html": "HTML",
+            "css": "CSS",
+            "json": "JSON",
+            "xml": "XML",
+            "py": "Python",
+            "php": "PHP",
+            "swift": "Swift",
+            "c": "C",
+            "cpp": "C++",
+            "h": "C++",
+            "cs": "C#",
+            "rs": "Rust",
+            "bash": "Bash",
+            "sh": "Shell",
+            "zsh": "Shell",
+            "mc": "Monkey C",
+            "mcgen": "Monkey C",
+            "sql": "SQL",
+            "asm": "Assembly"
+        ]
+        return languageMapping[fileExtension] ?? "plaintext"
+    }
+
 }

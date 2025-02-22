@@ -6,6 +6,7 @@
 
 import Foundation
 import SwiftUI
+import AppKit
 
 extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
@@ -46,5 +47,15 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+extension NSColor {
+    convenience init(hex: Int, alpha: CGFloat = 1.0) {
+        let red   = CGFloat((hex >> 16) & 0xFF) / 255.0
+        let green = CGFloat((hex >>  8) & 0xFF) / 255.0
+        let blue  = CGFloat((hex      ) & 0xFF) / 255.0
+        
+        self.init(srgbRed: red, green: green, blue: blue, alpha: alpha)
     }
 }
