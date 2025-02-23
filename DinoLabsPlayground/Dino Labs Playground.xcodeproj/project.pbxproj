@@ -25,6 +25,8 @@
 		CBDF235A2D6916930049F865 /* DinoLabsIDE.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF23592D6916930049F865 /* DinoLabsIDE.swift */; };
 		CBDF235C2D694C240049F865 /* DinoLabsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF235B2D694C240049F865 /* DinoLabsParser.swift */; };
 		CBDF235E2D6A46D60049F865 /* DinoLabsThemes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF235D2D6A46D60049F865 /* DinoLabsThemes.swift */; };
+		CBDF23612D6AA0AF0049F865 /* CodeTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF23602D6AA0AF0049F865 /* CodeTextField.swift */; };
+		CBDF23632D6AA0BB0049F865 /* CodeButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF23622D6AA0BB0049F865 /* CodeButtonMain.swift */; };
 		CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */; };
 		CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15A72D5D8A19009A0FAF /* ContentView.swift */; };
 		CBEC15AA2D5D8A1D009A0FAF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBEC15A92D5D8A1D009A0FAF /* Assets.xcassets */; };
@@ -75,6 +77,8 @@
 		CBDF23592D6916930049F865 /* DinoLabsIDE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsIDE.swift; sourceTree = "<group>"; };
 		CBDF235B2D694C240049F865 /* DinoLabsParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsParser.swift; sourceTree = "<group>"; };
 		CBDF235D2D6A46D60049F865 /* DinoLabsThemes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsThemes.swift; sourceTree = "<group>"; };
+		CBDF23602D6AA0AF0049F865 /* CodeTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeTextField.swift; sourceTree = "<group>"; };
+		CBDF23622D6AA0BB0049F865 /* CodeButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeButtonMain.swift; sourceTree = "<group>"; };
 		CBEC15A22D5D8A19009A0FAF /* Dino Labs Playground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dino Labs Playground.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBEC15A52D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsPlaygroundApp.swift; sourceTree = "<group>"; };
 		CBEC15A72D5D8A19009A0FAF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -152,6 +156,15 @@
 				CBDF23532D6807C30049F865 /* AccountButtonMain.swift */,
 			);
 			path = AccountHelpers;
+			sourceTree = "<group>";
+		};
+		CBDF235F2D6AA0950049F865 /* CodeHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CBDF23602D6AA0AF0049F865 /* CodeTextField.swift */,
+				CBDF23622D6AA0BB0049F865 /* CodeButtonMain.swift */,
+			);
+			path = CodeHelpers;
 			sourceTree = "<group>";
 		};
 		CBEC15992D5D8A19009A0FAF = {
@@ -274,6 +287,7 @@
 		CBEC15BA2D5D8F96009A0FAF /* Code */ = {
 			isa = PBXGroup;
 			children = (
+				CBDF235F2D6AA0950049F865 /* CodeHelpers */,
 				CBDF23592D6916930049F865 /* DinoLabsIDE.swift */,
 				CBDF235B2D694C240049F865 /* DinoLabsParser.swift */,
 				CBDF235D2D6A46D60049F865 /* DinoLabsThemes.swift */,
@@ -425,6 +439,7 @@
 				CBDF23522D6807B40049F865 /* AccountTextField.swift in Sources */,
 				CBFDA88B2D64FC3700EA87BB /* TabHelper.swift in Sources */,
 				CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */,
+				CBDF23612D6AA0AF0049F865 /* CodeTextField.swift in Sources */,
 				CB5B4ADB2D5FC6BF00492970 /* InputButtonManager.swift in Sources */,
 				CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */,
 				CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */,
@@ -465,6 +480,7 @@
 				CBFD7B6F2D624F6200418304 /* DoughnutHelper.swift in Sources */,
 				CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */,
 				CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */,
+				CBDF23632D6AA0BB0049F865 /* CodeButtonMain.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

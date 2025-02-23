@@ -16,27 +16,299 @@ struct IDEView: View {
     @State private var fileContent: String = ""
     @State private var isLoading: Bool = false
     
+    @State private var searchState: Bool = false
+    @State private var replaceState: Bool = false
+    @State private var searchCaseSensitive: Bool = true
+    @State private var searchQuery: String = ""
+    @State private var replaceQuery: String = ""
+    
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Loading file...")
+                ProgressView("")
             } else {
-                IDEEditorView(
-                    text: $fileContent,
-                    programmingLanguage: programmingLanguage,
-                    theme: {
-                        switch colorTheme.lowercased() {
-                        case "light":
-                            return .lightTheme
-                        case "dark":
-                            return .darkTheme
-                        default:
-                            return .defaultTheme
+                VStack(spacing: 0) {
+                    HStack {
+                        if searchState || replaceState {
+                            HStack(spacing: 0) {
+                                MainTextField(placeholder: "Search all files...", text: $searchQuery)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 8, weight: .semibold))
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 100, height: 25)
+                                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 0, bottomLeft: 2, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                    .hoverEffect(opacity: 0.8)
+                                HStack {
+                                    MainButtonMain {
+                                    }
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        Image(systemName: "magnifyingglass")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(
+                                        opacity: 0.6,
+                                        scale: 1.05,
+                                        cursor: .pointingHand
+                                    )
+                                    
+                                    MainButtonMain {
+                                        searchCaseSensitive.toggle()
+                                    }
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        Image(systemName: "a.square.fill")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2) : Color(hex: 0xf5f5f5))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(
+                                        opacity: 0.6,
+                                        scale: 1.05,
+                                        cursor: .pointingHand
+                                    )
+                                }
+                                .padding(.horizontal, 10)
+                                .frame(width: 60, height: 25)
+                                .containerHelper(
+                                    backgroundColor: Color(hex: 0x222222),
+                                    borderColor: Color(hex: 0x616161),
+                                    borderWidth: 1,
+                                    topLeft: 0, topRight: 2, bottomLeft: 0, bottomRight: 2,
+                                    shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
+                                )
+                            }
+                            .frame(width: 160, height: 25)
+                            .containerHelper(
+                                backgroundColor: Color.clear,
+                                borderColor: Color(hex: 0x616161),
+                                borderWidth: 1,
+                                topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2,
+                                shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
+                            )
+                            
+                            if replaceState {
+                                HStack(spacing: 0) {
+                                    MainTextField(placeholder: "Replace with...", text: $replaceQuery)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(width: 100, height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 0, bottomLeft: 2, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                    HStack {
+                                        MainButtonMain {
+                                            // Replace
+                                        }
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .overlay(
+                                            Image(systemName: "square.fill")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(
+                                            opacity: 0.6,
+                                            scale: 1.05,
+                                            cursor: .pointingHand
+                                        )
+                                        
+                                        MainButtonMain {
+                                           // Replace All
+                                        }
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .overlay(
+                                            Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(
+                                            opacity: 0.6,
+                                            scale: 1.05,
+                                            cursor: .pointingHand
+                                        )
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 60, height: 25)
+                                    .containerHelper(
+                                        backgroundColor: Color(hex: 0x222222),
+                                        borderColor: Color(hex: 0x616161),
+                                        borderWidth: 1,
+                                        topLeft: 0, topRight: 2, bottomLeft: 0, bottomRight: 2,
+                                        shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
+                                    )
+                                }
+                                .frame(width: 160, height: 25)
+                                .containerHelper(
+                                    backgroundColor: Color.clear,
+                                    borderColor: Color(hex: 0x616161),
+                                    borderWidth: 1,
+                                    topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2,
+                                    shadowColor: Color.white.opacity(0.5), shadowRadius: 8, shadowX: 0, shadowY: 0
+                                )
+                                .padding(.leading, 10)
+                            }
+                            
                         }
-                    }(),
-                    zoomLevel: zoomLevel,
-                    keyBinds: keyBinds
-                )
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            CodeButtonMain {
+                                if !searchState {
+                                    searchState = true
+                                    replaceState = false
+                                } else {
+                                    searchState = false
+                                    replaceState = false
+                                }
+                            }
+                            .containerHelper(backgroundColor: searchState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                if !replaceState {
+                                    replaceState = true
+                                    searchState = false
+                                } else {
+                                    replaceState = false
+                                    searchState = false
+                                }
+                            }
+                            .containerHelper(backgroundColor: replaceState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "text.magnifyingglass")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "square.on.square")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "arrow.uturn.backward")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "arrow.uturn.forward")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "square.split.2x1")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        }
+                        
+                    }
+                    .frame(height: (searchState || replaceState) ? 45 : 20)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 20)
+                    .containerHelper(
+                        backgroundColor: Color(hex: 0x171717).opacity(0.9),
+                        borderColor: Color.clear,
+                        borderWidth: 0,
+                        topLeft: 0,
+                        topRight: 0,
+                        bottomLeft: 0,
+                        bottomRight: 0,
+                        shadowColor: Color.clear,
+                        shadowRadius: 0,
+                        shadowX: 0,
+                        shadowY: 0
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
+                        alignment: .bottom
+                    )
+                    
+                    IDEEditorView(
+                        text: $fileContent,
+                        programmingLanguage: programmingLanguage,
+                        theme: {
+                            switch colorTheme.lowercased() {
+                            case "light":
+                                return .lightTheme
+                            case "dark":
+                                return .darkTheme
+                            default:
+                                return .defaultTheme
+                            }
+                        }(),
+                        zoomLevel: zoomLevel,
+                        keyBinds: keyBinds
+                    )
+                    
+                    
+                }
             }
         }
         .onAppear {
@@ -116,6 +388,8 @@ struct IDEEditorView: NSViewRepresentable {
         scrollView.drawsBackground = false
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = true
+        scrollView.verticalScroller = InvisibleScroller(frame: .zero)
+        scrollView.horizontalScroller = InvisibleScroller(frame: .zero)
         
         let ruler = IDECenteredLineNumberRuler(textView: textView, theme: theme, zoomLevel: zoomLevel)
         scrollView.verticalRulerView = ruler
@@ -123,7 +397,7 @@ struct IDEEditorView: NSViewRepresentable {
         scrollView.contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: scrollView.contentView, queue: .main) { _ in
             if let textView = scrollView.documentView as? IDETextView {
-                context.coordinator.applySyntaxHighlighting(to: textView)
+                context.coordinator.applySyntaxHighlightingInternal(on: textView, withReferenceText: textView.string)
             }
         }
         
@@ -153,15 +427,7 @@ struct IDEEditorView: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
             pendingHighlightWorkItem?.cancel()
-            let currentText = textView.string
-            let workItem = DispatchWorkItem { [weak self, weak textView] in
-                guard let self = self, let textView = textView else { return }
-                if textView.string == currentText {
-                    self.applySyntaxHighlightingInternal(on: textView, withReferenceText: currentText)
-                }
-            }
-            pendingHighlightWorkItem = workItem
-            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.05, execute: workItem)
+            self.applySyntaxHighlightingInternal(on: textView, withReferenceText: textView.string)
         }
         
         func applySyntaxHighlighting(to textView: NSTextView) {
@@ -174,11 +440,12 @@ struct IDEEditorView: NSViewRepresentable {
                 }
             }
             pendingHighlightWorkItem = workItem
-            DispatchQueue.global(qos: .userInitiated).async(execute: workItem)
+            DispatchQueue.main.async(execute: workItem)
         }
         
-        private func applySyntaxHighlightingInternal(on textView: NSTextView, withReferenceText currentText: String) {
-            guard let layoutManager = textView.layoutManager,
+        func applySyntaxHighlightingInternal(on textView: NSTextView, withReferenceText currentText: String) {
+            guard textView.string == currentText,
+                  let layoutManager = textView.layoutManager,
                   let textContainer = textView.textContainer else { return }
             
             let visibleRect = textView.visibleRect
@@ -189,13 +456,14 @@ struct IDEEditorView: NSViewRepresentable {
             let visibleLineRange = fullText.lineRange(for: visibleCharRange)
             let visibleText = fullText.substring(with: visibleLineRange)
             
-            let tokens = SwiftParser.tokenize(visibleText, language: parent.programmingLanguage)
             let paragraphStyle = textView.defaultParagraphStyle ?? NSParagraphStyle()
-            let font = NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(parent.zoomLevel), weight: .semibold)
+            let font = NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(self.parent.zoomLevel), weight: .semibold)
             let lineHeight: CGFloat = 20.0
             let actualLineHeight = layoutManager.defaultLineHeight(for: font)
             let baselineOffset = (lineHeight - actualLineHeight) / 2.0
+            let selRange = textView.selectedRange()
             
+            let tokens = SwiftParser.tokenize(visibleText, language: self.parent.programmingLanguage)
             let newVisibleAttributed = NSMutableAttributedString()
             var currentLine = 1
             for token in tokens {
@@ -210,7 +478,7 @@ struct IDEEditorView: NSViewRepresentable {
                     }
                     currentLine = token.lineNumber
                 }
-                let color = ThemeColorProvider.tokenColor(for: token.type, theme: parent.theme)
+                let color = ThemeColorProvider.tokenColor(for: token.type, theme: self.parent.theme)
                 let attrs: [NSAttributedString.Key: Any] = [
                     .foregroundColor: color,
                     .font: font,
@@ -232,20 +500,21 @@ struct IDEEditorView: NSViewRepresentable {
                 }
             }
             
-            let selRange = textView.selectedRange()
-            DispatchQueue.main.async {
-                if textView.string == currentText {
-                    textView.alphaValue = 0.0
-                    let undoManager = textView.undoManager
-                    undoManager?.disableUndoRegistration()
-                    textView.textStorage?.beginEditing()
-                    textView.textStorage?.replaceCharacters(in: visibleLineRange, with: newVisibleAttributed)
-                    textView.textStorage?.endEditing()
-                    textView.setSelectedRange(selRange)
-                    textView.alphaValue = 1.0
-                    undoManager?.enableUndoRegistration()
-                }
+            if let currentAttributed = textView.textStorage?.attributedSubstring(from: visibleLineRange),
+               currentAttributed.isEqual(to: newVisibleAttributed) {
+                return
             }
+            
+            let undoManager = textView.undoManager
+            undoManager?.disableUndoRegistration()
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            textView.textStorage?.beginEditing()
+            textView.textStorage?.replaceCharacters(in: visibleLineRange, with: newVisibleAttributed)
+            textView.textStorage?.endEditing()
+            CATransaction.commit()
+            textView.setSelectedRange(selRange)
+            undoManager?.enableUndoRegistration()
         }
     }
 }
@@ -502,5 +771,19 @@ class IDECenteredLineNumberRuler: NSRulerView {
             
             lineIndex += 1
         }
+    }
+}
+
+class InvisibleScroller: NSScroller {
+    override func draw(_ dirtyRect: NSRect) {
+    }
+    
+    override var alphaValue: CGFloat {
+        get { 0 }
+        set { }
+    }
+    
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
     }
 }
