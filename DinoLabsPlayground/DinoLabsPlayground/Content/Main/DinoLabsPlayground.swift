@@ -281,8 +281,10 @@ struct DinoLabsPlayground: View {
     @Binding var currentView: AppView
     @Binding var authenticatedUsername: String
     @Binding var authenticatedOrgID: String
+    @State private var hasUnsavedChanges: Bool = false
     @State private var leftPanelWidthRatio: CGFloat = 0.25
     @State private var isNavigatorLoading: Bool = false
+    @State private var hasUndavedChanges: Bool = false
     static var loadedRootURL: URL? = nil
     @State private var directoryURL: URL? = nil {
         didSet {
@@ -1662,7 +1664,8 @@ struct DinoLabsPlayground: View {
                                             IDEView(fileURL: activeTab.fileURL, programmingLanguage: language, 
                                                     keyBinds: $userKeyBinds,
                                                     zoomLevel: $userZoomLevel,
-                                                    colorTheme: $userColorTheme
+                                                    colorTheme: $userColorTheme,
+                                                    hasUnsavedChanges: $hasUnsavedChanges
                                             )
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         } else {

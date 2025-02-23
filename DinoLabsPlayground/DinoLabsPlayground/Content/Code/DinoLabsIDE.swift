@@ -13,6 +13,8 @@ struct IDEView: View {
     @Binding var keyBinds: [String: String]
     @Binding var zoomLevel: Double
     @Binding var colorTheme: String
+    @Binding var hasUnsavedChanges: Bool
+    
     @State private var fileContent: String = ""
     @State private var isLoading: Bool = false
     @State private var copyIcon = "square.on.square"
@@ -426,7 +428,8 @@ struct IDEView: View {
                         searchCaseSensitive: $searchCaseSensitive,
                         isReplacing: $isReplacing,
                         currentSearchMatch: $currentSearchMatch,
-                        totalSearchMatches: $totalSearchMatches
+                        totalSearchMatches: $totalSearchMatches,
+                        hasUnsavedChanges: $hasUnsavedChanges
                     )
                 }
             }
@@ -504,13 +507,13 @@ struct IDEEditorView: NSViewRepresentable {
     var theme: CodeEditorTheme = .defaultTheme
     var zoomLevel: Double = 1.0
     var keyBinds: [String: String] = [:]
-    
     @Binding var searchQuery: String
     @Binding var replaceQuery: String
     @Binding var searchCaseSensitive: Bool
     @Binding var isReplacing: Bool
     @Binding var currentSearchMatch: Int
     @Binding var totalSearchMatches: Int
+    @Binding var hasUnsavedChanges: Bool
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -631,6 +634,7 @@ struct IDEEditorView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+            parent.hasUnsavedChanges = true
             pendingHighlightWorkItem?.cancel()
             applySyntaxHighlightingInternal(on: textView, withReferenceText: textView.string)
             updateSearchIndicator()
@@ -854,6 +858,26 @@ class IDETextView: NSTextView {
     override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "f" {
             NotificationCenter.default.post(name: Notification.Name("OpenSearch"), object: nil)
+            return
+        }
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "z" {
+            self.undoManager?.undo()
+            return
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "y" {
+            self.undoManager?.redo()
+            return
+        }
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "c" {
+            self.copy(self)
+            return
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "v" {
+            self.paste(self)
+            return
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "x" {
+            self.cut(self)
+            return
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "a" {
+            self.selectAll(self)
             return
         }
         
