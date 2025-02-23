@@ -74,7 +74,7 @@
 		CBDF23532D6807C30049F865 /* AccountButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountButtonMain.swift; sourceTree = "<group>"; };
 		CBDF23552D681AAF0049F865 /* ToggleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleHelper.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CBDF23572D687EA10049F865 /* SliderHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderHelper.swift; sourceTree = "<group>"; };
-		CBDF23592D6916930049F865 /* DinoLabsIDE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsIDE.swift; sourceTree = "<group>"; };
+		CBDF23592D6916930049F865 /* DinoLabsIDE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsIDE.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CBDF235B2D694C240049F865 /* DinoLabsParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsParser.swift; sourceTree = "<group>"; };
 		CBDF235D2D6A46D60049F865 /* DinoLabsThemes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsThemes.swift; sourceTree = "<group>"; };
 		CBDF23602D6AA0AF0049F865 /* CodeTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeTextField.swift; sourceTree = "<group>"; };

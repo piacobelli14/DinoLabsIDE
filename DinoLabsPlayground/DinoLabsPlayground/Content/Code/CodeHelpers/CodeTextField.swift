@@ -11,6 +11,7 @@ struct CodeTextField: NSViewRepresentable {
     var placeholder: String
     @Binding var text: String
     var isSecure: Bool = false
+    var onReturnKeyPressed: (() -> Void)? = nil
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -20,7 +21,7 @@ struct CodeTextField: NSViewRepresentable {
         let textField: NSTextField
         
         if isSecure {
-            let secureField = ClickableNSSecureTextField()
+            let secureField = NSSecureTextField()
             secureField.isBordered = false
             secureField.drawsBackground = false
             secureField.backgroundColor = .clear
@@ -31,7 +32,7 @@ struct CodeTextField: NSViewRepresentable {
             secureField.textColor = .white
             textField = secureField
         } else {
-            let normalField = ClickableNSTextField()
+            let normalField = CodeNSTextField()
             normalField.isBordered = false
             normalField.drawsBackground = false
             normalField.backgroundColor = .clear
@@ -40,6 +41,9 @@ struct CodeTextField: NSViewRepresentable {
             normalField.isSelectable = true
             normalField.font = .systemFont(ofSize: 9, weight: .bold)
             normalField.textColor = .white
+            normalField.onReturnKeyPressed = {
+                context.coordinator.parent.onReturnKeyPressed?()
+            }
             textField = normalField
         }
         
@@ -75,6 +79,26 @@ struct CodeTextField: NSViewRepresentable {
             if let textField = notification.object as? NSTextField {
                 parent.text = textField.stringValue
             }
+        }
+        
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                parent.onReturnKeyPressed?()
+                return true
+            }
+            return false
+        }
+    }
+}
+
+class CodeNSTextField: NSTextField {
+    var onReturnKeyPressed: (() -> Void)? = nil
+    
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 36 {
+            onReturnKeyPressed?()
+        } else {
+            super.keyDown(with: event)
         }
     }
 }
