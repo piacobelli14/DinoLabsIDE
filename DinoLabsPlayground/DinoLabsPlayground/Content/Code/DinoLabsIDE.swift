@@ -13,9 +13,8 @@ struct IDEView: View {
     @Binding var keyBinds: [String: String]
     @Binding var zoomLevel: Double
     @Binding var colorTheme: String
+    @Binding var fileContent: String
     @Binding var hasUnsavedChanges: Bool
-    
-    @State private var fileContent: String = ""
     @State private var isLoading: Bool = false
     @State private var copyIcon = "square.on.square"
     @State private var searchState: Bool = false
@@ -435,7 +434,9 @@ struct IDEView: View {
             }
         }
         .onAppear {
-            loadFileContent()
+            if fileContent.isEmpty {
+                loadFileContent()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("OpenSearch"))) { _ in
             if !searchState {

@@ -1,3 +1,4 @@
+
 //
 //  DinoLabsPlayground.swift
 //
@@ -34,12 +35,15 @@ struct FileItem: Identifiable, Equatable {
     let url: URL
     let isDirectory: Bool
     var children: [FileItem]?
+    var hasUnsavedChanges: Bool = false
 }
 
 struct FileTab: Identifiable, Hashable {
     let id = UUID()
     let fileName: String
     let fileURL: URL
+    var fileContent: String = ""
+    var hasUnsavedChanges: Bool = false
 }
 
 func editorPlaceholderText(for fileURL: URL) -> String {
@@ -142,6 +146,13 @@ struct CollapsibleItemView: View {
             HStack(alignment: .center, spacing: 0) {
                 Color.clear
                     .frame(width: CGFloat(level) * 16, height: 1)
+                
+                if item.hasUnsavedChanges && !item.isDirectory {
+                    Circle()
+                        .fill(Color(hex: 0xD7BA7D))
+                        .frame(width: 6, height: 6)
+                        .padding(.trailing, 4)
+                }
                 if item.isDirectory {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .resizable()
@@ -158,7 +169,7 @@ struct CollapsibleItemView: View {
                         .padding(.trailing, 8)
                 }
                 Text(item.url.lastPathComponent)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(item.hasUnsavedChanges ? Color(hex: 0xD7BA7D) : .white.opacity(0.8))
                     .font(.system(size: 10, weight: .semibold))
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -266,9 +277,7 @@ struct CollapsibleItemView: View {
     }
     
     func relativePath(itemURL: URL) -> String {
-        guard let root = DinoLabsPlayground.loadedRootURL else {
-            return itemURL.path
-        }
+        guard let root = DinoLabsPlayground.loadedRootURL else { return itemURL.path }
         let rootName = root.lastPathComponent
         let rootParent = root.deletingLastPathComponent().path
         var path = itemURL.path.replacingOccurrences(of: rootParent, with: "")
@@ -394,6 +403,24 @@ struct DinoLabsPlayground: View {
         "makefile": "makefileExtension",
         "git": "githubExtension"
     ]
+    
+    private func updateUnsavedChangesInFileItems(for fileURL: URL, unsaved: Bool) {
+        func update(item: inout FileItem) {
+            if item.url == fileURL {
+                item.hasUnsavedChanges = unsaved
+            }
+            if item.isDirectory, var children = item.children {
+                for i in children.indices {
+                    update(item: &children[i])
+                }
+                item.children = children
+            }
+        }
+        for i in fileItems.indices {
+            update(item: &fileItems[i])
+        }
+    }
+
     
     
     private func addFile(to item: FileItem) {
@@ -1562,39 +1589,37 @@ struct DinoLabsPlayground: View {
                                     } else {
                                         ForEach(openTabs) { tab in
                                             HStack(spacing: 4) {
+                                                if tab.hasUnsavedChanges {
+                                                    Circle()
+                                                        .fill(Color(hex: 0xD7BA7D))
+                                                        .frame(width: 6, height: 6)
+                                                        .padding(.trailing, 4)
+                                                }
                                                 Image(getIcon(forFileURL: tab.fileURL))
                                                     .resizable()
                                                     .aspectRatio(contentMode: .fit)
                                                     .frame(width: 12, height: 12)
                                                     .padding(.trailing, 4)
-                                                    .allowsHitTesting(false)
-                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
                                                 Text(tab.fileName)
-                                                    .foregroundColor(.white.opacity(0.8))
+                                                    .foregroundColor(tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D) : .white.opacity(0.8))
                                                     .font(.system(size: 9, weight: .bold))
                                                     .lineLimit(1)
-                                                    .allowsHitTesting(false)
-                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
                                                 Button(action: {
                                                     closeTab(tab)
                                                 }) {
                                                     Image(systemName: "xmark")
                                                         .font(.system(size: 8, weight: .bold))
                                                         .foregroundColor(.white.opacity(0.8))
-                                                        .allowsHitTesting(false)
-                                                        .hoverEffect(opacity: 0.8, cursor: .pointingHand)
                                                 }
                                                 .buttonStyle(PlainButtonStyle())
                                                 .padding(.leading, 6)
                                             }
                                             .frame(height: (geometry.size.height - 50) * 0.05)
                                             .padding(.horizontal, 12)
-                                            .background(activeTabId == tab.id ? Color(hex: 0xAD6ADD).opacity(0.2) : Color(hex: 0xFFFFFF).opacity(0.05))
-                                            .overlay(
-                                                Rectangle()
-                                                    .frame(width: 0.5)
-                                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
-                                                alignment: .trailing
+                                            .background(
+                                                activeTabId == tab.id ?
+                                                (tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D).opacity(0.2) : Color(hex: 0xAD6ADD).opacity(0.2))
+                                                : Color(hex: 0xFFFFFF).opacity(0.05)
                                             )
                                             .onTapGesture {
                                                 activeTabId = tab.id
@@ -1651,29 +1676,23 @@ struct DinoLabsPlayground: View {
                                     )
                                     Spacer()
                                 } else {
-                                    if let activeTab = openTabs.first(where: { $0.id == activeTabId }) {
-                                        let ext = activeTab.fileURL.pathExtension.lowercased()
-                                        let codeExtensions: Set<String> = [
-                                            "js", "jsx", "ts", "tsx", "html", "css", "json", "xml",
-                                            "py", "php", "swift", "c", "cpp", "h", "cs", "rs",
-                                            "bash", "sh", "zsh", "mc", "mcgen", "sql", "asm"
-                                        ]
-                                        
-                                        if codeExtensions.contains(ext) {
-                                            let language = codeLanguage(for: ext)
-                                            IDEView(fileURL: activeTab.fileURL, programmingLanguage: language, 
-                                                    keyBinds: $userKeyBinds,
-                                                    zoomLevel: $userZoomLevel,
-                                                    colorTheme: $userColorTheme,
-                                                    hasUnsavedChanges: $hasUnsavedChanges
-                                            )
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                        } else {
-                                            Text(editorPlaceholderText(for: activeTab.fileURL))
-                                                .foregroundColor(.white)
-                                                .font(.system(size: 14))
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    if let activeTab = openTabs.first(where: { $0.id == activeTabId }),
+                                       let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
+                                        let language = codeLanguage(for: activeTab.fileURL.pathExtension.lowercased())
+                                        IDEView(
+                                            fileURL: activeTab.fileURL,
+                                            programmingLanguage: language,
+                                            keyBinds: $userKeyBinds,
+                                            zoomLevel: $userZoomLevel,
+                                            colorTheme: $userColorTheme,
+                                            fileContent: $openTabs[index].fileContent,
+                                            hasUnsavedChanges: $openTabs[index].hasUnsavedChanges
+                                        )
+                                        .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
+                                            updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
                                         }
+                                        .id(activeTab.id)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     } else if noFileSelected {
                                         Spacer()
                                         HStack {
