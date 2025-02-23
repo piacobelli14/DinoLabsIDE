@@ -15,7 +15,7 @@ struct IDEView: View {
     @Binding var colorTheme: String
     @State private var fileContent: String = ""
     @State private var isLoading: Bool = false
-    
+    @State private var copyIcon = "square.on.square"
     @State private var searchState: Bool = false
     @State private var replaceState: Bool = false
     @State private var searchCaseSensitive: Bool = true
@@ -298,12 +298,29 @@ struct IDEView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             CodeButtonMain {
-                                
+                                let pasteboard = NSPasteboard.general
+                                pasteboard.clearContents()
+                                pasteboard.setString(fileContent, forType: .string)
+                                withAnimation {
+                                    copyIcon = "checkmark.square.fill"
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation {
+                                        copyIcon = "square.on.square"
+                                    }
+                                }
                             }
-                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
                             .frame(width: 20, height: 20)
                             .overlay(
-                                Image(systemName: "square.on.square")
+                                Image(systemName: copyIcon)
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                     .allowsHitTesting(false)
@@ -311,9 +328,16 @@ struct IDEView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             CodeButtonMain {
-                                
+                                NotificationCenter.default.post(name: Notification.Name("PerformUndo"), object: nil)
                             }
-                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
                             .frame(width: 20, height: 20)
                             .overlay(
                                 Image(systemName: "arrow.uturn.backward")
@@ -324,9 +348,16 @@ struct IDEView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             CodeButtonMain {
-                                
+                                NotificationCenter.default.post(name: Notification.Name("PerformRedo"), object: nil)
                             }
-                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
                             .frame(width: 20, height: 20)
                             .overlay(
                                 Image(systemName: "arrow.uturn.forward")
@@ -339,7 +370,14 @@ struct IDEView: View {
                             CodeButtonMain {
                                 
                             }
-                            .containerHelper(backgroundColor: Color(hex: 0x414141), borderColor: Color(hex: 0x414141), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color(hex: 0x222222), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
                             .frame(width: 20, height: 20)
                             .overlay(
                                 Image(systemName: "square.split.2x1")
@@ -487,6 +525,7 @@ struct IDEEditorView: NSViewRepresentable {
         textView.isRichText = false
         textView.usesFindBar = true
         textView.allowsUndo = true
+        textView.undoManager?.levelsOfUndo = 0
         textView.delegate = context.coordinator
         textView.backgroundColor = NSColor(hex: 0x222222)
         textView.textColor = ThemeColorProvider.defaultTextColor(for: theme)
@@ -580,6 +619,12 @@ struct IDEEditorView: NSViewRepresentable {
             }
             NotificationCenter.default.addObserver(forName: Notification.Name("SearchQueryChanged"), object: nil, queue: .main) { [weak self] _ in
                 self?.updateSearchIndicator()
+            }
+            NotificationCenter.default.addObserver(forName: Notification.Name("PerformUndo"), object: nil, queue: .main) { [weak self] _ in
+                self?.textView?.undoManager?.undo()
+            }
+            NotificationCenter.default.addObserver(forName: Notification.Name("PerformRedo"), object: nil, queue: .main) { [weak self] _ in
+                self?.textView?.undoManager?.redo()
             }
         }
         
