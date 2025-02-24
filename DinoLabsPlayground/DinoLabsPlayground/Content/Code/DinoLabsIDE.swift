@@ -36,7 +36,7 @@ struct IDEView: View {
                         if searchState || replaceState {
                             HStack(spacing: 0) {
                                 HStack(spacing: 0) {
-                                    CodeTextField(placeholder: "Search all files...", text: $searchQuery, onReturnKeyPressed: {
+                                    CodeTextField(placeholder: "Search file...", text: $searchQuery, onReturnKeyPressed: {
                                         NotificationCenter.default.post(name: Notification.Name("JumpToNextSearchMatch"), object: nil)
                                     })
                                         .lineLimit(1)
@@ -428,7 +428,8 @@ struct IDEView: View {
                         isReplacing: $isReplacing,
                         currentSearchMatch: $currentSearchMatch,
                         totalSearchMatches: $totalSearchMatches,
-                        hasUnsavedChanges: $hasUnsavedChanges
+                        hasUnsavedChanges: $hasUnsavedChanges,
+                        onSave: saveFile
                     )
                 }
             }
@@ -448,6 +449,15 @@ struct IDEView: View {
                 searchQuery = ""
                 replaceQuery = ""
             }
+        }
+    }
+    
+    private func saveFile() {
+        do {
+            try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
+            hasUnsavedChanges = false
+        } catch {
+            print("Failed to save file: \(error)")
         }
     }
     
@@ -515,6 +525,7 @@ struct IDEEditorView: NSViewRepresentable {
     @Binding var currentSearchMatch: Int
     @Binding var totalSearchMatches: Int
     @Binding var hasUnsavedChanges: Bool
+    var onSave: () -> Void
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -857,6 +868,13 @@ class IDETextView: NSTextView {
     }
     
     override func keyDown(with event: NSEvent) {
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
+            if let coordinator = self.delegate as? IDEEditorView.Coordinator {
+                coordinator.parent.onSave() // Call the save action
+            }
+            return
+        }
+        
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "f" {
             NotificationCenter.default.post(name: Notification.Name("OpenSearch"), object: nil)
             return

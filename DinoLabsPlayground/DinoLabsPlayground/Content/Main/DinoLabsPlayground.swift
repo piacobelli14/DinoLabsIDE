@@ -1,4 +1,3 @@
-
 //
 //  DinoLabsPlayground.swift
 //
@@ -917,13 +916,33 @@ struct DinoLabsPlayground: View {
     }
     
     private func closeTab(_ tab: FileTab) {
-        openTabs.removeAll { $0.id == tab.id }
-        if openTabs.isEmpty {
-            activeTabId = nil
-            noFileSelected = true
+        if tab.hasUnsavedChanges {
+            alertTitle = "Unsaved Changes"
+            alertMessage = "You have unsaved changes. Are you sure you want to close this tab?"
+            alertInputs = []
+            showCancelButton = true
+            onConfirmAction = { _ in
+                updateUnsavedChangesInFileItems(for: tab.fileURL, unsaved: false)
+                openTabs.removeAll { $0.id == tab.id }
+                
+                if openTabs.isEmpty {
+                    activeTabId = nil
+                    noFileSelected = true
+                } else {
+                    activeTabId = openTabs.last?.id
+                    noFileSelected = false
+                }
+            }
+            showAlert = true
         } else {
-            activeTabId = openTabs.last?.id
-            noFileSelected = false
+            openTabs.removeAll { $0.id == tab.id }
+            if openTabs.isEmpty {
+                activeTabId = nil
+                noFileSelected = true
+            } else {
+                activeTabId = openTabs.last?.id
+                noFileSelected = false
+            }
         }
     }
     
