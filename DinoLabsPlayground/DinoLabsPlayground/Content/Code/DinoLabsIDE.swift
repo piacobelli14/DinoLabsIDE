@@ -355,25 +355,6 @@ struct IDEView: View {
                                     .allowsHitTesting(false)
                             )
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            
-                            CodeButtonMain {
-                            }
-                            .containerHelper(backgroundColor: Color(hex: 0x414141),
-                                             borderColor: Color(hex: 0x414141),
-                                             borderWidth: 1,
-                                             topLeft: 2, topRight: 2,
-                                             bottomLeft: 2, bottomRight: 2,
-                                             shadowColor: Color(hex: 0x222222),
-                                             shadowRadius: 0.5,
-                                             shadowX: 0, shadowY: 0)
-                            .frame(width: 20, height: 20)
-                            .overlay(
-                                Image(systemName: "square.split.2x1")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                    .allowsHitTesting(false)
-                            )
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                         }
                     }
                     .frame(height: (searchState || replaceState) ? 45 : 20)
@@ -941,12 +922,11 @@ struct IDEEditorView: NSViewRepresentable {
 
 class IDETextView: NSTextView {
     var customKeyBinds: [String: String] = [:]
-    
+
     override var intrinsicContentSize: NSSize {
-        return NSSize(width: CGFloat.greatestFiniteMagnitude,
-                      height: super.intrinsicContentSize.height)
+        return NSSize(width: CGFloat.greatestFiniteMagnitude, height: super.intrinsicContentSize.height)
     }
-    
+
     override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
@@ -993,29 +973,104 @@ class IDETextView: NSTextView {
                     indentSingleLine(selectionRange: selectionRange)
                 }
             } else {
+                let nsString = self.string as NSString
+                let sel = self.selectedRange()
+                let currentLineRange = nsString.lineRange(for: sel)
+                let currentLineText = nsString.substring(with: currentLineRange)
+                let currentLineTrimmed = currentLineText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if currentLineTrimmed.isEmpty && currentLineRange.location > 0 {
+                    let previousLineRange = nsString.lineRange(for: NSRange(location: currentLineRange.location - 1, length: 0))
+                    let previousLineText = nsString.substring(with: previousLineRange)
+                    let indentation = previousLineText.prefix { $0 == " " || $0 == "\t" }
+                    if !indentation.isEmpty {
+                        self.replaceCharacters(in: currentLineRange, with: String(indentation))
+                        self.setSelectedRange(NSRange(location: currentLineRange.location + String(indentation).count, length: 0))
+                        return
+                    }
+                }
                 super.keyDown(with: event)
             }
         } else {
             super.keyDown(with: event)
         }
     }
-    
-    override func insertBacktab(_ sender: Any?) {
-        var selRange = self.selectedRange()
-        if selRange.length == 0 {
-            let nsString = self.string as NSString
-            selRange = nsString.lineRange(for: selRange)
-            self.setSelectedRange(selRange)
+
+    override func deleteBackward(_ sender: Any?) {
+        let sel = self.selectedRange()
+        if sel.length != 0 {
+            super.deleteBackward(sender)
+            return
         }
-        let selectionText = (self.string as NSString).substring(with: self.selectedRange())
-        let isMultiline = selectionText.contains("\n")
-        if isMultiline {
-            unindentSelectedLines()
-        } else {
-            unindentSingleLine(selectionRange: self.selectedRange())
+        let nsString = self.string as NSString
+        let caretLocation = sel.location
+        let lineRange = nsString.lineRange(for: NSRange(location: caretLocation, length: 0))
+        let prefixRange = NSRange(location: lineRange.location, length: caretLocation - lineRange.location)
+        let prefix = nsString.substring(with: prefixRange)
+        if prefix.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !prefix.isEmpty {
+            if prefix.hasSuffix("\t") {
+                let deleteRange = NSRange(location: caretLocation - 1, length: 1)
+                self.shouldChangeText(in: deleteRange, replacementString: "")
+                self.replaceCharacters(in: deleteRange, with: "")
+                self.didChangeText()
+                return
+            } else {
+                var spaceCount = 0
+                for char in prefix.reversed() {
+                    if char == " " {
+                        spaceCount += 1
+                    } else {
+                        break
+                    }
+                }
+                let indentSize = 4
+                let remainder = spaceCount % indentSize
+                let removeCount = remainder == 0 ? indentSize : remainder
+                let deletionLength = min(removeCount, spaceCount)
+                let deleteRange = NSRange(location: caretLocation - deletionLength, length: deletionLength)
+                self.shouldChangeText(in: deleteRange, replacementString: "")
+                self.replaceCharacters(in: deleteRange, with: "")
+                self.didChangeText()
+                return
+            }
+        }
+        super.deleteBackward(sender)
+    }
+
+    override func insertBacktab(_ sender: Any?) {
+        let selRange = self.selectedRange()
+        let nsString = self.string as NSString
+        let startLineRange = nsString.lineRange(for: NSRange(location: selRange.location, length: 0))
+        var endLoc = selRange.location + selRange.length - 1
+        if endLoc < 0 { endLoc = 0 }
+        let endLineRange = nsString.lineRange(for: NSRange(location: endLoc, length: 0))
+        let rangeToModify = NSRange(location: startLineRange.location, length: endLineRange.location + endLineRange.length - startLineRange.location)
+        if rangeToModify.length == 0 { return }
+        let pattern = "^(\\t| {1,4})"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines]) {
+            let originalText = nsString.substring(with: rangeToModify)
+            let newText = regex.stringByReplacingMatches(in: originalText, options: [], range: NSRange(location: 0, length: (originalText as NSString).length), withTemplate: "")
+            self.shouldChangeText(in: rangeToModify, replacementString: newText)
+            self.replaceCharacters(in: rangeToModify, with: newText)
+            self.didChangeText()
+            self.setSelectedRange(NSRange(location: startLineRange.location, length: (newText as NSString).length))
+            if let coordinator = self.delegate as? IDEEditorView.Coordinator {
+                coordinator.applySyntaxHighlighting(to: self)
+            }
         }
     }
-    
+
+    override func insertNewline(_ sender: Any?) {
+        let nsString = self.string as NSString
+        let selRange = self.selectedRange()
+        let currentLineRange = nsString.lineRange(for: selRange)
+        let currentLine = nsString.substring(with: currentLineRange)
+        let indentation = currentLine.prefix { $0 == " " || $0 == "\t" }
+        super.insertNewline(sender)
+        if !indentation.isEmpty {
+            self.insertText(String(indentation), replacementRange: self.selectedRange())
+        }
+    }
+
     private func indentSelectedLines() {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1033,85 +1088,47 @@ class IDETextView: NSTextView {
         lines = lines.map { "\t" + $0 }
         var newText = lines.joined(separator: "\n")
         if hadTrailingNewline { newText += "\n" }
+        self.shouldChangeText(in: rangeToModify, replacementString: newText)
         self.replaceCharacters(in: rangeToModify, with: newText)
+        self.didChangeText()
         let newLength = (newText as NSString).length
         self.setSelectedRange(NSRange(location: startLine.location, length: newLength))
         if let coordinator = self.delegate as? IDEEditorView.Coordinator {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-    
-    private func unindentSelectedLines() {
-        let selRange = self.selectedRange()
-        let nsString = self.string as NSString
-        let startLine = nsString.lineRange(for: NSRange(location: selRange.location, length: 0))
-        var endLoc = selRange.location + selRange.length - 1
-        if endLoc < 0 { endLoc = 0 }
-        let endLine = nsString.lineRange(for: NSRange(location: endLoc, length: 0))
-        let rangeToModify = NSRange(location: startLine.location, length: endLine.location + endLine.length - startLine.location)
-        let originalText = nsString.substring(with: rangeToModify)
-        var lines = originalText.components(separatedBy: "\n")
-        let hadTrailingNewline = originalText.hasSuffix("\n")
-        if hadTrailingNewline, let last = lines.last, last.isEmpty {
-            lines.removeLast()
-        }
-        let indentWidth = 4
-        lines = lines.map { line -> String in
-            if line.hasPrefix("\t") {
-                return String(line.dropFirst())
-            } else {
-                let spaceCount = line.prefix(while: { $0 == " " }).count
-                let removal = min(indentWidth, spaceCount)
-                return String(line.dropFirst(removal))
-            }
-        }
-        var newText = lines.joined(separator: "\n")
-        if hadTrailingNewline { newText += "\n" }
-        self.replaceCharacters(in: rangeToModify, with: newText)
-        let newLength = (newText as NSString).length
-        self.setSelectedRange(NSRange(location: startLine.location, length: newLength))
-        if let coordinator = self.delegate as? IDEEditorView.Coordinator {
-            coordinator.applySyntaxHighlighting(to: self)
-        }
-    }
-    
+
     private func indentSingleLine(selectionRange: NSRange) {
         let selectedText = (self.string as NSString).substring(with: selectionRange)
         let replaced = "\t" + selectedText
+        self.shouldChangeText(in: selectionRange, replacementString: replaced)
         self.insertText(replaced, replacementRange: selectionRange)
+        self.didChangeText()
         let newRange = NSRange(location: selectionRange.location, length: replaced.count)
         self.setSelectedRange(newRange)
         if let coordinator = self.delegate as? IDEEditorView.Coordinator {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-    
+
     private func unindentSingleLine(selectionRange: NSRange) {
-        let selectedText = (self.string as NSString).substring(with: selectionRange)
-        let indentWidth = 4
-        if selectedText.hasPrefix("\t") {
-            let replaced = String(selectedText.dropFirst())
-            self.insertText(replaced, replacementRange: selectionRange)
-            let newRange = NSRange(location: selectionRange.location, length: replaced.count)
+        let nsString = self.string as NSString
+        let fullLineRange = nsString.lineRange(for: selectionRange)
+        let lineText = nsString.substring(with: fullLineRange)
+        let pattern = "^(\\t| {1,4})"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            let newText = regex.stringByReplacingMatches(in: lineText, options: [], range: NSRange(location: 0, length: (lineText as NSString).length), withTemplate: "")
+            self.shouldChangeText(in: fullLineRange, replacementString: newText)
+            self.replaceCharacters(in: fullLineRange, with: newText)
+            self.didChangeText()
+            let newRange = NSRange(location: fullLineRange.location, length: (newText as NSString).length)
             self.setSelectedRange(newRange)
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
                 coordinator.applySyntaxHighlighting(to: self)
             }
-        } else {
-            let spaceCount = selectedText.prefix(while: { $0 == " " }).count
-            if spaceCount > 0 {
-                let removal = min(indentWidth, spaceCount)
-                let replaced = String(selectedText.dropFirst(removal))
-                self.insertText(replaced, replacementRange: selectionRange)
-                let newRange = NSRange(location: selectionRange.location, length: replaced.count)
-                self.setSelectedRange(newRange)
-                if let coordinator = self.delegate as? IDEEditorView.Coordinator {
-                    coordinator.applySyntaxHighlighting(to: self)
-                }
-            }
         }
     }
-    
+
     override func menu(for event: NSEvent) -> NSMenu? {
         let customMenu = NSMenu(title: "Context Menu")
         customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
@@ -1125,27 +1142,29 @@ class IDETextView: NSTextView {
         customMenu.addItem(redoItem)
         return customMenu
     }
-    
+
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.title == "Services" || menuItem.title == "Services…" {
             return false
         }
         return super.validateMenuItem(menuItem)
     }
-    
+
     @objc func customUndo(_ sender: Any?) {
         self.undoManager?.undo()
     }
-    
+
     @objc func customRedo(_ sender: Any?) {
         self.undoManager?.redo()
     }
-    
+
     override func resetCursorRects() {
         self.discardCursorRects()
         self.addCursorRect(self.bounds, cursor: NSCursor.pointingHand)
     }
 }
+
+
 
 class IDEScrollView: NSScrollView {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {

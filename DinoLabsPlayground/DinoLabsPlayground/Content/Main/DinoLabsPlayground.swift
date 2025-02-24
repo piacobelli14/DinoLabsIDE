@@ -1443,11 +1443,10 @@ struct DinoLabsPlayground: View {
                                 HStack {
                                     MainButtonMain {
                                         if !isAccount {
-                                            noFileSelected = false
                                             isAccount = true
                                         } else {
-                                            noFileSelected = true
                                             isAccount = false
+                                            noFileSelected = openTabs.isEmpty
                                         }
                                     }
                                     .containerHelper(backgroundColor: Color.clear, borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
@@ -1553,33 +1552,7 @@ struct DinoLabsPlayground: View {
                         VStack(spacing: 0) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 0) {
-                                    if noFileSelected {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "wand.and.stars")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                                .frame(width: 12, height: 12)
-                                                .padding(.trailing, 4)
-                                                .allowsHitTesting(false)
-                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                            Text("Get Started")
-                                                .foregroundColor(.white.opacity(0.8))
-                                                .font(.system(size: 9, weight: .bold))
-                                                .lineLimit(1)
-                                                .truncationMode(.tail)
-                                                .allowsHitTesting(false)
-                                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                        }
-                                        .frame(height: (geometry.size.height - 50) * 0.05)
-                                        .padding(.horizontal, 12)
-                                        .background(Color(hex: 0xAD6ADD).opacity(0.2))
-                                        .overlay(
-                                            Rectangle()
-                                                .frame(width: 0.5)
-                                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
-                                            alignment: .trailing
-                                        )
-                                    } else if isAccount {
+                                    if isAccount {
                                         HStack(spacing: 4) {
                                             Image(systemName: "person.circle")
                                                 .resizable()
@@ -1606,52 +1579,80 @@ struct DinoLabsPlayground: View {
                                             alignment: .trailing
                                         )
                                     } else {
-                                        ForEach(openTabs) { tab in
+                                        if noFileSelected {
                                             HStack(spacing: 4) {
-                                                if tab.hasUnsavedChanges {
-                                                    Circle()
-                                                        .fill(Color(hex: 0xD7BA7D))
-                                                        .frame(width: 6, height: 6)
-                                                        .padding(.trailing, 4)
-                                                }
-                                                Image(getIcon(forFileURL: tab.fileURL))
+                                                Image(systemName: "wand.and.stars")
                                                     .resizable()
                                                     .aspectRatio(contentMode: .fit)
                                                     .frame(width: 12, height: 12)
                                                     .padding(.trailing, 4)
-                                                Text(tab.fileName)
-                                                    .foregroundColor(tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D) : .white.opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                                Text("Get Started")
+                                                    .foregroundColor(.white.opacity(0.8))
                                                     .font(.system(size: 9, weight: .bold))
                                                     .lineLimit(1)
-                                                Button(action: {
-                                                    closeTab(tab)
-                                                }) {
-                                                    Image(systemName: "xmark")
-                                                        .font(.system(size: 8, weight: .bold))
-                                                        .foregroundColor(.white.opacity(0.8))
-                                                }
-                                                .buttonStyle(PlainButtonStyle())
-                                                .padding(.leading, 6)
+                                                    .truncationMode(.tail)
+                                                    .allowsHitTesting(false)
+                                                    .hoverEffect(opacity: 0.8, cursor: .pointingHand)
                                             }
                                             .frame(height: (geometry.size.height - 50) * 0.05)
                                             .padding(.horizontal, 12)
-                                            .background(
-                                                activeTabId == tab.id ?
-                                                (tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D).opacity(0.2) : Color(hex: 0xAD6ADD).opacity(0.2))
-                                                : Color(hex: 0xFFFFFF).opacity(0.05)
+                                            .background(Color(hex: 0xAD6ADD).opacity(0.2))
+                                            .overlay(
+                                                Rectangle()
+                                                    .frame(width: 0.5)
+                                                    .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                                                alignment: .trailing
                                             )
-                                            .onTapGesture {
-                                                activeTabId = tab.id
-                                                noFileSelected = false
+                                        } else {
+                                            ForEach(openTabs) { tab in
+                                                HStack(spacing: 4) {
+                                                    if tab.hasUnsavedChanges {
+                                                        Circle()
+                                                            .fill(Color(hex: 0xD7BA7D))
+                                                            .frame(width: 6, height: 6)
+                                                            .padding(.trailing, 4)
+                                                    }
+                                                    Image(getIcon(forFileURL: tab.fileURL))
+                                                        .resizable()
+                                                        .aspectRatio(contentMode: .fit)
+                                                        .frame(width: 12, height: 12)
+                                                        .padding(.trailing, 4)
+                                                    Text(tab.fileName)
+                                                        .foregroundColor(tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D) : .white.opacity(0.8))
+                                                        .font(.system(size: 9, weight: .bold))
+                                                        .lineLimit(1)
+                                                    Button(action: {
+                                                        closeTab(tab)
+                                                    }) {
+                                                        Image(systemName: "xmark")
+                                                            .font(.system(size: 8, weight: .bold))
+                                                            .foregroundColor(.white.opacity(0.8))
+                                                    }
+                                                    .buttonStyle(PlainButtonStyle())
+                                                    .padding(.leading, 6)
+                                                }
+                                                .frame(height: (geometry.size.height - 50) * 0.05)
+                                                .padding(.horizontal, 12)
+                                                .background(
+                                                    activeTabId == tab.id ?
+                                                    (tab.hasUnsavedChanges ? Color(hex: 0xD7BA7D).opacity(0.2) : Color(hex: 0xAD6ADD).opacity(0.2))
+                                                    : Color(hex: 0xFFFFFF).opacity(0.05)
+                                                )
+                                                .onTapGesture {
+                                                    activeTabId = tab.id
+                                                    noFileSelected = false
+                                                }
+                                                .onDrag {
+                                                    self.draggingTab = tab
+                                                    return NSItemProvider(object: tab.id.uuidString as NSString)
+                                                }
+                                                .onDrop(of: ["public.text"],
+                                                        delegate: TabDropDelegate(item: tab,
+                                                                                  currentTabs: $openTabs,
+                                                                                  draggingTab: $draggingTab))
                                             }
-                                            .onDrag {
-                                                self.draggingTab = tab
-                                                return NSItemProvider(object: tab.id.uuidString as NSString)
-                                            }
-                                            .onDrop(of: ["public.text"],
-                                                    delegate: TabDropDelegate(item: tab,
-                                                                             currentTabs: $openTabs,
-                                                                             draggingTab: $draggingTab))
                                         }
                                     }
                                 }
