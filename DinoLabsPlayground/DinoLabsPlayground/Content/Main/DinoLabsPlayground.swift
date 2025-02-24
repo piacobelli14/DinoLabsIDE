@@ -41,6 +41,7 @@ struct FileTab: Identifiable, Hashable {
     let id = UUID()
     let fileName: String
     let fileURL: URL
+    var lineNumber: Int? = nil
     var fileContent: String = ""
     var hasUnsavedChanges: Bool = false
 }
@@ -903,15 +904,33 @@ struct DinoLabsPlayground: View {
         return path
     }
     
-    private func openFileTab(url: URL) {
+    private func openFileTab(url: URL, lineNumber: Int?) {
         if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
             activeTabId = existingTab.id
             noFileSelected = false
+            if let lineNumber = lineNumber {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("NavigateToLine"),
+                        object: nil,
+                        userInfo: ["lineNumber": lineNumber]
+                    )
+                }
+            }
         } else {
             let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
             openTabs.append(newTab)
             activeTabId = newTab.id
             noFileSelected = false
+            if let lineNumber = lineNumber {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("NavigateToLine"),
+                        object: nil,
+                        userInfo: ["lineNumber": lineNumber]
+                    )
+                }
+            }
         }
     }
     
@@ -1372,8 +1391,8 @@ struct DinoLabsPlayground: View {
                                                         searchResults: $groupedSearchResults,
                                                         searchQuery: searchQuery,
                                                         isCaseSensitive: isSearchCaseSensitive,
-                                                        onOpenFile: { fileURL in
-                                                            openFileTab(url: fileURL)
+                                                        onOpenFile: { fileURL, lineNumber in
+                                                            openFileTab(url: fileURL, lineNumber: lineNumber)
                                                         }
                                                     )
                                                 }
@@ -1403,7 +1422,7 @@ struct DinoLabsPlayground: View {
                                                                 isPasteEnabled: (clipboardItem != nil),
                                                                 onDropItem: handleDropItem,
                                                                 onOpenFile: { fileItem in
-                                                                    openFileTab(url: fileItem.url)
+                                                                    openFileTab(url: fileItem.url, lineNumber: 0)
                                                                 }
                                                             )
                                                         }
@@ -2202,7 +2221,7 @@ struct DinoLabsPlayground: View {
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK {
             if let url = panel.urls.first {
-                openFileTab(url: url)
+                openFileTab(url: url, lineNumber: 0)
             }
         }
     }

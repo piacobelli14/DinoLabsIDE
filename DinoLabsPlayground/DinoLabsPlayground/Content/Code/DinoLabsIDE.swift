@@ -26,7 +26,7 @@ struct IDEView: View {
     @State private var isReplacing: Bool = false
     @State private var currentSearchMatch: Int = 0
     @State private var totalSearchMatches: Int = 0
-    
+
     var body: some View {
         Group {
             if isLoading {
@@ -147,7 +147,6 @@ struct IDEView: View {
                                                   shadowColor: Color.white.opacity(0.5),
                                                   shadowRadius: 8,
                                                   shadowX: 0, shadowY: 0)
-                                
                                 if replaceState {
                                     HStack(spacing: 0) {
                                         CodeTextField(placeholder: "Replace with...", text: $replaceQuery)
@@ -184,7 +183,6 @@ struct IDEView: View {
                                             .hoverEffect(opacity: 0.6,
                                                          scale: 1.05,
                                                          cursor: .pointingHand)
-                                            
                                             CodeButtonMain {
                                                 replaceAllOccurrences()
                                             }
@@ -224,12 +222,9 @@ struct IDEView: View {
                                                       shadowX: 0, shadowY: 0)
                                     .padding(.leading, 10)
                                 }
-                                
                             }
                         }
-                        
                         Spacer()
-                        
                         HStack(spacing: 8) {
                             CodeButtonMain {
                                 if !searchState {
@@ -258,7 +253,6 @@ struct IDEView: View {
                                     .allowsHitTesting(false)
                             )
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            
                             CodeButtonMain {
                                 if !replaceState {
                                     replaceState = true
@@ -286,7 +280,6 @@ struct IDEView: View {
                                     .allowsHitTesting(false)
                             )
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            
                             CodeButtonMain {
                                 let pasteboard = NSPasteboard.general
                                 pasteboard.clearContents()
@@ -316,7 +309,6 @@ struct IDEView: View {
                                     .allowsHitTesting(false)
                             )
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            
                             CodeButtonMain {
                                 NotificationCenter.default.post(name: Notification.Name("PerformUndo"), object: nil)
                             }
@@ -336,7 +328,6 @@ struct IDEView: View {
                                     .allowsHitTesting(false)
                             )
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            
                             CodeButtonMain {
                                 NotificationCenter.default.post(name: Notification.Name("PerformRedo"), object: nil)
                             }
@@ -375,7 +366,6 @@ struct IDEView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                         alignment: .bottom
                     )
-                    
                     IDEEditorView(
                         text: $fileContent,
                         programmingLanguage: programmingLanguage,
@@ -404,11 +394,6 @@ struct IDEView: View {
                 }
             }
         }
-        .onAppear {
-            if fileContent.isEmpty {
-                loadFileContent()
-            }
-        }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("OpenSearch"))) { _ in
             if !searchState {
                 searchState = true
@@ -420,6 +405,11 @@ struct IDEView: View {
                 replaceQuery = ""
             }
         }
+        .onAppear {
+            if fileContent.isEmpty {
+                loadFileContent()
+            }
+        }
     }
     
     private func saveFile() {
@@ -427,7 +417,7 @@ struct IDEView: View {
             try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
             hasUnsavedChanges = false
         } catch {
-            return;
+            return
         }
     }
     
@@ -438,10 +428,27 @@ struct IDEView: View {
             DispatchQueue.main.async {
                 self.fileContent = content
                 self.isLoading = false
+                if let lineNumber = self.getLineNumberToNavigate() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(
+                            name: Notification.Name("NavigateToLine"),
+                            object: nil,
+                            userInfo: ["lineNumber": lineNumber]
+                        )
+                    }
+                }
             }
         }
     }
     
+    private func getLineNumberToNavigate() -> Int? {
+        if let fragment = fileURL.fragment, fragment.starts(with: "L") {
+            let lineNumberString = String(fragment.dropFirst())
+            return Int(lineNumberString)
+        }
+        return nil
+    }
+
     private func replaceNextOccurrence() {
         guard !searchQuery.isEmpty else { return }
         if let foundRange = nextRange(of: searchQuery, in: fileContent, caseSensitive: searchCaseSensitive) {
@@ -474,9 +481,7 @@ struct IDEView: View {
         }
     }
     
-    private func nextRange(of needle: String,
-                           in haystack: String,
-                           caseSensitive: Bool) -> Range<String.Index>? {
+    private func nextRange(of needle: String, in haystack: String, caseSensitive: Bool) -> Range<String.Index>? {
         let options: String.CompareOptions = caseSensitive ? [] : .caseInsensitive
         return haystack.range(of: needle, options: options)
     }
@@ -523,7 +528,6 @@ struct IDEEditorView: NSViewRepresentable {
         paragraphStyle.lineSpacing = 0.0
         paragraphStyle.tabStops = []
         paragraphStyle.defaultTabInterval = 40
-        
         textView.defaultParagraphStyle = paragraphStyle
         textView.typingAttributes = [
             .font: textView.font ?? NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(zoomLevel), weight: .semibold),
@@ -533,8 +537,7 @@ struct IDEEditorView: NSViewRepresentable {
         
         if let textContainer = textView.textContainer {
             textContainer.widthTracksTextView = false
-            textContainer.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
-                                                  height: .greatestFiniteMagnitude)
+            textContainer.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
             textContainer.lineFragmentPadding = 8.0
             textContainer.lineBreakMode = .byClipping
         }
@@ -542,8 +545,7 @@ struct IDEEditorView: NSViewRepresentable {
         textView.isHorizontallyResizable = true
         textView.isVerticallyResizable = true
         textView.autoresizingMask = [.width, .height]
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
-                                  height: .greatestFiniteMagnitude)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         textView.textContainerInset = NSSize(width: 0, height: 8)
         textView.customKeyBinds = keyBinds
         
@@ -559,7 +561,6 @@ struct IDEEditorView: NSViewRepresentable {
         
         let ruler = IDECenteredLineNumberRuler(textView: textView, theme: theme, zoomLevel: zoomLevel)
         scrollView.verticalRulerView = ruler
-        
         scrollView.contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(
             forName: NSView.boundsDidChangeNotification,
@@ -567,22 +568,18 @@ struct IDEEditorView: NSViewRepresentable {
             queue: .main
         ) { _ in
             if let textView = scrollView.documentView as? IDETextView {
-                context.coordinator.applySyntaxHighlightingInternal(on: textView,
-                                                                    withReferenceText: textView.string)
+                context.coordinator.applySyntaxHighlightingInternal(on: textView, withReferenceText: textView.string)
             }
         }
-        
         context.coordinator.textView = textView
         return scrollView
     }
     
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? IDETextView else { return }
-
         textView.isEditable = !showAlert
         textView.window?.invalidateCursorRects(for: textView)
         textView.resetCursorRects()
-
         if textView.string != text {
             textView.string = text
             context.coordinator.applySyntaxHighlighting(to: textView)
@@ -598,10 +595,16 @@ struct IDEEditorView: NSViewRepresentable {
         var parent: IDEEditorView
         weak var textView: NSTextView?
         private var pendingHighlightWorkItem: DispatchWorkItem?
+        var lineHighlightRange: NSRange?
         
         init(_ parent: IDEEditorView) {
             self.parent = parent
             super.init()
+            NotificationCenter.default.addObserver(forName: Notification.Name("NavigateToLine"), object: nil, queue: .main) { [weak self] notification in
+                if let lineNumber = notification.userInfo?["lineNumber"] as? Int {
+                    self?.navigateToLine(lineNumber)
+                }
+            }
             NotificationCenter.default.addObserver(forName: Notification.Name("JumpToNextSearchMatch"), object: nil, queue: .main) { [weak self] _ in
                 self?.jumpToNextSearchMatch()
             }
@@ -617,6 +620,32 @@ struct IDEEditorView: NSViewRepresentable {
             NotificationCenter.default.addObserver(forName: Notification.Name("PerformRedo"), object: nil, queue: .main) { [weak self] _ in
                 self?.textView?.undoManager?.redo()
             }
+            NotificationCenter.default.addObserver(self, selector: #selector(handleSelectionDidChange(_:)), name: NSTextView.didChangeSelectionNotification, object: nil)
+        }
+        
+        @objc private func handleSelectionDidChange(_ note: Notification) {
+            guard let tv = textView, let obj = note.object as? NSTextView, obj == tv else { return }
+            if lineHighlightRange != nil {
+                lineHighlightRange = nil
+                applySyntaxHighlighting(to: tv)
+            }
+        }
+        
+        private func navigateToLine(_ lineNumber: Int) {
+            guard let textView = textView else { return }
+            let lines = textView.string.components(separatedBy: "\n")
+            guard lineNumber > 0, lineNumber <= lines.count else { return }
+            
+            var location = 0
+            for i in 0..<lineNumber - 1 {
+                location += lines[i].count + 1
+            }
+            
+            let lineText = lines[lineNumber - 1]
+            let range = NSRange(location: location, length: lineText.count)
+            
+            textView.scrollRangeToVisible(range)
+            textView.setSelectedRange(range)
         }
         
         func textDidChange(_ notification: Notification) {
@@ -634,8 +663,7 @@ struct IDEEditorView: NSViewRepresentable {
             let workItem = DispatchWorkItem { [weak self, weak textView] in
                 guard let self = self, let textView = textView else { return }
                 if textView.string == currentText {
-                    self.applySyntaxHighlightingInternal(on: textView,
-                                                         withReferenceText: currentText)
+                    self.applySyntaxHighlightingInternal(on: textView, withReferenceText: currentText)
                 }
             }
             pendingHighlightWorkItem = workItem
@@ -646,35 +674,28 @@ struct IDEEditorView: NSViewRepresentable {
             guard textView.string == currentText,
                   let layoutManager = textView.layoutManager,
                   let textContainer = textView.textContainer else { return }
-            
             layoutManager.ensureLayout(for: textContainer)
-            
             let visibleRect = textView.visibleRect
             let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
             let visibleCharRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
-            
             let fullText = textView.string as NSString
             let visibleLineRange = fullText.lineRange(for: visibleCharRange)
             let expandedRange = expandRangeToIncludeFullContext(visibleLineRange, in: fullText)
             let expandedText = fullText.substring(with: expandedRange)
-            
             let paragraphStyle = textView.defaultParagraphStyle ?? NSParagraphStyle()
             let font = NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(parent.zoomLevel), weight: .semibold)
             let lineHeight: CGFloat = 20.0
             let actualLineHeight = layoutManager.defaultLineHeight(for: font)
             let baselineOffset = (lineHeight - actualLineHeight) / 2.0
             let selRange = textView.selectedRange()
-            
             let tokens = SwiftParser.tokenize(expandedText, language: parent.programmingLanguage)
             let newVisibleAttributed = NSMutableAttributedString()
             var currentLine = 1
-            
             for token in tokens {
                 if token.lineNumber > currentLine {
                     let needed = token.lineNumber - currentLine
                     for _ in 0..<needed {
-                        let newlineAttr = NSAttributedString(string: "\n",
-                                                              attributes: [.paragraphStyle: paragraphStyle])
+                        let newlineAttr = NSAttributedString(string: "\n", attributes: [.paragraphStyle: paragraphStyle])
                         newVisibleAttributed.append(newlineAttr)
                     }
                     currentLine = token.lineNumber
@@ -688,23 +709,19 @@ struct IDEEditorView: NSViewRepresentable {
                 ]
                 newVisibleAttributed.append(NSAttributedString(string: token.value, attributes: attrs))
             }
-            
             let visibleLinesCount = expandedText.components(separatedBy: "\n").count
             if visibleLinesCount > currentLine {
                 let diff = visibleLinesCount - currentLine
                 for _ in 0..<diff {
-                    let newlineAttr = NSAttributedString(string: "\n",
-                                                          attributes: [.paragraphStyle: paragraphStyle])
+                    let newlineAttr = NSAttributedString(string: "\n", attributes: [.paragraphStyle: paragraphStyle])
                     newVisibleAttributed.append(newlineAttr)
                 }
             }
-            
             if !parent.isReplacing && !parent.searchQuery.isEmpty {
                 let searchText = parent.searchQuery
                 let options: NSString.CompareOptions = parent.searchCaseSensitive ? [] : [.caseInsensitive]
                 let nsNewVisibleText = newVisibleAttributed.string as NSString
                 var searchRange = NSRange(location: 0, length: nsNewVisibleText.length)
-                
                 let baseFontSize = 11 * CGFloat(parent.zoomLevel)
                 let highlightFont = NSFont.monospacedSystemFont(ofSize: baseFontSize * 1.05, weight: .semibold)
                 let highlightColor = NSColor(hex: 0xAD6ADD)
@@ -712,7 +729,6 @@ struct IDEEditorView: NSViewRepresentable {
                 shadow.shadowOffset = NSSize(width: 1, height: -1)
                 shadow.shadowBlurRadius = 2
                 shadow.shadowColor = NSColor.black.withAlphaComponent(0.7)
-                
                 while true {
                     let foundRange = nsNewVisibleText.range(of: searchText, options: options, range: searchRange)
                     if foundRange.location != NSNotFound {
@@ -730,7 +746,6 @@ struct IDEEditorView: NSViewRepresentable {
                         break
                     }
                 }
-                
                 newVisibleAttributed.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: newVisibleAttributed.length), options: []) { value, range, _ in
                     if let color = value as? NSColor {
                         if color != highlightColor {
@@ -740,12 +755,26 @@ struct IDEEditorView: NSViewRepresentable {
                     }
                 }
             }
-            
-            if let currentAttributed = textView.textStorage?.attributedSubstring(from: expandedRange),
-               currentAttributed.isEqual(to: newVisibleAttributed) {
+            if let lineRange = lineHighlightRange {
+                let baseFontSize = 11 * CGFloat(parent.zoomLevel)
+                let highlightFont = NSFont.monospacedSystemFont(ofSize: baseFontSize * 1.05, weight: .semibold)
+                let highlightColor = NSColor(hex: 0xAD6ADD)
+                let shadow = NSShadow()
+                shadow.shadowOffset = NSSize(width: 1, height: -1)
+                shadow.shadowBlurRadius = 2
+                shadow.shadowColor = NSColor.black.withAlphaComponent(0.7)
+                let intersection = NSIntersectionRange(NSRange(location: expandedRange.location, length: newVisibleAttributed.length), lineRange)
+                if intersection.length > 0 {
+                    let localRange = NSRange(location: intersection.location - expandedRange.location, length: intersection.length)
+                    newVisibleAttributed.addAttribute(.font, value: highlightFont, range: localRange)
+                    newVisibleAttributed.addAttribute(.foregroundColor, value: highlightColor, range: localRange)
+                    newVisibleAttributed.addAttribute(.shadow, value: shadow, range: localRange)
+                    newVisibleAttributed.removeAttribute(.backgroundColor, range: localRange)
+                }
+            }
+            if let currentAttributed = textView.textStorage?.attributedSubstring(from: expandedRange), currentAttributed.isEqual(to: newVisibleAttributed) {
                 return
             }
-            
             CATransaction.begin()
             CATransaction.setDisableActions(true)
             textView.textStorage?.beginEditing()
@@ -755,7 +784,7 @@ struct IDEEditorView: NSViewRepresentable {
             CATransaction.commit()
             textView.layer?.removeAllAnimations()
         }
-
+        
         private func expandRangeToIncludeFullContext(_ visibleRange: NSRange, in fullText: NSString) -> NSRange {
             var expandedRange = visibleRange
             let delimiterPairs: [(String, String)] = [
@@ -780,12 +809,10 @@ struct IDEEditorView: NSViewRepresentable {
                 ("--[[", "]]"),
                 ("[[", "]]")
             ]
-            
             for (startDelimiter, endDelimiter) in delimiterPairs {
                 if startDelimiter == endDelimiter {
                     var occurrences: [NSRange] = []
                     var searchRange = NSRange(location: 0, length: fullText.length)
-                    
                     while true {
                         let foundRange = fullText.range(of: startDelimiter, options: [], range: searchRange)
                         if foundRange.location == NSNotFound { break }
@@ -794,15 +821,13 @@ struct IDEEditorView: NSViewRepresentable {
                         if newLocation >= fullText.length { break }
                         searchRange = NSRange(location: newLocation, length: fullText.length - newLocation)
                     }
-                    
                     if occurrences.count >= 2 {
                         for i in 0..<occurrences.count - 1 where i % 2 == 0 {
                             let start = occurrences[i]
                             let end = occurrences[i + 1]
-                            
-                            if (start.location < visibleRange.location && end.location + end.length > visibleRange.location) ||
-                               (visibleRange.contains(start.location) && end.location + end.length > NSMaxRange(visibleRange)) ||
-                               (visibleRange.contains(start.location) && visibleRange.contains(end.location + end.length - 1)) {
+                            if (start.location < visibleRange.location && end.location + end.length > visibleRange.location)
+                                || (visibleRange.contains(start.location) && end.location + end.length > NSMaxRange(visibleRange))
+                                || (visibleRange.contains(start.location) && visibleRange.contains(end.location + end.length - 1)) {
                                 let blockStart = start.location
                                 let blockEnd = end.location + end.length
                                 expandedRange = NSUnionRange(expandedRange, NSRange(location: blockStart, length: blockEnd - blockStart))
@@ -812,27 +837,22 @@ struct IDEEditorView: NSViewRepresentable {
                 } else {
                     let startSearchRange1 = NSRange(location: 0, length: visibleRange.location)
                     let startRange1 = fullText.range(of: startDelimiter, options: .backwards, range: startSearchRange1)
-                    
                     if startRange1.location != NSNotFound {
                         let endSearchStart = startRange1.location + startRange1.length
                         let endSearchRange1 = NSRange(location: endSearchStart, length: fullText.length - endSearchStart)
                         let endRange1 = fullText.range(of: endDelimiter, options: [], range: endSearchRange1)
-                        
                         if endRange1.location != NSNotFound && endRange1.location >= visibleRange.location {
                             let blockStart = startRange1.location
                             let blockEnd = endRange1.location + endRange1.length
                             expandedRange = NSUnionRange(expandedRange, NSRange(location: blockStart, length: blockEnd - blockStart))
                         }
                     }
-                    
                     let startSearchRange2 = visibleRange
                     let startRange2 = fullText.range(of: startDelimiter, options: [], range: startSearchRange2)
-                    
                     if startRange2.location != NSNotFound {
                         let endSearchStart = startRange2.location + startRange2.length
                         let endSearchRange2 = NSRange(location: endSearchStart, length: fullText.length - endSearchStart)
                         let endRange2 = fullText.range(of: endDelimiter, options: [], range: endSearchRange2)
-                        
                         if endRange2.location != NSNotFound {
                             let blockStart = startRange2.location
                             let blockEnd = endRange2.location + endRange2.length
@@ -841,7 +861,6 @@ struct IDEEditorView: NSViewRepresentable {
                     }
                 }
             }
-            
             return expandedRange
         }
         
@@ -928,11 +947,9 @@ struct IDEEditorView: NSViewRepresentable {
 class IDETextView: NSTextView {
     var customKeyBinds: [String: String] = [:]
     private var trackingArea: NSTrackingArea?
-    
     override var intrinsicContentSize: NSSize {
         return NSSize(width: CGFloat.greatestFiniteMagnitude, height: super.intrinsicContentSize.height)
     }
-    
     override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
@@ -1000,7 +1017,6 @@ class IDETextView: NSTextView {
             super.keyDown(with: event)
         }
     }
-    
     override func deleteBackward(_ sender: Any?) {
         let sel = self.selectedRange()
         if sel.length != 0 {
@@ -1041,7 +1057,6 @@ class IDETextView: NSTextView {
         }
         super.deleteBackward(sender)
     }
-    
     override func insertBacktab(_ sender: Any?) {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1064,7 +1079,6 @@ class IDETextView: NSTextView {
             }
         }
     }
-    
     override func insertNewline(_ sender: Any?) {
         let nsString = self.string as NSString
         let selRange = self.selectedRange()
@@ -1076,7 +1090,6 @@ class IDETextView: NSTextView {
             self.insertText(String(indentation), replacementRange: self.selectedRange())
         }
     }
-    
     private func indentSelectedLines() {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1103,7 +1116,6 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-    
     private func indentSingleLine(selectionRange: NSRange) {
         let selectedText = (self.string as NSString).substring(with: selectionRange)
         let replaced = "\t" + selectedText
@@ -1116,7 +1128,6 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-    
     private func unindentSingleLine(selectionRange: NSRange) {
         let nsString = self.string as NSString
         let fullLineRange = nsString.lineRange(for: selectionRange)
@@ -1134,7 +1145,6 @@ class IDETextView: NSTextView {
             }
         }
     }
-    
     override func menu(for event: NSEvent) -> NSMenu? {
         let customMenu = NSMenu(title: "Context Menu")
         customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
@@ -1148,28 +1158,23 @@ class IDETextView: NSTextView {
         customMenu.addItem(redoItem)
         return customMenu
     }
-    
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.title == "Services" || menuItem.title == "Services…" {
             return false
         }
         return super.validateMenuItem(menuItem)
     }
-    
     @objc func customUndo(_ sender: Any?) {
         self.undoManager?.undo()
     }
-    
     @objc func customRedo(_ sender: Any?) {
         self.undoManager?.redo()
     }
-    
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         self.window?.invalidateCursorRects(for: self)
         self.resetCursorRects()
     }
-    
     override func resetCursorRects() {
         super.resetCursorRects()
         let rect = self.visibleRect
@@ -1179,14 +1184,12 @@ class IDETextView: NSTextView {
             self.addCursorRect(rect, cursor: NSCursor.iBeam)
         }
     }
-
     override var isEditable: Bool {
         didSet {
             self.window?.invalidateCursorRects(for: self)
             self.resetCursorRects()
         }
     }
-
     override func mouseEntered(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1194,7 +1197,6 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
-
     override func mouseMoved(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1202,7 +1204,6 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
-
     override func cursorUpdate(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1210,7 +1211,6 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
-
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let trackingArea = self.trackingArea {
@@ -1268,15 +1268,12 @@ class IDECenteredLineNumberRuler: NSRulerView {
         guard let tv = textView, let layoutManager = tv.layoutManager else { return }
         let fullGlyphRange = NSRange(location: 0, length: layoutManager.numberOfGlyphs)
         var lineIndex = 1
-        
         layoutManager.enumerateLineFragments(forGlyphRange: fullGlyphRange) { lineRect, _, _, _, _ in
             var lineRectInTextView = lineRect
             lineRectInTextView.origin.x += tv.textContainerOrigin.x
             lineRectInTextView.origin.y += tv.textContainerOrigin.y
-            
             let lineRectInRuler = self.convert(lineRectInTextView, from: tv)
             let yCenter = lineRectInRuler.midY
-            
             let numberString = "\(lineIndex)"
             let font = NSFont.monospacedSystemFont(ofSize: 10 * CGFloat(self.zoomLevel), weight: .semibold)
             let attrs: [NSAttributedString.Key: Any] = [
@@ -1285,11 +1282,9 @@ class IDECenteredLineNumberRuler: NSRulerView {
             ]
             let numAttr = NSAttributedString(string: numberString, attributes: attrs)
             let size = numAttr.size()
-            
             let xPos = self.ruleThickness - size.width - 35
             let yPos = yCenter - (size.height / 2.5)
             numAttr.draw(at: NSPoint(x: xPos, y: yPos))
-            
             lineIndex += 1
         }
     }
@@ -1298,12 +1293,10 @@ class IDECenteredLineNumberRuler: NSRulerView {
 class InvisibleScroller: NSScroller {
     override func draw(_ dirtyRect: NSRect) {
     }
-    
     override var alphaValue: CGFloat {
         get { 0 }
         set { }
     }
-    
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
     }

@@ -222,7 +222,8 @@ func generateHighlightedAttributedString(text: String, highlight: String, isCase
 class SearchResultItem: NSCollectionViewItem {
     let clippedTextView = ClippedSearchResultTextView()
     var fileURL: URL?
-    var onOpenFile: ((URL) -> Void)?
+    var lineNumber: Int?
+    var onOpenFile: ((URL, Int?) -> Void)?
     
     override func loadView() {
         self.view = HoverEffectView(frame: .zero)
@@ -248,7 +249,7 @@ class SearchResultItem: NSCollectionViewItem {
     
     @objc func cellClicked() {
         if let url = fileURL {
-            onOpenFile?(url)
+            onOpenFile?(url, lineNumber)
         }
     }
     
@@ -257,8 +258,9 @@ class SearchResultItem: NSCollectionViewItem {
         (view as? HoverEffectView)?.resetHoverState()
     }
     
-    func configure(match: SearchResult, query: String, isCaseSensitive: Bool, fileURL: URL, onOpenFile: @escaping (URL) -> Void) {
+    func configure(match: SearchResult, query: String, isCaseSensitive: Bool, fileURL: URL, onOpenFile: @escaping (URL, Int?) -> Void) {
         self.fileURL = fileURL
+        self.lineNumber = match.lineNumber
         self.onOpenFile = onOpenFile
         let trimmed = match.line.trimmingCharacters(in: .whitespacesAndNewlines)
         let attributed = generateHighlightedAttributedString(text: trimmed, highlight: query, isCaseSensitive: isCaseSensitive)
@@ -349,7 +351,7 @@ struct AdvancedVirtualizedSearchResultsView: NSViewRepresentable {
     @Binding var searchResults: [FileSearchResult]
     let searchQuery: String
     let isCaseSensitive: Bool
-    let onOpenFile: (URL) -> Void
+    let onOpenFile: (URL, Int?) -> Void
     
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView(frame: .zero)
@@ -438,7 +440,8 @@ struct AdvancedVirtualizedSearchResultsView: NSViewRepresentable {
         func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
             if let indexPath = indexPaths.first {
                 let fileResult = searchResults[indexPath.section]
-                parent.onOpenFile(fileResult.fileURL)
+                let match = fileResult.results[indexPath.item]
+                parent.onOpenFile(fileResult.fileURL, match.lineNumber)
             }
         }
         
