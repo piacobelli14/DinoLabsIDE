@@ -679,7 +679,8 @@ struct IDEEditorView: NSViewRepresentable {
             
             let fullText = textView.string as NSString
             let visibleLineRange = fullText.lineRange(for: visibleCharRange)
-            let visibleText = fullText.substring(with: visibleLineRange)
+            let expandedRange = expandRangeToIncludeFullContext(visibleLineRange, in: fullText)
+            let expandedText = fullText.substring(with: expandedRange)
             
             let paragraphStyle = textView.defaultParagraphStyle ?? NSParagraphStyle()
             let font = NSFont.monospacedSystemFont(ofSize: 11 * CGFloat(parent.zoomLevel), weight: .semibold)
@@ -688,7 +689,7 @@ struct IDEEditorView: NSViewRepresentable {
             let baselineOffset = (lineHeight - actualLineHeight) / 2.0
             let selRange = textView.selectedRange()
             
-            let tokens = SwiftParser.tokenize(visibleText, language: parent.programmingLanguage)
+            let tokens = SwiftParser.tokenize(expandedText, language: parent.programmingLanguage)
             let newVisibleAttributed = NSMutableAttributedString()
             var currentLine = 1
             
@@ -712,7 +713,7 @@ struct IDEEditorView: NSViewRepresentable {
                 newVisibleAttributed.append(NSAttributedString(string: token.value, attributes: attrs))
             }
             
-            let visibleLinesCount = visibleText.components(separatedBy: "\n").count
+            let visibleLinesCount = expandedText.components(separatedBy: "\n").count
             if visibleLinesCount > currentLine {
                 let diff = visibleLinesCount - currentLine
                 for _ in 0..<diff {
@@ -764,7 +765,7 @@ struct IDEEditorView: NSViewRepresentable {
                 }
             }
             
-            if let currentAttributed = textView.textStorage?.attributedSubstring(from: visibleLineRange),
+            if let currentAttributed = textView.textStorage?.attributedSubstring(from: expandedRange),
                currentAttributed.isEqual(to: newVisibleAttributed) {
                 return
             }
@@ -772,11 +773,57 @@ struct IDEEditorView: NSViewRepresentable {
             CATransaction.begin()
             CATransaction.setDisableActions(true)
             textView.textStorage?.beginEditing()
-            textView.textStorage?.replaceCharacters(in: visibleLineRange, with: newVisibleAttributed)
+            textView.textStorage?.replaceCharacters(in: expandedRange, with: newVisibleAttributed)
             textView.textStorage?.endEditing()
             textView.setSelectedRange(selRange)
             CATransaction.commit()
             textView.layer?.removeAllAnimations()
+        }
+
+        func expandRangeToIncludeFullContext(_ range: NSRange, in fullText: NSString) -> NSRange {
+            var expandedRange = range
+            let delimiterPairs = [
+                ("/*", "*/"),
+                ("{/*", "*/}"),
+                ("`", "`"),
+                ("``", "``"),
+                ("\"\"\"", "\"\"\""),
+                ("'''", "'''"),
+                ("<!--", "-->"),
+                ("/**", "*/"),
+                ("///", "///"),
+                ("%{", "}"),
+                ("#{", "}"),
+                ("<<EOF", "EOF"),
+                ("=begin", "=end"),
+                ("{-", "-}"),
+                ("(*", "*)"),
+                ("{*", "*}"),
+                ("/** @", "*/"),
+                ("//!", "//!"),
+                (">>> ", "..."),
+                ("```", "```"),
+                ("\\begin{", "\\end{"),
+                ("--[[", "]]"),
+                ("[[", "]]"),
+                ("--[[", "]]")
+            ]
+            
+            for (startDelimiter, endDelimiter) in delimiterPairs {
+                let startSearchRange = NSRange(location: 0, length: range.location)
+                let startRange = fullText.range(of: startDelimiter, options: .backwards, range: startSearchRange)
+                let endSearchLocation = range.location + range.length
+                let endSearchLength = fullText.length - endSearchLocation
+                let endSearchRange = NSRange(location: endSearchLocation, length: endSearchLength)
+                let endRange = fullText.range(of: endDelimiter, options: [], range: endSearchRange)
+                
+                if startRange.location != NSNotFound && endRange.location != NSNotFound {
+                    expandedRange.location = startRange.location
+                    expandedRange.length = endRange.location + endRange.length - startRange.location
+                }
+            }
+            
+            return expandedRange
         }
         
         func jumpToNextSearchMatch() {
@@ -870,11 +917,10 @@ class IDETextView: NSTextView {
     override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
-                coordinator.parent.onSave() // Call the save action
+                coordinator.parent.onSave()
             }
             return
         }
-        
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "f" {
             NotificationCenter.default.post(name: Notification.Name("OpenSearch"), object: nil)
             return
@@ -899,7 +945,6 @@ class IDETextView: NSTextView {
             self.selectAll(self)
             return
         }
-        
         guard let chars = event.charactersIgnoringModifiers else {
             super.keyDown(with: event)
             return
@@ -945,8 +990,7 @@ class IDETextView: NSTextView {
         var endLoc = selRange.location + selRange.length - 1
         if endLoc < 0 { endLoc = 0 }
         let endLine = nsString.lineRange(for: NSRange(location: endLoc, length: 0))
-        let rangeToModify = NSRange(location: startLine.location,
-                                    length: endLine.location + endLine.length - startLine.location)
+        let rangeToModify = NSRange(location: startLine.location, length: endLine.location + endLine.length - startLine.location)
         let originalText = nsString.substring(with: rangeToModify)
         var lines = originalText.components(separatedBy: "\n")
         let hadTrailingNewline = originalText.hasSuffix("\n")
@@ -971,8 +1015,7 @@ class IDETextView: NSTextView {
         var endLoc = selRange.location + selRange.length - 1
         if endLoc < 0 { endLoc = 0 }
         let endLine = nsString.lineRange(for: NSRange(location: endLoc, length: 0))
-        let rangeToModify = NSRange(location: startLine.location,
-                                    length: endLine.location + endLine.length - startLine.location)
+        let rangeToModify = NSRange(location: startLine.location, length: endLine.location + endLine.length - startLine.location)
         let originalText = nsString.substring(with: rangeToModify)
         var lines = originalText.components(separatedBy: "\n")
         let hadTrailingNewline = originalText.hasSuffix("\n")
@@ -1038,23 +1081,13 @@ class IDETextView: NSTextView {
     
     override func menu(for event: NSEvent) -> NSMenu? {
         let customMenu = NSMenu(title: "Context Menu")
-        customMenu.addItem(withTitle: "Copy",
-                           action: #selector(NSText.copy(_:)),
-                           keyEquivalent: customKeyBinds["copy"] ?? "")
-        customMenu.addItem(withTitle: "Paste",
-                           action: #selector(NSText.paste(_:)),
-                           keyEquivalent: customKeyBinds["paste"] ?? "")
-        customMenu.addItem(withTitle: "Cut",
-                           action: #selector(NSText.cut(_:)),
-                           keyEquivalent: customKeyBinds["cut"] ?? "")
-        let undoItem = NSMenuItem(title: "Undo",
-                                  action: #selector(customUndo(_:)),
-                                  keyEquivalent: customKeyBinds["undo"] ?? "")
+        customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
+        customMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: customKeyBinds["paste"] ?? "")
+        customMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: customKeyBinds["cut"] ?? "")
+        let undoItem = NSMenuItem(title: "Undo", action: #selector(customUndo(_:)), keyEquivalent: customKeyBinds["undo"] ?? "")
         undoItem.target = self
         customMenu.addItem(undoItem)
-        let redoItem = NSMenuItem(title: "Redo",
-                                  action: #selector(customRedo(_:)),
-                                  keyEquivalent: customKeyBinds["redo"] ?? "")
+        let redoItem = NSMenuItem(title: "Redo", action: #selector(customRedo(_:)), keyEquivalent: customKeyBinds["redo"] ?? "")
         redoItem.target = self
         customMenu.addItem(redoItem)
         return customMenu
@@ -1073,6 +1106,11 @@ class IDETextView: NSTextView {
     
     @objc func customRedo(_ sender: Any?) {
         self.undoManager?.redo()
+    }
+    
+    override func resetCursorRects() {
+        self.discardCursorRects()
+        self.addCursorRect(self.bounds, cursor: NSCursor.pointingHand)
     }
 }
 

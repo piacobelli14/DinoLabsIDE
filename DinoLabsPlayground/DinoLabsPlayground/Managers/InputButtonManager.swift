@@ -17,6 +17,14 @@ class PlainNSButton: NSButton {
         title = ""
         layer?.backgroundColor = NSColor.clear.cgColor
         focusRingType = .none
+        
+        let trackingArea = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(trackingArea)
     }
     
     required init?(coder: NSCoder) {
@@ -27,6 +35,30 @@ class PlainNSButton: NSButton {
     
     override func resetCursorRects() {
         discardCursorRects()
-        addCursorRect(self.bounds, cursor: NSCursor.pointingHand)
+        addCursorRect(bounds, cursor: NSCursor.pointingHand)
+    }
+    
+    override func mouseEntered(with event: NSEvent) {
+        NSCursor.pointingHand.push()
+    }
+    
+    override func mouseExited(with event: NSEvent) {
+        NSCursor.pop()
+    }
+    
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        updateTrackingAreas()
+    }
+    
+    override func updateTrackingAreas() {
+        trackingAreas.forEach { removeTrackingArea($0) }
+        let trackingArea = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(trackingArea)
     }
 }

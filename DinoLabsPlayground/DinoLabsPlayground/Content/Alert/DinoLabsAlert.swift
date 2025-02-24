@@ -112,8 +112,7 @@ struct DinoLabsAlert: View {
                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.6))
                             .shadow(color: .gray.opacity(0.5), radius: 0.5, x: 0, y: 0)
                             .multilineTextAlignment(.center)
-                            .frame(width: geometry.size.width * 0.32)
-                            .frame(maxWidth: 300)
+                            .frame(maxWidth: 260)
                             .padding(.horizontal, 8)
                     }
                     .padding(.bottom, 20)
@@ -203,7 +202,7 @@ struct DinoLabsAlert: View {
                                 .allowsHitTesting(false)
                         )
                         .containerHelper(backgroundColor: Color(hex: 0xAD6ADD), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
-                        .hoverEffect(opacity: 0.5)
+                        .hoverEffect(opacity: 0.5, cursor: .pointingHand)
                         .clickEffect(opacity: 0.1)
                         
                         if showCancel {
@@ -219,7 +218,7 @@ struct DinoLabsAlert: View {
                                     .allowsHitTesting(false)
                             )
                             .containerHelper(backgroundColor: Color(hex: 0xD8D8D8), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
-                            .hoverEffect(opacity: 0.5)
+                            .hoverEffect(opacity: 0.5, cursor: .pointingHand)
                             .clickEffect(opacity: 0.1)
                         }
                     }
