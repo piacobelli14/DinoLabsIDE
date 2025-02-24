@@ -1,7 +1,7 @@
 //
-// DinoLabsIDE.swift
+//  DinoLabsIDE.swift
 //
-// Created by Peter Iacobelli on 2/21/25.
+//  Created by Peter Iacobelli on 2/22/25.
 //
 
 import SwiftUI
@@ -57,7 +57,6 @@ struct IDEView: View {
                                         .hoverEffect(opacity: 0.8)
                                         .onChange(of: searchQuery) { _ in
                                             NotificationCenter.default.post(name: Notification.Name("SearchQueryChanged"), object: nil)
-                                            NotificationCenter.default.post(name: Notification.Name("JumpToNextSearchMatch"), object: nil)
                                         }
                                     HStack {
                                         CodeButtonMain {
@@ -73,10 +72,7 @@ struct IDEView: View {
                                                 .foregroundColor(Color(hex: 0xf5f5f5))
                                                 .allowsHitTesting(false)
                                         )
-                                        .hoverEffect(opacity: 0.6,
-                                                     scale: 1.05,
-                                                     cursor: .pointingHand)
-                                        
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
                                         CodeButtonMain {
                                             NotificationCenter.default.post(name: Notification.Name("JumpToPreviousSearchMatch"), object: nil)
                                         }
@@ -90,10 +86,7 @@ struct IDEView: View {
                                                 .foregroundColor(Color(hex: 0xf5f5f5))
                                                 .allowsHitTesting(false)
                                         )
-                                        .hoverEffect(opacity: 0.6,
-                                                     scale: 1.05,
-                                                     cursor: .pointingHand)
-                                        
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
                                         CodeButtonMain {
                                             searchCaseSensitive.toggle()
                                             withAnimation(.none) {
@@ -111,9 +104,7 @@ struct IDEView: View {
                                                                                    : Color(hex: 0xf5f5f5))
                                                 .allowsHitTesting(false)
                                         )
-                                        .hoverEffect(opacity: 0.6,
-                                                     scale: 1.05,
-                                                     cursor: .pointingHand)
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
                                     }
                                     .padding(.horizontal, 10)
                                     .frame(width: 60, height: 25)
@@ -156,7 +147,6 @@ struct IDEView: View {
                                                   shadowRadius: 8,
                                                   shadowX: 0, shadowY: 0)
                                 
-                               
                                 if replaceState {
                                     HStack(spacing: 0) {
                                         CodeTextField(placeholder: "Replace with...", text: $replaceQuery)
@@ -233,8 +223,6 @@ struct IDEView: View {
                                                       shadowX: 0, shadowY: 0)
                                     .padding(.leading, 10)
                                 }
-                                
-                                
                                 
                             }
                         }
@@ -369,7 +357,6 @@ struct IDEView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             CodeButtonMain {
-                                
                             }
                             .containerHelper(backgroundColor: Color(hex: 0x414141),
                                              borderColor: Color(hex: 0x414141),
@@ -457,7 +444,7 @@ struct IDEView: View {
             try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
             hasUnsavedChanges = false
         } catch {
-            print("Failed to save file: \(error)")
+            return;
         }
     }
     
@@ -780,13 +767,11 @@ struct IDEEditorView: NSViewRepresentable {
             textView.layer?.removeAllAnimations()
         }
 
-        func expandRangeToIncludeFullContext(_ range: NSRange, in fullText: NSString) -> NSRange {
-            var expandedRange = range
-            let delimiterPairs = [
+        private func expandRangeToIncludeFullContext(_ visibleRange: NSRange, in fullText: NSString) -> NSRange {
+            var expandedRange = visibleRange
+            let delimiterPairs: [(String, String)] = [
                 ("/*", "*/"),
                 ("{/*", "*/}"),
-                ("`", "`"),
-                ("``", "``"),
                 ("\"\"\"", "\"\"\""),
                 ("'''", "'''"),
                 ("<!--", "-->"),
@@ -802,29 +787,77 @@ struct IDEEditorView: NSViewRepresentable {
                 ("/** @", "*/"),
                 ("//!", "//!"),
                 (">>> ", "..."),
-                ("```", "```"),
                 ("\\begin{", "\\end{"),
                 ("--[[", "]]"),
-                ("[[", "]]"),
-                ("--[[", "]]")
+                ("[[", "]]")
             ]
             
             for (startDelimiter, endDelimiter) in delimiterPairs {
-                let startSearchRange = NSRange(location: 0, length: range.location)
-                let startRange = fullText.range(of: startDelimiter, options: .backwards, range: startSearchRange)
-                let endSearchLocation = range.location + range.length
-                let endSearchLength = fullText.length - endSearchLocation
-                let endSearchRange = NSRange(location: endSearchLocation, length: endSearchLength)
-                let endRange = fullText.range(of: endDelimiter, options: [], range: endSearchRange)
-                
-                if startRange.location != NSNotFound && endRange.location != NSNotFound {
-                    expandedRange.location = startRange.location
-                    expandedRange.length = endRange.location + endRange.length - startRange.location
+                if startDelimiter == endDelimiter {
+                    var occurrences: [NSRange] = []
+                    var searchRange = NSRange(location: 0, length: fullText.length)
+                    
+                    while true {
+                        let foundRange = fullText.range(of: startDelimiter, options: [], range: searchRange)
+                        if foundRange.location == NSNotFound { break }
+                        occurrences.append(foundRange)
+                        let newLocation = foundRange.location + foundRange.length
+                        if newLocation >= fullText.length { break }
+                        searchRange = NSRange(location: newLocation, length: fullText.length - newLocation)
+                    }
+                    
+                    if occurrences.count >= 2 {
+                        for i in 0..<occurrences.count - 1 where i % 2 == 0 {
+                            let start = occurrences[i]
+                            let end = occurrences[i + 1]
+                            
+                            if (start.location < visibleRange.location && end.location + end.length > visibleRange.location) ||
+                               (visibleRange.contains(start.location) && end.location + end.length > NSMaxRange(visibleRange)) ||
+                               (visibleRange.contains(start.location) && visibleRange.contains(end.location + end.length - 1)) {
+                                let blockStart = start.location
+                                let blockEnd = end.location + end.length
+                                expandedRange = NSUnionRange(expandedRange, NSRange(location: blockStart, length: blockEnd - blockStart))
+                            }
+                        }
+                    }
+                } else {
+                    let startSearchRange1 = NSRange(location: 0, length: visibleRange.location)
+                    let startRange1 = fullText.range(of: startDelimiter, options: .backwards, range: startSearchRange1)
+                    
+                    if startRange1.location != NSNotFound {
+                        let endSearchStart = startRange1.location + startRange1.length
+                        let endSearchRange1 = NSRange(location: endSearchStart, length: fullText.length - endSearchStart)
+                        let endRange1 = fullText.range(of: endDelimiter, options: [], range: endSearchRange1)
+                        
+                        if endRange1.location != NSNotFound && endRange1.location >= visibleRange.location {
+                            let blockStart = startRange1.location
+                            let blockEnd = endRange1.location + endRange1.length
+                            expandedRange = NSUnionRange(expandedRange, NSRange(location: blockStart, length: blockEnd - blockStart))
+                        }
+                    }
+                    
+                    let startSearchRange2 = visibleRange
+                    let startRange2 = fullText.range(of: startDelimiter, options: [], range: startSearchRange2)
+                    
+                    if startRange2.location != NSNotFound {
+                        let endSearchStart = startRange2.location + startRange2.length
+                        let endSearchRange2 = NSRange(location: endSearchStart, length: fullText.length - endSearchStart)
+                        let endRange2 = fullText.range(of: endDelimiter, options: [], range: endSearchRange2)
+                        
+                        if endRange2.location != NSNotFound {
+                            let blockStart = startRange2.location
+                            let blockEnd = endRange2.location + endRange2.length
+                            expandedRange = NSUnionRange(expandedRange, NSRange(location: blockStart, length: blockEnd - blockStart))
+                        }
+                    }
                 }
             }
             
             return expandedRange
         }
+
+
+
         
         func jumpToNextSearchMatch() {
             guard let textView = textView, !parent.searchQuery.isEmpty else { return }
@@ -1191,5 +1224,11 @@ class InvisibleScroller: NSScroller {
     
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
+    }
+}
+
+extension NSRange {
+    func contains(_ location: Int) -> Bool {
+        return location >= self.location && location < self.location + self.length
     }
 }
