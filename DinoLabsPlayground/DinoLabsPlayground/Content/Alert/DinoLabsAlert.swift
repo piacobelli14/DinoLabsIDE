@@ -204,6 +204,13 @@ struct DinoLabsAlert: View {
                         .containerHelper(backgroundColor: Color(hex: 0xAD6ADD), borderColor: Color.clear, borderWidth: 0, topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6, shadowColor: .white.opacity(0.4), shadowRadius: 1.5, shadowX: 0, shadowY: 0)
                         .hoverEffect(opacity: 0.5, cursor: .pointingHand)
                         .clickEffect(opacity: 0.1)
+                        .onHover { isHovered in
+                            if isHovered {
+                                NSCursor.pointingHand.set()
+                            } else {
+                                NSCursor.arrow.set()
+                            }
+                        }
                         
                         if showCancel {
                             AlertButtonMain {

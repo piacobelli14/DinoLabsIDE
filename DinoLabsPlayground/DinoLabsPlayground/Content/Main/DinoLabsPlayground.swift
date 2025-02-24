@@ -1706,7 +1706,8 @@ struct DinoLabsPlayground: View {
                                             zoomLevel: $userZoomLevel,
                                             colorTheme: $userColorTheme,
                                             fileContent: $openTabs[index].fileContent,
-                                            hasUnsavedChanges: $openTabs[index].hasUnsavedChanges
+                                            hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
+                                            showAlert: $showAlert
                                         )
                                         .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
                                             updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)

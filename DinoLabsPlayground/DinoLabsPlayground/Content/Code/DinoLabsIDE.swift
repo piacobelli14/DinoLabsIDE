@@ -15,6 +15,7 @@ struct IDEView: View {
     @Binding var colorTheme: String
     @Binding var fileContent: String
     @Binding var hasUnsavedChanges: Bool
+    @Binding var showAlert: Bool
     @State private var isLoading: Bool = false
     @State private var copyIcon = "square.on.square"
     @State private var searchState: Bool = false
@@ -397,6 +398,7 @@ struct IDEView: View {
                         currentSearchMatch: $currentSearchMatch,
                         totalSearchMatches: $totalSearchMatches,
                         hasUnsavedChanges: $hasUnsavedChanges,
+                        showAlert: $showAlert,
                         onSave: saveFile
                     )
                 }
@@ -493,6 +495,7 @@ struct IDEEditorView: NSViewRepresentable {
     @Binding var currentSearchMatch: Int
     @Binding var totalSearchMatches: Int
     @Binding var hasUnsavedChanges: Bool
+    @Binding var showAlert: Bool
     var onSave: () -> Void
     
     func makeCoordinator() -> Coordinator {
@@ -504,7 +507,7 @@ struct IDEEditorView: NSViewRepresentable {
         textView.wantsLayer = true
         textView.layer?.actions = [:]
         textView.layer?.speed = 1000
-        textView.isEditable = true
+        textView.isEditable = !showAlert
         textView.isRichText = false
         textView.usesFindBar = true
         textView.allowsUndo = true
@@ -575,6 +578,11 @@ struct IDEEditorView: NSViewRepresentable {
     
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? IDETextView else { return }
+
+        textView.isEditable = !showAlert
+        textView.window?.invalidateCursorRects(for: textView)
+        textView.resetCursorRects()
+
         if textView.string != text {
             textView.string = text
             context.coordinator.applySyntaxHighlighting(to: textView)
@@ -836,9 +844,6 @@ struct IDEEditorView: NSViewRepresentable {
             
             return expandedRange
         }
-
-
-
         
         func jumpToNextSearchMatch() {
             guard let textView = textView, !parent.searchQuery.isEmpty else { return }
@@ -922,11 +927,12 @@ struct IDEEditorView: NSViewRepresentable {
 
 class IDETextView: NSTextView {
     var customKeyBinds: [String: String] = [:]
-
+    private var trackingArea: NSTrackingArea?
+    
     override var intrinsicContentSize: NSSize {
         return NSSize(width: CGFloat.greatestFiniteMagnitude, height: super.intrinsicContentSize.height)
     }
-
+    
     override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
@@ -994,7 +1000,7 @@ class IDETextView: NSTextView {
             super.keyDown(with: event)
         }
     }
-
+    
     override func deleteBackward(_ sender: Any?) {
         let sel = self.selectedRange()
         if sel.length != 0 {
@@ -1035,7 +1041,7 @@ class IDETextView: NSTextView {
         }
         super.deleteBackward(sender)
     }
-
+    
     override func insertBacktab(_ sender: Any?) {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1058,7 +1064,7 @@ class IDETextView: NSTextView {
             }
         }
     }
-
+    
     override func insertNewline(_ sender: Any?) {
         let nsString = self.string as NSString
         let selRange = self.selectedRange()
@@ -1070,7 +1076,7 @@ class IDETextView: NSTextView {
             self.insertText(String(indentation), replacementRange: self.selectedRange())
         }
     }
-
+    
     private func indentSelectedLines() {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1097,7 +1103,7 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-
+    
     private func indentSingleLine(selectionRange: NSRange) {
         let selectedText = (self.string as NSString).substring(with: selectionRange)
         let replaced = "\t" + selectedText
@@ -1110,7 +1116,7 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
-
+    
     private func unindentSingleLine(selectionRange: NSRange) {
         let nsString = self.string as NSString
         let fullLineRange = nsString.lineRange(for: selectionRange)
@@ -1128,7 +1134,7 @@ class IDETextView: NSTextView {
             }
         }
     }
-
+    
     override func menu(for event: NSEvent) -> NSMenu? {
         let customMenu = NSMenu(title: "Context Menu")
         customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
@@ -1142,29 +1148,86 @@ class IDETextView: NSTextView {
         customMenu.addItem(redoItem)
         return customMenu
     }
-
+    
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.title == "Services" || menuItem.title == "Services…" {
             return false
         }
         return super.validateMenuItem(menuItem)
     }
-
+    
     @objc func customUndo(_ sender: Any?) {
         self.undoManager?.undo()
     }
-
+    
     @objc func customRedo(_ sender: Any?) {
         self.undoManager?.redo()
     }
-
+    
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        self.window?.invalidateCursorRects(for: self)
+        self.resetCursorRects()
+    }
+    
     override func resetCursorRects() {
-        self.discardCursorRects()
-        self.addCursorRect(self.bounds, cursor: NSCursor.pointingHand)
+        super.resetCursorRects()
+        let rect = self.visibleRect
+        if !self.isEditable {
+            self.addCursorRect(rect, cursor: NSCursor.pointingHand)
+        } else {
+            self.addCursorRect(rect, cursor: NSCursor.iBeam)
+        }
+    }
+
+    override var isEditable: Bool {
+        didSet {
+            self.window?.invalidateCursorRects(for: self)
+            self.resetCursorRects()
+        }
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea = self.trackingArea {
+            self.removeTrackingArea(trackingArea)
+        }
+        let options: NSTrackingArea.Options = [
+            .activeAlways,
+            .mouseEnteredAndExited,
+            .mouseMoved,
+            .cursorUpdate,
+            .inVisibleRect
+        ]
+        self.trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+        self.addTrackingArea(self.trackingArea!)
+        self.window?.invalidateCursorRects(for: self)
     }
 }
-
-
 
 class IDEScrollView: NSScrollView {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
