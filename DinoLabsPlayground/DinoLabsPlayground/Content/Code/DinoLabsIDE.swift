@@ -11,6 +11,7 @@ struct IDEView: View {
     let geometry: GeometryProxy
     let fileURL: URL
     let programmingLanguage: String
+    let programmingLanguageImage: String
     var username: String
     var rootDirectory: String
     @Binding var leftPanelWidthRatio: CGFloat
@@ -229,6 +230,18 @@ struct IDEView: View {
                                     .padding(.leading, 10)
                                 }
                             }
+                        } else {
+                            Image("\(programmingLanguageImage)")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 11, height: 11)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.trailing, 2)
+                            Text("\(programmingLanguage)")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 11, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
                         }
                         Spacer()
                         HStack(spacing: 8) {

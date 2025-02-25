@@ -293,7 +293,7 @@ public struct SwiftParser {
                 #"(#[^\n]*)"#,
                 #"\b(FROM|RUN|CMD|LABEL|EXPOSE|ENV|ADD|COPY|ENTRYPOINT|VOLUME|USER|WORKDIR|ARG|ONBUILD|STOPSIGNAL|HEALTHCHECK|SHELL)\b"#,
                 #"(\"[^\"]*\"|'[^']*')"#,
-                #"([^\\s]+)"#
+                #"([^\\]+)"#
             ]
         case "makefile":
             return [
@@ -301,7 +301,7 @@ public struct SwiftParser {
                 #"^([A-Za-z0-9_./-]+:)"#,
                 #"(\\$\([A-Za-z0-9_]+\))"#,
                 #"(\"(?:(?:[^\"\\]|\\.)*)\"|'(?:(?:[^'\\]|\\.)*)')"#,
-                #"([^\\s]+)"#
+                #"([^\\]+)"#
             ]
         default:
             return nil
@@ -412,7 +412,7 @@ public struct SwiftParser {
             "string", "entity", "text", "operator"
         ],
         "dockerfile": [
-            "comment", "instruction", "string", "variable"
+            "variable", "variable", "variable", "variable"
         ],
         "makefile": [
             "comment", "target", "variable", "string", "text"

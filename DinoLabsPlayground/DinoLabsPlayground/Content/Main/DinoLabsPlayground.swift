@@ -35,6 +35,32 @@ struct FileItem: Identifiable, Equatable, Codable {
     let isDirectory: Bool
     var children: [FileItem]?
     var hasUnsavedChanges: Bool = false
+    var permissions: FilePermissions?
+}
+
+extension FileItem {
+    static func == (lhs: FileItem, rhs: FileItem) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.url == rhs.url &&
+               lhs.isDirectory == rhs.isDirectory &&
+               lhs.hasUnsavedChanges == rhs.hasUnsavedChanges &&
+               lhs.children == rhs.children &&
+               lhs.permissions == rhs.permissions
+    }
+}
+
+struct FilePermissions: Codable {
+    var canRead: Bool
+    var canWrite: Bool
+    var canExecute: Bool
+}
+
+extension FilePermissions: Equatable {
+    static func == (lhs: FilePermissions, rhs: FilePermissions) -> Bool {
+        return lhs.canRead == rhs.canRead &&
+               lhs.canWrite == rhs.canWrite &&
+               lhs.canExecute == rhs.canExecute
+    }
 }
 
 struct FileTab: Identifiable, Hashable, Codable {
@@ -57,49 +83,62 @@ struct FileTab: Identifiable, Hashable, Codable {
 
 func editorPlaceholderText(for fileURL: URL) -> String {
     let ext = fileURL.pathExtension.lowercased()
+    let name = fileURL.lastPathComponent.lowercased()
+    
     if ["csv"].contains(ext) {
-         return "Currently editing tabular file"
+        return "Currently editing tabular file"
     }
     if ["txt", "md"].contains(ext) {
-         return "Currently editing text file"
+        return "Currently editing text file"
     }
     if ["png", "jpg", "jpeg", "gif", "svg", "bmp"].contains(ext) {
-         return "Currently editing image file"
+        return "Currently editing image file"
     }
     if ["mp4", "mkv", "avi", "mov", "webm"].contains(ext) {
-         return "Currently editing video file"
+        return "Currently editing video file"
     }
     if ["mp3", "wav", "flac"].contains(ext) {
-         return "Currently editing audio file"
+        return "Currently editing audio file"
     }
+    
     let languageMapping: [String: String] = [
-         "js": "Javascript",
-         "jsx": "Javascript",
-         "ts": "Typescript",
-         "tsx": "Typescript",
-         "html": "HTML",
-         "css": "CSS",
-         "json": "JSON",
-         "xml": "XML",
-         "py": "Python",
-         "php": "PHP",
-         "swift": "Swift",
-         "c": "C",
-         "cpp": "C++",
-         "h": "C++",
-         "cs": "C#",
-         "rs": "Rust",
-         "bash": "Bash",
-         "sh": "Shell",
-         "zsh": "Shell",
-         "mc": "Monkey C",
-         "mcgen": "Monkey C",
-         "sql": "SQL",
-         "asm": "Assembly"
+        "js": "Javascript",
+        "jsx": "Javascript",
+        "ts": "Typescript",
+        "tsx": "Typescript",
+        "html": "HTML",
+        "css": "CSS",
+        "json": "JSON",
+        "xml": "XML",
+        "py": "Python",
+        "php": "PHP",
+        "swift": "Swift",
+        "c": "C",
+        "cpp": "C++",
+        "h": "C++",
+        "cs": "C#",
+        "rs": "Rust",
+        "bash": "Bash",
+        "sh": "Shell",
+        "zsh": "Shell",
+        "mc": "Monkey C",
+        "mcgen": "Monkey C",
+        "sql": "SQL",
+        "asm": "Assembly"
     ]
-    if let language = languageMapping[ext] {
-         return "Currently editing \(language) file"
+    
+    if name == "dockerfile" {
+        return "Currently editing Dockerfile"
+    } else if name == "makefile" {
+        return "Currently editing Makefile"
+    } else if name.hasPrefix(".git") {
+        return "Currently editing Git file"
     }
+    
+    if let language = languageMapping[ext] {
+        return "Currently editing \(language) file"
+    }
+    
     return "Currently editing file"
 }
 
@@ -415,7 +454,6 @@ struct DinoLabsPlayground: View {
         "git": "githubExtension"
     ]
     
-    
     private func updateUnsavedChangesInFileItems(for fileURL: URL, unsaved: Bool) {
         func update(item: inout FileItem) {
             if item.url == fileURL {
@@ -598,22 +636,23 @@ struct DinoLabsPlayground: View {
     }
     
     private func reloadDirectory() {
-        guard let dir = directoryURL else { return }
-        isNavigatorLoading = true
-        DispatchQueue.global(qos: .userInitiated).async {
-            let root = FileItem(
-                id: dir,
-                url: dir,
-                isDirectory: true,
-                children: self.loadFileItems(from: dir)
-            )
-            DispatchQueue.main.async {
-                fileItems = [root]
-                rootIsExpanded = true
-                isNavigatorLoading = false
-            }
-        }
-    }
+           guard let dir = directoryURL else { return }
+           isNavigatorLoading = true
+           DispatchQueue.global(qos: .userInitiated).async {
+               let root = FileItem(
+                   id: dir,
+                   url: dir,
+                   isDirectory: true,
+                   children: self.loadFileItems(from: dir),
+                   permissions: FilePermissions(canRead: true, canWrite: true, canExecute: true)
+               )
+               DispatchQueue.main.async {
+                   fileItems = [root]
+                   rootIsExpanded = true
+                   isNavigatorLoading = false
+               }
+           }
+       }
     
     private func handleDropItem(source: URL, destinationItem: FileItem) -> Bool {
         let fm = FileManager.default
@@ -661,16 +700,34 @@ struct DinoLabsPlayground: View {
     private func loadFileItems(from url: URL) -> [FileItem] {
         var items = [FileItem]()
         let fm = FileManager.default
-        if let contents = try? fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) {
+        
+        if let contents = try? fm.contentsOfDirectory(
+            at: url,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) {
             for contentURL in contents {
-                let isDir = (try? contentURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                let resourceValues = try? contentURL.resourceValues(forKeys: [.isDirectoryKey])
+                let isDir = resourceValues?.isDirectory ?? false
+                
                 var children: [FileItem]? = nil
                 if isDir {
                     children = loadFileItems(from: contentURL)
                 }
-                items.append(FileItem(id: contentURL, url: contentURL, isDirectory: isDir, children: children))
+                
+                let permissions = FilePermissions(canRead: true, canWrite: true, canExecute: true)
+                let fileItem = FileItem(
+                    id: contentURL,
+                    url: contentURL,
+                    isDirectory: isDir,
+                    children: children,
+                    permissions: permissions
+                )
+                
+                items.append(fileItem)
             }
         }
+        
         return items
     }
     
@@ -1725,13 +1782,14 @@ struct DinoLabsPlayground: View {
                                 } else {
                                     if let activeTab = openTabs.first(where: { $0.id == activeTabId }),
                                        let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
-                                        let language = codeLanguage(for: activeTab.fileURL.pathExtension.lowercased())
+                                        let language = codeLanguage(for: activeTab.fileURL)
                                         let username = UserDefaults.standard.string(forKey: "userID") ?? "Unknown User"
                                         let rootDirectory = directoryURL?.path ?? ""
                                         IDEView(
                                             geometry: geometry,
                                             fileURL: activeTab.fileURL,
                                             programmingLanguage: language,
+                                            programmingLanguageImage: getIcon(forFileURL: activeTab.fileURL),
                                             username: username,
                                             rootDirectory: rootDirectory,
                                             leftPanelWidthRatio: $leftPanelWidthRatio,
@@ -2136,7 +2194,6 @@ struct DinoLabsPlayground: View {
         }
         .onAppear {
             fetchUsageData()
-            
             if directoryURL != nil {
                 reloadDirectory()
             }
@@ -2253,7 +2310,16 @@ struct DinoLabsPlayground: View {
         }
     }
     
-    private func codeLanguage(for fileExtension: String) -> String {
+    private func codeLanguage(for fileURL: URL) -> String {
+        let name = fileURL.lastPathComponent.lowercased()
+        if name == "dockerfile" {
+            return "Dockerfile"
+        } else if name == "makefile" {
+            return "Makefile"
+        } else if name.hasPrefix(".git") {
+            return "Git"
+        }
+        let ext = fileURL.pathExtension.lowercased()
         let languageMapping: [String: String] = [
             "js": "Javascript",
             "jsx": "Javascript",
@@ -2279,7 +2345,6 @@ struct DinoLabsPlayground: View {
             "sql": "SQL",
             "asm": "Assembly"
         ]
-        return languageMapping[fileExtension] ?? "plaintext"
+        return languageMapping[ext] ?? "plaintext"
     }
-
 }
