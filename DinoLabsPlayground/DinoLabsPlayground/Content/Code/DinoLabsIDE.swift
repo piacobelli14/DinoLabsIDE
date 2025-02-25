@@ -11,6 +11,8 @@ struct IDEView: View {
     let geometry: GeometryProxy
     let fileURL: URL
     let programmingLanguage: String
+    var username: String
+    var rootDirectory: String
     @Binding var leftPanelWidthRatio: CGFloat
     @Binding var keyBinds: [String: String]
     @Binding var zoomLevel: Double
@@ -29,6 +31,7 @@ struct IDEView: View {
     @State private var currentSearchMatch: Int = 0
     @State private var totalSearchMatches: Int = 0
     @State private var consoleState: String = "terminal"
+    @State private var showFullRoot: Bool = true
 
     var body: some View {
         Group {
@@ -397,41 +400,79 @@ struct IDEView: View {
                     )
                     
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 4) {
-                            CodeButtonMain {
-                                consoleState = "terminal"
-                            }
-                            .overlay(
-                                Text("Terminal")
-                                    .font(.system(size: 11, weight: consoleState == "terminal" ? .bold : .semibold, design: .default).italic())
-                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "terminal" ? 1.0 : 0.8))
-                                    .underline(consoleState == "terminal" ? true : false)
-                                    .allowsHitTesting(false)
-                            )
-                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                        HStack(spacing: 20) {
+                            Text("Terminal")
+                                .font(
+                                    consoleState == "terminal" ?
+                                        .system(size: 10, weight: .bold, design: .default).italic() :
+                                        .system(size: 10, weight: .semibold, design: .default)
+                                )
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "terminal" ? 1.0 : 0.8))
+                                .underline(consoleState == "terminal" ? true : false)
+                                .allowsHitTesting(false)
+                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                .onTapGesture {
+                                    consoleState = "terminal"
+                                }
                             
-                            CodeButtonMain {
-                                consoleState = "problems"
-                            }
-                            .overlay(
-                                Text("Problems")
-                                    .font(.system(size: 11, weight: consoleState == "problems" ? .bold : .semibold, design: .default).italic())
-                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "problems" ? 1.0 : 0.8))
-                                    .underline(consoleState == "problems" ? true : false)
-                                    .allowsHitTesting(false)
-                            )
-                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                            Text("Problems")
+                                .font(
+                                    consoleState == "problems" ?
+                                        .system(size: 10, weight: .bold, design: .default).italic() :
+                                        .system(size: 10, weight: .semibold, design: .default)
+                                )
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "problems" ? 1.0 : 0.8))
+                                .underline(consoleState == "problems" ? true : false)
+                                .allowsHitTesting(false)
+                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                .onTapGesture {
+                                    consoleState = "problems"
+                                }
                             
                             Spacer()
+                            
+                            HStack {
+                                Text("Show Full Root")
+                                    .font(.system(size: 9, weight: .regular))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .padding(.trailing, 6)
+                                
+                                Toggle("", isOn: $showFullRoot)
+                                    .toggleStyle(ToggleSwitch(
+                                        toggleWidth: 25,
+                                        toggleHeight: 14,
+                                        circleSize: 12,
+                                        activeColor: .purple,
+                                        inactiveColor: Color(hex: 0x333333),
+                                        thumbColor: .white,
+                                        textColor: .white,
+                                        fontSize: 9,
+                                        fontWeight: .bold,
+                                        activeText: "Yes",
+                                        inactiveText: "No",
+                                        showText: true,
+                                        animationDuration: 0.2,
+                                        animationDamping: 0.8
+                                    ))
+                            }
+                            .padding(.horizontal, 10)
                         }
+                        .padding(.horizontal, 10)
                         .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 40, alignment: .leading)
+                    
                         
                         Spacer()
                         
                         VStack(spacing: 0) {
+                            if consoleState == "terminal" {
+                                TerminalView(username: username, rootDirectory: rootDirectory, showFullRoot: showFullRoot)
+                                    .background(Color.clear)
+                                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
+                            }
                             
                         }
-                        .frame(height: 85)
+                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), alignment: .leading)
+                    
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 150)
                     .containerHelper(backgroundColor: Color(hex: 0x171717),
@@ -1364,3 +1405,4 @@ extension NSRange {
         return location >= self.location && location < self.location + self.length
     }
 }
+

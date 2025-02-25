@@ -15,37 +15,40 @@ struct ContentView: View {
     @StateObject private var auth = AuthViewModel()
 
     var body: some View {
-        Group {
-            switch currentView {
-            case .Loading:
-                ProgressView("Loading...")
-            case .LoginAuth:
-                LoginAuth(currentView: $currentView,
-                          authenticatedUsername: $authenticatedUsername,
-                          authenticatedOrgID: $authenticatedOrgID)
-            case .ResetAuth:
-                ResetAuth(currentView: $currentView,
-                          authenticatedUsername: $authenticatedUsername,
-                          authenticatedOrgID: $authenticatedOrgID)
-            case .RegisterAuth:
-                RegisterAuth(currentView: $currentView,
-                             authenticatedUsername: $authenticatedUsername,
-                             authenticatedOrgID: $authenticatedOrgID)
-            case .DinoLabsPlayground:
-                DinoLabsPlayground(currentView: $currentView,
-                                   authenticatedUsername: $authenticatedUsername,
-                                   authenticatedOrgID: $authenticatedOrgID,
-                                   openTabs: $sessionManager.openTabs,
-                                   activeTabId: $sessionManager.activeTabId,
-                                   directoryURL: $sessionManager.directoryURL,
-                                   displayedChildren: $sessionManager.displayedChildren)
+        GeometryReader { geometry in
+            Group {
+                switch currentView {
+                case .Loading:
+                    VStack {}
+                case .LoginAuth:
+                    LoginAuth(currentView: $currentView,
+                              authenticatedUsername: $authenticatedUsername,
+                              authenticatedOrgID: $authenticatedOrgID)
+                case .ResetAuth:
+                    ResetAuth(currentView: $currentView,
+                              authenticatedUsername: $authenticatedUsername,
+                              authenticatedOrgID: $authenticatedOrgID)
+                case .RegisterAuth:
+                    RegisterAuth(currentView: $currentView,
+                                 authenticatedUsername: $authenticatedUsername,
+                                 authenticatedOrgID: $authenticatedOrgID)
+                case .DinoLabsPlayground:
+                    DinoLabsPlayground(currentView: $currentView,
+                                       authenticatedUsername: $authenticatedUsername,
+                                       authenticatedOrgID: $authenticatedOrgID,
+                                       openTabs: $sessionManager.openTabs,
+                                       activeTabId: $sessionManager.activeTabId,
+                                       directoryURL: $sessionManager.directoryURL,
+                                       displayedChildren: $sessionManager.displayedChildren)
                     .onAppear {
                         checkToken()
                     }
+                }
             }
-        }
-        .onAppear {
-            initializeView()
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .onAppear {
+                initializeView()
+            }
         }
     }
 

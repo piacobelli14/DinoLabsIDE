@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		CB18D2D42D6D48E700CCFA36 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB18D2D32D6D48E600CCFA36 /* SessionManager.swift */; };
+		CB18D2D62D6E447000CCFA36 /* DinoLabsTerminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB18D2D52D6E447000CCFA36 /* DinoLabsTerminal.swift */; };
 		CB5B4AD32D5FC0B100492970 /* AlertCheckField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */; };
 		CB5B4AD52D5FC0C700492970 /* AlertMenuField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */; };
 		CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */; };
@@ -60,6 +61,7 @@
 
 /* Begin PBXFileReference section */
 		CB18D2D32D6D48E600CCFA36 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		CB18D2D52D6E447000CCFA36 /* DinoLabsTerminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsTerminal.swift; sourceTree = "<group>"; };
 		CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCheckField.swift; sourceTree = "<group>"; };
 		CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertMenuField.swift; sourceTree = "<group>"; };
 		CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertButtonMain.swift; sourceTree = "<group>"; };
@@ -289,6 +291,7 @@
 			children = (
 				CBDF235F2D6AA0950049F865 /* CodeHelpers */,
 				CBDF23592D6916930049F865 /* DinoLabsIDE.swift */,
+				CB18D2D52D6E447000CCFA36 /* DinoLabsTerminal.swift */,
 				CBDF235B2D694C240049F865 /* DinoLabsParser.swift */,
 				CBDF235D2D6A46D60049F865 /* DinoLabsThemes.swift */,
 			);
@@ -464,6 +467,7 @@
 				CBDF235E2D6A46D60049F865 /* DinoLabsThemes.swift in Sources */,
 				CB5B4ADE2D5FF8CE00492970 /* MainTextField.swift in Sources */,
 				CBDF23582D687EA10049F865 /* SliderHelper.swift in Sources */,
+				CB18D2D62D6E447000CCFA36 /* DinoLabsTerminal.swift in Sources */,
 				CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */,
 				CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */,
 				CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */,

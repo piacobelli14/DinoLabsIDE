@@ -1726,10 +1726,14 @@ struct DinoLabsPlayground: View {
                                     if let activeTab = openTabs.first(where: { $0.id == activeTabId }),
                                        let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
                                         let language = codeLanguage(for: activeTab.fileURL.pathExtension.lowercased())
+                                        let username = UserDefaults.standard.string(forKey: "userID") ?? "Unknown User"
+                                        let rootDirectory = directoryURL?.path ?? ""
                                         IDEView(
                                             geometry: geometry,
                                             fileURL: activeTab.fileURL,
                                             programmingLanguage: language,
+                                            username: username,
+                                            rootDirectory: rootDirectory,
                                             leftPanelWidthRatio: $leftPanelWidthRatio,
                                             keyBinds: $userKeyBinds,
                                             zoomLevel: $userZoomLevel,
@@ -2131,9 +2135,7 @@ struct DinoLabsPlayground: View {
             }
         }
         .onAppear {
-            if noFileSelected && activeTabId == nil {
-                fetchUsageData()
-            }
+            fetchUsageData()
             
             if directoryURL != nil {
                 reloadDirectory()
@@ -2216,25 +2218,26 @@ struct DinoLabsPlayground: View {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK {
-            if let url = panel.urls.first {
-                directoryURL = url
-                isNavigatorLoading = true
-                DispatchQueue.global(qos: .userInitiated).async {
-                    let root = FileItem(
-                        id: url,
-                        url: url,
-                        isDirectory: true,
-                        children: self.loadFileItems(from: url)
-                    )
-                    DispatchQueue.main.async {
-                        fileItems = [root]
-                        rootIsExpanded = true
-                        isNavigatorLoading = false
-                        displayedChildren = root.children ?? []
-                    }
+        let previousDirectoryURL = directoryURL
+        if panel.runModal() == .OK, let url = panel.urls.first {
+            directoryURL = url
+            isNavigatorLoading = true
+            DispatchQueue.global(qos: .userInitiated).async {
+                let root = FileItem(
+                    id: url,
+                    url: url,
+                    isDirectory: true,
+                    children: self.loadFileItems(from: url)
+                )
+                DispatchQueue.main.async {
+                    fileItems = [root]
+                    rootIsExpanded = true
+                    isNavigatorLoading = false
+                    displayedChildren = root.children ?? []
                 }
             }
+        } else {
+            directoryURL = previousDirectoryURL
         }
     }
     
