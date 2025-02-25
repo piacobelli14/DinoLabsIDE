@@ -29,7 +29,7 @@ struct LanguageUsage: Identifiable {
     var percentage: Double = 0.0
 }
 
-struct FileItem: Identifiable, Equatable {
+struct FileItem: Identifiable, Equatable, Codable {
     let id: URL
     let url: URL
     let isDirectory: Bool
@@ -37,7 +37,7 @@ struct FileItem: Identifiable, Equatable {
     var hasUnsavedChanges: Bool = false
 }
 
-struct FileTab: Identifiable, Hashable {
+struct FileTab: Identifiable, Hashable, Codable {
     let id = UUID()
     let fileName: String
     let fileURL: URL
@@ -290,16 +290,20 @@ struct DinoLabsPlayground: View {
     @Binding var currentView: AppView
     @Binding var authenticatedUsername: String
     @Binding var authenticatedOrgID: String
+    @Binding var openTabs: [FileTab]
+    @Binding var activeTabId: UUID?
+    @Binding var directoryURL: URL? {
+        didSet {
+            DinoLabsPlayground.loadedRootURL = directoryURL
+        }
+    }
+    @Binding var displayedChildren: [FileItem]
+
     @State private var hasUnsavedChanges: Bool = false
     @State private var leftPanelWidthRatio: CGFloat = 0.25
     @State private var isNavigatorLoading: Bool = false
     @State private var hasUndavedChanges: Bool = false
     static var loadedRootURL: URL? = nil
-    @State private var directoryURL: URL? = nil {
-        didSet {
-            DinoLabsPlayground.loadedRootURL = directoryURL
-        }
-    }
     @State private var userKeyBinds: [String: String] = [:]
     @State private var userZoomLevel: Double = 1.0
     @State private var userColorTheme: String = "default"
@@ -334,8 +338,6 @@ struct DinoLabsPlayground: View {
     @State private var showCancelButton: Bool = false
     @State private var onConfirmAction: (([String: Any]?) -> Void)? = nil
     @State private var draggingTab: FileTab? = nil
-    @State private var openTabs: [FileTab] = []
-    @State private var activeTabId: UUID? = nil
     @State private var personalUsageData: [LineChartDataPoint] = []
     @State private var personalUsageByDay: [LineChartDataPoint] = []
     @State private var usageLanguagesData: [LanguageUsage] = []
@@ -404,6 +406,7 @@ struct DinoLabsPlayground: View {
         "git": "githubExtension"
     ]
     
+    
     private func updateUnsavedChangesInFileItems(for fileURL: URL, unsaved: Bool) {
         func update(item: inout FileItem) {
             if item.url == fileURL {
@@ -421,8 +424,6 @@ struct DinoLabsPlayground: View {
         }
     }
 
-    
-    
     private func addFile(to item: FileItem) {
         alertTitle = "Create New File"
         alertMessage = "Enter the name of your new file:"
@@ -684,15 +685,6 @@ struct DinoLabsPlayground: View {
             }
         }
         return nil
-    }
-    
-    private var displayedChildren: [FileItem] {
-        guard let root = fileItems.first else { return [] }
-        if filteredSearch.isEmpty {
-            return root.children ?? []
-        } else {
-            return (root.children ?? []).compactMap { filteredFileItem($0, query: filteredSearch) }
-        }
     }
     
     private func searchInFile(_ file: FileItem, query: String) -> [SearchResult] {
@@ -1598,7 +1590,7 @@ struct DinoLabsPlayground: View {
                                             alignment: .trailing
                                         )
                                     } else {
-                                        if noFileSelected {
+                                        if noFileSelected && activeTabId == nil {
                                             HStack(spacing: 4) {
                                                 Image(systemName: "wand.and.stars")
                                                     .resizable()
@@ -1733,7 +1725,7 @@ struct DinoLabsPlayground: View {
                                         }
                                         .id(activeTab.id)
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    } else if noFileSelected {
+                                    } else if noFileSelected && activeTabId == nil  {
                                         Spacer()
                                         HStack {
                                             Spacer()
@@ -2121,8 +2113,12 @@ struct DinoLabsPlayground: View {
             }
         }
         .onAppear {
-            if noFileSelected {
+            if noFileSelected && activeTabId == nil {
                 fetchUsageData()
+            }
+            
+            if directoryURL != nil {
+                reloadDirectory()
             }
         }
     }
@@ -2208,6 +2204,7 @@ struct DinoLabsPlayground: View {
                         fileItems = [root]
                         rootIsExpanded = true
                         isNavigatorLoading = false
+                        displayedChildren = root.children ?? []
                     }
                 }
             }

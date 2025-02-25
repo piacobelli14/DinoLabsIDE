@@ -7,6 +7,10 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Binding var openTabs: [FileTab]
+    @Binding var activeTabId: UUID?
+    @Binding var directoryURL: URL?
+    @Binding var displayedChildren: [FileItem] 
     @State private var currentView: AppView = .Loading
     @State private var authenticatedUsername: String = ""
     @State private var authenticatedOrgID: String = ""
@@ -19,14 +23,25 @@ struct ContentView: View {
             case .Loading:
                 ProgressView("Loading...")
             case .LoginAuth:
-                LoginAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
+                LoginAuth(currentView: $currentView,
+                          authenticatedUsername: $authenticatedUsername,
+                          authenticatedOrgID: $authenticatedOrgID)
             case .ResetAuth:
-                ResetAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
+                ResetAuth(currentView: $currentView,
+                          authenticatedUsername: $authenticatedUsername,
+                          authenticatedOrgID: $authenticatedOrgID)
             case .RegisterAuth:
-                RegisterAuth(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
-
+                RegisterAuth(currentView: $currentView,
+                             authenticatedUsername: $authenticatedUsername,
+                             authenticatedOrgID: $authenticatedOrgID)
             case .DinoLabsPlayground:
-                DinoLabsPlayground(currentView: $currentView, authenticatedUsername: $authenticatedUsername, authenticatedOrgID: $authenticatedOrgID)
+                DinoLabsPlayground(currentView: $currentView,
+                                   authenticatedUsername: $authenticatedUsername,
+                                   authenticatedOrgID: $authenticatedOrgID,
+                                   openTabs: $openTabs,
+                                   activeTabId: $activeTabId,
+                                   directoryURL: $directoryURL,
+                                   displayedChildren: $displayedChildren)
                     .onAppear {
                         checkToken()
                     }

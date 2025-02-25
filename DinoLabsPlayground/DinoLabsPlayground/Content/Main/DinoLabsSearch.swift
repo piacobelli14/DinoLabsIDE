@@ -166,7 +166,7 @@ class HoverEffectView: NSView {
     override func mouseEntered(with event: NSEvent) {
         layer?.removeAllAnimations()
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.1)
+        CATransaction.setAnimationDuration(0.4)
         layer?.setAffineTransform(CGAffineTransform(scaleX: hoverScale, y: hoverScale))
         CATransaction.commit()
     }
@@ -174,7 +174,7 @@ class HoverEffectView: NSView {
     override func mouseExited(with event: NSEvent) {
         layer?.removeAllAnimations()
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.1)
+        CATransaction.setAnimationDuration(0.4)
         layer?.setAffineTransform(.identity)
         CATransaction.commit()
     }

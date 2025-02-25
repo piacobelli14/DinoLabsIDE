@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB18D2D42D6D48E700CCFA36 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB18D2D32D6D48E600CCFA36 /* SessionManager.swift */; };
 		CB5B4AD32D5FC0B100492970 /* AlertCheckField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */; };
 		CB5B4AD52D5FC0C700492970 /* AlertMenuField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */; };
 		CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */; };
@@ -47,7 +48,6 @@
 		CBEC15DC2D5E806E009A0FAF /* ClickHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */; };
 		CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */; };
 		CBEC15E02D5EA98A009A0FAF /* RegisterAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */; };
-		CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */; };
 		CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */; };
 		CBFD7B6F2D624F6200418304 /* DoughnutHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */; };
 		CBFD7B712D62909900418304 /* LineHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFD7B702D62909900418304 /* LineHelper.swift */; };
@@ -59,6 +59,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CB18D2D32D6D48E600CCFA36 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		CB5B4AD22D5FC0B100492970 /* AlertCheckField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCheckField.swift; sourceTree = "<group>"; };
 		CB5B4AD42D5FC0C700492970 /* AlertMenuField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertMenuField.swift; sourceTree = "<group>"; };
 		CB5B4AD62D5FC56D00492970 /* AlertButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertButtonMain.swift; sourceTree = "<group>"; };
@@ -101,7 +102,6 @@
 		CBEC15DB2D5E806E009A0FAF /* ClickHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickHelper.swift; sourceTree = "<group>"; };
 		CBEC15DD2D5E937C009A0FAF /* ResetAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetAuth.swift; sourceTree = "<group>"; };
 		CBEC15DF2D5EA98A009A0FAF /* RegisterAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterAuth.swift; sourceTree = "<group>"; };
-		CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPortManager.swift; sourceTree = "<group>"; };
 		CBF91B9D2D5EE71F00B0616D /* AlertTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTextField.swift; sourceTree = "<group>"; };
 		CBFD7B6E2D624F6200418304 /* DoughnutHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughnutHelper.swift; sourceTree = "<group>"; };
 		CBFD7B702D62909900418304 /* LineHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineHelper.swift; sourceTree = "<group>"; wrapsLines = 0; };
@@ -214,11 +214,11 @@
 				CBEC15C82D5D9159009A0FAF /* SecurityManager.swift */,
 				CBEC15CA2D5D9176009A0FAF /* NetworkManager.swift */,
 				CBEC15CC2D5D91A8009A0FAF /* StructManager.swift */,
-				CBEC15E12D5EC474009A0FAF /* ViewPortManager.swift */,
 				CB5B4AD82D5FC68C00492970 /* InputFieldManager.swift */,
 				CB5B4ADA2D5FC6BE00492970 /* InputButtonManager.swift */,
 				CBEC15C62D5D90F3009A0FAF /* DateManager.swift */,
 				CBFD7B722D62A42C00418304 /* ColorManager.swift */,
+				CB18D2D32D6D48E600CCFA36 /* SessionManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -467,12 +467,12 @@
 				CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */,
 				CBF91B9E2D5EE71F00B0616D /* AlertTextField.swift in Sources */,
 				CBEC15C32D5D9015009A0FAF /* DinoLabsAlert.swift in Sources */,
+				CB18D2D42D6D48E700CCFA36 /* SessionManager.swift in Sources */,
 				CBFD7B712D62909900418304 /* LineHelper.swift in Sources */,
 				CBDF235C2D694C240049F865 /* DinoLabsParser.swift in Sources */,
 				CBFD7B732D62A42C00418304 /* ColorManager.swift in Sources */,
 				CBDF23542D6807C30049F865 /* AccountButtonMain.swift in Sources */,
 				CBDF23562D681AAF0049F865 /* ToggleHelper.swift in Sources */,
-				CBEC15E22D5EC474009A0FAF /* ViewPortManager.swift in Sources */,
 				CBEC15A82D5D8A19009A0FAF /* ContentView.swift in Sources */,
 				CBEC15A62D5D8A19009A0FAF /* DinoLabsPlaygroundApp.swift in Sources */,
 				CB5B4AE32D600C2900492970 /* NavigationBar.swift in Sources */,
