@@ -38,12 +38,21 @@ struct FileItem: Identifiable, Equatable, Codable {
 }
 
 struct FileTab: Identifiable, Hashable, Codable {
-    let id = UUID()
+    let id: UUID
     let fileName: String
     let fileURL: URL
     var lineNumber: Int? = nil
     var fileContent: String = ""
     var hasUnsavedChanges: Bool = false
+
+    init(id: UUID = UUID(), fileName: String, fileURL: URL, lineNumber: Int? = nil, fileContent: String = "", hasUnsavedChanges: Bool = false) {
+        self.id = id
+        self.fileName = fileName
+        self.fileURL = fileURL
+        self.lineNumber = lineNumber
+        self.fileContent = fileContent
+        self.hasUnsavedChanges = hasUnsavedChanges
+    }
 }
 
 func editorPlaceholderText(for fileURL: URL) -> String {
@@ -899,6 +908,7 @@ struct DinoLabsPlayground: View {
     private func openFileTab(url: URL, lineNumber: Int?) {
         if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
             activeTabId = existingTab.id
+            SessionStateManager.shared.updateActiveTab(id: existingTab.id)
             noFileSelected = false
             if let lineNumber = lineNumber {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -913,6 +923,7 @@ struct DinoLabsPlayground: View {
             let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
             openTabs.append(newTab)
             activeTabId = newTab.id
+            SessionStateManager.shared.updateActiveTab(id: newTab.id)
             noFileSelected = false
             if let lineNumber = lineNumber {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -938,9 +949,11 @@ struct DinoLabsPlayground: View {
                 
                 if openTabs.isEmpty {
                     activeTabId = nil
+                    SessionStateManager.shared.updateActiveTab(id: nil)
                     noFileSelected = true
                 } else {
                     activeTabId = openTabs.last?.id
+                    SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
                     noFileSelected = false
                 }
             }
@@ -949,9 +962,11 @@ struct DinoLabsPlayground: View {
             openTabs.removeAll { $0.id == tab.id }
             if openTabs.isEmpty {
                 activeTabId = nil
+                SessionStateManager.shared.updateActiveTab(id: nil)
                 noFileSelected = true
             } else {
                 activeTabId = openTabs.last?.id
+                SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
                 noFileSelected = false
             }
         }
@@ -1653,6 +1668,7 @@ struct DinoLabsPlayground: View {
                                                 )
                                                 .onTapGesture {
                                                     activeTabId = tab.id
+                                                    SessionStateManager.shared.updateActiveTab(id: tab.id)
                                                     noFileSelected = false
                                                 }
                                                 .onDrag {
@@ -1711,8 +1727,10 @@ struct DinoLabsPlayground: View {
                                        let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
                                         let language = codeLanguage(for: activeTab.fileURL.pathExtension.lowercased())
                                         IDEView(
+                                            geometry: geometry,
                                             fileURL: activeTab.fileURL,
                                             programmingLanguage: language,
+                                            leftPanelWidthRatio: $leftPanelWidthRatio,
                                             keyBinds: $userKeyBinds,
                                             zoomLevel: $userZoomLevel,
                                             colorTheme: $userColorTheme,
@@ -2119,6 +2137,15 @@ struct DinoLabsPlayground: View {
             
             if directoryURL != nil {
                 reloadDirectory()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            let sessionData = SessionData(openTabs: openTabs,
+                                          activeTabId: activeTabId,
+                                          directoryURL: directoryURL,
+                                          displayedChildren: displayedChildren)
+            if let encodedData = try? JSONEncoder().encode(sessionData) {
+                UserDefaults.standard.set(encodedData, forKey: "sessionData")
             }
         }
     }

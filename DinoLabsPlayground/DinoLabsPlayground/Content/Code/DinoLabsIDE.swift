@@ -8,8 +8,10 @@ import SwiftUI
 import AppKit
 
 struct IDEView: View {
+    let geometry: GeometryProxy
     let fileURL: URL
     let programmingLanguage: String
+    @Binding var leftPanelWidthRatio: CGFloat
     @Binding var keyBinds: [String: String]
     @Binding var zoomLevel: Double
     @Binding var colorTheme: String
@@ -26,6 +28,7 @@ struct IDEView: View {
     @State private var isReplacing: Bool = false
     @State private var currentSearchMatch: Int = 0
     @State private var totalSearchMatches: Int = 0
+    @State private var consoleState: String = "terminal"
 
     var body: some View {
         Group {
@@ -366,6 +369,7 @@ struct IDEView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                         alignment: .bottom
                     )
+                    
                     IDEEditorView(
                         text: $fileContent,
                         programmingLanguage: programmingLanguage,
@@ -390,6 +394,59 @@ struct IDEView: View {
                         hasUnsavedChanges: $hasUnsavedChanges,
                         showAlert: $showAlert,
                         onSave: saveFile
+                    )
+                    
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 4) {
+                            CodeButtonMain {
+                                consoleState = "terminal"
+                            }
+                            .overlay(
+                                Text("Terminal")
+                                    .font(.system(size: 11, weight: consoleState == "terminal" ? .bold : .semibold, design: .default).italic())
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "terminal" ? 1.0 : 0.8))
+                                    .underline(consoleState == "terminal" ? true : false)
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                            
+                            CodeButtonMain {
+                                consoleState = "problems"
+                            }
+                            .overlay(
+                                Text("Problems")
+                                    .font(.system(size: 11, weight: consoleState == "problems" ? .bold : .semibold, design: .default).italic())
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "problems" ? 1.0 : 0.8))
+                                    .underline(consoleState == "problems" ? true : false)
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                            
+                            Spacer()
+                        }
+                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 40, alignment: .leading)
+                        
+                        Spacer()
+                        
+                        VStack(spacing: 0) {
+                            
+                        }
+                        .frame(height: 85)
+                    }
+                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 150)
+                    .containerHelper(backgroundColor: Color(hex: 0x171717),
+                                     borderColor: Color.clear,
+                                     borderWidth: 0,
+                                     topLeft: 0, topRight: 0,
+                                     bottomLeft: 0, bottomRight: 0,
+                                     shadowColor: Color.clear,
+                                     shadowRadius: 0,
+                                     shadowX: 0, shadowY: 0)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 2.0)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
+                        alignment: .top
                     )
                 }
             }
@@ -631,23 +688,6 @@ struct IDEEditorView: NSViewRepresentable {
             }
         }
         
-        private func navigateToLine(_ lineNumber: Int) {
-            guard let textView = textView else { return }
-            let lines = textView.string.components(separatedBy: "\n")
-            guard lineNumber > 0, lineNumber <= lines.count else { return }
-            
-            var location = 0
-            for i in 0..<lineNumber - 1 {
-                location += lines[i].count + 1
-            }
-            
-            let lineText = lines[lineNumber - 1]
-            let range = NSRange(location: location, length: lineText.count)
-            
-            textView.scrollRangeToVisible(range)
-            textView.setSelectedRange(range)
-        }
-        
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
@@ -862,6 +902,23 @@ struct IDEEditorView: NSViewRepresentable {
                 }
             }
             return expandedRange
+        }
+        
+        func navigateToLine(_ lineNumber: Int) {
+            guard let textView = textView else { return }
+            let lines = textView.string.components(separatedBy: "\n")
+            guard lineNumber > 0, lineNumber <= lines.count else { return }
+            
+            var location = 0
+            for i in 0..<lineNumber - 1 {
+                location += lines[i].count + 1
+            }
+            
+            let lineText = lines[lineNumber - 1]
+            let range = NSRange(location: location, length: lineText.count)
+            
+            textView.scrollRangeToVisible(range)
+            textView.setSelectedRange(range)
         }
         
         func jumpToNextSearchMatch() {

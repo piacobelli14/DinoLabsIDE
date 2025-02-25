@@ -7,10 +7,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Binding var openTabs: [FileTab]
-    @Binding var activeTabId: UUID?
-    @Binding var directoryURL: URL?
-    @Binding var displayedChildren: [FileItem] 
+    @ObservedObject private var sessionManager = SessionStateManager.shared
     @State private var currentView: AppView = .Loading
     @State private var authenticatedUsername: String = ""
     @State private var authenticatedOrgID: String = ""
@@ -38,10 +35,10 @@ struct ContentView: View {
                 DinoLabsPlayground(currentView: $currentView,
                                    authenticatedUsername: $authenticatedUsername,
                                    authenticatedOrgID: $authenticatedOrgID,
-                                   openTabs: $openTabs,
-                                   activeTabId: $activeTabId,
-                                   directoryURL: $directoryURL,
-                                   displayedChildren: $displayedChildren)
+                                   openTabs: $sessionManager.openTabs,
+                                   activeTabId: $sessionManager.activeTabId,
+                                   directoryURL: $sessionManager.directoryURL,
+                                   displayedChildren: $sessionManager.displayedChildren)
                     .onAppear {
                         checkToken()
                     }
@@ -141,5 +138,4 @@ struct ContentView: View {
         }
         auth.token = token
     }
-
 }

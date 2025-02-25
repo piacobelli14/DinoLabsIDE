@@ -6,6 +6,7 @@
 
 import SwiftUI
 import AppKit
+import Combine
 
 struct SessionData: Codable {
     var openTabs: [FileTab]
@@ -14,6 +15,85 @@ struct SessionData: Codable {
     var displayedChildren: [FileItem]
 }
 
+class SessionStateManager: ObservableObject {
+    static let shared = SessionStateManager()
+    
+    @Published var openTabs: [FileTab] = []
+    @Published var activeTabId: UUID?
+    @Published var directoryURL: URL?
+    @Published var displayedChildren: [FileItem] = []
+    
+    private var subscriptions = Set<AnyCancellable>()
+    
+    private init() {
+        loadSessionData()
+        setupAutoSave()
+    }
+    
+    private func setupAutoSave() {
+        $openTabs
+            .debounce(for: .seconds(0.5), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.saveSessionData()
+            }
+            .store(in: &subscriptions)
+        
+        $activeTabId
+            .sink { [weak self] _ in
+                self?.saveSessionData()
+            }
+            .store(in: &subscriptions)
+            
+        $directoryURL
+            .debounce(for: .seconds(0.5), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.saveSessionData()
+            }
+            .store(in: &subscriptions)
+            
+        $displayedChildren
+            .debounce(for: .seconds(0.5), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.saveSessionData()
+            }
+            .store(in: &subscriptions)
+    }
+    
+    func saveSessionData() {
+        let sessionData = SessionData(
+            openTabs: self.openTabs,
+            activeTabId: self.activeTabId,
+            directoryURL: self.directoryURL,
+            displayedChildren: self.displayedChildren
+        )
+        
+        do {
+            let encodedData = try JSONEncoder().encode(sessionData)
+            UserDefaults.standard.set(encodedData, forKey: "sessionData")
+        } catch {
+            return
+        }
+    }
+    
+    func loadSessionData() {
+        if let savedData = UserDefaults.standard.data(forKey: "sessionData") {
+            do {
+                let sessionData = try JSONDecoder().decode(SessionData.self, from: savedData)
+                self.openTabs = sessionData.openTabs
+                self.activeTabId = sessionData.activeTabId
+                self.directoryURL = sessionData.directoryURL
+                self.displayedChildren = sessionData.displayedChildren
+            } catch {
+                return
+            }
+        }
+    }
+    
+    func updateActiveTab(id: UUID?) {
+        self.activeTabId = id
+        saveSessionData()
+    }
+}
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -23,8 +103,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.maxSize = NSSize(width: 1600, height: 1600)
             window.delegate = self
         }
-
-        loadSessionData()
     }
 
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
@@ -35,33 +113,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        saveSessionData()
+        SessionStateManager.shared.saveSessionData()
     }
-
-    private func saveSessionData() {
-        if let contentView = NSApplication.shared.windows.first?.contentView as? NSHostingView<ContentView> {
-            let openTabs = contentView.rootView.openTabs
-            let activeTabId = contentView.rootView.activeTabId
-            let directoryURL = contentView.rootView.directoryURL
-            let displayedChildren = contentView.rootView.displayedChildren
-
-            let sessionData = SessionData(openTabs: openTabs, activeTabId: activeTabId, directoryURL: directoryURL, displayedChildren: displayedChildren)
-            if let encodedData = try? JSONEncoder().encode(sessionData) {
-                UserDefaults.standard.set(encodedData, forKey: "sessionData")
-            }
-        }
-    }
-
-    private func loadSessionData() {
-        if let savedData = UserDefaults.standard.data(forKey: "sessionData"),
-           let sessionData = try? JSONDecoder().decode(SessionData.self, from: savedData),
-           let contentView = NSApplication.shared.windows.first?.contentView as? NSHostingView<ContentView> {
-            contentView.rootView.openTabs = sessionData.openTabs
-            contentView.rootView.activeTabId = sessionData.activeTabId
-            contentView.rootView.directoryURL = sessionData.directoryURL
-            contentView.rootView.displayedChildren = sessionData.displayedChildren
-
-        }
-    }
-
 }
