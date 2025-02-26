@@ -454,6 +454,224 @@ struct DinoLabsPlayground: View {
         "git": "githubExtension"
     ]
     
+    private func openTab(url: URL, lineNumber: Int?) {
+        let ext = url.pathExtension.lowercased()
+        if ext == "csv" {
+            if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
+                activeTabId = existingTab.id
+                SessionStateManager.shared.updateActiveTab(id: existingTab.id)
+                noFileSelected = false
+            } else {
+                let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
+                openTabs.append(newTab)
+                activeTabId = newTab.id
+                SessionStateManager.shared.updateActiveTab(id: newTab.id)
+                noFileSelected = false
+            }
+            return
+        }
+        let codeLanguage = codeLanguage(for: url)
+        guard codeLanguage != "plaintext" else {
+            alertTitle = "Unsupported file type"
+            alertMessage = "The file you selected is not a supported file."
+            showAlert = true
+            return
+        }
+        if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
+            activeTabId = existingTab.id
+            SessionStateManager.shared.updateActiveTab(id: existingTab.id)
+            noFileSelected = false
+            if let lineNumber = lineNumber {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("NavigateToLine"),
+                        object: nil,
+                        userInfo: ["lineNumber": lineNumber]
+                    )
+                }
+            }
+        } else {
+            let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
+            openTabs.append(newTab)
+            activeTabId = newTab.id
+            SessionStateManager.shared.updateActiveTab(id: newTab.id)
+            noFileSelected = false
+            if let lineNumber = lineNumber {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("NavigateToLine"),
+                        object: nil,
+                        userInfo: ["lineNumber": lineNumber]
+                    )
+                }
+            }
+        }
+    }
+    
+    private func closeTab(_ tab: FileTab) {
+        if tab.hasUnsavedChanges {
+            alertTitle = "Unsaved Changes"
+            alertMessage = "You have unsaved changes. Are you sure you want to close this tab?"
+            alertInputs = []
+            showCancelButton = true
+            onConfirmAction = { _ in
+                updateUnsavedChangesInFileItems(for: tab.fileURL, unsaved: false)
+                openTabs.removeAll { $0.id == tab.id }
+                
+                if openTabs.isEmpty {
+                    activeTabId = nil
+                    SessionStateManager.shared.updateActiveTab(id: nil)
+                    noFileSelected = true
+                } else {
+                    activeTabId = openTabs.last?.id
+                    SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
+                    noFileSelected = false
+                }
+            }
+            showAlert = true
+        } else {
+            openTabs.removeAll { $0.id == tab.id }
+            if openTabs.isEmpty {
+                activeTabId = nil
+                SessionStateManager.shared.updateActiveTab(id: nil)
+                noFileSelected = true
+            } else {
+                activeTabId = openTabs.last?.id
+                SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
+                noFileSelected = false
+            }
+        }
+    }
+    
+    private func getIcon(forFileURL url: URL) -> String {
+        let name = url.lastPathComponent.lowercased()
+        if name == "dockerfile" {
+            return extensionToImageMap["dockerfile"] ?? extensionToImageMap["default"]!
+        } else if name == "makefile" {
+            return extensionToImageMap["makefile"] ?? extensionToImageMap["default"]!
+        } else if name.hasPrefix(".git") {
+            return extensionToImageMap["git"] ?? extensionToImageMap["default"]!
+        }
+        let ext = url.pathExtension.lowercased()
+        return extensionToImageMap[ext] ?? extensionToImageMap["default"]!
+    }
+    
+    private func filteredFileItem(_ item: FileItem, query: String) -> FileItem? {
+        if query.isEmpty { return item }
+        
+        let name = item.url.lastPathComponent
+        let matches: Bool
+        if isSearchCaseSensitive {
+            matches = name.contains(query)
+        } else {
+            matches = name.lowercased().contains(query.lowercased())
+        }
+        
+        if item.isDirectory, let children = item.children {
+            let filteredChildren = children.compactMap { filteredFileItem($0, query: query) }
+            if matches || !filteredChildren.isEmpty {
+                return FileItem(id: item.id, url: item.url, isDirectory: item.isDirectory, children: filteredChildren)
+            }
+        } else if matches {
+            return item
+        }
+        
+        return nil
+    }
+    
+    private func loadFileItems(from url: URL) -> [FileItem] {
+        var items = [FileItem]()
+        let fm = FileManager.default
+        
+        if let contents = try? fm.contentsOfDirectory(
+            at: url,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) {
+            for contentURL in contents {
+                let resourceValues = try? contentURL.resourceValues(forKeys: [.isDirectoryKey])
+                let isDir = resourceValues?.isDirectory ?? false
+                
+                var children: [FileItem]? = nil
+                if isDir {
+                    children = loadFileItems(from: contentURL)
+                }
+                
+                let permissions = FilePermissions(canRead: true, canWrite: true, canExecute: true)
+                let fileItem = FileItem(
+                    id: contentURL,
+                    url: contentURL,
+                    isDirectory: isDir,
+                    children: children,
+                    permissions: permissions
+                )
+                
+                items.append(fileItem)
+            }
+        }
+        
+        return items
+    }
+    
+    private func loadDirectory() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        let previousDirectoryURL = directoryURL
+        if panel.runModal() == .OK, let url = panel.urls.first {
+            directoryURL = url
+            isNavigatorLoading = true
+            DispatchQueue.global(qos: .userInitiated).async {
+                let root = FileItem(
+                    id: url,
+                    url: url,
+                    isDirectory: true,
+                    children: self.loadFileItems(from: url)
+                )
+                DispatchQueue.main.async {
+                    fileItems = [root]
+                    rootIsExpanded = true
+                    isNavigatorLoading = false
+                    displayedChildren = root.children ?? []
+                }
+            }
+        } else {
+            directoryURL = previousDirectoryURL
+        }
+    }
+    
+    private func reloadDirectory() {
+        guard let dir = directoryURL else { return }
+        isNavigatorLoading = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            let root = FileItem(
+                id: dir,
+                url: dir,
+                isDirectory: true,
+                children: self.loadFileItems(from: dir),
+                permissions: FilePermissions(canRead: true, canWrite: true, canExecute: true)
+            )
+            DispatchQueue.main.async {
+                fileItems = [root]
+                rootIsExpanded = true
+                isNavigatorLoading = false
+            }
+        }
+    }
+    
+    private func loadFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK {
+            if let url = panel.urls.first {
+                openTab(url: url, lineNumber: 0)
+            }
+        }
+    }
+    
     private func updateUnsavedChangesInFileItems(for fileURL: URL, unsaved: Bool) {
         func update(item: inout FileItem) {
             if item.url == fileURL {
@@ -635,25 +853,6 @@ struct DinoLabsPlayground: View {
         NSWorkspace.shared.activateFileViewerSelecting([item.url])
     }
     
-    private func reloadDirectory() {
-           guard let dir = directoryURL else { return }
-           isNavigatorLoading = true
-           DispatchQueue.global(qos: .userInitiated).async {
-               let root = FileItem(
-                   id: dir,
-                   url: dir,
-                   isDirectory: true,
-                   children: self.loadFileItems(from: dir),
-                   permissions: FilePermissions(canRead: true, canWrite: true, canExecute: true)
-               )
-               DispatchQueue.main.async {
-                   fileItems = [root]
-                   rootIsExpanded = true
-                   isNavigatorLoading = false
-               }
-           }
-       }
-    
     private func handleDropItem(source: URL, destinationItem: FileItem) -> Bool {
         let fm = FileManager.default
         guard destinationItem.isDirectory else { return false }
@@ -682,75 +881,6 @@ struct DinoLabsPlayground: View {
         } catch {
             return false
         }
-    }
-    
-    private func getIcon(forFileURL url: URL) -> String {
-        let name = url.lastPathComponent.lowercased()
-        if name == "dockerfile" {
-            return extensionToImageMap["dockerfile"] ?? extensionToImageMap["default"]!
-        } else if name == "makefile" {
-            return extensionToImageMap["makefile"] ?? extensionToImageMap["default"]!
-        } else if name.hasPrefix(".git") {
-            return extensionToImageMap["git"] ?? extensionToImageMap["default"]!
-        }
-        let ext = url.pathExtension.lowercased()
-        return extensionToImageMap[ext] ?? extensionToImageMap["default"]!
-    }
-    
-    private func loadFileItems(from url: URL) -> [FileItem] {
-        var items = [FileItem]()
-        let fm = FileManager.default
-        
-        if let contents = try? fm.contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) {
-            for contentURL in contents {
-                let resourceValues = try? contentURL.resourceValues(forKeys: [.isDirectoryKey])
-                let isDir = resourceValues?.isDirectory ?? false
-                
-                var children: [FileItem]? = nil
-                if isDir {
-                    children = loadFileItems(from: contentURL)
-                }
-                
-                let permissions = FilePermissions(canRead: true, canWrite: true, canExecute: true)
-                let fileItem = FileItem(
-                    id: contentURL,
-                    url: contentURL,
-                    isDirectory: isDir,
-                    children: children,
-                    permissions: permissions
-                )
-                
-                items.append(fileItem)
-            }
-        }
-        
-        return items
-    }
-    
-    private func filteredFileItem(_ item: FileItem, query: String) -> FileItem? {
-        if query.isEmpty { return item }
-        let name = item.url.lastPathComponent
-        let matches: Bool
-        if isSearchCaseSensitive {
-            matches = name.contains(query)
-        } else {
-            matches = name.lowercased().contains(query.lowercased())
-        }
-        if item.isDirectory, let children = item.children {
-            let filteredChildren = children.compactMap { filteredFileItem($0, query: query) }
-            if matches || !filteredChildren.isEmpty {
-                return FileItem(id: item.id, url: item.url, isDirectory: item.isDirectory, children: filteredChildren)
-            }
-        } else {
-            if matches {
-                return item
-            }
-        }
-        return nil
     }
     
     private func searchInFile(_ file: FileItem, query: String) -> [SearchResult] {
@@ -962,73 +1092,6 @@ struct DinoLabsPlayground: View {
         return path
     }
     
-    private func openFileTab(url: URL, lineNumber: Int?) {
-        if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
-            activeTabId = existingTab.id
-            SessionStateManager.shared.updateActiveTab(id: existingTab.id)
-            noFileSelected = false
-            if let lineNumber = lineNumber {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    NotificationCenter.default.post(
-                        name: Notification.Name("NavigateToLine"),
-                        object: nil,
-                        userInfo: ["lineNumber": lineNumber]
-                    )
-                }
-            }
-        } else {
-            let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
-            openTabs.append(newTab)
-            activeTabId = newTab.id
-            SessionStateManager.shared.updateActiveTab(id: newTab.id)
-            noFileSelected = false
-            if let lineNumber = lineNumber {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    NotificationCenter.default.post(
-                        name: Notification.Name("NavigateToLine"),
-                        object: nil,
-                        userInfo: ["lineNumber": lineNumber]
-                    )
-                }
-            }
-        }
-    }
-    
-    private func closeTab(_ tab: FileTab) {
-        if tab.hasUnsavedChanges {
-            alertTitle = "Unsaved Changes"
-            alertMessage = "You have unsaved changes. Are you sure you want to close this tab?"
-            alertInputs = []
-            showCancelButton = true
-            onConfirmAction = { _ in
-                updateUnsavedChangesInFileItems(for: tab.fileURL, unsaved: false)
-                openTabs.removeAll { $0.id == tab.id }
-                
-                if openTabs.isEmpty {
-                    activeTabId = nil
-                    SessionStateManager.shared.updateActiveTab(id: nil)
-                    noFileSelected = true
-                } else {
-                    activeTabId = openTabs.last?.id
-                    SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
-                    noFileSelected = false
-                }
-            }
-            showAlert = true
-        } else {
-            openTabs.removeAll { $0.id == tab.id }
-            if openTabs.isEmpty {
-                activeTabId = nil
-                SessionStateManager.shared.updateActiveTab(id: nil)
-                noFileSelected = true
-            } else {
-                activeTabId = openTabs.last?.id
-                SessionStateManager.shared.updateActiveTab(id: openTabs.last?.id)
-                noFileSelected = false
-            }
-        }
-    }
-    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
@@ -1213,7 +1276,10 @@ struct DinoLabsPlayground: View {
                                     .onChange(of: directoryItemSearch) { newValue in
                                         searchDebounceTask?.cancel()
                                         let task = DispatchWorkItem {
-                                            filteredSearch = newValue
+                                            if let root = fileItems.first {
+                                                let filteredRoot = filteredFileItem(root, query: newValue)
+                                                displayedChildren = filteredRoot?.children ?? []
+                                            }
                                         }
                                         searchDebounceTask = task
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
@@ -1456,7 +1522,7 @@ struct DinoLabsPlayground: View {
                                                         searchQuery: searchQuery,
                                                         isCaseSensitive: isSearchCaseSensitive,
                                                         onOpenFile: { fileURL, lineNumber in
-                                                            openFileTab(url: fileURL, lineNumber: lineNumber)
+                                                            openTab(url: fileURL, lineNumber: lineNumber)
                                                         }
                                                     )
                                                 }
@@ -1486,7 +1552,7 @@ struct DinoLabsPlayground: View {
                                                                 isPasteEnabled: (clipboardItem != nil),
                                                                 onDropItem: handleDropItem,
                                                                 onOpenFile: { fileItem in
-                                                                    openFileTab(url: fileItem.url, lineNumber: 0)
+                                                                    openTab(url: fileItem.url, lineNumber: 0)
                                                                 }
                                                             )
                                                         }
@@ -1688,6 +1754,9 @@ struct DinoLabsPlayground: View {
                                                     .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                                                 alignment: .trailing
                                             )
+                                            .onAppear {
+                                                fetchUsageData()
+                                            }
                                         } else {
                                             ForEach(openTabs) { tab in
                                                 HStack(spacing: 4) {
@@ -1782,29 +1851,35 @@ struct DinoLabsPlayground: View {
                                 } else {
                                     if let activeTab = openTabs.first(where: { $0.id == activeTabId }),
                                        let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
-                                        let language = codeLanguage(for: activeTab.fileURL)
-                                        let username = UserDefaults.standard.string(forKey: "userID") ?? "Unknown User"
-                                        let rootDirectory = directoryURL?.path ?? ""
-                                        IDEView(
-                                            geometry: geometry,
-                                            fileURL: activeTab.fileURL,
-                                            programmingLanguage: language,
-                                            programmingLanguageImage: getIcon(forFileURL: activeTab.fileURL),
-                                            username: username,
-                                            rootDirectory: rootDirectory,
-                                            leftPanelWidthRatio: $leftPanelWidthRatio,
-                                            keyBinds: $userKeyBinds,
-                                            zoomLevel: $userZoomLevel,
-                                            colorTheme: $userColorTheme,
-                                            fileContent: $openTabs[index].fileContent,
-                                            hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
-                                            showAlert: $showAlert
-                                        )
-                                        .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
-                                            updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
+                                        if activeTab.fileURL.pathExtension.lowercased() == "csv" {
+                                            TabularView(fileURL: activeTab.fileURL)
+                                                .id(activeTab.id)
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        } else {
+                                            let language = codeLanguage(for: activeTab.fileURL)
+                                            let username = UserDefaults.standard.string(forKey: "userID") ?? "Unknown User"
+                                            let rootDirectory = directoryURL?.path ?? ""
+                                            IDEView(
+                                                geometry: geometry,
+                                                fileURL: activeTab.fileURL,
+                                                programmingLanguage: language,
+                                                programmingLanguageImage: getIcon(forFileURL: activeTab.fileURL),
+                                                username: username,
+                                                rootDirectory: rootDirectory,
+                                                leftPanelWidthRatio: $leftPanelWidthRatio,
+                                                keyBinds: $userKeyBinds,
+                                                zoomLevel: $userZoomLevel,
+                                                colorTheme: $userColorTheme,
+                                                fileContent: $openTabs[index].fileContent,
+                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
+                                                showAlert: $showAlert
+                                            )
+                                            .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
+                                                updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
+                                            }
+                                            .id(activeTab.id)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
-                                        .id(activeTab.id)
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     } else if noFileSelected && activeTabId == nil  {
                                         Spacer()
                                         HStack {
@@ -2193,7 +2268,6 @@ struct DinoLabsPlayground: View {
             }
         }
         .onAppear {
-            fetchUsageData()
             if directoryURL != nil {
                 reloadDirectory()
             }
@@ -2270,54 +2344,12 @@ struct DinoLabsPlayground: View {
         personalUsageByDay = lineData
     }
     
-    private func loadDirectory() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        let previousDirectoryURL = directoryURL
-        if panel.runModal() == .OK, let url = panel.urls.first {
-            directoryURL = url
-            isNavigatorLoading = true
-            DispatchQueue.global(qos: .userInitiated).async {
-                let root = FileItem(
-                    id: url,
-                    url: url,
-                    isDirectory: true,
-                    children: self.loadFileItems(from: url)
-                )
-                DispatchQueue.main.async {
-                    fileItems = [root]
-                    rootIsExpanded = true
-                    isNavigatorLoading = false
-                    displayedChildren = root.children ?? []
-                }
-            }
-        } else {
-            directoryURL = previousDirectoryURL
-        }
-    }
-    
-    private func loadFile() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK {
-            if let url = panel.urls.first {
-                openFileTab(url: url, lineNumber: 0)
-            }
-        }
-    }
-    
     private func codeLanguage(for fileURL: URL) -> String {
         let name = fileURL.lastPathComponent.lowercased()
         if name == "dockerfile" {
             return "Dockerfile"
         } else if name == "makefile" {
             return "Makefile"
-        } else if name.hasPrefix(".git") {
-            return "Git"
         }
         let ext = fileURL.pathExtension.lowercased()
         let languageMapping: [String: String] = [

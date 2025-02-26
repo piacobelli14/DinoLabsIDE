@@ -7,7 +7,7 @@
 import SwiftUI
 import AppKit
 
-class ClickableNSTextField: NSTextField {
+class ClickableNSTextField: NSTextField, NSTextViewDelegate {
     override func resetCursorRects() {
         self.discardCursorRects()
         self.addCursorRect(self.bounds, cursor: NSCursor.iBeam)
@@ -19,14 +19,23 @@ class ClickableNSTextField: NSTextField {
         window.makeFirstResponder(self)
         
         if let fieldEditor = window.fieldEditor(true, for: self) as? NSTextView {
+            fieldEditor.delegate = self
             fieldEditor.insertionPointColor = .lightGray
             let length = fieldEditor.string.count
             fieldEditor.selectedRange = NSRange(location: length, length: 0)
         }
     }
+    
+    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        if let replacement = replacementString, replacement == ". " {
+            textView.replaceCharacters(in: affectedCharRange, with: "  ")
+            return false
+        }
+        return true
+    }
 }
 
-class ClickableNSSecureTextField: NSSecureTextField {
+class ClickableNSSecureTextField: NSSecureTextField, NSTextViewDelegate {
     override func resetCursorRects() {
         self.discardCursorRects()
         self.addCursorRect(self.bounds, cursor: NSCursor.iBeam)
@@ -38,10 +47,19 @@ class ClickableNSSecureTextField: NSSecureTextField {
         window.makeFirstResponder(self)
         
         if let fieldEditor = window.fieldEditor(true, for: self) as? NSTextView {
+            fieldEditor.delegate = self
             fieldEditor.insertionPointColor = .black
             let length = fieldEditor.string.count
             fieldEditor.selectedRange = NSRange(location: length, length: 0)
         }
+    }
+    
+    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        if let replacement = replacementString, replacement == ". " {
+            textView.replaceCharacters(in: affectedCharRange, with: "  ")
+            return false
+        }
+        return true
     }
 }
 

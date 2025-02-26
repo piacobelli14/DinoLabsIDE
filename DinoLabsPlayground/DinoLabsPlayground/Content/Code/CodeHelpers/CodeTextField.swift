@@ -101,4 +101,22 @@ class CodeNSTextField: NSTextField {
             super.keyDown(with: event)
         }
     }
+    
+    override func becomeFirstResponder() -> Bool {
+        let success = super.becomeFirstResponder()
+        if let fieldEditor = self.window?.fieldEditor(true, for: self) as? NSTextView {
+            fieldEditor.delegate = self
+        }
+        return success
+    }
+}
+
+extension CodeNSTextField: NSTextViewDelegate {
+    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        if let replacement = replacementString, replacement == ". " {
+            textView.replaceCharacters(in: affectedCharRange, with: "  ")
+            return false
+        }
+        return true
+    }
 }

@@ -1,3 +1,4 @@
+
 //
 //  DinoLabsIDE.swift
 //
@@ -119,8 +120,8 @@ struct IDEView: View {
                                     .containerHelper(backgroundColor: Color(hex: 0x222222),
                                                       borderColor: Color(hex: 0x616161),
                                                       borderWidth: 1,
-                                                      topLeft: 0, topRight: 0,
-                                                      bottomLeft: 0, bottomRight: 0,
+                                                      topLeft: 0, topRight: 2,
+                                                      bottomLeft: 0, bottomRight: 2,
                                                       shadowColor: .clear,
                                                       shadowRadius: 0,
                                                       shadowX: 0, shadowY: 0)
@@ -428,20 +429,6 @@ struct IDEView: View {
                                     consoleState = "terminal"
                                 }
                             
-                            Text("Problems")
-                                .font(
-                                    consoleState == "problems" ?
-                                        .system(size: 10, weight: .bold, design: .default).italic() :
-                                        .system(size: 10, weight: .semibold, design: .default)
-                                )
-                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(consoleState == "problems" ? 1.0 : 0.8))
-                                .underline(consoleState == "problems" ? true : false)
-                                .allowsHitTesting(false)
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .onTapGesture {
-                                    consoleState = "problems"
-                                }
-                            
                             Spacer()
                             
                             HStack {
@@ -527,10 +514,31 @@ struct IDEView: View {
         do {
             try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
             hasUnsavedChanges = false
+            let url = URL(string: "https://www.dinolaboratories.com/dinolabs/dinolabs-web-api/save-file-edit")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            if let token = loadTokenFromKeychain() {
+                request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            }
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let userID = UserDefaults.standard.string(forKey: "userID") ?? "userID_placeholder"
+            let organizationID = UserDefaults.standard.string(forKey: "orgID") ?? "orgID_placeholder"
+            let scriptName = fileURL.lastPathComponent.isEmpty ? "unknown_script_name" : fileURL.lastPathComponent
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            let body: [String: Any] = [
+                "organizationID": organizationID,
+                "userID": userID,
+                "language": programmingLanguage,
+                "script_name": scriptName,
+                "timestamp": timestamp
+            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+            URLSession.shared.dataTask(with: request).resume()
         } catch {
             return
         }
     }
+
     
     private func loadFileContent() {
         isLoading = true
@@ -627,7 +635,7 @@ struct IDEEditorView: NSViewRepresentable {
         textView.backgroundColor = NSColor(hex: 0x222222)
         textView.textColor = ThemeColorProvider.defaultTextColor(for: theme)
         textView.font = .monospacedSystemFont(ofSize: 11 * CGFloat(zoomLevel), weight: .semibold)
-        
+        textView.isAutomaticTextReplacementEnabled = false
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.minimumLineHeight = 20.0
         paragraphStyle.maximumLineHeight = 20.0
@@ -1095,6 +1103,14 @@ struct IDEEditorView: NSViewRepresentable {
             }
             parent.currentSearchMatch = currentIndex
         }
+        
+        func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+            if let replacement = replacementString, replacement == ". " {
+                textView.replaceCharacters(in: affectedCharRange, with: "  ")
+                return false
+            }
+            return true
+        }
     }
 }
 
@@ -1188,6 +1204,22 @@ class IDETextView: NSTextView {
         } else {
             super.keyDown(with: event)
         }
+    }
+    
+    override func insertText(_ insertString: Any, replacementRange: NSRange) {
+        if let string = insertString as? String, string == " " {
+            let currentString = self.string as NSString
+            let sel = self.selectedRange()
+            if sel.location > 0 {
+                let previousCharRange = NSRange(location: sel.location - 1, length: 1)
+                let previousChar = currentString.substring(with: previousCharRange)
+                if previousChar == " " {
+                    super.insertText(" ", replacementRange: replacementRange)
+                    return
+                }
+            }
+        }
+        super.insertText(insertString, replacementRange: replacementRange)
     }
     
     override func deleteBackward(_ sender: Any?) {
