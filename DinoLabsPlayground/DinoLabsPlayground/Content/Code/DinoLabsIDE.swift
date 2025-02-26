@@ -1101,10 +1101,28 @@ struct IDEEditorView: NSViewRepresentable {
 class IDETextView: NSTextView {
     var customKeyBinds: [String: String] = [:]
     private var trackingArea: NSTrackingArea?
+    
     override var intrinsicContentSize: NSSize {
         return NSSize(width: CGFloat.greatestFiniteMagnitude, height: super.intrinsicContentSize.height)
     }
+    
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command) {
+            let allowedKeys: Set<String> = ["s", "f", "z", "y", "c", "v", "x", "a"]
+            if let key = event.charactersIgnoringModifiers?.lowercased(), !allowedKeys.contains(key) {
+                return true
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+    
     override func keyDown(with event: NSEvent) {
+        if event.modifierFlags.contains(.command) {
+            let allowedKeys: Set<String> = ["s", "f", "z", "y", "c", "v", "x", "a"]
+            if let key = event.charactersIgnoringModifiers?.lowercased(), !allowedKeys.contains(key) {
+                return
+            }
+        }
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
             if let coordinator = self.delegate as? IDEEditorView.Coordinator {
                 coordinator.parent.onSave()
@@ -1171,6 +1189,7 @@ class IDETextView: NSTextView {
             super.keyDown(with: event)
         }
     }
+    
     override func deleteBackward(_ sender: Any?) {
         let sel = self.selectedRange()
         if sel.length != 0 {
@@ -1211,6 +1230,7 @@ class IDETextView: NSTextView {
         }
         super.deleteBackward(sender)
     }
+    
     override func insertBacktab(_ sender: Any?) {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1233,6 +1253,7 @@ class IDETextView: NSTextView {
             }
         }
     }
+    
     override func insertNewline(_ sender: Any?) {
         let nsString = self.string as NSString
         let selRange = self.selectedRange()
@@ -1244,6 +1265,7 @@ class IDETextView: NSTextView {
             self.insertText(String(indentation), replacementRange: self.selectedRange())
         }
     }
+    
     private func indentSelectedLines() {
         let selRange = self.selectedRange()
         let nsString = self.string as NSString
@@ -1270,6 +1292,7 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
+    
     private func indentSingleLine(selectionRange: NSRange) {
         let selectedText = (self.string as NSString).substring(with: selectionRange)
         let replaced = "\t" + selectedText
@@ -1282,6 +1305,7 @@ class IDETextView: NSTextView {
             coordinator.applySyntaxHighlighting(to: self)
         }
     }
+    
     private func unindentSingleLine(selectionRange: NSRange) {
         let nsString = self.string as NSString
         let fullLineRange = nsString.lineRange(for: selectionRange)
@@ -1299,6 +1323,7 @@ class IDETextView: NSTextView {
             }
         }
     }
+    
     override func menu(for event: NSEvent) -> NSMenu? {
         let customMenu = NSMenu(title: "Context Menu")
         customMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: customKeyBinds["copy"] ?? "")
@@ -1312,23 +1337,28 @@ class IDETextView: NSTextView {
         customMenu.addItem(redoItem)
         return customMenu
     }
+    
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.title == "Services" || menuItem.title == "Services…" {
             return false
         }
         return super.validateMenuItem(menuItem)
     }
+    
     @objc func customUndo(_ sender: Any?) {
         self.undoManager?.undo()
     }
+    
     @objc func customRedo(_ sender: Any?) {
         self.undoManager?.redo()
     }
+    
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         self.window?.invalidateCursorRects(for: self)
         self.resetCursorRects()
     }
+    
     override func resetCursorRects() {
         super.resetCursorRects()
         let rect = self.visibleRect
@@ -1338,12 +1368,14 @@ class IDETextView: NSTextView {
             self.addCursorRect(rect, cursor: NSCursor.iBeam)
         }
     }
+    
     override var isEditable: Bool {
         didSet {
             self.window?.invalidateCursorRects(for: self)
             self.resetCursorRects()
         }
     }
+    
     override func mouseEntered(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1351,6 +1383,7 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
+    
     override func mouseMoved(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1358,6 +1391,7 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
+    
     override func cursorUpdate(with event: NSEvent) {
         if !self.isEditable {
             NSCursor.pointingHand.set()
@@ -1365,6 +1399,7 @@ class IDETextView: NSTextView {
             NSCursor.iBeam.set()
         }
     }
+    
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let trackingArea = self.trackingArea {
