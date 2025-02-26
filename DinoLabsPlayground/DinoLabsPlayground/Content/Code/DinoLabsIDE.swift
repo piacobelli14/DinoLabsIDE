@@ -563,12 +563,12 @@ struct IDEView: View {
     private func replaceNextOccurrence() {
         guard !searchQuery.isEmpty else { return }
         if let foundRange = nextRange(of: searchQuery, in: fileContent, caseSensitive: searchCaseSensitive) {
+            let nsRange = NSRange(foundRange, in: fileContent)
+            let oldContent = fileContent
+            NotificationCenter.default.post(name: Notification.Name("PerformReplacementNext"), object: nil, userInfo: ["range": nsRange, "replacement": replaceQuery, "oldContent": oldContent])
+            hasUnsavedChanges = true
             let tempSearch = searchQuery
             searchQuery = ""
-            fileContent.replaceSubrange(foundRange, with: replaceQuery)
-            withAnimation(.none) {
-                fileContent = fileContent
-            }
             DispatchQueue.main.async {
                 self.searchQuery = tempSearch
             }
@@ -577,16 +577,11 @@ struct IDEView: View {
     
     private func replaceAllOccurrences() {
         guard !searchQuery.isEmpty else { return }
+        let oldContent = fileContent
         let tempSearch = searchQuery
         searchQuery = ""
-        if searchCaseSensitive {
-            fileContent = fileContent.replacingOccurrences(of: tempSearch, with: replaceQuery)
-        } else {
-            fileContent = fileContent.replacingOccurrences(of: tempSearch, with: replaceQuery, options: .caseInsensitive, range: nil)
-        }
-        withAnimation(.none) {
-            fileContent = fileContent
-        }
+        NotificationCenter.default.post(name: Notification.Name("PerformReplacementAll"), object: nil, userInfo: ["search": tempSearch, "replacement": replaceQuery, "oldContent": oldContent, "caseSensitive": searchCaseSensitive])
+        hasUnsavedChanges = true
         DispatchQueue.main.async {
             self.searchQuery = tempSearch
         }
@@ -731,6 +726,43 @@ struct IDEEditorView: NSViewRepresentable {
             NotificationCenter.default.addObserver(forName: Notification.Name("PerformRedo"), object: nil, queue: .main) { [weak self] _ in
                 self?.textView?.undoManager?.redo()
             }
+            NotificationCenter.default.addObserver(forName: Notification.Name("PerformReplacementNext"), object: nil, queue: .main) { [weak self] notification in
+                guard let self = self, let textView = self.textView else { return }
+                guard let userInfo = notification.userInfo,
+                      let nsRange = userInfo["range"] as? NSRange,
+                      let replacement = userInfo["replacement"] as? String else { return }
+                if textView.shouldChangeText(in: nsRange, replacementString: replacement) {
+                    textView.replaceCharacters(in: nsRange, with: replacement)
+                    textView.didChangeText()
+                }
+            }
+            NotificationCenter.default.addObserver(forName: Notification.Name("PerformReplacementAll"), object: nil, queue: .main) { [weak self] notification in
+                guard let self = self, let textView = self.textView else { return }
+                guard let userInfo = notification.userInfo,
+                      let search = userInfo["search"] as? String,
+                      let replacement = userInfo["replacement"] as? String,
+                      let caseSensitive = userInfo["caseSensitive"] as? Bool else { return }
+                let options: NSString.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
+                let nsText = textView.string as NSString
+                var searchRange = NSRange(location: 0, length: nsText.length)
+                while true {
+                    let foundRange = nsText.range(of: search, options: options, range: searchRange)
+                    if foundRange.location != NSNotFound {
+                        if textView.shouldChangeText(in: foundRange, replacementString: replacement) {
+                            textView.replaceCharacters(in: foundRange, with: replacement)
+                            textView.didChangeText()
+                        }
+                        let newLocation = foundRange.location + (replacement as NSString).length
+                        if newLocation < nsText.length {
+                            searchRange = NSRange(location: newLocation, length: nsText.length - newLocation)
+                        } else {
+                            break
+                        }
+                    } else {
+                        break
+                    }
+                }
+            }
             NotificationCenter.default.addObserver(self, selector: #selector(handleSelectionDidChange(_:)), name: NSTextView.didChangeSelectionNotification, object: nil)
         }
         
@@ -823,9 +855,11 @@ struct IDEEditorView: NSViewRepresentable {
                 shadow.shadowOffset = NSSize(width: 1, height: -1)
                 shadow.shadowBlurRadius = 2
                 shadow.shadowColor = NSColor.black.withAlphaComponent(0.7)
+                var foundMatch = false
                 while true {
                     let foundRange = nsNewVisibleText.range(of: searchText, options: options, range: searchRange)
                     if foundRange.location != NSNotFound {
+                        foundMatch = true
                         newVisibleAttributed.addAttribute(.font, value: highlightFont, range: foundRange)
                         newVisibleAttributed.addAttribute(.foregroundColor, value: highlightColor, range: foundRange)
                         newVisibleAttributed.addAttribute(.shadow, value: shadow, range: foundRange)
@@ -840,11 +874,20 @@ struct IDEEditorView: NSViewRepresentable {
                         break
                     }
                 }
-                newVisibleAttributed.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: newVisibleAttributed.length), options: []) { value, range, _ in
-                    if let color = value as? NSColor {
-                        if color != highlightColor {
-                            let mutedColor = color.withAlphaComponent(0.3)
-                            newVisibleAttributed.addAttribute(.foregroundColor, value: mutedColor, range: range)
+                if foundMatch {
+                    newVisibleAttributed.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: newVisibleAttributed.length), options: []) { value, range, _ in
+                        if let color = value as? NSColor {
+                            if color != highlightColor {
+                                let mutedColor = color.withAlphaComponent(0.3)
+                                newVisibleAttributed.addAttribute(.foregroundColor, value: mutedColor, range: range)
+                            }
+                        }
+                    }
+                } else {
+                    newVisibleAttributed.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: newVisibleAttributed.length), options: []) { value, range, _ in
+                        if let color = value as? NSColor {
+                            let restoredColor = color.withAlphaComponent(1.0)
+                            newVisibleAttributed.addAttribute(.foregroundColor, value: restoredColor, range: range)
                         }
                     }
                 }
@@ -1418,4 +1461,3 @@ extension NSRange {
         return location >= self.location && location < self.location + self.length
     }
 }
-

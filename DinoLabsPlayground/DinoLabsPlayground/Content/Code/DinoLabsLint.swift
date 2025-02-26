@@ -9,9 +9,3 @@ struct LintError {
     let col: Int
     let message: String
 }
-
-struct BracketToken {
-    let char: Character
-    let line: Int
-    let col: Int
-}
