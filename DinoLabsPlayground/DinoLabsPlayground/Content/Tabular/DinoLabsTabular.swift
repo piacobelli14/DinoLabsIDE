@@ -1,3 +1,9 @@
+//
+//  DinoLabsTabular.swift
+//
+//  Created by Peter Iacobelli on 2/25/25.
+//
+
 import SwiftUI
 import AppKit
 
@@ -5,12 +11,13 @@ struct TabularView: View {
     let geometry: GeometryProxy
     let fileURL: URL
     @Binding var leftPanelWidthRatio: CGFloat
-    @State private var data: [[String]] = []
-    private let rowHeight: CGFloat = 30
+    @StateObject private var dataModel = DataTableModel(rows: 100, columns: 15)
+    private let rowHeight: CGFloat = 20
     private let rowNumberWidth: CGFloat = 50
     private let totalRows = 100
     private let totalColumns = 15
     @State private var horizontalOffset: CGFloat = 0
+    @State private var verticalOffset: CGFloat = 0
     @State private var showFileMenu = false
     @State private var showEditMenu = false
     @State private var showFormatMenu = false
@@ -42,7 +49,9 @@ struct TabularView: View {
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(Color.white.opacity(0.7))
                             .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                            .padding(.leading, 8)
+                            .padding(.leading, 6)
+                            .padding(.top, 4)
+                            .padding(.bottom, 0)
                         
                         HStack(spacing: 0) {
                             Text("File")
@@ -263,12 +272,24 @@ struct TabularView: View {
                             
                             Spacer()
                         }
-                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.4))
+                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
                         Spacer()
                     }
-                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.4))
+                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
                       
-                    Spacer()
+                    HStack {
+                        
+                    }
+                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55), height: 40)
+                    .containerHelper(
+                        backgroundColor: Color.black.opacity(0.1),
+                        borderColor: Color.clear,
+                        borderWidth: 0,
+                        topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 5,
+                        shadowColor: .white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                    )
+                    .padding(.trailing, 5)
+                    .padding(.leading, 15)
                 }
                 .padding(.horizontal, 10)
                 .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 80)
@@ -286,89 +307,60 @@ struct TabularView: View {
                 )
                 
                 ZStack(alignment: .topLeading) {
-                    
-                    Rectangle()
-                        .frame(width: rowNumberWidth, height: rowHeight)
-                        .foregroundColor(Color.gray.opacity(0.3))
-                        .border(Color.gray.opacity(0.5), width: 0.5)
-                        .zIndex(2)
-                    
-                    VStack(spacing: 0) {
-                        ColumnHeaderScrollView(
-                            content: {
-                                AnyView(
-                                    HStack(spacing: 0) {
-                                        ForEach(0..<totalColumns, id: \.self) { colIndex in
-                                            Text(columnLabel(for: colIndex + 1))
-                                                .font(.system(size: 10, weight: .bold))
-                                                .padding(.horizontal, 10)
-                                                .frame(width: 100, height: rowHeight)
-                                                .background(Color(hex: 0x212121))
-                                                .border(Color.gray.opacity(0.5), width: 0.5)
-                                        }
-                                    }
-                                )
-                            },
-                            horizontalOffset: $horizontalOffset,
-                            rowHeight: Int(rowHeight),
-                            totalColumns: totalColumns,
-                            rowNumberWidth: 0,
-                            isHeader: true
-                        )
-                        .frame(height: rowHeight)
-                        .padding(.leading, rowNumberWidth)
-                        
-                        ScrollView(.vertical) {
-                            HStack(alignment: .top, spacing: 0) {
-                                LazyVStack(spacing: 0) {
-                                    ForEach(0..<totalRows, id: \.self) { rowIndex in
-                                        Text("\(rowIndex + 1)")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .padding(.horizontal, 10)
-                                            .frame(width: rowNumberWidth, height: rowHeight)
-                                            .background(Color(hex: 0x212121))
-                                            .border(Color.gray.opacity(0.5), width: 0.5)
-                                    }
-                                }
-                                .frame(width: rowNumberWidth)
-                                
-                                ColumnHeaderScrollView(
-                                    content: {
-                                        AnyView(
-                                            LazyVStack(spacing: 0) {
-                                                ForEach(0..<totalRows, id: \.self) { rowIndex in
-                                                    HStack(spacing: 0) {
-                                                        ForEach(0..<totalColumns, id: \.self) { colIndex in
-                                                            Text(
-                                                                rowIndex < data.count && colIndex < data[rowIndex].count
-                                                                ? data[rowIndex][colIndex]
-                                                                : ""
-                                                            )
-                                                            .lineLimit(1)
-                                                            .truncationMode(.tail)
-                                                            .font(.system(size: 9, weight: .semibold))
-                                                            .padding(.horizontal, 10)
-                                                            .frame(width: 100, height: rowHeight)
-                                                            .background(Color(hex: 0x181818))
-                                                            .border(Color.gray.opacity(0.5), width: 0.5)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        )
-                                    },
-                                    horizontalOffset: $horizontalOffset,
-                                    rowHeight: Int(rowHeight * CGFloat(totalRows)),
-                                    totalColumns: totalColumns,
-                                    rowNumberWidth: 0,
-                                    isHeader: false
-                                )
-                            }
-                            .id("topLeft")
+                    HStack(spacing: 0) {
+                        VStack(spacing: 0) {
+                            Rectangle()
+                                .frame(width: rowNumberWidth, height: rowHeight)
+                                .foregroundColor(Color.gray.opacity(0.3))
+                                .border(Color.gray.opacity(0.5), width: 0.5)
+                            
+                            TableRowNumbers(
+                                rowHeight: rowHeight,
+                                rowNumberWidth: rowNumberWidth,
+                                totalRows: totalRows,
+                                verticalOffset: $verticalOffset
+                            )
                         }
-                        .modifier(HideScrollIndicatorsIfAvailable())
+                        .zIndex(2)
+                        .frame(width: rowNumberWidth)
+                        
+                        VStack(spacing: 0) {
+                            ColumnHeaders(
+                                content: {
+                                    AnyView(
+                                        HStack(spacing: 0) {
+                                            ForEach(0..<totalColumns, id: \.self) { colIndex in
+                                                Text(columnLabel(for: colIndex + 1))
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .padding(.horizontal, 10)
+                                                    .frame(width: 100, height: rowHeight)
+                                                    .background(Color(hex: 0x212121))
+                                                    .border(Color.gray.opacity(0.5), width: 0.5)
+                                            }
+                                        }
+                                    )
+                                },
+                                horizontalOffset: $horizontalOffset,
+                                rowHeight: Int(rowHeight),
+                                totalColumns: totalColumns,
+                                rowNumberWidth: 0,
+                                isHeader: true
+                            )
+                            .frame(height: rowHeight)
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) - rowNumberWidth)
+                            
+                            DataTableGrid(
+                                dataModel: dataModel,
+                                rowHeight: rowHeight,
+                                totalRows: totalRows,
+                                totalColumns: totalColumns,
+                                horizontalOffset: $horizontalOffset,
+                                verticalOffset: $verticalOffset
+                            )
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) - rowNumberWidth)
+                        }
                     }
-                    .zIndex(1)
+                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
                 }
             }
             
@@ -552,25 +544,84 @@ struct TabularView: View {
         }
     }
 
-    private func loadSheet() {
-        if let content = try? String(contentsOf: fileURL) {
-            let rows = content.components(separatedBy: "\n")
-            data = rows.map { $0.components(separatedBy: ",") }
+    fileprivate func loadSheet() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let content = try String(contentsOf: fileURL)
+                let rows = content.components(separatedBy: "\n")
+                let parsedData = rows.map { $0.components(separatedBy: ",") }
+                
+                DispatchQueue.main.async {
+                    dataModel.loadData(parsedData, totalRows: totalRows, totalColumns: totalColumns)
+                }
+            } catch {
+                return
+            }
         }
     }
 }
 
-fileprivate struct HideScrollIndicatorsIfAvailable: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(macOS 13.0, *) {
-            return AnyView(content.scrollIndicators(.hidden))
-        } else {
-            return AnyView(content)
+fileprivate struct TableRowNumbers: NSViewRepresentable {
+    let rowHeight: CGFloat
+    let rowNumberWidth: CGFloat
+    let totalRows: Int
+    @Binding var verticalOffset: CGFloat
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = false
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.verticalScrollElasticity = .none
+        scrollView.horizontalScrollElasticity = .none
+        
+        let contentView = NSView(frame: NSRect(x: 0, y: 0, width: rowNumberWidth, height: CGFloat(totalRows) * rowHeight))
+        
+        for row in 0..<totalRows {
+            let containerFrame = NSRect(x: 0, y: CGFloat(totalRows - row - 1) * rowHeight, width: rowNumberWidth, height: rowHeight)
+            let container = NSView(frame: containerFrame)
+            
+            container.wantsLayer = true
+            container.layer?.backgroundColor = NSColor(hex: 0x212121).cgColor
+            container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+            container.layer?.borderWidth = 0.5
+            
+            let font = NSFont.systemFont(ofSize: 10, weight: .bold)
+            let textHeight = font.ascender + abs(font.descender)
+            let labelFrame = NSRect(x: 0, y: (rowHeight - textHeight) / 2, width: rowNumberWidth, height: textHeight)
+            let label = NSTextField(frame: labelFrame)
+            label.stringValue = "\(row + 1)"
+            label.isEditable = false
+            label.isBordered = false
+            label.backgroundColor = .clear
+            
+            label.textColor = .white
+            label.font = font
+            label.alignment = .center
+            label.wantsLayer = true
+            
+            container.addSubview(label)
+            contentView.addSubview(container)
+        }
+        
+        scrollView.documentView = contentView
+        DispatchQueue.main.async {
+            let maxVerticalOffset = contentView.frame.height - scrollView.contentView.bounds.height
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: maxVerticalOffset))
+        }
+        
+        return scrollView
+    }
+
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        let currentY = nsView.contentView.bounds.origin.y
+        if abs(currentY - verticalOffset) > 0.1 {
+            nsView.contentView.scroll(to: NSPoint(x: 0, y: verticalOffset))
         }
     }
 }
 
-struct ColumnHeaderScrollView: NSViewRepresentable {
+struct ColumnHeaders: NSViewRepresentable {
     let content: () -> AnyView
     @Binding var horizontalOffset: CGFloat
     var rowHeight: Int
@@ -580,11 +631,12 @@ struct ColumnHeaderScrollView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
-
         scrollView.hasVerticalScroller = false
         scrollView.hasHorizontalScroller = false
         scrollView.scrollerStyle = .overlay
         scrollView.autohidesScrollers = false
+        scrollView.verticalScrollElasticity = .none
+        scrollView.horizontalScrollElasticity = .none
 
         let hostingView = NSHostingView(rootView: content())
         scrollView.documentView = hostingView
@@ -623,10 +675,10 @@ struct ColumnHeaderScrollView: NSViewRepresentable {
     }
 
     class Coordinator: NSObject {
-        var parent: ColumnHeaderScrollView
+        var parent: ColumnHeaders
         var scrollView: NSScrollView?
 
-        init(_ parent: ColumnHeaderScrollView) {
+        init(_ parent: ColumnHeaders) {
             self.parent = parent
         }
 
@@ -648,5 +700,257 @@ struct ColumnHeaderScrollView: NSViewRepresentable {
     static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
         NotificationCenter.default.removeObserver(coordinator)
         nsView.documentView = nil
+    }
+}
+
+fileprivate struct DataTableGrid: NSViewRepresentable {
+    @ObservedObject var dataModel: DataTableModel
+    let rowHeight: CGFloat
+    let totalRows: Int
+    let totalColumns: Int
+    @Binding var horizontalOffset: CGFloat
+    @Binding var verticalOffset: CGFloat
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.scrollerStyle = .overlay
+        scrollView.verticalScrollElasticity = .none
+        scrollView.horizontalScrollElasticity = .none
+        
+        let tableView = DataTableWrapper(
+            frame: .zero,
+            dataModel: dataModel,
+            rowHeight: rowHeight,
+            totalRows: totalRows,
+            totalColumns: totalColumns
+        )
+        
+        scrollView.documentView = tableView
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(context.coordinator.scrollViewDidScroll(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
+        
+        DispatchQueue.main.async {
+            let maxVerticalOffset = tableView.frame.height - scrollView.contentView.bounds.height
+            scrollView.contentView.scroll(to: NSPoint(x: horizontalOffset, y: maxVerticalOffset))
+        }
+        
+        context.coordinator.scrollView = scrollView
+        return scrollView
+    }
+
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        if let tableView = nsView.documentView as? DataTableWrapper {
+            tableView.dataModel = dataModel
+            tableView.updateCells()
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject {
+        var parent: DataTableGrid
+        var scrollView: NSScrollView?
+
+        init(_ parent: DataTableGrid) {
+            self.parent = parent
+        }
+
+        @objc func scrollViewDidScroll(_ notification: Notification) {
+            guard let scrollView = scrollView else { return }
+            let newHorizontalOffset = scrollView.contentView.bounds.origin.x
+            let newVerticalOffset = scrollView.contentView.bounds.origin.y
+            
+            if newHorizontalOffset != parent.horizontalOffset || newVerticalOffset != parent.verticalOffset {
+                DispatchQueue.main.async {
+                    self.parent.horizontalOffset = newHorizontalOffset
+                    self.parent.verticalOffset = newVerticalOffset
+                }
+            }
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+    }
+}
+
+fileprivate class DataTableWrapper: NSView {
+    var dataModel: DataTableModel
+    let rowHeight: CGFloat
+    let totalRows: Int
+    let totalColumns: Int
+    private var textFields: [[NSTextField]] = []
+    private var gridOverlay: DataGridOverlay!
+
+    init(frame: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int) {
+        self.dataModel = dataModel
+        self.rowHeight = rowHeight
+        self.totalRows = totalRows
+        self.totalColumns = totalColumns
+        super.init(frame: frame)
+        
+        setupTable()
+        
+        gridOverlay = DataGridOverlay(frame: self.bounds, totalRows: totalRows, totalColumns: totalColumns, rowHeight: rowHeight)
+        gridOverlay.autoresizingMask = [.width, .height]
+        gridOverlay.wantsLayer = true
+        gridOverlay.layer?.zPosition = 1
+        addSubview(gridOverlay)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupTable() {
+        let totalWidth = CGFloat(totalColumns) * 100
+        let totalHeight = CGFloat(totalRows) * rowHeight
+        frame = NSRect(x: 0, y: 0, width: totalWidth, height: totalHeight)
+        
+        textFields = []
+        for row in 0..<totalRows {
+            var rowFields: [NSTextField] = []
+            let containerY = CGFloat(totalRows - row - 1) * rowHeight
+            for col in 0..<totalColumns {
+                let containerFrame = NSRect(x: CGFloat(col) * 100, y: containerY, width: 100, height: rowHeight)
+                let container = NSView(frame: containerFrame)
+                
+                container.wantsLayer = true
+                container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+
+                let font = NSFont.systemFont(ofSize: 9, weight: .semibold)
+                let textHeight = font.ascender + abs(font.descender)
+                let textFieldFrame = NSRect(x: 0, y: (rowHeight - textHeight) / 2, width: 100, height: textHeight)
+                let textField = NSTextField(frame: textFieldFrame)
+                textField.stringValue = dataModel.getValue(row: row, column: col)
+                textField.isBordered = false
+                textField.backgroundColor = .clear
+                textField.focusRingType = .none
+                textField.textColor = .white
+                textField.font = font
+                textField.delegate = self
+                textField.tag = row * totalColumns + col
+                textField.wantsLayer = true
+                textField.layer?.zPosition = 0
+                textField.alignment = .center
+                if let cell = textField.cell as? NSTextFieldCell {
+                    cell.lineBreakMode = .byTruncatingTail
+                }
+                container.addSubview(textField)
+                addSubview(container)
+                rowFields.append(textField)
+            }
+            textFields.append(rowFields)
+        }
+    }
+    
+    func updateCells() {
+        for row in 0..<totalRows {
+            for col in 0..<totalColumns {
+                let textField = textFields[row][col]
+                if textField.currentEditor() == nil {
+                    textField.stringValue = dataModel.getValue(row: row, column: col)
+                }
+            }
+        }
+    }
+    
+    override var isFlipped: Bool {
+        return false
+    }
+}
+
+extension DataTableWrapper: NSTextFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        guard let textField = obj.object as? NSTextField else { return }
+        let tag = textField.tag
+        let row = tag / totalColumns
+        let col = tag % totalColumns
+        dataModel.updateCell(row: row, column: col, value: textField.stringValue)
+    }
+}
+
+private class DataTableModel: ObservableObject {
+    private var data: [[String]]
+    private let rows: Int
+    private let columns: Int
+    
+    init(rows: Int, columns: Int) {
+        self.rows = rows
+        self.columns = columns
+        self.data = Array(repeating: Array(repeating: "", count: columns), count: rows)
+    }
+    
+    func loadData(_ parsedData: [[String]], totalRows: Int, totalColumns: Int) {
+        for row in 0..<min(totalRows, parsedData.count) {
+            for col in 0..<min(totalColumns, parsedData[row].count) {
+                data[row][col] = parsedData[row][col]
+            }
+        }
+        objectWillChange.send()
+    }
+    
+    func getValue(row: Int, column: Int) -> String {
+        guard row < data.count && column < data[row].count else { return "" }
+        return data[row][column]
+    }
+    
+    func updateCell(row: Int, column: Int, value: String) {
+        guard row < data.count && column < data[row].count else { return }
+        data[row][column] = value
+        objectWillChange.send()
+    }
+}
+
+private class DataGridOverlay: NSView {
+    let totalRows: Int
+    let totalColumns: Int
+    let rowHeight: CGFloat
+    let cellWidth: CGFloat = 100
+
+    init(frame frameRect: NSRect, totalRows: Int, totalColumns: Int, rowHeight: CGFloat) {
+        self.totalRows = totalRows
+        self.totalColumns = totalColumns
+        self.rowHeight = rowHeight
+        super.init(frame: frameRect)
+        self.wantsLayer = true
+        self.layer?.backgroundColor = NSColor.clear.cgColor
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        
+        NSColor.gray.withAlphaComponent(0.5).setStroke()
+        let path = NSBezierPath()
+        
+        for col in 0...totalColumns {
+            let x = CGFloat(col) * cellWidth
+            path.move(to: NSPoint(x: x, y: 0))
+            path.line(to: NSPoint(x: x, y: self.bounds.height))
+        }
+        
+        for row in 0...totalRows {
+            let y = CGFloat(row) * rowHeight
+            path.move(to: NSPoint(x: 0, y: y))
+            path.line(to: NSPoint(x: self.bounds.width, y: y))
+        }
+        
+        path.lineWidth = 0.5
+        path.stroke()
     }
 }
