@@ -1852,9 +1852,13 @@ struct DinoLabsPlayground: View {
                                     if let activeTab = openTabs.first(where: { $0.id == activeTabId }),
                                        let index = openTabs.firstIndex(where: { $0.id == activeTab.id }) {
                                         if activeTab.fileURL.pathExtension.lowercased() == "csv" {
-                                            TabularView(fileURL: activeTab.fileURL)
-                                                .id(activeTab.id)
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            TabularView(
+                                                geometry: geometry,
+                                                fileURL: activeTab.fileURL,
+                                                leftPanelWidthRatio: $leftPanelWidthRatio
+                                            )
+                                            .id(activeTab.id)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         } else {
                                             let language = codeLanguage(for: activeTab.fileURL)
                                             let username = UserDefaults.standard.string(forKey: "userID") ?? "Unknown User"
