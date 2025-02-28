@@ -346,8 +346,9 @@ struct DinoLabsPlayground: View {
         }
     }
     @Binding var displayedChildren: [FileItem]
-
+    
     @State private var hasUnsavedChanges: Bool = false
+    @State private var dataDragOverError: Bool = false
     @State private var leftPanelWidthRatio: CGFloat = 0.25
     @State private var isNavigatorLoading: Bool = false
     @State private var hasUndavedChanges: Bool = false

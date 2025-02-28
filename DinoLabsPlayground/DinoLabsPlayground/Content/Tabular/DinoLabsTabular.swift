@@ -670,27 +670,36 @@ private class RowNumberOverlay: NSView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for trackingArea in self.trackingAreas {
+            self.removeTrackingArea(trackingArea)
+        }
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .mouseMoved, .activeInKeyWindow, .inVisibleRect, .enabledDuringMouseDrag]
+        let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+        self.addTrackingArea(trackingArea)
+    }
+    
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         let row = totalRows - 1 - Int(point.y / rowHeight)
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["phase": "down", "endRow": row, "shift": isShift])
         startRow = row
-        
-        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": row, "endRow": row])
     }
     
     override func mouseDragged(with event: NSEvent) {
-        guard let start = startRow else { return }
         let point = convert(event.locationInWindow, from: nil)
         let currentRow = totalRows - 1 - Int(point.y / rowHeight)
-        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": start, "endRow": currentRow])
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["phase": "drag", "endRow": currentRow, "shift": isShift])
     }
     
     override func mouseUp(with event: NSEvent) {
-        guard let start = startRow else { return }
         let point = convert(event.locationInWindow, from: nil)
         let endRow = totalRows - 1 - Int(point.y / rowHeight)
-        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": start, "endRow": endRow])
-        startRow = nil
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["phase": "up", "endRow": endRow, "shift": isShift])
     }
 }
 
@@ -797,6 +806,16 @@ private class ColumnHeaderOverlay: NSView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for trackingArea in self.trackingAreas {
+            self.removeTrackingArea(trackingArea)
+        }
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .mouseMoved, .activeInKeyWindow, .inVisibleRect, .enabledDuringMouseDrag]
+        let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+        self.addTrackingArea(trackingArea)
+    }
+    
     override func hitTest(_ point: NSPoint) -> NSView? {
         return self
     }
@@ -808,23 +827,23 @@ private class ColumnHeaderOverlay: NSView {
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         let column = Int(point.x / cellWidth)
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["phase": "down", "endColumn": column, "shift": isShift])
         startColumn = column
-        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": column, "endColumn": column])
     }
     
     override func mouseDragged(with event: NSEvent) {
-        guard let start = startColumn else { return }
         let point = convert(event.locationInWindow, from: nil)
         let currentColumn = Int(point.x / cellWidth)
-        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": start, "endColumn": currentColumn])
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["phase": "drag", "endColumn": currentColumn, "shift": isShift])
     }
     
     override func mouseUp(with event: NSEvent) {
-        guard let start = startColumn else { return }
         let point = convert(event.locationInWindow, from: nil)
         let endColumn = Int(point.x / cellWidth)
-        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": start, "endColumn": endColumn])
-        startColumn = nil
+        let isShift = event.modifierFlags.contains(.shift)
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["phase": "up", "endColumn": endColumn, "shift": isShift])
     }
 }
 
@@ -918,11 +937,18 @@ fileprivate class DataTableWrapper: NSView {
     private var textFields: [[NSTextField]] = []
     private var gridOverlay: DataGridOverlay!
     private var activeCell: (row: Int, column: Int)? = nil
-    private var selectionStart: (row: Int, column: Int)?
-    private var selectionEnd: (row: Int, column: Int)?
+    var selectionStart: (row: Int, column: Int)?
+    var selectionEnd: (row: Int, column: Int)?
+    private var rowHeaderSelectionAnchor: Int?
+    private var columnHeaderSelectionAnchor: Int?
     private var selectionView: NSView?
     private var resizeHandler: ResizeHandler?
     private var isResizingSelection: Bool = false
+    private var isDraggingSelection: Bool = false
+    private var dragStartPoint: NSPoint?
+    private var originalSelectionStart: (row: Int, column: Int)?
+    private var originalSelectionEnd: (row: Int, column: Int)?
+    private var originalSelectionData: [[String]]?
 
     init(frame: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int) {
         self.dataModel = dataModel
@@ -969,7 +995,7 @@ fileprivate class DataTableWrapper: NSView {
                 let font = NSFont.systemFont(ofSize: 9, weight: .semibold)
                 let textHeight = font.ascender + abs(font.descender)
                 let textFieldFrame = NSRect(x: 0, y: (rowHeight - textHeight) / 2, width: 100, height: textHeight)
-                let textField = TextField(frame: textFieldFrame)
+                let textField = CellTextField(frame: textFieldFrame)
                 textField.stringValue = dataModel.getValue(row: row, column: col)
                 textField.isBordered = false
                 textField.backgroundColor = .clear
@@ -1011,28 +1037,60 @@ fileprivate class DataTableWrapper: NSView {
             }
         }
         
+        if let selView = selectionView {
+            if selView.frame.contains(localPoint) {
+                let pointInSel = selView.convert(globalPoint, from: nil)
+                if selView.bounds.insetBy(dx: 4, dy: 4).contains(pointInSel) {
+                    isDraggingSelection = true
+                    dragStartPoint = localPoint
+                    originalSelectionStart = selectionStart
+                    originalSelectionEnd = selectionEnd
+                    if let selStart = selectionStart, let selEnd = selectionEnd {
+                        let minRow = min(selStart.row, selEnd.row)
+                        let maxRow = max(selStart.row, selEnd.row)
+                        let minCol = min(selStart.column, selEnd.column)
+                        let maxCol = max(selStart.column, selEnd.column)
+                        originalSelectionData = []
+                        for r in minRow...maxRow {
+                            var rowData: [String] = []
+                            for c in minCol...maxCol {
+                                rowData.append(dataModel.getValue(row: r, column: c))
+                            }
+                            originalSelectionData?.append(rowData)
+                        }
+                    }
+                    return
+                }
+            }
+        }
+        
         guard let (row, col) = cellIndex(at: localPoint) else {
             clearSelection()
             return
         }
-        
-        if let s = selectionStart, let e = selectionEnd {
-            let minRow = min(s.row, e.row)
-            let maxRow = max(s.row, e.row)
-            let minCol = min(s.column, e.column)
-            let maxCol = max(s.column, e.column)
-            if !(row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
-                clearSelection()
+        handleCellClick(row: row, column: col, event: event)
+    }
+    
+    func handleCellClick(row: Int, column: Int, event: NSEvent) {
+        if event.modifierFlags.contains(.shift), let anchor = selectionStart, let currentEnd = selectionEnd {
+            if anchor.column == 0 && currentEnd.column == totalColumns - 1 {
+                selectionEnd = (row, totalColumns - 1)
+            } else if anchor.row == 0 && currentEnd.row == totalRows - 1 {
+                selectionEnd = (totalRows - 1, column)
+            } else {
+                selectionEnd = (row, column)
             }
+        } else {
+            clearSelection()
+            selectionStart = (row, column)
+            selectionEnd = (row, column)
         }
         
-        selectionStart = (row, col)
-        selectionEnd = (row, col)
         activeCell = nil
         updateCellHighlight()
         
         selectionView?.removeFromSuperview()
-        let selView = NSView(frame: .zero)
+        let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
         selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
         selView.layer?.borderColor = NSColor.green.cgColor
@@ -1052,8 +1110,52 @@ fileprivate class DataTableWrapper: NSView {
     
     override func mouseDragged(with event: NSEvent) {
         let localPoint = convert(event.locationInWindow, from: nil)
-        if let _ = selectionStart, let (row, col) = cellIndex(at: localPoint) {
-            selectionEnd = (row, col)
+        if isDraggingSelection {
+            let dx = localPoint.x - (dragStartPoint?.x ?? 0)
+            let dy = localPoint.y - (dragStartPoint?.y ?? 0)
+            let deltaCol = Int(round(dx / 100))
+            let deltaRow = -Int(round(dy / rowHeight))
+            if let origStart = originalSelectionStart, let origEnd = originalSelectionEnd {
+                var newStartRow = origStart.row + deltaRow
+                var newEndRow = origEnd.row + deltaRow
+                var newStartCol = origStart.column + deltaCol
+                var newEndCol = origEnd.column + deltaCol
+                if newStartRow < 0 {
+                    newStartRow = 0
+                    newEndRow = newStartRow + (origEnd.row - origStart.row)
+                }
+                if newEndRow >= totalRows {
+                    newEndRow = totalRows - 1
+                    newStartRow = newEndRow - (origEnd.row - origStart.row)
+                }
+                if newStartCol < 0 {
+                    newStartCol = 0
+                    newEndCol = newStartCol + (origEnd.column - origStart.column)
+                }
+                if newEndCol >= totalColumns {
+                    newEndCol = totalColumns - 1
+                    newStartCol = newEndCol - (origEnd.column - origStart.column)
+                }
+                selectionStart = (newStartRow, newStartCol)
+                selectionEnd = (newEndRow, newEndCol)
+                updateCellHighlight()
+                updateSelectionViewFrame()
+            }
+            return
+        }
+        
+        if let (row, col) = cellIndex(at: localPoint), let anchor = selectionStart, let currentEnd = selectionEnd {
+            if event.modifierFlags.contains(.shift) {
+                if anchor.column == 0 && currentEnd.column == totalColumns - 1 {
+                    selectionEnd = (row, totalColumns - 1)
+                } else if anchor.row == 0 && currentEnd.row == totalRows - 1 {
+                    selectionEnd = (totalRows - 1, col)
+                } else {
+                    selectionEnd = (row, col)
+                }
+            } else {
+                selectionEnd = (row, col)
+            }
             updateCellHighlight()
             updateSelectionViewFrame()
         }
@@ -1062,6 +1164,46 @@ fileprivate class DataTableWrapper: NSView {
     override func mouseUp(with event: NSEvent) {
         if isResizingSelection {
             isResizingSelection = false
+        }
+        if isDraggingSelection {
+            if let origStart = originalSelectionStart,
+               let origEnd = originalSelectionEnd,
+               let origData = originalSelectionData,
+               let selStart = selectionStart,
+               let selEnd = selectionEnd {
+                let origMinRow = min(origStart.row, origEnd.row)
+                let origMaxRow = max(origStart.row, origEnd.row)
+                let origMinCol = min(origStart.column, origEnd.column)
+                let origMaxCol = max(origStart.column, origEnd.column)
+                let newMinRow = min(selStart.row, selEnd.row)
+                let newMaxRow = max(selStart.row, selEnd.row)
+                let newMinCol = min(selStart.column, selEnd.column)
+                let newMaxCol = max(selStart.column, selEnd.column)
+                
+                if (origMaxRow - origMinRow) == (newMaxRow - newMinRow) && (origMaxCol - origMinCol) == (newMaxCol - newMinCol) {
+                    for r in 0..<(origMaxRow - origMinRow + 1) {
+                        for c in 0..<(origMaxCol - origMinCol + 1) {
+                            dataModel.updateCell(row: newMinRow + r, column: newMinCol + c, value: origData[r][c])
+                        }
+                    }
+                    
+                    if !(origMinRow == newMinRow && origMinCol == newMinCol) {
+                        for r in origMinRow...origMaxRow {
+                            for c in origMinCol...origMaxCol {
+                                if r < newMinRow || r > newMaxRow || c < newMinCol || c > newMaxCol {
+                                    dataModel.updateCell(row: r, column: c, value: "")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            isDraggingSelection = false
+            dragStartPoint = nil
+            originalSelectionStart = nil
+            originalSelectionEnd = nil
+            originalSelectionData = nil
+            return
         }
         if let s = selectionStart, let e = selectionEnd,
            (s.row != e.row || s.column != e.column) {
@@ -1115,8 +1257,8 @@ fileprivate class DataTableWrapper: NSView {
                     let container = textField.superview!
                     if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
                         container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
-                        container.layer?.borderColor = NSColor.green.cgColor
-                        container.layer?.borderWidth = 2
+                        container.layer?.borderColor = NSColor.clear.cgColor
+                        container.layer?.borderWidth = 0
                     } else {
                         container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
                         container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
@@ -1159,7 +1301,7 @@ fileprivate class DataTableWrapper: NSView {
         updateSelectionViewFrame()
         
         if selectionView == nil {
-            let selView = NSView(frame: .zero)
+            let selView = DraggableSelectionView(frame: .zero)
             selView.wantsLayer = true
             selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
             selView.layer?.borderColor = NSColor.green.cgColor
@@ -1208,15 +1350,25 @@ fileprivate class DataTableWrapper: NSView {
     
     @objc func handleRowHeaderSelection(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
-              let startRow = userInfo["startRow"] as? Int,
-              let endRow = userInfo["endRow"] as? Int else { return }
-        let minRow = min(startRow, endRow)
-        let maxRow = max(startRow, endRow)
+              let clickedRow = userInfo["endRow"] as? Int,
+              let phase = userInfo["phase"] as? String else { return }
+        let isShift = userInfo["shift"] as? Bool ?? false
+        if phase == "down" {
+            if !isShift {
+                rowHeaderSelectionAnchor = clickedRow
+            } else if rowHeaderSelectionAnchor == nil {
+                rowHeaderSelectionAnchor = clickedRow
+            }
+        }
+        
+        guard let anchorRow = rowHeaderSelectionAnchor else { return }
+        let minRow = min(anchorRow, clickedRow)
+        let maxRow = max(anchorRow, clickedRow)
         selectionStart = (minRow, 0)
         selectionEnd = (maxRow, totalColumns - 1)
         activeCell = nil
         selectionView?.removeFromSuperview()
-        let selView = NSView(frame: .zero)
+        let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
         selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
         selView.layer?.borderColor = NSColor.green.cgColor
@@ -1235,15 +1387,25 @@ fileprivate class DataTableWrapper: NSView {
     
     @objc func handleColumnHeaderSelection(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
-              let startCol = userInfo["startColumn"] as? Int,
-              let endCol = userInfo["endColumn"] as? Int else { return }
-        let minCol = min(startCol, endCol)
-        let maxCol = max(startCol, endCol)
+              let clickedCol = userInfo["endColumn"] as? Int,
+              let phase = userInfo["phase"] as? String else { return }
+        let isShift = userInfo["shift"] as? Bool ?? false
+        if phase == "down" {
+            if !isShift {
+                columnHeaderSelectionAnchor = clickedCol
+            } else if columnHeaderSelectionAnchor == nil {
+                columnHeaderSelectionAnchor = clickedCol
+            }
+        }
+        
+        guard let anchorCol = columnHeaderSelectionAnchor else { return }
+        let minCol = min(anchorCol, clickedCol)
+        let maxCol = max(anchorCol, clickedCol)
         selectionStart = (0, minCol)
         selectionEnd = (totalRows - 1, maxCol)
         activeCell = nil
         selectionView?.removeFromSuperview()
-        let selView = NSView(frame: .zero)
+        let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
         selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
         selView.layer?.borderColor = NSColor.green.cgColor
@@ -1265,7 +1427,7 @@ fileprivate class DataTableWrapper: NSView {
         selectionEnd = (totalRows - 1, totalColumns - 1)
         activeCell = nil
         selectionView?.removeFromSuperview()
-        let selView = NSView(frame: .zero)
+        let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
         selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
         selView.layer?.borderColor = NSColor.green.cgColor
@@ -1387,13 +1549,33 @@ private class ResizeHandler: NSView {
     }
 }
 
-class TextField: NSTextField {
+private class DraggableSelectionView: NSView {
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        addCursorRect(bounds, cursor: NSCursor.openHand)
+    }
+    override func mouseDown(with event: NSEvent) {
+         self.superview?.mouseDown(with: event)
+    }
+    override func mouseDragged(with event: NSEvent) {
+         self.superview?.mouseDragged(with: event)
+    }
+    override func mouseUp(with event: NSEvent) {
+         self.superview?.mouseUp(with: event)
+    }
+}
+
+class CellTextField: NSTextField {
     override func mouseDown(with event: NSEvent) {
         if let container = self.superview, let tableView = container.superview as? DataTableWrapper {
             let tag = self.tag
             let row = tag / tableView.totalColumns
             let col = tag % tableView.totalColumns
-            tableView.activateCell(row: row, column: col)
+            if event.modifierFlags.contains(.shift) {
+                tableView.handleCellClick(row: row, column: col, event: event)
+            } else {
+                tableView.activateCell(row: row, column: col)
+            }
         }
         
         if event.clickCount == 2 {
