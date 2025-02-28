@@ -25,6 +25,7 @@ struct TabularView: View {
     @State private var showInsertMenu = false
     @State private var showFilterMenu = false
     @State private var labelRects: [CGRect] = Array(repeating: .zero, count: 6)
+    @State private var cellSelection: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)? = nil
     
     func columnLabel(for index: Int) -> String {
         var columnName = ""
@@ -286,7 +287,7 @@ struct TabularView: View {
                         borderColor: Color.clear,
                         borderWidth: 0,
                         topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 5,
-                        shadowColor: .white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                        shadowColor: Color.white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
                     )
                     .padding(.trailing, 5)
                     .padding(.leading, 15)
@@ -313,12 +314,16 @@ struct TabularView: View {
                                 .frame(width: rowNumberWidth, height: rowHeight)
                                 .foregroundColor(Color.gray.opacity(0.3))
                                 .border(Color.gray.opacity(0.5), width: 0.5)
+                                .onTapGesture {
+                                    NotificationCenter.default.post(name: Notification.Name("FullSheetSelection"), object: nil)
+                                }
                             
-                            TableRowNumbers(
+                            RowNumbers(
                                 rowHeight: rowHeight,
                                 rowNumberWidth: rowNumberWidth,
                                 totalRows: totalRows,
-                                verticalOffset: $verticalOffset
+                                verticalOffset: $verticalOffset,
+                                selectedRange: cellSelection.map { ($0.startRow, $0.endRow) }
                             )
                         }
                         .zIndex(2)
@@ -330,11 +335,12 @@ struct TabularView: View {
                                     AnyView(
                                         HStack(spacing: 0) {
                                             ForEach(0..<totalColumns, id: \.self) { colIndex in
+                                                let isSelected = cellSelection != nil && (colIndex >= cellSelection!.startColumn && colIndex <= cellSelection!.endColumn)
                                                 Text(columnLabel(for: colIndex + 1))
                                                     .font(.system(size: 10, weight: .bold))
                                                     .padding(.horizontal, 10)
                                                     .frame(width: 100, height: rowHeight)
-                                                    .background(Color(hex: 0x212121))
+                                                    .background(isSelected ? Color(hex: 0x2F2F2F) : Color(hex: 0x212121))
                                                     .border(Color.gray.opacity(0.5), width: 0.5)
                                             }
                                         }
@@ -539,6 +545,17 @@ struct TabularView: View {
             }
         }
         .coordinateSpace(name: "MenuBar")
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("CellSelectionChanged"))) { notification in
+            if let info = notification.userInfo,
+               let startRow = info["startRow"] as? Int,
+               let endRow = info["endRow"] as? Int,
+               let startColumn = info["startColumn"] as? Int,
+               let endColumn = info["endColumn"] as? Int {
+                self.cellSelection = (startRow, endRow, startColumn, endColumn)
+            } else {
+                self.cellSelection = nil
+            }
+        }
         .onAppear {
             loadSheet()
         }
@@ -561,12 +578,13 @@ struct TabularView: View {
     }
 }
 
-fileprivate struct TableRowNumbers: NSViewRepresentable {
+fileprivate struct RowNumbers: NSViewRepresentable {
     let rowHeight: CGFloat
     let rowNumberWidth: CGFloat
     let totalRows: Int
     @Binding var verticalOffset: CGFloat
-
+    let selectedRange: (startRow: Int, endRow: Int)?
+    
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = false
@@ -582,7 +600,9 @@ fileprivate struct TableRowNumbers: NSViewRepresentable {
             let container = NSView(frame: containerFrame)
             
             container.wantsLayer = true
-            container.layer?.backgroundColor = NSColor(hex: 0x212121).cgColor
+            
+            let isSelected = selectedRange != nil && (row >= selectedRange!.startRow && row <= selectedRange!.endRow)
+            container.layer?.backgroundColor = isSelected ? NSColor(hex: 0x2F2F2F).cgColor : NSColor(hex: 0x212121).cgColor
             container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
             container.layer?.borderWidth = 0.5
             
@@ -610,6 +630,10 @@ fileprivate struct TableRowNumbers: NSViewRepresentable {
             scrollView.contentView.scroll(to: NSPoint(x: 0, y: maxVerticalOffset))
         }
         
+        let overlay = RowNumberOverlay(frame: contentView.bounds, totalRows: totalRows, rowHeight: rowHeight)
+        overlay.autoresizingMask = [.width, .height]
+        contentView.addSubview(overlay)
+        
         return scrollView
     }
 
@@ -618,6 +642,55 @@ fileprivate struct TableRowNumbers: NSViewRepresentable {
         if abs(currentY - verticalOffset) > 0.1 {
             nsView.contentView.scroll(to: NSPoint(x: 0, y: verticalOffset))
         }
+        if let contentView = nsView.documentView {
+            for subview in contentView.subviews {
+                if subview is RowNumberOverlay { continue }
+                let rowIndex = totalRows - 1 - Int(subview.frame.origin.y / rowHeight)
+                let isSelected = selectedRange != nil && (rowIndex >= selectedRange!.startRow && rowIndex <= selectedRange!.endRow)
+                subview.layer?.backgroundColor = isSelected ? NSColor(hex: 0x2F2F2F).cgColor : NSColor(hex: 0x212121).cgColor
+            }
+        }
+    }
+}
+
+private class RowNumberOverlay: NSView {
+    let totalRows: Int
+    let rowHeight: CGFloat
+    var startRow: Int?
+    
+    init(frame frameRect: NSRect, totalRows: Int, rowHeight: CGFloat) {
+        self.totalRows = totalRows
+        self.rowHeight = rowHeight
+        super.init(frame: frameRect)
+        self.wantsLayer = true
+        self.layer?.backgroundColor = NSColor.clear.cgColor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let row = totalRows - 1 - Int(point.y / rowHeight)
+        startRow = row
+        
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": row, "endRow": row])
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        guard let start = startRow else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        let currentRow = totalRows - 1 - Int(point.y / rowHeight)
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": start, "endRow": currentRow])
+    }
+    
+    override func mouseUp(with event: NSEvent) {
+        guard let start = startRow else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        let endRow = totalRows - 1 - Int(point.y / rowHeight)
+        NotificationCenter.default.post(name: Notification.Name("RowHeaderSelectionChanged"), object: nil, userInfo: ["startRow": start, "endRow": endRow])
+        startRow = nil
     }
 }
 
@@ -652,6 +725,10 @@ struct ColumnHeaders: NSViewRepresentable {
         hostingView.widthAnchor.constraint(greaterThanOrEqualTo: scrollView.contentView.widthAnchor).isActive = true
         scrollView.contentView.scroll(to: NSPoint(x: horizontalOffset, y: 0))
 
+        let overlay = ColumnHeaderOverlay(frame: hostingView.frame, totalColumns: totalColumns, cellWidth: 100)
+        overlay.autoresizingMask = [.width, .height]
+        scrollView.contentView.addSubview(overlay, positioned: .above, relativeTo: hostingView)
+        
         NotificationCenter.default.addObserver(
             context.coordinator,
             selector: #selector(context.coordinator.scrollViewDidScroll(_:)),
@@ -700,6 +777,54 @@ struct ColumnHeaders: NSViewRepresentable {
     static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
         NotificationCenter.default.removeObserver(coordinator)
         nsView.documentView = nil
+    }
+}
+
+private class ColumnHeaderOverlay: NSView {
+    let totalColumns: Int
+    let cellWidth: CGFloat
+    var startColumn: Int?
+    
+    init(frame frameRect: NSRect, totalColumns: Int, cellWidth: CGFloat) {
+        self.totalColumns = totalColumns
+        self.cellWidth = cellWidth
+        super.init(frame: frameRect)
+        self.wantsLayer = true
+        self.layer?.backgroundColor = NSColor.clear.cgColor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return self
+    }
+    
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        return true
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let column = Int(point.x / cellWidth)
+        startColumn = column
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": column, "endColumn": column])
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        guard let start = startColumn else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        let currentColumn = Int(point.x / cellWidth)
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": start, "endColumn": currentColumn])
+    }
+    
+    override func mouseUp(with event: NSEvent) {
+        guard let start = startColumn else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        let endColumn = Int(point.x / cellWidth)
+        NotificationCenter.default.post(name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil, userInfo: ["startColumn": start, "endColumn": endColumn])
+        startColumn = nil
     }
 }
 
@@ -792,6 +917,12 @@ fileprivate class DataTableWrapper: NSView {
     let totalColumns: Int
     private var textFields: [[NSTextField]] = []
     private var gridOverlay: DataGridOverlay!
+    private var activeCell: (row: Int, column: Int)? = nil
+    private var selectionStart: (row: Int, column: Int)?
+    private var selectionEnd: (row: Int, column: Int)?
+    private var selectionView: NSView?
+    private var resizeHandler: ResizeHandler?
+    private var isResizingSelection: Bool = false
 
     init(frame: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int) {
         self.dataModel = dataModel
@@ -807,6 +938,12 @@ fileprivate class DataTableWrapper: NSView {
         gridOverlay.wantsLayer = true
         gridOverlay.layer?.zPosition = 1
         addSubview(gridOverlay)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handleRowHeaderSelection(_:)), name: Notification.Name("RowHeaderSelectionChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleColumnHeaderSelection(_:)), name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleFullSheetSelection(_:)), name: Notification.Name("FullSheetSelection"), object: nil)
+        
+        self.addTrackingArea(NSTrackingArea(rect: self.bounds, options: [.mouseEnteredAndExited, .activeAlways, .mouseMoved], owner: self, userInfo: nil))
     }
     
     required init?(coder: NSCoder) {
@@ -832,7 +969,7 @@ fileprivate class DataTableWrapper: NSView {
                 let font = NSFont.systemFont(ofSize: 9, weight: .semibold)
                 let textHeight = font.ascender + abs(font.descender)
                 let textFieldFrame = NSRect(x: 0, y: (rowHeight - textHeight) / 2, width: 100, height: textHeight)
-                let textField = NSTextField(frame: textFieldFrame)
+                let textField = TextField(frame: textFieldFrame)
                 textField.stringValue = dataModel.getValue(row: row, column: col)
                 textField.isBordered = false
                 textField.backgroundColor = .clear
@@ -847,11 +984,195 @@ fileprivate class DataTableWrapper: NSView {
                 if let cell = textField.cell as? NSTextFieldCell {
                     cell.lineBreakMode = .byTruncatingTail
                 }
+                textField.isEnabled = true
                 container.addSubview(textField)
                 addSubview(container)
                 rowFields.append(textField)
             }
             textFields.append(rowFields)
+        }
+        updateCellHighlight()
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        if let active = activeCell {
+            textFields[active.row][active.column].abortEditing()
+            window?.makeFirstResponder(nil)
+        }
+        
+        let globalPoint = event.locationInWindow
+        let localPoint = convert(globalPoint, from: nil)
+        
+        if let selView = selectionView, let resizeHandler = resizeHandler {
+            let pointInSel = selView.convert(globalPoint, from: nil)
+            if resizeHandler.frame.contains(pointInSel) {
+                isResizingSelection = true
+                return
+            }
+        }
+        
+        guard let (row, col) = cellIndex(at: localPoint) else {
+            clearSelection()
+            return
+        }
+        
+        if let s = selectionStart, let e = selectionEnd {
+            let minRow = min(s.row, e.row)
+            let maxRow = max(s.row, e.row)
+            let minCol = min(s.column, e.column)
+            let maxCol = max(s.column, e.column)
+            if !(row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
+                clearSelection()
+            }
+        }
+        
+        selectionStart = (row, col)
+        selectionEnd = (row, col)
+        activeCell = nil
+        updateCellHighlight()
+        
+        selectionView?.removeFromSuperview()
+        let selView = NSView(frame: .zero)
+        selView.wantsLayer = true
+        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+        selView.layer?.borderColor = NSColor.green.cgColor
+        selView.layer?.borderWidth = 2
+        self.selectionView = selView
+        self.addSubview(selView, positioned: .above, relativeTo: nil)
+        
+        resizeHandler?.removeFromSuperview()
+        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+        handler.wantsLayer = true
+        handler.layer?.backgroundColor = NSColor.green.cgColor
+        self.resizeHandler = handler
+        selView.addSubview(handler)
+        
+        updateSelectionViewFrame()
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        let localPoint = convert(event.locationInWindow, from: nil)
+        if let _ = selectionStart, let (row, col) = cellIndex(at: localPoint) {
+            selectionEnd = (row, col)
+            updateCellHighlight()
+            updateSelectionViewFrame()
+        }
+    }
+    
+    override func mouseUp(with event: NSEvent) {
+        if isResizingSelection {
+            isResizingSelection = false
+        }
+        if let s = selectionStart, let e = selectionEnd,
+           (s.row != e.row || s.column != e.column) {
+            activeCell = nil
+            window?.makeFirstResponder(nil)
+        }
+    }
+    
+    private func cellIndex(at point: NSPoint) -> (Int, Int)? {
+        let col = Int(point.x / 100)
+        let row = totalRows - 1 - Int(point.y / rowHeight)
+        if col >= 0 && col < totalColumns && row >= 0 && row < totalRows {
+            return (row, col)
+        }
+        return nil
+    }
+    
+    private func updateSelectionViewFrame() {
+        guard let start = selectionStart, let end = selectionEnd, let selView = selectionView else { return }
+        let minRow = min(start.row, end.row)
+        let maxRow = max(start.row, end.row)
+        let minCol = min(start.column, end.column)
+        let maxCol = max(start.column, end.column)
+        
+        let x = CGFloat(minCol) * 100
+        let width = CGFloat(maxCol - minCol + 1) * 100
+        let y = CGFloat(totalRows - 1 - maxRow) * rowHeight
+        let height = CGFloat(maxRow - minRow + 1) * rowHeight
+        
+        let newFrame = NSRect(x: x, y: y, width: width, height: height)
+        selView.frame = newFrame
+        
+        let handlerSize: CGFloat = 16
+        resizeHandler?.frame = NSRect(
+            x: selView.bounds.width - handlerSize/2,
+            y: -handlerSize/2,
+            width: handlerSize,
+            height: handlerSize
+        )
+    }
+    
+    private func updateCellHighlight() {
+        if let start = selectionStart, let end = selectionEnd {
+            let minRow = min(start.row, end.row)
+            let maxRow = max(start.row, end.row)
+            let minCol = min(start.column, end.column)
+            let maxCol = max(start.column, end.column)
+            for row in 0..<totalRows {
+                for col in 0..<totalColumns {
+                    let textField = textFields[row][col]
+                    let container = textField.superview!
+                    if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
+                        container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+                        container.layer?.borderColor = NSColor.green.cgColor
+                        container.layer?.borderWidth = 2
+                    } else {
+                        container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+                        container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                        container.layer?.borderWidth = 0.5
+                    }
+                }
+            }
+            
+            NotificationCenter.default.post(name: Notification.Name("CellSelectionChanged"), object: nil, userInfo: ["startRow": minRow, "endRow": maxRow, "startColumn": minCol, "endColumn": maxCol])
+        } else {
+            for row in 0..<totalRows {
+                for col in 0..<totalColumns {
+                    let textField = textFields[row][col]
+                    let container = textField.superview!
+                    container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+                    container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                    container.layer?.borderWidth = 0.5
+                }
+            }
+            
+            NotificationCenter.default.post(name: Notification.Name("CellSelectionChanged"), object: nil, userInfo: nil)
+        }
+    }
+    
+    func activateCell(row: Int, column: Int) {
+        if let s = selectionStart, let e = selectionEnd,
+           (s.row != e.row || s.column != e.column) {
+            clearSelection()
+        }
+        
+        if let old = activeCell, (old.row != row || old.column != column) {
+            textFields[old.row][old.column].abortEditing()
+            window?.makeFirstResponder(nil)
+        }
+        
+        activeCell = (row, column)
+        selectionStart = (row, column)
+        selectionEnd = (row, column)
+        updateCellHighlight()
+        updateSelectionViewFrame()
+        
+        if selectionView == nil {
+            let selView = NSView(frame: .zero)
+            selView.wantsLayer = true
+            selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+            selView.layer?.borderColor = NSColor.green.cgColor
+            selView.layer?.borderWidth = 2
+            selectionView = selView
+            addSubview(selView, positioned: .above, relativeTo: nil)
+            
+            let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+            handler.wantsLayer = true
+            handler.layer?.backgroundColor = NSColor.green.cgColor
+            resizeHandler = handler
+            selView.addSubview(handler)
+            updateSelectionViewFrame()
         }
     }
     
@@ -864,15 +1185,119 @@ fileprivate class DataTableWrapper: NSView {
                 }
             }
         }
+        updateCellHighlight()
     }
     
     override var isFlipped: Bool {
         return false
     }
+    
+    private func clearSelection() {
+        if let active = activeCell {
+            textFields[active.row][active.column].abortEditing()
+            window?.makeFirstResponder(nil)
+        }
+        activeCell = nil
+        selectionStart = nil
+        selectionEnd = nil
+        selectionView?.removeFromSuperview()
+        selectionView = nil
+        resizeHandler = nil
+        updateCellHighlight()
+    }
+    
+    @objc func handleRowHeaderSelection(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let startRow = userInfo["startRow"] as? Int,
+              let endRow = userInfo["endRow"] as? Int else { return }
+        let minRow = min(startRow, endRow)
+        let maxRow = max(startRow, endRow)
+        selectionStart = (minRow, 0)
+        selectionEnd = (maxRow, totalColumns - 1)
+        activeCell = nil
+        selectionView?.removeFromSuperview()
+        let selView = NSView(frame: .zero)
+        selView.wantsLayer = true
+        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+        selView.layer?.borderColor = NSColor.green.cgColor
+        selView.layer?.borderWidth = 2
+        selectionView = selView
+        addSubview(selView, positioned: .above, relativeTo: nil)
+        resizeHandler?.removeFromSuperview()
+        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+        handler.wantsLayer = true
+        handler.layer?.backgroundColor = NSColor.green.cgColor
+        resizeHandler = handler
+        selView.addSubview(handler)
+        updateCellHighlight()
+        updateSelectionViewFrame()
+    }
+    
+    @objc func handleColumnHeaderSelection(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let startCol = userInfo["startColumn"] as? Int,
+              let endCol = userInfo["endColumn"] as? Int else { return }
+        let minCol = min(startCol, endCol)
+        let maxCol = max(startCol, endCol)
+        selectionStart = (0, minCol)
+        selectionEnd = (totalRows - 1, maxCol)
+        activeCell = nil
+        selectionView?.removeFromSuperview()
+        let selView = NSView(frame: .zero)
+        selView.wantsLayer = true
+        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+        selView.layer?.borderColor = NSColor.green.cgColor
+        selView.layer?.borderWidth = 2
+        selectionView = selView
+        addSubview(selView, positioned: .above, relativeTo: nil)
+        resizeHandler?.removeFromSuperview()
+        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+        handler.wantsLayer = true
+        handler.layer?.backgroundColor = NSColor.green.cgColor
+        resizeHandler = handler
+        selView.addSubview(handler)
+        updateCellHighlight()
+        updateSelectionViewFrame()
+    }
+    
+    @objc func handleFullSheetSelection(_ notification: Notification) {
+        selectionStart = (0, 0)
+        selectionEnd = (totalRows - 1, totalColumns - 1)
+        activeCell = nil
+        selectionView?.removeFromSuperview()
+        let selView = NSView(frame: .zero)
+        selView.wantsLayer = true
+        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+        selView.layer?.borderColor = NSColor.green.cgColor
+        selView.layer?.borderWidth = 2
+        selectionView = selView
+        addSubview(selView, positioned: .above, relativeTo: nil)
+        resizeHandler?.removeFromSuperview()
+        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+        handler.wantsLayer = true
+        handler.layer?.backgroundColor = NSColor.green.cgColor
+        resizeHandler = handler
+        selView.addSubview(handler)
+        updateCellHighlight()
+        updateSelectionViewFrame()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
 }
 
 extension DataTableWrapper: NSTextFieldDelegate {
-    func controlTextDidChange(_ obj: Notification) {
+    func controlTextDidBeginEditing(_ obj: Notification) {
+        guard let textField = obj.object as? NSTextField else { return }
+        let tag = textField.tag
+        let row = tag / totalColumns
+        let col = tag % totalColumns
+        activeCell = (row, col)
+        updateCellHighlight()
+    }
+    
+    func controlTextDidEndEditing(_ obj: Notification) {
         guard let textField = obj.object as? NSTextField else { return }
         let tag = textField.tag
         let row = tag / totalColumns
@@ -952,5 +1377,27 @@ private class DataGridOverlay: NSView {
         
         path.lineWidth = 0.5
         path.stroke()
+    }
+}
+
+private class ResizeHandler: NSView {
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        addCursorRect(bounds, cursor: .crosshair)
+    }
+}
+
+class TextField: NSTextField {
+    override func mouseDown(with event: NSEvent) {
+        if let container = self.superview, let tableView = container.superview as? DataTableWrapper {
+            let tag = self.tag
+            let row = tag / tableView.totalColumns
+            let col = tag % tableView.totalColumns
+            tableView.activateCell(row: row, column: col)
+        }
+        
+        if event.clickCount == 2 {
+            super.mouseDown(with: event)
+        }
     }
 }
