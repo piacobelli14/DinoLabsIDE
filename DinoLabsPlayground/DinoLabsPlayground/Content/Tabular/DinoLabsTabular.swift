@@ -1476,6 +1476,44 @@ fileprivate class DataTableWrapper: NSView {
         updateSelectionViewFrame()
     }
     
+    override var acceptsFirstResponder: Bool {
+        return true
+    }
+    
+    override func keyDown(with event: NSEvent) {
+        guard let active = activeCell else {
+            super.keyDown(with: event)
+            return
+        }
+        let key = event.keyCode
+        var newRow = active.row
+        var newCol = active.column
+        switch key {
+        case 123:
+            newCol = max(0, active.column - 1)
+        case 124:
+            newCol = min(totalColumns - 1, active.column + 1)
+        case 125:
+            newRow = min(totalRows - 1, active.row + 1)
+        case 126:
+            newRow = max(0, active.row - 1)
+        case 48:
+            newCol = min(totalColumns - 1, active.column + 1)
+        case 36, 76:
+            newRow = min(totalRows - 1, active.row + 1)
+        default:
+            super.keyDown(with: event)
+            return
+        }
+        activeCell = (newRow, newCol)
+        updateCellHighlight()
+        let newTag = newRow * totalColumns + newCol
+        if newTag < textFields.flatMap({ $0 }).count {
+            let newField = textFields[newRow][newCol]
+            window?.makeFirstResponder(newField)
+        }
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -1497,6 +1535,44 @@ extension DataTableWrapper: NSTextFieldDelegate {
         let row = tag / totalColumns
         let col = tag % totalColumns
         dataModel.updateCell(row: row, column: col, value: textField.stringValue)
+    }
+    
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard let current = activeCell else { return false }
+        var newRow = current.row
+        var newCol = current.column
+        
+        if commandSelector == #selector(NSResponder.moveLeft(_:)) {
+            if textView.selectedRange().location > 0 {
+                return false
+            }
+            newCol = max(0, current.column - 1)
+        } else if commandSelector == #selector(NSResponder.moveRight(_:)) {
+            let textLength = textView.string.count
+            if textView.selectedRange().location < textLength {
+                return false
+            }
+            newCol = min(totalColumns - 1, current.column + 1)
+        } else if commandSelector == #selector(NSResponder.moveUp(_:)) {
+            newRow = max(0, current.row - 1)
+        } else if commandSelector == #selector(NSResponder.moveDown(_:)) {
+            newRow = min(totalRows - 1, current.row + 1)
+        } else if commandSelector == #selector(NSResponder.insertTab(_:)) {
+            newCol = min(totalColumns - 1, current.column + 1)
+        } else if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+            newRow = min(totalRows - 1, current.row + 1)
+        } else {
+            return false
+        }
+        
+        activeCell = (newRow, newCol)
+        updateCellHighlight()
+        let newTag = newRow * totalColumns + newCol
+        if newTag < textFields.flatMap({ $0 }).count {
+            let newField = textFields[newRow][newCol]
+            window?.makeFirstResponder(newField)
+        }
+        return true
     }
 }
 
@@ -1598,6 +1674,17 @@ private class DraggableSelectionView: NSView {
 }
 
 class CellTextField: NSTextField {
+    override func keyDown(with event: NSEvent) {
+        let keysToForward: Set<UInt16> = [123, 124, 125, 126, 36, 76]
+        if keysToForward.contains(event.keyCode) {
+            if let container = self.superview, let tableWrapper = container.superview as? DataTableWrapper {
+                tableWrapper.keyDown(with: event)
+                return
+            }
+        }
+        super.keyDown(with: event)
+    }
+    
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2 {
             super.mouseDown(with: event)
