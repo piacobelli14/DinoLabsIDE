@@ -937,6 +937,8 @@ fileprivate class DataTableWrapper: NSView {
     private var textFields: [[NSTextField]] = []
     private var gridOverlay: DataGridOverlay!
     private var activeCell: (row: Int, column: Int)? = nil
+    private var maybeSingleClickCell: (row: Int, col: Int)?
+    private var userActuallyDragged = false
     var selectionStart: (row: Int, column: Int)?
     var selectionEnd: (row: Int, column: Int)?
     private var rowHeaderSelectionAnchor: Int?
@@ -1021,9 +1023,12 @@ fileprivate class DataTableWrapper: NSView {
     }
     
     override func mouseDown(with event: NSEvent) {
-        if let active = activeCell {
-            textFields[active.row][active.column].abortEditing()
+        userActuallyDragged = false
+        maybeSingleClickCell = nil
+        
+        if let a = activeCell {
             window?.makeFirstResponder(nil)
+            activeCell = nil
         }
         
         let globalPoint = event.locationInWindow
@@ -1068,48 +1073,23 @@ fileprivate class DataTableWrapper: NSView {
             clearSelection()
             return
         }
-        handleCellClick(row: row, column: col, event: event)
-    }
-    
-    func handleCellClick(row: Int, column: Int, event: NSEvent) {
-        if event.modifierFlags.contains(.shift), let anchor = selectionStart, let currentEnd = selectionEnd {
-            if anchor.column == 0 && currentEnd.column == totalColumns - 1 {
-                selectionEnd = (row, totalColumns - 1)
-            } else if anchor.row == 0 && currentEnd.row == totalRows - 1 {
-                selectionEnd = (totalRows - 1, column)
-            } else {
-                selectionEnd = (row, column)
-            }
+        
+        if event.clickCount == 1 && !event.modifierFlags.contains(.shift) {
+            maybeSingleClickCell = (row, col)
         } else {
-            clearSelection()
-            selectionStart = (row, column)
-            selectionEnd = (row, column)
+            handleCellClick(row: row, column: col, event: event)
         }
-        
-        activeCell = nil
-        updateCellHighlight()
-        
-        selectionView?.removeFromSuperview()
-        let selView = DraggableSelectionView(frame: .zero)
-        selView.wantsLayer = true
-        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
-        selView.layer?.borderColor = NSColor.green.cgColor
-        selView.layer?.borderWidth = 2
-        self.selectionView = selView
-        self.addSubview(selView, positioned: .above, relativeTo: nil)
-        
-        resizeHandler?.removeFromSuperview()
-        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
-        handler.wantsLayer = true
-        handler.layer?.backgroundColor = NSColor.green.cgColor
-        self.resizeHandler = handler
-        selView.addSubview(handler)
-        
-        updateSelectionViewFrame()
     }
     
     override func mouseDragged(with event: NSEvent) {
+        if !userActuallyDragged, let (row, col) = maybeSingleClickCell {
+            maybeSingleClickCell = nil
+            handleCellClick(row: row, column: col, event: event)
+            userActuallyDragged = true
+        }
+        
         let localPoint = convert(event.locationInWindow, from: nil)
+        
         if isDraggingSelection {
             let dx = localPoint.x - (dragStartPoint?.x ?? 0)
             let dy = localPoint.y - (dragStartPoint?.y ?? 0)
@@ -1159,6 +1139,8 @@ fileprivate class DataTableWrapper: NSView {
             updateCellHighlight()
             updateSelectionViewFrame()
         }
+        
+        userActuallyDragged = true
     }
     
     override func mouseUp(with event: NSEvent) {
@@ -1205,11 +1187,66 @@ fileprivate class DataTableWrapper: NSView {
             originalSelectionData = nil
             return
         }
+        
+        if let (row, col) = maybeSingleClickCell, !userActuallyDragged {
+            maybeSingleClickCell = nil
+            clearSelection()
+            activateCell(row: row, column: col)
+            return
+        }
+        
         if let s = selectionStart, let e = selectionEnd,
            (s.row != e.row || s.column != e.column) {
             activeCell = nil
             window?.makeFirstResponder(nil)
         }
+    }
+    
+    func handleCellClick(row: Int, column: Int, event: NSEvent) {
+        activeCell = nil
+        
+        if event.modifierFlags.contains(.shift), let anchor = selectionStart, let currentEnd = selectionEnd {
+            if anchor.column == 0 && currentEnd.column == totalColumns - 1 {
+                selectionEnd = (row, totalColumns - 1)
+            } else if anchor.row == 0 && currentEnd.row == totalRows - 1 {
+                selectionEnd = (totalRows - 1, column)
+            } else {
+                selectionEnd = (row, column)
+            }
+        } else {
+            clearSelection()
+            selectionStart = (row, column)
+            selectionEnd = (row, column)
+        }
+        
+        updateCellHighlight()
+        
+        selectionView?.removeFromSuperview()
+        let selView = DraggableSelectionView(frame: .zero)
+        selView.wantsLayer = true
+        selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+        selView.layer?.borderColor = NSColor.green.cgColor
+        selView.layer?.borderWidth = 2
+        self.selectionView = selView
+        self.addSubview(selView, positioned: .above, relativeTo: nil)
+        
+        resizeHandler?.removeFromSuperview()
+        let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
+        handler.wantsLayer = true
+        handler.layer?.backgroundColor = NSColor.green.cgColor
+        self.resizeHandler = handler
+        selView.addSubview(handler)
+        
+        updateSelectionViewFrame()
+    }
+    
+    func activateCell(row: Int, column: Int) {
+        clearSelection()
+        
+        if let old = activeCell, (old.row != row || old.column != column) {
+            window?.makeFirstResponder(nil)
+        }
+        activeCell = (row, column)
     }
     
     private func cellIndex(at point: NSPoint) -> (Int, Int)? {
@@ -1219,6 +1256,10 @@ fileprivate class DataTableWrapper: NSView {
             return (row, col)
         }
         return nil
+    }
+    
+    override var isFlipped: Bool {
+        return false
     }
     
     private func updateSelectionViewFrame() {
@@ -1246,19 +1287,31 @@ fileprivate class DataTableWrapper: NSView {
     }
     
     private func updateCellHighlight() {
-        if let start = selectionStart, let end = selectionEnd {
-            let minRow = min(start.row, end.row)
-            let maxRow = max(start.row, end.row)
-            let minCol = min(start.column, end.column)
-            let maxCol = max(start.column, end.column)
-            for row in 0..<totalRows {
-                for col in 0..<totalColumns {
-                    let textField = textFields[row][col]
-                    let container = textField.superview!
-                    if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
-                        container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
-                        container.layer?.borderColor = NSColor.clear.cgColor
-                        container.layer?.borderWidth = 0
+        for row in 0..<totalRows {
+            for col in 0..<totalColumns {
+                let textField = textFields[row][col]
+                let container = textField.superview!
+                
+                if let active = activeCell, active.row == row && active.column == col {
+                    container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+                    container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                    container.layer?.borderWidth = 0.5
+                } else {
+                    if let start = selectionStart, let end = selectionEnd {
+                        let minRow = min(start.row, end.row)
+                        let maxRow = max(start.row, end.row)
+                        let minCol = min(start.column, end.column)
+                        let maxCol = max(start.column, end.column)
+                        
+                        if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
+                            container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+                            container.layer?.borderColor = NSColor.clear.cgColor
+                            container.layer?.borderWidth = 0
+                        } else {
+                            container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+                            container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                            container.layer?.borderWidth = 0.5
+                        }
                     } else {
                         container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
                         container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
@@ -1266,55 +1319,21 @@ fileprivate class DataTableWrapper: NSView {
                     }
                 }
             }
-            
-            NotificationCenter.default.post(name: Notification.Name("CellSelectionChanged"), object: nil, userInfo: ["startRow": minRow, "endRow": maxRow, "startColumn": minCol, "endColumn": maxCol])
+        }
+        
+        if let start = selectionStart, let end = selectionEnd {
+            let minRow = min(start.row, end.row)
+            let maxRow = max(start.row, end.row)
+            let minCol = min(start.column, end.column)
+            let maxCol = max(start.column, end.column)
+            NotificationCenter.default.post(name: Notification.Name("CellSelectionChanged"), object: nil, userInfo: [
+                "startRow": minRow,
+                "endRow": maxRow,
+                "startColumn": minCol,
+                "endColumn": maxCol
+            ])
         } else {
-            for row in 0..<totalRows {
-                for col in 0..<totalColumns {
-                    let textField = textFields[row][col]
-                    let container = textField.superview!
-                    container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
-                    container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
-                    container.layer?.borderWidth = 0.5
-                }
-            }
-            
             NotificationCenter.default.post(name: Notification.Name("CellSelectionChanged"), object: nil, userInfo: nil)
-        }
-    }
-    
-    func activateCell(row: Int, column: Int) {
-        if let s = selectionStart, let e = selectionEnd,
-           (s.row != e.row || s.column != e.column) {
-            clearSelection()
-        }
-        
-        if let old = activeCell, (old.row != row || old.column != column) {
-            textFields[old.row][old.column].abortEditing()
-            window?.makeFirstResponder(nil)
-        }
-        
-        activeCell = (row, column)
-        selectionStart = (row, column)
-        selectionEnd = (row, column)
-        updateCellHighlight()
-        updateSelectionViewFrame()
-        
-        if selectionView == nil {
-            let selView = DraggableSelectionView(frame: .zero)
-            selView.wantsLayer = true
-            selView.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
-            selView.layer?.borderColor = NSColor.green.cgColor
-            selView.layer?.borderWidth = 2
-            selectionView = selView
-            addSubview(selView, positioned: .above, relativeTo: nil)
-            
-            let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
-            handler.wantsLayer = true
-            handler.layer?.backgroundColor = NSColor.green.cgColor
-            resizeHandler = handler
-            selView.addSubview(handler)
-            updateSelectionViewFrame()
         }
     }
     
@@ -1330,16 +1349,11 @@ fileprivate class DataTableWrapper: NSView {
         updateCellHighlight()
     }
     
-    override var isFlipped: Bool {
-        return false
-    }
-    
-    private func clearSelection() {
-        if let active = activeCell {
-            textFields[active.row][active.column].abortEditing()
+    func clearSelection() {
+        if let a = activeCell {
             window?.makeFirstResponder(nil)
+            activeCell = nil
         }
-        activeCell = nil
         selectionStart = nil
         selectionEnd = nil
         selectionView?.removeFromSuperview()
@@ -1353,6 +1367,12 @@ fileprivate class DataTableWrapper: NSView {
               let clickedRow = userInfo["endRow"] as? Int,
               let phase = userInfo["phase"] as? String else { return }
         let isShift = userInfo["shift"] as? Bool ?? false
+        
+        if let a = activeCell {
+            window?.makeFirstResponder(nil)
+            activeCell = nil
+        }
+        
         if phase == "down" {
             if !isShift {
                 rowHeaderSelectionAnchor = clickedRow
@@ -1366,7 +1386,6 @@ fileprivate class DataTableWrapper: NSView {
         let maxRow = max(anchorRow, clickedRow)
         selectionStart = (minRow, 0)
         selectionEnd = (maxRow, totalColumns - 1)
-        activeCell = nil
         selectionView?.removeFromSuperview()
         let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
@@ -1381,6 +1400,7 @@ fileprivate class DataTableWrapper: NSView {
         handler.layer?.backgroundColor = NSColor.green.cgColor
         resizeHandler = handler
         selView.addSubview(handler)
+        
         updateCellHighlight()
         updateSelectionViewFrame()
     }
@@ -1390,6 +1410,12 @@ fileprivate class DataTableWrapper: NSView {
               let clickedCol = userInfo["endColumn"] as? Int,
               let phase = userInfo["phase"] as? String else { return }
         let isShift = userInfo["shift"] as? Bool ?? false
+        
+        if let a = activeCell {
+            window?.makeFirstResponder(nil)
+            activeCell = nil
+        }
+        
         if phase == "down" {
             if !isShift {
                 columnHeaderSelectionAnchor = clickedCol
@@ -1403,7 +1429,6 @@ fileprivate class DataTableWrapper: NSView {
         let maxCol = max(anchorCol, clickedCol)
         selectionStart = (0, minCol)
         selectionEnd = (totalRows - 1, maxCol)
-        activeCell = nil
         selectionView?.removeFromSuperview()
         let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
@@ -1418,14 +1443,20 @@ fileprivate class DataTableWrapper: NSView {
         handler.layer?.backgroundColor = NSColor.green.cgColor
         resizeHandler = handler
         selView.addSubview(handler)
+        
         updateCellHighlight()
         updateSelectionViewFrame()
     }
     
     @objc func handleFullSheetSelection(_ notification: Notification) {
+        if let a = activeCell {
+            window?.makeFirstResponder(nil)
+            activeCell = nil
+        }
+        
         selectionStart = (0, 0)
         selectionEnd = (totalRows - 1, totalColumns - 1)
-        activeCell = nil
+        
         selectionView?.removeFromSuperview()
         let selView = DraggableSelectionView(frame: .zero)
         selView.wantsLayer = true
@@ -1440,6 +1471,7 @@ fileprivate class DataTableWrapper: NSView {
         handler.layer?.backgroundColor = NSColor.green.cgColor
         resizeHandler = handler
         selView.addSubview(handler)
+        
         updateCellHighlight()
         updateSelectionViewFrame()
     }
@@ -1567,19 +1599,27 @@ private class DraggableSelectionView: NSView {
 
 class CellTextField: NSTextField {
     override func mouseDown(with event: NSEvent) {
-        if let container = self.superview, let tableView = container.superview as? DataTableWrapper {
-            let tag = self.tag
-            let row = tag / tableView.totalColumns
-            let col = tag % tableView.totalColumns
-            if event.modifierFlags.contains(.shift) {
-                tableView.handleCellClick(row: row, column: col, event: event)
-            } else {
-                tableView.activateCell(row: row, column: col)
-            }
-        }
-        
         if event.clickCount == 2 {
             super.mouseDown(with: event)
+            return
+        }
+        
+        if let container = self.superview {
+            container.mouseDown(with: event)
+        }
+    }
+    override func mouseDragged(with event: NSEvent) {
+        if let container = self.superview {
+            container.mouseDragged(with: event)
+        } else {
+            super.mouseDragged(with: event)
+        }
+    }
+    override func mouseUp(with event: NSEvent) {
+        if let container = self.superview {
+            container.mouseUp(with: event)
+        } else {
+            super.mouseUp(with: event)
         }
     }
 }
