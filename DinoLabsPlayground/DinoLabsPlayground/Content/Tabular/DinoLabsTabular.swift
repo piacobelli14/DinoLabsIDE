@@ -1029,6 +1029,7 @@ fileprivate class DataTableWrapper: NSView {
         if let a = activeCell {
             window?.makeFirstResponder(nil)
             activeCell = nil
+            updateCellHighlight()
         }
         
         let globalPoint = event.locationInWindow
@@ -1192,6 +1193,7 @@ fileprivate class DataTableWrapper: NSView {
             maybeSingleClickCell = nil
             clearSelection()
             activateCell(row: row, column: col)
+            updateCellHighlight()
             return
         }
         
@@ -1199,11 +1201,15 @@ fileprivate class DataTableWrapper: NSView {
            (s.row != e.row || s.column != e.column) {
             activeCell = nil
             window?.makeFirstResponder(nil)
+            updateCellHighlight()
         }
     }
     
     func handleCellClick(row: Int, column: Int, event: NSEvent) {
-        activeCell = nil
+        if let a = activeCell {
+            window?.makeFirstResponder(nil)
+            activeCell = nil
+        }
         
         if event.modifierFlags.contains(.shift), let anchor = selectionStart, let currentEnd = selectionEnd {
             if anchor.column == 0 && currentEnd.column == totalColumns - 1 {
@@ -1247,6 +1253,11 @@ fileprivate class DataTableWrapper: NSView {
             window?.makeFirstResponder(nil)
         }
         activeCell = (row, column)
+        let newTag = row * totalColumns + column
+        if newTag < textFields.flatMap({ $0 }).count {
+            let newField = textFields[row][column]
+            window?.makeFirstResponder(newField)
+        }
     }
     
     private func cellIndex(at point: NSPoint) -> (Int, Int)? {
@@ -1350,10 +1361,6 @@ fileprivate class DataTableWrapper: NSView {
     }
     
     func clearSelection() {
-        if let a = activeCell {
-            window?.makeFirstResponder(nil)
-            activeCell = nil
-        }
         selectionStart = nil
         selectionEnd = nil
         selectionView?.removeFromSuperview()
@@ -1525,6 +1532,9 @@ extension DataTableWrapper: NSTextFieldDelegate {
         let tag = textField.tag
         let row = tag / totalColumns
         let col = tag % totalColumns
+        if selectionStart != nil || selectionEnd != nil {
+            clearSelection()
+        }
         activeCell = (row, col)
         updateCellHighlight()
     }
