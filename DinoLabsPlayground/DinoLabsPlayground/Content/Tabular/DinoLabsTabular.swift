@@ -872,7 +872,7 @@ struct TabularView: View {
                     )
                     
                     TabularButtonMain {
-                        
+                        downloadSheet()
                     }
                     .frame(height: 12)
                     .padding(.vertical, 10)
@@ -1175,6 +1175,31 @@ struct TabularView: View {
             hasUnsavedChanges = false
         } catch {
             return
+        }
+    }
+    
+    private func downloadSheet() {
+        var lines: [String] = []
+        for row in 0..<totalRows {
+            var rowData: [String] = []
+            for col in 0..<totalColumns {
+                rowData.append(dataModel.getValue(row: row, column: col))
+            }
+            lines.append(rowData.joined(separator: ","))
+        }
+        let csv = lines.joined(separator: "\n")
+
+        let savePanel = NSSavePanel()
+        savePanel.title = "Download CSV"
+        savePanel.prompt = "Download"
+        savePanel.nameFieldStringValue = fileURL.lastPathComponent
+        
+        if savePanel.runModal() == .OK, let selectedURL = savePanel.url {
+            do {
+                try csv.write(to: selectedURL, atomically: true, encoding: .utf8)
+            } catch {
+               return
+            }
         }
     }
 
