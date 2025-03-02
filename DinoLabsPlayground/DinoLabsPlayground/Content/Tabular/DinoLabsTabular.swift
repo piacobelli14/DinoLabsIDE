@@ -11,6 +11,11 @@ struct TabularView: View {
     let geometry: GeometryProxy
     let fileURL: URL
     @Binding var leftPanelWidthRatio: CGFloat
+    
+    // ADD THIS:
+    @Binding var hasUnsavedChanges: Bool
+    // END ADD
+    
     @StateObject private var dataModel = DataTableModel(rows: 100, columns: 15)
     private let rowHeight: CGFloat = 20
     private let rowNumberWidth: CGFloat = 50
@@ -711,13 +716,15 @@ struct TabularView: View {
                             .frame(height: rowHeight)
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) - rowNumberWidth)
                             
+                            // PASS THE BINDING HERE:
                             DataTableGrid(
                                 dataModel: dataModel,
                                 rowHeight: rowHeight,
                                 totalRows: totalRows,
                                 totalColumns: totalColumns,
                                 horizontalOffset: $horizontalOffset,
-                                verticalOffset: $verticalOffset
+                                verticalOffset: $verticalOffset,
+                                hasUnsavedChanges: $hasUnsavedChanges // NEW
                             )
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) - rowNumberWidth)
                             .contextMenu {
@@ -835,8 +842,10 @@ struct TabularView: View {
             
             if showFileMenu {
                 VStack(spacing: 0) {
+                    // SAVE FILE BUTTON
                     TabularButtonMain {
-                        
+                        // CALL SAVE ACTION HERE:
+                        saveSheet()
                     }
                     .frame(height: 12)
                     .padding(.vertical, 10)
@@ -1037,6 +1046,14 @@ struct TabularView: View {
                         return event
                     }
                     
+                    // ADD CMD+S CHECK:
+                    if event.charactersIgnoringModifiers?.lowercased() == "s" {
+                        // Call our save function:
+                        saveSheet()
+                        return nil
+                    }
+                    // END ADD
+                    
                     if event.charactersIgnoringModifiers?.lowercased() == "a" {
                         NotificationCenter.default.post(name: Notification.Name("FullSheetSelection"), object: nil)
                         return nil
@@ -1151,6 +1168,29 @@ struct TabularView: View {
             }
         }
     }
+    
+    // NEW FUNCTION TO SAVE THE CSV BACK TO THE FILE:
+    private func saveSheet() {
+        // We'll reassemble rows & columns into CSV lines:
+        var lines: [String] = []
+        for row in 0..<totalRows {
+            var rowData: [String] = []
+            for col in 0..<totalColumns {
+                rowData.append(dataModel.getValue(row: row, column: col))
+            }
+            // join each row with commas
+            lines.append(rowData.joined(separator: ","))
+        }
+        let csv = lines.joined(separator: "\n")
+        
+        do {
+            try csv.write(to: fileURL, atomically: true, encoding: .utf8)
+            hasUnsavedChanges = false
+        } catch {
+            // handle write error if needed
+        }
+    }
+    // END NEW FUNCTION
 
     fileprivate func loadSheet() {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -1495,6 +1535,10 @@ fileprivate struct DataTableGrid: NSViewRepresentable {
     let totalColumns: Int
     @Binding var horizontalOffset: CGFloat
     @Binding var verticalOffset: CGFloat
+    
+    // ADD THIS:
+    @Binding var hasUnsavedChanges: Bool
+    // END ADD
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -1505,12 +1549,14 @@ fileprivate struct DataTableGrid: NSViewRepresentable {
         scrollView.verticalScrollElasticity = .none
         scrollView.horizontalScrollElasticity = .none
         
+        // PASS THE BINDING DOWN:
         let tableView = DataTableWrapper(
             frame: .zero,
             dataModel: dataModel,
             rowHeight: rowHeight,
             totalRows: totalRows,
-            totalColumns: totalColumns
+            totalColumns: totalColumns,
+            hasUnsavedChanges: $hasUnsavedChanges // NEW
         )
         
         scrollView.documentView = tableView
@@ -1575,6 +1621,11 @@ fileprivate class DataTableWrapper: NSView {
     let rowHeight: CGFloat
     let totalRows: Int
     let totalColumns: Int
+    
+    // ADD THIS:
+    private var hasUnsavedChanges: Binding<Bool>
+    // END ADD
+
     private var textFields: [[NSTextField]] = []
     private var gridOverlay: DataGridOverlay!
     private var activeCell: (row: Int, column: Int)? = nil
@@ -1595,12 +1646,14 @@ fileprivate class DataTableWrapper: NSView {
     private var searchMatches: [(row: Int, column: Int)] = []
     private var currentSearchIndex: Int = -1
 
-    init(frame: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int) {
+    // Modified init to accept hasUnsavedChanges as well:
+    init(frame frameRect: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int, hasUnsavedChanges: Binding<Bool>) {
         self.dataModel = dataModel
         self.rowHeight = rowHeight
         self.totalRows = totalRows
         self.totalColumns = totalColumns
-        super.init(frame: frame)
+        self.hasUnsavedChanges = hasUnsavedChanges
+        super.init(frame: frameRect)
         
         setupTable()
         
@@ -2210,6 +2263,10 @@ extension DataTableWrapper: NSTextFieldDelegate {
         let row = tag / totalColumns
         let col = tag % totalColumns
         dataModel.updateCell(row: row, column: col, value: textField.stringValue)
+        
+        // EXACT SAME IDEA: Whenever user finishes editing -> mark unsaved
+        hasUnsavedChanges.wrappedValue = true
+        // END ADD
     }
     
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {

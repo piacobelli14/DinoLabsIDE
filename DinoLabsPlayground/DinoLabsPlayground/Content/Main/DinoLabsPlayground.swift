@@ -1856,8 +1856,12 @@ struct DinoLabsPlayground: View {
                                             TabularView(
                                                 geometry: geometry,
                                                 fileURL: activeTab.fileURL,
-                                                leftPanelWidthRatio: $leftPanelWidthRatio
+                                                leftPanelWidthRatio: $leftPanelWidthRatio,
+                                                hasUnsavedChanges:  $openTabs[index].hasUnsavedChanges
                                             )
+                                            .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
+                                                updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
+                                            }
                                             .id(activeTab.id)
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         } else {
