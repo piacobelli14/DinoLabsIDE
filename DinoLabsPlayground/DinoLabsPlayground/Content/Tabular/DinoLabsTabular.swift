@@ -921,6 +921,286 @@ struct TabularView: View {
             }
             if showEditMenu {
                 VStack(spacing: 0) {
+                    TabularButtonMain {
+                        dataModel.undo()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "arrow.uturn.backward")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Undo")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        dataModel.redo()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "arrow.uturn.forward")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Redo")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            var buffer: [[String]] = []
+                            for row in minRow...maxRow {
+                                var rowBuffer: [String] = []
+                                for col in minCol...maxCol {
+                                    rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                }
+                                buffer.append(rowBuffer)
+                            }
+                            copiedData = buffer
+                            for row in minRow...maxRow {
+                                for col in minCol...maxCol {
+                                    dataModel.updateCell(row: row, column: col, value: "")
+                                }
+                            }
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            copiedData = [[dataModel.getValue(row: row, column: col)]]
+                            dataModel.updateCell(row: row, column: col, value: "")
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "scissors")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Cut")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            var buffer: [[String]] = []
+                            for row in minRow...maxRow {
+                                var rowBuffer: [String] = []
+                                for col in minCol...maxCol {
+                                    rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                }
+                                buffer.append(rowBuffer)
+                            }
+                            copiedData = buffer
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            copiedData = [[dataModel.getValue(row: row, column: col)]]
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "square.on.square")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Copy")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            for (rIndex, rowData) in copiedData.enumerated() {
+                                for (cIndex, value) in rowData.enumerated() {
+                                    let destRow = minRow + rIndex
+                                    let destCol = minCol + cIndex
+                                    if destRow < totalRows && destCol < totalColumns {
+                                        dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                    }
+                                }
+                            }
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            for (rIndex, rowData) in copiedData.enumerated() {
+                                for (cIndex, value) in rowData.enumerated() {
+                                    let destRow = row + rIndex
+                                    let destCol = col + cIndex
+                                    if destRow < totalRows && destCol < totalColumns {
+                                        dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "doc.on.clipboard.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Paste")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        NotificationCenter.default.post(name: Notification.Name("FullSheetSelection"), object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "cursorarrow.motionlines")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Select All")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    Spacer()
                 }
                 .frame(width: 160, height: 200)
                 .containerHelper(
