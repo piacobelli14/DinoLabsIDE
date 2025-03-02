@@ -26,7 +26,20 @@ struct TabularView: View {
     @State private var showFilterMenu = false
     @State private var labelRects: [CGRect] = Array(repeating: .zero, count: 6)
     @State private var cellSelection: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)? = nil
-    
+    @State private var copyIcon = "square.on.square"
+    @State private var searchState: Bool = false
+    @State private var replaceState: Bool = false
+    @State private var searchCaseSensitive: Bool = true
+    @State private var searchQuery: String = ""
+    @State private var replaceQuery: String = ""
+    @State private var isReplacing: Bool = false
+    @State private var currentSearchMatch: Int = 0
+    @State private var totalSearchMatches: Int = 0
+    @State private var cmdFMonitor: Any? = nil
+    @State private var undoRedoMonitor: Any? = nil
+    @State private var keyBindMonitor: Any? = nil
+    @State private var copiedData: [[String]] = []
+
     func columnLabel(for index: Int) -> String {
         var columnName = ""
         var columnIndex = index
@@ -287,7 +300,7 @@ struct TabularView: View {
                         borderColor: Color.clear,
                         borderWidth: 0,
                         topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 5,
-                        shadowColor: Color.white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                        shadowColor: Color.white.opacity(0.2), shadowRadius: 0.5, shadowX: 0, shadowY: 0
                     )
                     .padding(.trailing, 5)
                     .padding(.leading, 15)
@@ -300,6 +313,302 @@ struct TabularView: View {
                     borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
                     shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
                 )
+                
+                HStack {
+                    if searchState || replaceState {
+                        HStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                TabularTextField(placeholder: "Search file...", text: $searchQuery, onReturnKeyPressed: {
+                                    
+                                })
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 8, weight: .semibold))
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 100, height: 25)
+                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                      borderColor: Color(hex: 0x616161),
+                                                      borderWidth: 1,
+                                                      topLeft: 2, topRight: 0,
+                                                      bottomLeft: 2, bottomRight: 0,
+                                                      shadowColor: .clear,
+                                                      shadowRadius: 0,
+                                                      shadowX: 0, shadowY: 0)
+                                    .hoverEffect(opacity: 0.8)
+                                    
+                                HStack {
+                                    TabularButtonMain {
+                                        
+                                    }
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        Image(systemName: "arrow.down")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                    TabularButtonMain {
+                                       
+                                    }
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        Image(systemName: "arrow.up")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                    TabularButtonMain {
+                                        searchCaseSensitive.toggle()
+                                        
+                                    }
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        Image(systemName: "a.square.fill")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2)
+                                                                               : Color(hex: 0xf5f5f5))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                }
+                                .padding(.horizontal, 10)
+                                .frame(width: 60, height: 25)
+                                .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                  borderColor: Color(hex: 0x616161),
+                                                  borderWidth: 1,
+                                                  topLeft: 0, topRight: 2,
+                                                  bottomLeft: 0, bottomRight: 2,
+                                                  shadowColor: .clear,
+                                                  shadowRadius: 0,
+                                                  shadowX: 0, shadowY: 0)
+                                HStack {
+                                    Text("\(currentSearchMatch) of \(totalSearchMatches)")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .frame(width: 60, height: 25)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .padding(.leading, 8)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 10)
+                                .frame(width: 60, height: 25)
+                                .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                  borderColor: Color(hex: 0x616161),
+                                                  borderWidth: 1,
+                                                  topLeft: 0, topRight: 2,
+                                                  bottomLeft: 0, bottomRight: 2,
+                                                  shadowColor: .clear,
+                                                  shadowRadius: 0,
+                                                  shadowX: 0, shadowY: 0)
+                            }
+                            .frame(width: 220, height: 25)
+                            .containerHelper(backgroundColor: Color.clear,
+                                              borderColor: Color(hex: 0x616161),
+                                              borderWidth: 1,
+                                              topLeft: 2, topRight: 2,
+                                              bottomLeft: 2, bottomRight: 2,
+                                              shadowColor: Color.white.opacity(0.5),
+                                              shadowRadius: 8,
+                                              shadowX: 0, shadowY: 0)
+                            if replaceState {
+                                HStack(spacing: 0) {
+                                    TabularTextField(placeholder: "Replace with...", text: $replaceQuery)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(width: 100, height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                          borderColor: Color(hex: 0x616161),
+                                                          borderWidth: 1,
+                                                          topLeft: 2, topRight: 0,
+                                                          bottomLeft: 2, bottomRight: 0,
+                                                          shadowColor: .clear,
+                                                          shadowRadius: 0,
+                                                          shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                    HStack {
+                                        TabularButtonMain {
+                                            
+                                        }
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .overlay(
+                                            Image(systemName: "square.fill")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.6,
+                                                     scale: 1.05,
+                                                     cursor: .pointingHand)
+                                        TabularButtonMain {
+                                            
+                                        }
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .overlay(
+                                            Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.6,
+                                                     scale: 1.05,
+                                                     cursor: .pointingHand)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 60, height: 25)
+                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                      borderColor: Color(hex: 0x616161),
+                                                      borderWidth: 1,
+                                                      topLeft: 0, topRight: 2,
+                                                      bottomLeft: 0, bottomRight: 2,
+                                                      shadowColor: .clear,
+                                                      shadowRadius: 0,
+                                                      shadowX: 0, shadowY: 0)
+                                }
+                                .frame(width: 160, height: 25)
+                                .containerHelper(backgroundColor: Color.clear,
+                                                  borderColor: Color(hex: 0x616161),
+                                                  borderWidth: 1,
+                                                  topLeft: 2, topRight: 2,
+                                                  bottomLeft: 2, bottomRight: 2,
+                                                  shadowColor: Color.white.opacity(0.5),
+                                                  shadowRadius: 8,
+                                                  shadowX: 0, shadowY: 0)
+                                .padding(.leading, 10)
+                            }
+                        }
+                    }
+                    Spacer()
+                    HStack(spacing: 8) {
+                        TabularButtonMain {
+                            if !searchState {
+                                searchState = true
+                                replaceState = false
+                            } else {
+                                searchState = false
+                                replaceState = false
+                                searchQuery = ""
+                                replaceQuery = ""
+                            }
+                        }
+                        .containerHelper(backgroundColor: searchState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
+                                         borderColor: Color(hex: 0x414141),
+                                         borderWidth: 1,
+                                         topLeft: 2, topRight: 2,
+                                         bottomLeft: 2, bottomRight: 2,
+                                         shadowColor: Color(hex: 0x222222),
+                                         shadowRadius: 0.5,
+                                         shadowX: 0, shadowY: 0)
+                        .frame(width: 20, height: 20)
+                        .overlay(
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                .allowsHitTesting(false)
+                        )
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        TabularButtonMain {
+                            if !replaceState {
+                                replaceState = true
+                                searchState = false
+                            } else {
+                                replaceState = false
+                                searchState = false
+                                searchQuery = ""
+                                replaceQuery = ""
+                            }
+                        }
+                        .containerHelper(backgroundColor: replaceState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
+                                         borderColor: Color(hex: 0x414141),
+                                         borderWidth: 1,
+                                         topLeft: 2, topRight: 2,
+                                         bottomLeft: 2, bottomRight: 2,
+                                         shadowColor: Color(hex: 0x222222),
+                                         shadowRadius: 0.5,
+                                         shadowX: 0, shadowY: 0)
+                        .frame(width: 20, height: 20)
+                        .overlay(
+                            Image(systemName: "text.magnifyingglass")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                .allowsHitTesting(false)
+                        )
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        
+                        TabularButtonMain {
+                            dataModel.undo()
+                        }
+                        .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                         borderColor: Color(hex: 0x414141),
+                                         borderWidth: 1,
+                                         topLeft: 2, topRight: 2,
+                                         bottomLeft: 2, bottomRight: 2,
+                                         shadowColor: Color(hex: 0x222222),
+                                         shadowRadius: 0.5,
+                                         shadowX: 0, shadowY: 0)
+                        .frame(width: 20, height: 20)
+                        .overlay(
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                .allowsHitTesting(false)
+                        )
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        TabularButtonMain {
+                            dataModel.redo()
+                        }
+                        .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                         borderColor: Color(hex: 0x414141),
+                                         borderWidth: 1,
+                                         topLeft: 2, topRight: 2,
+                                         bottomLeft: 2, bottomRight: 2,
+                                         shadowColor: Color(hex: 0x222222),
+                                         shadowRadius: 0.5,
+                                         shadowX: 0, shadowY: 0)
+                        .frame(width: 20, height: 20)
+                        .overlay(
+                            Image(systemName: "arrow.uturn.forward")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                .allowsHitTesting(false)
+                        )
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    }
+                }
+                .frame(height: 25)
+                .padding(.bottom, 15)
+                .padding(.horizontal, 20)
+                .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9),
+                                  borderColor: Color.clear,
+                                  borderWidth: 0,
+                                  topLeft: 0, topRight: 0,
+                                  bottomLeft: 0, bottomRight: 0,
+                                  shadowColor: Color.clear,
+                                  shadowRadius: 0,
+                                  shadowX: 0, shadowY: 0)
                 .overlay(
                     Rectangle()
                         .frame(height: 0.5)
@@ -558,6 +867,114 @@ struct TabularView: View {
         }
         .onAppear {
             loadSheet()
+            cmdFMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers?.lowercased() == "f" {
+                    searchState = true
+                    return nil
+                }
+                return event
+            }
+            undoRedoMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if event.modifierFlags.contains(.command) {
+                    if event.charactersIgnoringModifiers?.lowercased() == "z" {
+                        dataModel.undo()
+                        return nil
+                    } else if event.charactersIgnoringModifiers?.lowercased() == "y" {
+                        dataModel.redo()
+                        return nil
+                    }
+                }
+                return event
+            }
+            
+            keyBindMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if event.modifierFlags.contains(.command) {
+                    
+                    if let keyWindow = NSApp.keyWindow,
+                       let responder = keyWindow.firstResponder as? NSTextView,
+                       let textField = responder.delegate as? NSTextField,
+                       textField.currentEditor() != nil {
+                        return event
+                    }
+                    
+                    if event.charactersIgnoringModifiers?.lowercased() == "a" {
+                        NotificationCenter.default.post(name: Notification.Name("FullSheetSelection"), object: nil)
+                        return nil
+                    }
+                    
+                    if event.charactersIgnoringModifiers?.lowercased() == "c" {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            
+                            var buffer: [[String]] = []
+                            for row in minRow...maxRow {
+                                var rowBuffer: [String] = []
+                                for col in minCol...maxCol {
+                                    rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                }
+                                buffer.append(rowBuffer)
+                            }
+                            copiedData = buffer
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            copiedData = [[dataModel.getValue(row: row, column: col)]]
+                        }
+                        return nil
+                    } else if event.charactersIgnoringModifiers?.lowercased() == "v" {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            for (rIndex, rowData) in copiedData.enumerated() {
+                                for (cIndex, value) in rowData.enumerated() {
+                                    let destRow = minRow + rIndex
+                                    let destCol = minCol + cIndex
+                                    if destRow < totalRows && destCol < totalColumns {
+                                        dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                    }
+                                }
+                            }
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            for (rIndex, rowData) in copiedData.enumerated() {
+                                for (cIndex, value) in rowData.enumerated() {
+                                    let destRow = row + rIndex
+                                    let destCol = col + cIndex
+                                    if destRow < totalRows && destCol < totalColumns {
+                                        dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                    }
+                                }
+                            }
+                        }
+                        return nil
+                    }
+                }
+                return event
+            }
+        }
+        .onDisappear {
+            if let monitor = cmdFMonitor {
+                NSEvent.removeMonitor(monitor)
+                cmdFMonitor = nil
+            }
+            if let monitor = undoRedoMonitor {
+                NSEvent.removeMonitor(monitor)
+                undoRedoMonitor = nil
+            }
+            if let monitor = keyBindMonitor {
+                NSEvent.removeMonitor(monitor)
+                keyBindMonitor = nil
+            }
         }
     }
 
@@ -584,7 +1001,7 @@ fileprivate struct RowNumbers: NSViewRepresentable {
     let totalRows: Int
     @Binding var verticalOffset: CGFloat
     let selectedRange: (startRow: Int, endRow: Int)?
-    
+
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = false
@@ -614,7 +1031,6 @@ fileprivate struct RowNumbers: NSViewRepresentable {
             label.isEditable = false
             label.isBordered = false
             label.backgroundColor = .clear
-            
             label.textColor = .white
             label.font = font
             label.alignment = .center
@@ -1240,7 +1656,7 @@ fileprivate class DataTableWrapper: NSView {
         let handler = ResizeHandler(frame: NSRect(x: 0, y: 0, width: 16, height: 16))
         handler.wantsLayer = true
         handler.layer?.backgroundColor = NSColor.green.cgColor
-        self.resizeHandler = handler
+        resizeHandler = handler
         selView.addSubview(handler)
         
         updateSelectionViewFrame()
@@ -1304,9 +1720,9 @@ fileprivate class DataTableWrapper: NSView {
                 let container = textField.superview!
                 
                 if let active = activeCell, active.row == row && active.column == col {
-                    container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
-                    container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
-                    container.layer?.borderWidth = 0.5
+                    container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+                    container.layer?.borderColor = NSColor.green.cgColor
+                    container.layer?.borderWidth = 2
                 } else {
                     if let start = selectionStart, let end = selectionEnd {
                         let minRow = min(start.row, end.row)
@@ -1590,11 +2006,13 @@ private class DataTableModel: ObservableObject {
     private var data: [[String]]
     private let rows: Int
     private let columns: Int
+    private let undoManager = UndoManager()
     
     init(rows: Int, columns: Int) {
         self.rows = rows
         self.columns = columns
         self.data = Array(repeating: Array(repeating: "", count: columns), count: rows)
+        self.undoManager.levelsOfUndo = 0
     }
     
     func loadData(_ parsedData: [[String]], totalRows: Int, totalColumns: Int) {
@@ -1613,7 +2031,22 @@ private class DataTableModel: ObservableObject {
     
     func updateCell(row: Int, column: Int, value: String) {
         guard row < data.count && column < data[row].count else { return }
+        let oldValue = data[row][column]
+        if oldValue == value { return }
         data[row][column] = value
+        undoManager.registerUndo(withTarget: self) { target in
+            target.updateCell(row: row, column: column, value: oldValue)
+        }
+        objectWillChange.send()
+    }
+    
+    func undo() {
+        undoManager.undo()
+        objectWillChange.send()
+    }
+    
+    func redo() {
+        undoManager.redo()
         objectWillChange.send()
     }
 }

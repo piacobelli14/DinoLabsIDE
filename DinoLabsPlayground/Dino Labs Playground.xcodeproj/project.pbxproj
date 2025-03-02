@@ -20,6 +20,8 @@
 		CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B4AE52D601B5F00492970 /* NavigatorButtonMain.swift */; };
 		CB6331752D66ACD300DBA508 /* DinoLabsAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6331742D66ACD300DBA508 /* DinoLabsAccount.swift */; };
 		CB82E61E2D7002EC00AB6412 /* TabularButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB82E61D2D7002EC00AB6412 /* TabularButtonMain.swift */; };
+		CB9A90A72D73A13E00AA034A /* TabularTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90A62D73A13E00AA034A /* TabularTextField.swift */; };
+		CB9A90A92D74A20F00AA034A /* DinoLabsTabularConstructors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90A82D74A20F00AA034A /* DinoLabsTabularConstructors.swift */; };
 		CBB19EF92D6EB12C002E7805 /* DinoLabsTabular.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */; };
 		CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */; };
 		CBDF23522D6807B40049F865 /* AccountTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF23512D6807B40049F865 /* AccountTextField.swift */; };
@@ -75,6 +77,8 @@
 		CB5B4AE52D601B5F00492970 /* NavigatorButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigatorButtonMain.swift; sourceTree = "<group>"; };
 		CB6331742D66ACD300DBA508 /* DinoLabsAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsAccount.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CB82E61D2D7002EC00AB6412 /* TabularButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabularButtonMain.swift; sourceTree = "<group>"; };
+		CB9A90A62D73A13E00AA034A /* TabularTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabularTextField.swift; sourceTree = "<group>"; };
+		CB9A90A82D74A20F00AA034A /* DinoLabsTabularConstructors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsTabularConstructors.swift; sourceTree = "<group>"; };
 		CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsTabular.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundVideoHelper.swift; sourceTree = "<group>"; };
 		CBDF23512D6807B40049F865 /* AccountTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountTextField.swift; sourceTree = "<group>"; };
@@ -167,6 +171,7 @@
 		CB82E61C2D7002CA00AB6412 /* TabularHelpers */ = {
 			isa = PBXGroup;
 			children = (
+				CB9A90A62D73A13E00AA034A /* TabularTextField.swift */,
 				CB82E61D2D7002EC00AB6412 /* TabularButtonMain.swift */,
 			);
 			path = TabularHelpers;
@@ -322,6 +327,7 @@
 			children = (
 				CB82E61C2D7002CA00AB6412 /* TabularHelpers */,
 				CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */,
+				CB9A90A82D74A20F00AA034A /* DinoLabsTabularConstructors.swift */,
 			);
 			path = Tabular;
 			sourceTree = "<group>";
@@ -457,6 +463,7 @@
 				CBFDA88B2D64FC3700EA87BB /* TabHelper.swift in Sources */,
 				CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */,
 				CBDF23612D6AA0AF0049F865 /* CodeTextField.swift in Sources */,
+				CB9A90A92D74A20F00AA034A /* DinoLabsTabularConstructors.swift in Sources */,
 				CB5B4ADB2D5FC6BF00492970 /* InputButtonManager.swift in Sources */,
 				CBEC15C52D5D906F009A0FAF /* LoginAuth.swift in Sources */,
 				CB5B4AE62D601B5F00492970 /* NavigatorButtonMain.swift in Sources */,
@@ -465,6 +472,7 @@
 				CB6331752D66ACD300DBA508 /* DinoLabsAccount.swift in Sources */,
 				CBEC15DA2D5E7205009A0FAF /* HoverHelper.swift in Sources */,
 				CBEC15C12D5D8FE0009A0FAF /* DinoLabsColorPicker.swift in Sources */,
+				CB9A90A72D73A13E00AA034A /* TabularTextField.swift in Sources */,
 				CBDF235A2D6916930049F865 /* DinoLabsIDE.swift in Sources */,
 				CB5B4AE02D5FF8E300492970 /* MainButtonMain.swift in Sources */,
 				CBEC15DC2D5E806E009A0FAF /* ClickHelper.swift in Sources */,
