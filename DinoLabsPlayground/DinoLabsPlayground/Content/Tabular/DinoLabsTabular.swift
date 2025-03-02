@@ -39,6 +39,7 @@ struct TabularView: View {
     @State private var undoRedoMonitor: Any? = nil
     @State private var keyBindMonitor: Any? = nil
     @State private var copiedData: [[String]] = []
+    @State private var searchMatches: [(row: Int, column: Int)] = []
 
     func columnLabel(for index: Int) -> String {
         var columnName = ""
@@ -318,29 +319,48 @@ struct TabularView: View {
                     if searchState || replaceState {
                         HStack(spacing: 0) {
                             HStack(spacing: 0) {
-                                TabularTextField(placeholder: "Search file...", text: $searchQuery, onReturnKeyPressed: {
-                                    
-                                })
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .frame(width: 100, height: 25)
-                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                      borderColor: Color(hex: 0x616161),
-                                                      borderWidth: 1,
-                                                      topLeft: 2, topRight: 0,
-                                                      bottomLeft: 2, bottomRight: 0,
-                                                      shadowColor: .clear,
-                                                      shadowRadius: 0,
-                                                      shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.8)
+                                TabularTextField(
+                                    placeholder: "Search file...",
+                                    text: $searchQuery,
+                                    onReturnKeyPressed: {
+                                        if !searchMatches.isEmpty {
+                                            let newIndex = (currentSearchMatch + 1) > totalSearchMatches
+                                                ? 1
+                                                : (currentSearchMatch + 1)
+                                            currentSearchMatch = newIndex
+                                            postSearchUpdate()
+                                        }
+                                    }
+                                )
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.white)
+                                .font(.system(size: 8, weight: .semibold))
+                                .padding(.horizontal, 10)
+                                .frame(width: 100, height: 25)
+                                .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                  borderColor: Color(hex: 0x616161),
+                                                  borderWidth: 1,
+                                                  topLeft: 2, topRight: 0,
+                                                  bottomLeft: 2, bottomRight: 0,
+                                                  shadowColor: .clear,
+                                                  shadowRadius: 0,
+                                                  shadowX: 0, shadowY: 0)
+                                .hoverEffect(opacity: 0.8)
+                                .onChange(of: searchQuery) { _ in
+                                    performSearch()
+                                }
                                     
                                 HStack {
                                     TabularButtonMain {
-                                        
+                                        if !searchMatches.isEmpty {
+                                            let newIndex = (currentSearchMatch + 1) > totalSearchMatches
+                                                ? 1
+                                                : (currentSearchMatch + 1)
+                                            currentSearchMatch = newIndex
+                                            postSearchUpdate()
+                                        }
                                     }
                                     .lineLimit(1)
                                     .truncationMode(.tail)
@@ -353,8 +373,15 @@ struct TabularView: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                    
                                     TabularButtonMain {
-                                       
+                                        if !searchMatches.isEmpty {
+                                            let newIndex = (currentSearchMatch - 1) < 1
+                                                ? totalSearchMatches
+                                                : (currentSearchMatch - 1)
+                                            currentSearchMatch = newIndex
+                                            postSearchUpdate()
+                                        }
                                     }
                                     .lineLimit(1)
                                     .truncationMode(.tail)
@@ -367,9 +394,10 @@ struct TabularView: View {
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                    
                                     TabularButtonMain {
                                         searchCaseSensitive.toggle()
-                                        
+                                        performSearch()
                                     }
                                     .lineLimit(1)
                                     .truncationMode(.tail)
@@ -379,7 +407,7 @@ struct TabularView: View {
                                         Image(systemName: "a.square.fill")
                                             .font(.system(size: 10, weight: .semibold))
                                             .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2)
-                                                                               : Color(hex: 0xf5f5f5))
+                                                                                 : Color(hex: 0xf5f5f5))
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
@@ -445,7 +473,16 @@ struct TabularView: View {
                                         .hoverEffect(opacity: 0.8)
                                     HStack {
                                         TabularButtonMain {
-                                            
+                                            if !searchMatches.isEmpty && currentSearchMatch > 0 {
+                                                let matchIndex = currentSearchMatch - 1
+                                                let (row, col) = searchMatches[matchIndex]
+                                                dataModel.updateCell(row: row, column: col, value: replaceQuery)
+                                                performSearch()
+                                                if currentSearchMatch > totalSearchMatches {
+                                                    currentSearchMatch = totalSearchMatches
+                                                }
+                                                postSearchUpdate()
+                                            }
                                         }
                                         .lineLimit(1)
                                         .truncationMode(.tail)
@@ -460,8 +497,15 @@ struct TabularView: View {
                                         .hoverEffect(opacity: 0.6,
                                                      scale: 1.05,
                                                      cursor: .pointingHand)
+                                        
                                         TabularButtonMain {
-                                            
+                                            if !searchMatches.isEmpty {
+                                                for (row, col) in searchMatches {
+                                                    dataModel.updateCell(row: row, column: col, value: replaceQuery)
+                                                }
+                                                performSearch()
+                                                postSearchUpdate()
+                                            }
                                         }
                                         .lineLimit(1)
                                         .truncationMode(.tail)
@@ -512,6 +556,7 @@ struct TabularView: View {
                                 replaceState = false
                                 searchQuery = ""
                                 replaceQuery = ""
+                                clearSearchResults()
                             }
                         }
                         .containerHelper(backgroundColor: searchState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
@@ -534,11 +579,13 @@ struct TabularView: View {
                             if !replaceState {
                                 replaceState = true
                                 searchState = false
+                                clearSearchResults()
                             } else {
                                 replaceState = false
                                 searchState = false
                                 searchQuery = ""
                                 replaceQuery = ""
+                                clearSearchResults()
                             }
                         }
                         .containerHelper(backgroundColor: replaceState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
@@ -673,6 +720,99 @@ struct TabularView: View {
                                 verticalOffset: $verticalOffset
                             )
                             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) - rowNumberWidth)
+                            .contextMenu {
+                                Button("Cut") {
+                                    if let selection = cellSelection {
+                                        let minRow = min(selection.startRow, selection.endRow)
+                                        let maxRow = max(selection.startRow, selection.endRow)
+                                        let minCol = min(selection.startColumn, selection.endColumn)
+                                        let maxCol = max(selection.startColumn, selection.endColumn)
+                                        var buffer: [[String]] = []
+                                        for row in minRow...maxRow {
+                                            var rowBuffer: [String] = []
+                                            for col in minCol...maxCol {
+                                                rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                            }
+                                            buffer.append(rowBuffer)
+                                        }
+                                        copiedData = buffer
+                                        for row in minRow...maxRow {
+                                            for col in minCol...maxCol {
+                                                dataModel.updateCell(row: row, column: col, value: "")
+                                            }
+                                        }
+                                    } else if let keyWindow = NSApp.keyWindow,
+                                              let responder = keyWindow.firstResponder as? NSTextView,
+                                              let textField = responder.delegate as? NSTextField {
+                                        let tag = textField.tag
+                                        let row = tag / totalColumns
+                                        let col = tag % totalColumns
+                                        copiedData = [[dataModel.getValue(row: row, column: col)]]
+                                        dataModel.updateCell(row: row, column: col, value: "")
+                                    }
+                                }
+                                Button("Copy") {
+                                    if let selection = cellSelection {
+                                        let minRow = min(selection.startRow, selection.endRow)
+                                        let maxRow = max(selection.startRow, selection.endRow)
+                                        let minCol = min(selection.startColumn, selection.endColumn)
+                                        let maxCol = max(selection.startColumn, selection.endColumn)
+                                        
+                                        var buffer: [[String]] = []
+                                        for row in minRow...maxRow {
+                                            var rowBuffer: [String] = []
+                                            for col in minCol...maxCol {
+                                                rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                            }
+                                            buffer.append(rowBuffer)
+                                        }
+                                        copiedData = buffer
+                                    } else if let keyWindow = NSApp.keyWindow,
+                                              let responder = keyWindow.firstResponder as? NSTextView,
+                                              let textField = responder.delegate as? NSTextField {
+                                        let tag = textField.tag
+                                        let row = tag / totalColumns
+                                        let col = tag % totalColumns
+                                        copiedData = [[dataModel.getValue(row: row, column: col)]]
+                                    }
+                                }
+                                Button("Paste") {
+                                    if let selection = cellSelection {
+                                        let minRow = min(selection.startRow, selection.endRow)
+                                        let minCol = min(selection.startColumn, selection.endColumn)
+                                        for (rIndex, rowData) in copiedData.enumerated() {
+                                            for (cIndex, value) in rowData.enumerated() {
+                                                let destRow = minRow + rIndex
+                                                let destCol = minCol + cIndex
+                                                if destRow < totalRows && destCol < totalColumns {
+                                                    dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                                }
+                                            }
+                                        }
+                                    } else if let keyWindow = NSApp.keyWindow,
+                                              let responder = keyWindow.firstResponder as? NSTextView,
+                                              let textField = responder.delegate as? NSTextField {
+                                        let tag = textField.tag
+                                        let row = tag / totalColumns
+                                        let col = tag % totalColumns
+                                        for (rIndex, rowData) in copiedData.enumerated() {
+                                            for (cIndex, value) in rowData.enumerated() {
+                                                let destRow = row + rIndex
+                                                let destCol = col + cIndex
+                                                if destRow < totalRows && destCol < totalColumns {
+                                                    dataModel.updateCell(row: destRow, column: destCol, value: value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                Button("Undo") {
+                                    dataModel.undo()
+                                }
+                                Button("Redo") {
+                                    dataModel.redo()
+                                }
+                            }
                         }
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
@@ -927,7 +1067,41 @@ struct TabularView: View {
                             copiedData = [[dataModel.getValue(row: row, column: col)]]
                         }
                         return nil
-                    } else if event.charactersIgnoringModifiers?.lowercased() == "v" {
+                    }
+                    else if event.charactersIgnoringModifiers?.lowercased() == "x" {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            
+                            var buffer: [[String]] = []
+                            for row in minRow...maxRow {
+                                var rowBuffer: [String] = []
+                                for col in minCol...maxCol {
+                                    rowBuffer.append(dataModel.getValue(row: row, column: col))
+                                }
+                                buffer.append(rowBuffer)
+                            }
+                            copiedData = buffer
+                            
+                            for row in minRow...maxRow {
+                                for col in minCol...maxCol {
+                                    dataModel.updateCell(row: row, column: col, value: "")
+                                }
+                            }
+                        } else if let keyWindow = NSApp.keyWindow,
+                                  let responder = keyWindow.firstResponder as? NSTextView,
+                                  let textField = responder.delegate as? NSTextField {
+                            let tag = textField.tag
+                            let row = tag / totalColumns
+                            let col = tag % totalColumns
+                            copiedData = [[dataModel.getValue(row: row, column: col)]]
+                            dataModel.updateCell(row: row, column: col, value: "")
+                        }
+                        return nil
+                    }
+                    else if event.charactersIgnoringModifiers?.lowercased() == "v" {
                         if let selection = cellSelection {
                             let minRow = min(selection.startRow, selection.endRow)
                             let minCol = min(selection.startColumn, selection.endColumn)
@@ -992,6 +1166,57 @@ struct TabularView: View {
                 return
             }
         }
+    }
+
+    private func performSearch() {
+        searchMatches.removeAll()
+        let query = searchCaseSensitive ? searchQuery : searchQuery.lowercased()
+
+        if query.isEmpty {
+            totalSearchMatches = 0
+            currentSearchMatch = 0
+            postSearchUpdate()
+            return
+        }
+
+        for row in 0..<totalRows {
+            for col in 0..<totalColumns {
+                let value = dataModel.getValue(row: row, column: col)
+                let target = searchCaseSensitive ? value : value.lowercased()
+                if target.contains(query) {
+                    searchMatches.append((row: row, column: col))
+                }
+            }
+        }
+
+        totalSearchMatches = searchMatches.count
+        currentSearchMatch = totalSearchMatches > 0 ? 1 : 0
+        postSearchUpdate()
+    }
+
+    private func postSearchUpdate() {
+        NotificationCenter.default.post(
+            name: Notification.Name("SearchResultsUpdated"),
+            object: nil,
+            userInfo: [
+                "matches": searchMatches,
+                "currentIndex": currentSearchMatch > 0 ? (currentSearchMatch - 1) : -1
+            ]
+        )
+    }
+
+    private func clearSearchResults() {
+        searchMatches.removeAll()
+        totalSearchMatches = 0
+        currentSearchMatch = 0
+        NotificationCenter.default.post(
+            name: Notification.Name("SearchResultsUpdated"),
+            object: nil,
+            userInfo: [
+                "matches": [],
+                "currentIndex": -1
+            ]
+        )
     }
 }
 
@@ -1367,6 +1592,8 @@ fileprivate class DataTableWrapper: NSView {
     private var originalSelectionStart: (row: Int, column: Int)?
     private var originalSelectionEnd: (row: Int, column: Int)?
     private var originalSelectionData: [[String]]?
+    private var searchMatches: [(row: Int, column: Int)] = []
+    private var currentSearchIndex: Int = -1
 
     init(frame: NSRect, dataModel: DataTableModel, rowHeight: CGFloat, totalRows: Int, totalColumns: Int) {
         self.dataModel = dataModel
@@ -1386,12 +1613,23 @@ fileprivate class DataTableWrapper: NSView {
         NotificationCenter.default.addObserver(self, selector: #selector(handleRowHeaderSelection(_:)), name: Notification.Name("RowHeaderSelectionChanged"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleColumnHeaderSelection(_:)), name: Notification.Name("ColumnHeaderSelectionChanged"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleFullSheetSelection(_:)), name: Notification.Name("FullSheetSelection"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSearchResultsUpdated(_:)), name: Notification.Name("SearchResultsUpdated"), object: nil)
         
         self.addTrackingArea(NSTrackingArea(rect: self.bounds, options: [.mouseEnteredAndExited, .activeAlways, .mouseMoved], owner: self, userInfo: nil))
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc private func handleSearchResultsUpdated(_ notification: Notification) {
+        guard let info = notification.userInfo else { return }
+        let newMatches = info["matches"] as? [(Int, Int)] ?? []
+        let newIndex = info["currentIndex"] as? Int ?? -1
+        
+        self.searchMatches = newMatches
+        self.currentSearchIndex = newIndex
+        updateCellHighlight()
     }
     
     private func setupTable() {
@@ -1723,28 +1961,39 @@ fileprivate class DataTableWrapper: NSView {
                     container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
                     container.layer?.borderColor = NSColor.green.cgColor
                     container.layer?.borderWidth = 2
-                } else {
-                    if let start = selectionStart, let end = selectionEnd {
-                        let minRow = min(start.row, end.row)
-                        let maxRow = max(start.row, end.row)
-                        let minCol = min(start.column, end.column)
-                        let maxCol = max(start.column, end.column)
-                        
-                        if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
-                            container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
-                            container.layer?.borderColor = NSColor.clear.cgColor
-                            container.layer?.borderWidth = 0
-                        } else {
-                            container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
-                            container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
-                            container.layer?.borderWidth = 0.5
-                        }
-                    } else {
-                        container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
-                        container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
-                        container.layer?.borderWidth = 0.5
+                    continue
+                }
+                
+                if let start = selectionStart, let end = selectionEnd {
+                    let minRow = min(start.row, end.row)
+                    let maxRow = max(start.row, end.row)
+                    let minCol = min(start.column, end.column)
+                    let maxCol = max(start.column, end.column)
+                    
+                    if row >= minRow && row <= maxRow && col >= minCol && col <= maxCol {
+                        container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
+                        container.layer?.borderColor = NSColor.clear.cgColor
+                        container.layer?.borderWidth = 0
+                        continue
                     }
                 }
+                
+                if let index = searchMatches.firstIndex(where: { $0.row == row && $0.column == col }) {
+                    if index == currentSearchIndex {
+                        container.layer?.backgroundColor = NSColor.systemOrange.withAlphaComponent(0.25).cgColor
+                        container.layer?.borderColor = NSColor.orange.cgColor
+                        container.layer?.borderWidth = 2
+                    } else {
+                        container.layer?.backgroundColor = NSColor.systemOrange.withAlphaComponent(0.15).cgColor
+                        container.layer?.borderColor = NSColor.clear.cgColor
+                        container.layer?.borderWidth = 0
+                    }
+                    continue
+                }
+                
+                container.layer?.backgroundColor = NSColor(hex: 0x181818).cgColor
+                container.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                container.layer?.borderWidth = 0.5
             }
         }
         
