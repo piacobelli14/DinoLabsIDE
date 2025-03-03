@@ -1,3 +1,4 @@
+
 //
 //  DinoLabsTabular.swift
 //
@@ -58,390 +59,243 @@ struct TabularView: View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    VStack(alignment: .leading) {
-                        Spacer()
-                        Text(fileURL.lastPathComponent)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(Color.white.opacity(0.7))
-                            .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
-                            .padding(.leading, 6)
-                            .padding(.top, 4)
-                            .padding(.bottom, 0)
-                        
-                        HStack(spacing: 0) {
-                            Text("File")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showFileMenu ? .semibold : .regular))
-                                .foregroundColor(showFileMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showFileMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showFileMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[0] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[0] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showFileMenu.toggle()
-                                    showEditMenu = false
-                                    showFormatMenu = false
-                                    showInsertMenu = false
-                                    showFilterMenu = false
-                                }
-                            
-                            Text("Edit")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showEditMenu ? .semibold : .regular))
-                                .foregroundColor(showEditMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showEditMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showEditMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[1] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[1] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showEditMenu.toggle()
-                                    showFileMenu = false
-                                    showFormatMenu = false
-                                    showInsertMenu = false
-                                    showFilterMenu = false
-                                }
-                            
-                            Text("Format")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showFormatMenu ? .semibold : .regular))
-                                .foregroundColor(showFormatMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showFormatMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showFormatMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[2] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[2] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showFormatMenu.toggle()
-                                    showFileMenu = false
-                                    showEditMenu = false
-                                    showInsertMenu = false
-                                    showFilterMenu = false
-                                }
-                            
-                            Text("Insert")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showInsertMenu ? .semibold : .regular))
-                                .foregroundColor(showInsertMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showInsertMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showInsertMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[4] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[4] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showInsertMenu.toggle()
-                                    showFileMenu = false
-                                    showEditMenu = false
-                                    showFormatMenu = false
-                                    showFilterMenu = false
-                                }
-                            
-                            Text("Filter")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showFilterMenu ? .semibold : .regular))
-                                .foregroundColor(showFilterMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showFilterMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[5] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[5] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showFilterMenu.toggle()
-                                    showFileMenu = false
-                                    showEditMenu = false
-                                    showFormatMenu = false
-                                    showInsertMenu = false
-                                }
-                            
-                            Spacer()
-                        }
-                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                        Spacer()
-                    }
-                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                    
                     HStack {
-                        
-                    }
-                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.55), height: 40)
-                    .containerHelper(
-                        backgroundColor: Color.black.opacity(0.1),
-                        borderColor: Color.clear,
-                        borderWidth: 0,
-                        topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 5,
-                        shadowColor: Color.white.opacity(0.2), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                    )
-                    .padding(.trailing, 5)
-                    .padding(.leading, 15)
-                }
-                .padding(.horizontal, 10)
-                .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 80)
-                .containerHelper(
-                    backgroundColor: Color(hex: 0x171717),
-                    borderColor: Color.clear,
-                    borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                    shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
-                )
-                
-                HStack {
-                    if searchState || replaceState {
-                        HStack(spacing: 0) {
+                        if !searchState && !replaceState {
                             HStack(spacing: 0) {
-                                TabularTextField(
-                                    placeholder: "Search file...",
-                                    text: $searchQuery,
-                                    onReturnKeyPressed: {
-                                        if !searchMatches.isEmpty {
-                                            let newIndex = (currentSearchMatch + 1) > totalSearchMatches
-                                            ? 1
-                                            : (currentSearchMatch + 1)
-                                            currentSearchMatch = newIndex
-                                            postSearchUpdate()
-                                        }
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(fileURL.lastPathComponent)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(Color.white.opacity(0.7))
+                                        .shadow(color: .white.opacity(0.5), radius: 0.5, x: 0, y: 0)
+                                        .padding(.leading, 6)
+                                        .padding(.bottom, 8)
+                                    
+                                    HStack(spacing: 0) {
+                                        Text("File")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.horizontal, 6)
+                                            .padding(.top, 1)
+                                            .padding(.bottom, 5)
+                                            .font(.system(size: 11, weight: showFileMenu ? .semibold : .regular))
+                                            .foregroundColor(showFileMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
+                                            .containerHelper(
+                                                backgroundColor: showFileMenu ? Color.white.opacity(0.1) : Color.clear,
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
+                                                shadowColor: .white.opacity(showFileMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                                            )
+                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            .background(
+                                                GeometryReader { g in
+                                                    Color.clear
+                                                        .onAppear {
+                                                            labelRects[0] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                        .onChange(of: g.size) { _ in
+                                                            labelRects[0] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                showFileMenu.toggle()
+                                                showEditMenu = false
+                                                showFormatMenu = false
+                                                showInsertMenu = false
+                                                showFilterMenu = false
+                                            }
+                                        
+                                        Text("Edit")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.horizontal, 6)
+                                            .padding(.top, 1)
+                                            .padding(.bottom, 5)
+                                            .font(.system(size: 11, weight: showEditMenu ? .semibold : .regular))
+                                            .foregroundColor(showEditMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
+                                            .containerHelper(
+                                                backgroundColor: showEditMenu ? Color.white.opacity(0.1) : Color.clear,
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
+                                                shadowColor: .white.opacity(showEditMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                                            )
+                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            .background(
+                                                GeometryReader { g in
+                                                    Color.clear
+                                                        .onAppear {
+                                                            labelRects[1] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                        .onChange(of: g.size) { _ in
+                                                            labelRects[1] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                showEditMenu.toggle()
+                                                showFileMenu = false
+                                                showFormatMenu = false
+                                                showInsertMenu = false
+                                                showFilterMenu = false
+                                            }
+                                        
+                                        Text("Format")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.horizontal, 6)
+                                            .padding(.top, 1)
+                                            .padding(.bottom, 5)
+                                            .font(.system(size: 11, weight: showFormatMenu ? .semibold : .regular))
+                                            .foregroundColor(showFormatMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
+                                            .containerHelper(
+                                                backgroundColor: showFormatMenu ? Color.white.opacity(0.1) : Color.clear,
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
+                                                shadowColor: .white.opacity(showFormatMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                                            )
+                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            .background(
+                                                GeometryReader { g in
+                                                    Color.clear
+                                                        .onAppear {
+                                                            labelRects[2] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                        .onChange(of: g.size) { _ in
+                                                            labelRects[2] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                showFormatMenu.toggle()
+                                                showFileMenu = false
+                                                showEditMenu = false
+                                                showInsertMenu = false
+                                                showFilterMenu = false
+                                            }
+                                        
+                                        Text("Insert")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.horizontal, 6)
+                                            .padding(.top, 1)
+                                            .padding(.bottom, 5)
+                                            .font(.system(size: 11, weight: showInsertMenu ? .semibold : .regular))
+                                            .foregroundColor(showInsertMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
+                                            .containerHelper(
+                                                backgroundColor: showInsertMenu ? Color.white.opacity(0.1) : Color.clear,
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
+                                                shadowColor: .white.opacity(showInsertMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                                            )
+                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            .background(
+                                                GeometryReader { g in
+                                                    Color.clear
+                                                        .onAppear {
+                                                            labelRects[4] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                        .onChange(of: g.size) { _ in
+                                                            labelRects[4] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                showInsertMenu.toggle()
+                                                showFileMenu = false
+                                                showEditMenu = false
+                                                showFormatMenu = false
+                                                showFilterMenu = false
+                                            }
+                                        
+                                        Text("Filter")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.horizontal, 6)
+                                            .padding(.top, 1)
+                                            .padding(.bottom, 5)
+                                            .font(.system(size: 11, weight: showFilterMenu ? .semibold : .regular))
+                                            .foregroundColor(showFilterMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
+                                            .containerHelper(
+                                                backgroundColor: showFilterMenu ? Color.white.opacity(0.1) : Color.clear,
+                                                borderColor: Color.clear,
+                                                borderWidth: 0,
+                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
+                                                shadowColor: .white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
+                                            )
+                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
+                                            .background(
+                                                GeometryReader { g in
+                                                    Color.clear
+                                                        .onAppear {
+                                                            labelRects[5] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                        .onChange(of: g.size) { _ in
+                                                            labelRects[5] = g.frame(in: .named("MenuBar"))
+                                                        }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                showFilterMenu.toggle()
+                                                showFileMenu = false
+                                                showEditMenu = false
+                                                showFormatMenu = false
+                                                showInsertMenu = false
+                                            }
+                                        
+                                        Spacer()
                                     }
-                                )
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.white)
-                                .font(.system(size: 8, weight: .semibold))
-                                .padding(.horizontal, 10)
-                                .frame(width: 100, height: 25)
-                                .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                 borderColor: Color(hex: 0x616161),
-                                                 borderWidth: 1,
-                                                 topLeft: 2, topRight: 0,
-                                                 bottomLeft: 2, bottomRight: 0,
-                                                 shadowColor: .clear,
-                                                 shadowRadius: 0,
-                                                 shadowX: 0, shadowY: 0)
-                                .hoverEffect(opacity: 0.8)
-                                .onChange(of: searchQuery) { _ in
-                                    performSearch()
                                 }
-                                
-                                HStack {
-                                    TabularButtonMain {
-                                        if !searchMatches.isEmpty {
-                                            let newIndex = (currentSearchMatch + 1) > totalSearchMatches
-                                            ? 1
-                                            : (currentSearchMatch + 1)
-                                            currentSearchMatch = newIndex
-                                            postSearchUpdate()
+                            }
+                            .padding(.vertical, 10)
+                        } else if searchState || replaceState {
+                            HStack(spacing: 0) {
+                                HStack(spacing: 0) {
+                                    TabularTextField(
+                                        placeholder: "Search file...",
+                                        text: $searchQuery,
+                                        onReturnKeyPressed: {
+                                            if !searchMatches.isEmpty {
+                                                let newIndex = (currentSearchMatch + 1) > totalSearchMatches
+                                                ? 1
+                                                : (currentSearchMatch + 1)
+                                                currentSearchMatch = newIndex
+                                                postSearchUpdate()
+                                            }
                                         }
-                                    }
+                                    )
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                     .textFieldStyle(PlainTextFieldStyle())
                                     .foregroundColor(.white)
-                                    .overlay(
-                                        Image(systemName: "arrow.down")
-                                            .font(.system(size: 9, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
-                                    
-                                    TabularButtonMain {
-                                        if !searchMatches.isEmpty {
-                                            let newIndex = (currentSearchMatch - 1) < 1
-                                            ? totalSearchMatches
-                                            : (currentSearchMatch - 1)
-                                            currentSearchMatch = newIndex
-                                            postSearchUpdate()
-                                        }
-                                    }
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .overlay(
-                                        Image(systemName: "arrow.up")
-                                            .font(.system(size: 9, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
-                                    
-                                    TabularButtonMain {
-                                        searchCaseSensitive.toggle()
+                                    .font(.system(size: 8, weight: .semibold))
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 100, height: 25)
+                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                     borderColor: Color(hex: 0x616161),
+                                                     borderWidth: 1,
+                                                     topLeft: 2, topRight: 0,
+                                                     bottomLeft: 2, bottomRight: 0,
+                                                     shadowColor: .clear,
+                                                     shadowRadius: 0,
+                                                     shadowX: 0, shadowY: 0)
+                                    .hoverEffect(opacity: 0.8)
+                                    .onChange(of: searchQuery) { _ in
                                         performSearch()
                                     }
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .overlay(
-                                        Image(systemName: "a.square.fill")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2)
-                                                             : Color(hex: 0xf5f5f5))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
-                                }
-                                .padding(.horizontal, 10)
-                                .frame(width: 60, height: 25)
-                                .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                 borderColor: Color(hex: 0x616161),
-                                                 borderWidth: 1,
-                                                 topLeft: 0, topRight: 2,
-                                                 bottomLeft: 0, bottomRight: 2,
-                                                 shadowColor: .clear,
-                                                 shadowRadius: 0,
-                                                 shadowX: 0, shadowY: 0)
-                                HStack {
-                                    Text("\(currentSearchMatch) of \(totalSearchMatches)")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 8, weight: .semibold))
-                                        .frame(width: 60, height: 25)
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .padding(.leading, 8)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 10)
-                                .frame(width: 60, height: 25)
-                                .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                 borderColor: Color(hex: 0x616161),
-                                                 borderWidth: 1,
-                                                 topLeft: 0, topRight: 2,
-                                                 bottomLeft: 0, bottomRight: 2,
-                                                 shadowColor: .clear,
-                                                 shadowRadius: 0,
-                                                 shadowX: 0, shadowY: 0)
-                            }
-                            .frame(width: 220, height: 25)
-                            .containerHelper(backgroundColor: Color.clear,
-                                             borderColor: Color(hex: 0x616161),
-                                             borderWidth: 1,
-                                             topLeft: 2, topRight: 2,
-                                             bottomLeft: 2, bottomRight: 2,
-                                             shadowColor: Color.white.opacity(0.5),
-                                             shadowRadius: 8,
-                                             shadowX: 0, shadowY: 0)
-                            if replaceState {
-                                HStack(spacing: 0) {
-                                    TabularTextField(placeholder: "Replace with...", text: $replaceQuery)
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .textFieldStyle(PlainTextFieldStyle())
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 8, weight: .semibold))
-                                        .padding(.horizontal, 10)
-                                        .frame(width: 100, height: 25)
-                                        .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 0,
-                                                         bottomLeft: 2, bottomRight: 0,
-                                                         shadowColor: .clear,
-                                                         shadowRadius: 0,
-                                                         shadowX: 0, shadowY: 0)
-                                        .hoverEffect(opacity: 0.8)
+                                    
                                     HStack {
                                         TabularButtonMain {
-                                            if !searchMatches.isEmpty && currentSearchMatch > 0 {
-                                                let matchIndex = currentSearchMatch - 1
-                                                let (row, col) = searchMatches[matchIndex]
-                                                dataModel.updateCell(row: row, column: col, value: replaceQuery)
-                                                performSearch()
-                                                if currentSearchMatch > totalSearchMatches {
-                                                    currentSearchMatch = totalSearchMatches
-                                                }
+                                            if !searchMatches.isEmpty {
+                                                let newIndex = (currentSearchMatch + 1) > totalSearchMatches
+                                                ? 1
+                                                : (currentSearchMatch + 1)
+                                                currentSearchMatch = newIndex
                                                 postSearchUpdate()
                                             }
                                         }
@@ -450,21 +304,19 @@ struct TabularView: View {
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .foregroundColor(.white)
                                         .overlay(
-                                            Image(systemName: "square.fill")
+                                            Image(systemName: "arrow.down")
                                                 .font(.system(size: 9, weight: .semibold))
                                                 .foregroundColor(Color(hex: 0xf5f5f5))
                                                 .allowsHitTesting(false)
                                         )
-                                        .hoverEffect(opacity: 0.6,
-                                                     scale: 1.05,
-                                                     cursor: .pointingHand)
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
                                         
                                         TabularButtonMain {
                                             if !searchMatches.isEmpty {
-                                                for (row, col) in searchMatches {
-                                                    dataModel.updateCell(row: row, column: col, value: replaceQuery)
-                                                }
-                                                performSearch()
+                                                let newIndex = (currentSearchMatch - 1) < 1
+                                                ? totalSearchMatches
+                                                : (currentSearchMatch - 1)
+                                                currentSearchMatch = newIndex
                                                 postSearchUpdate()
                                             }
                                         }
@@ -473,14 +325,49 @@ struct TabularView: View {
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .foregroundColor(.white)
                                         .overlay(
-                                            Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                                            Image(systemName: "arrow.up")
                                                 .font(.system(size: 9, weight: .semibold))
                                                 .foregroundColor(Color(hex: 0xf5f5f5))
                                                 .allowsHitTesting(false)
                                         )
-                                        .hoverEffect(opacity: 0.6,
-                                                     scale: 1.05,
-                                                     cursor: .pointingHand)
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                        
+                                        TabularButtonMain {
+                                            searchCaseSensitive.toggle()
+                                            performSearch()
+                                        }
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .overlay(
+                                            Image(systemName: "a.square.fill")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2)
+                                                                 : Color(hex: 0xf5f5f5))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .frame(width: 60, height: 25)
+                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                     borderColor: Color(hex: 0x616161),
+                                                     borderWidth: 1,
+                                                     topLeft: 0, topRight: 2,
+                                                     bottomLeft: 0, bottomRight: 2,
+                                                     shadowColor: .clear,
+                                                     shadowRadius: 0,
+                                                     shadowX: 0, shadowY: 0)
+                                    HStack {
+                                        Text("\(currentSearchMatch) of \(totalSearchMatches)")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 8, weight: .semibold))
+                                            .frame(width: 60, height: 25)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .padding(.leading, 8)
+                                        Spacer()
                                     }
                                     .padding(.horizontal, 10)
                                     .frame(width: 60, height: 25)
@@ -493,7 +380,7 @@ struct TabularView: View {
                                                      shadowRadius: 0,
                                                      shadowX: 0, shadowY: 0)
                                 }
-                                .frame(width: 160, height: 25)
+                                .frame(width: 220, height: 25)
                                 .containerHelper(backgroundColor: Color.clear,
                                                  borderColor: Color(hex: 0x616161),
                                                  borderWidth: 1,
@@ -502,126 +389,221 @@ struct TabularView: View {
                                                  shadowColor: Color.white.opacity(0.5),
                                                  shadowRadius: 8,
                                                  shadowX: 0, shadowY: 0)
-                                .padding(.leading, 10)
+                                if replaceState {
+                                    HStack(spacing: 0) {
+                                        TabularTextField(placeholder: "Replace with...", text: $replaceQuery)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 8, weight: .semibold))
+                                            .padding(.horizontal, 10)
+                                            .frame(width: 100, height: 25)
+                                            .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                             borderColor: Color(hex: 0x616161),
+                                                             borderWidth: 1,
+                                                             topLeft: 2, topRight: 0,
+                                                             bottomLeft: 2, bottomRight: 0,
+                                                             shadowColor: .clear,
+                                                             shadowRadius: 0,
+                                                             shadowX: 0, shadowY: 0)
+                                            .hoverEffect(opacity: 0.8)
+                                        HStack {
+                                            TabularButtonMain {
+                                                if !searchMatches.isEmpty && currentSearchMatch > 0 {
+                                                    let matchIndex = currentSearchMatch - 1
+                                                    let (row, col) = searchMatches[matchIndex]
+                                                    dataModel.updateCell(row: row, column: col, value: replaceQuery)
+                                                    performSearch()
+                                                    if currentSearchMatch > totalSearchMatches {
+                                                        currentSearchMatch = totalSearchMatches
+                                                    }
+                                                    postSearchUpdate()
+                                                }
+                                            }
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .foregroundColor(.white)
+                                            .overlay(
+                                                Image(systemName: "square.fill")
+                                                    .font(.system(size: 9, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.6,
+                                                         scale: 1.05,
+                                                         cursor: .pointingHand)
+                                            
+                                            TabularButtonMain {
+                                                if !searchMatches.isEmpty {
+                                                    for (row, col) in searchMatches {
+                                                        dataModel.updateCell(row: row, column: col, value: replaceQuery)
+                                                    }
+                                                    performSearch()
+                                                    postSearchUpdate()
+                                                }
+                                            }
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .foregroundColor(.white)
+                                            .overlay(
+                                                Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                                                    .font(.system(size: 9, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.6,
+                                                         scale: 1.05,
+                                                         cursor: .pointingHand)
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .frame(width: 60, height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222),
+                                                         borderColor: Color(hex: 0x616161),
+                                                         borderWidth: 1,
+                                                         topLeft: 0, topRight: 2,
+                                                         bottomLeft: 0, bottomRight: 2,
+                                                         shadowColor: .clear,
+                                                         shadowRadius: 0,
+                                                         shadowX: 0, shadowY: 0)
+                                    }
+                                    .frame(width: 160, height: 25)
+                                    .containerHelper(backgroundColor: Color.clear,
+                                                     borderColor: Color(hex: 0x616161),
+                                                     borderWidth: 1,
+                                                     topLeft: 2, topRight: 2,
+                                                     bottomLeft: 2, bottomRight: 2,
+                                                     shadowColor: Color.white.opacity(0.5),
+                                                     shadowRadius: 8,
+                                                     shadowX: 0, shadowY: 0)
+                                    .padding(.leading, 10)
+                                }
                             }
+                            .padding(.vertical, 10)
                         }
+                        Spacer()
+                        HStack(spacing: 8) {
+                            TabularButtonMain {
+                                if !searchState {
+                                    searchState = true
+                                    replaceState = false
+                                } else {
+                                    searchState = false
+                                    replaceState = false
+                                    searchQuery = ""
+                                    replaceQuery = ""
+                                    clearSearchResults()
+                                }
+                            }
+                            .containerHelper(backgroundColor: searchState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            TabularButtonMain {
+                                if !replaceState {
+                                    replaceState = true
+                                    searchState = false
+                                    clearSearchResults()
+                                } else {
+                                    replaceState = false
+                                    searchState = false
+                                    searchQuery = ""
+                                    replaceQuery = ""
+                                    clearSearchResults()
+                                }
+                            }
+                            .containerHelper(backgroundColor: replaceState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "text.magnifyingglass")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            
+                            TabularButtonMain {
+                                dataModel.undo()
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "arrow.uturn.backward")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            TabularButtonMain {
+                                dataModel.redo()
+                            }
+                            .containerHelper(backgroundColor: Color(hex: 0x414141),
+                                             borderColor: Color(hex: 0x414141),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color(hex: 0x222222),
+                                             shadowRadius: 0.5,
+                                             shadowX: 0, shadowY: 0)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "arrow.uturn.forward")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                    .allowsHitTesting(false)
+                            )
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        }
+                        .padding(.vertical, 10)
                     }
-                    Spacer()
-                    HStack(spacing: 8) {
-                        TabularButtonMain {
-                            if !searchState {
-                                searchState = true
-                                replaceState = false
-                            } else {
-                                searchState = false
-                                replaceState = false
-                                searchQuery = ""
-                                replaceQuery = ""
-                                clearSearchResults()
-                            }
-                        }
-                        .containerHelper(backgroundColor: searchState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
-                                         borderColor: Color(hex: 0x414141),
-                                         borderWidth: 1,
-                                         topLeft: 2, topRight: 2,
-                                         bottomLeft: 2, bottomRight: 2,
-                                         shadowColor: Color(hex: 0x222222),
-                                         shadowRadius: 0.5,
-                                         shadowX: 0, shadowY: 0)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                .allowsHitTesting(false)
-                        )
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                        TabularButtonMain {
-                            if !replaceState {
-                                replaceState = true
-                                searchState = false
-                                clearSearchResults()
-                            } else {
-                                replaceState = false
-                                searchState = false
-                                searchQuery = ""
-                                replaceQuery = ""
-                                clearSearchResults()
-                            }
-                        }
-                        .containerHelper(backgroundColor: replaceState ? Color(hex: 0xAD6ADD) : Color(hex: 0x414141),
-                                         borderColor: Color(hex: 0x414141),
-                                         borderWidth: 1,
-                                         topLeft: 2, topRight: 2,
-                                         bottomLeft: 2, bottomRight: 2,
-                                         shadowColor: Color(hex: 0x222222),
-                                         shadowRadius: 0.5,
-                                         shadowX: 0, shadowY: 0)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            Image(systemName: "text.magnifyingglass")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                .allowsHitTesting(false)
-                        )
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                        
-                        TabularButtonMain {
-                            dataModel.undo()
-                        }
-                        .containerHelper(backgroundColor: Color(hex: 0x414141),
-                                         borderColor: Color(hex: 0x414141),
-                                         borderWidth: 1,
-                                         topLeft: 2, topRight: 2,
-                                         bottomLeft: 2, bottomRight: 2,
-                                         shadowColor: Color(hex: 0x222222),
-                                         shadowRadius: 0.5,
-                                         shadowX: 0, shadowY: 0)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            Image(systemName: "arrow.uturn.backward")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                .allowsHitTesting(false)
-                        )
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                        TabularButtonMain {
-                            dataModel.redo()
-                        }
-                        .containerHelper(backgroundColor: Color(hex: 0x414141),
-                                         borderColor: Color(hex: 0x414141),
-                                         borderWidth: 1,
-                                         topLeft: 2, topRight: 2,
-                                         bottomLeft: 2, bottomRight: 2,
-                                         shadowColor: Color(hex: 0x222222),
-                                         shadowRadius: 0.5,
-                                         shadowX: 0, shadowY: 0)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            Image(systemName: "arrow.uturn.forward")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                .allowsHitTesting(false)
-                        )
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                    }
+                    .padding(.horizontal, 20)
+                    .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9),
+                                     borderColor: Color.clear,
+                                     borderWidth: 0,
+                                     topLeft: 0, topRight: 0,
+                                     bottomLeft: 0, bottomRight: 0,
+                                     shadowColor: Color.clear,
+                                     shadowRadius: 0,
+                                     shadowX: 0, shadowY: 0)
+                   
+                    
+                    
                 }
-                .frame(height: 25)
-                .padding(.bottom, 15)
-                .padding(.horizontal, 20)
-                .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9),
-                                 borderColor: Color.clear,
-                                 borderWidth: 0,
-                                 topLeft: 0, topRight: 0,
-                                 bottomLeft: 0, bottomRight: 0,
-                                 shadowColor: Color.clear,
-                                 shadowRadius: 0,
-                                 shadowX: 0, shadowY: 0)
-                .overlay(
-                    Rectangle()
-                        .frame(height: 0.5)
-                        .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
-                    alignment: .bottom
+                .padding(.horizontal, 10)
+                .frame(width: geometry.size.width * (1 - leftPanelWidthRatio), height: 80)
+                .containerHelper(
+                    backgroundColor: Color(hex: 0x171717),
+                    borderColor: Color.clear,
+                    borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
+                    shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
                 )
                 
                 ZStack(alignment: .topLeading) {
