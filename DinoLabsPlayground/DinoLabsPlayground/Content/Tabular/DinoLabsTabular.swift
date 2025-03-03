@@ -40,6 +40,8 @@ struct TabularView: View {
     @State private var keyBindMonitor: Any? = nil
     @State private var copiedData: [[String]] = []
     @State private var searchMatches: [(row: Int, column: Int)] = []
+    @State private var filterCriteria: String = ""
+    @State private var isFilterActive: Bool = false
 
     func columnLabel(for index: Int) -> String {
         var columnName = ""
@@ -250,7 +252,7 @@ struct TabularView: View {
                         Spacer()
                     }
                     .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.35))
-                      
+                    
                     HStack {
                         
                     }
@@ -284,8 +286,8 @@ struct TabularView: View {
                                     onReturnKeyPressed: {
                                         if !searchMatches.isEmpty {
                                             let newIndex = (currentSearchMatch + 1) > totalSearchMatches
-                                                ? 1
-                                                : (currentSearchMatch + 1)
+                                            ? 1
+                                            : (currentSearchMatch + 1)
                                             currentSearchMatch = newIndex
                                             postSearchUpdate()
                                         }
@@ -299,24 +301,24 @@ struct TabularView: View {
                                 .padding(.horizontal, 10)
                                 .frame(width: 100, height: 25)
                                 .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                  borderColor: Color(hex: 0x616161),
-                                                  borderWidth: 1,
-                                                  topLeft: 2, topRight: 0,
-                                                  bottomLeft: 2, bottomRight: 0,
-                                                  shadowColor: .clear,
-                                                  shadowRadius: 0,
-                                                  shadowX: 0, shadowY: 0)
+                                                 borderColor: Color(hex: 0x616161),
+                                                 borderWidth: 1,
+                                                 topLeft: 2, topRight: 0,
+                                                 bottomLeft: 2, bottomRight: 0,
+                                                 shadowColor: .clear,
+                                                 shadowRadius: 0,
+                                                 shadowX: 0, shadowY: 0)
                                 .hoverEffect(opacity: 0.8)
                                 .onChange(of: searchQuery) { _ in
                                     performSearch()
                                 }
-                                    
+                                
                                 HStack {
                                     TabularButtonMain {
                                         if !searchMatches.isEmpty {
                                             let newIndex = (currentSearchMatch + 1) > totalSearchMatches
-                                                ? 1
-                                                : (currentSearchMatch + 1)
+                                            ? 1
+                                            : (currentSearchMatch + 1)
                                             currentSearchMatch = newIndex
                                             postSearchUpdate()
                                         }
@@ -336,8 +338,8 @@ struct TabularView: View {
                                     TabularButtonMain {
                                         if !searchMatches.isEmpty {
                                             let newIndex = (currentSearchMatch - 1) < 1
-                                                ? totalSearchMatches
-                                                : (currentSearchMatch - 1)
+                                            ? totalSearchMatches
+                                            : (currentSearchMatch - 1)
                                             currentSearchMatch = newIndex
                                             postSearchUpdate()
                                         }
@@ -366,7 +368,7 @@ struct TabularView: View {
                                         Image(systemName: "a.square.fill")
                                             .font(.system(size: 10, weight: .semibold))
                                             .foregroundColor(searchCaseSensitive ? Color(hex: 0x5C2BE2)
-                                                                                 : Color(hex: 0xf5f5f5))
+                                                             : Color(hex: 0xf5f5f5))
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.6, scale: 1.05, cursor: .pointingHand)
@@ -374,13 +376,13 @@ struct TabularView: View {
                                 .padding(.horizontal, 10)
                                 .frame(width: 60, height: 25)
                                 .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                  borderColor: Color(hex: 0x616161),
-                                                  borderWidth: 1,
-                                                  topLeft: 0, topRight: 2,
-                                                  bottomLeft: 0, bottomRight: 2,
-                                                  shadowColor: .clear,
-                                                  shadowRadius: 0,
-                                                  shadowX: 0, shadowY: 0)
+                                                 borderColor: Color(hex: 0x616161),
+                                                 borderWidth: 1,
+                                                 topLeft: 0, topRight: 2,
+                                                 bottomLeft: 0, bottomRight: 2,
+                                                 shadowColor: .clear,
+                                                 shadowRadius: 0,
+                                                 shadowX: 0, shadowY: 0)
                                 HStack {
                                     Text("\(currentSearchMatch) of \(totalSearchMatches)")
                                         .foregroundColor(.white)
@@ -394,23 +396,23 @@ struct TabularView: View {
                                 .padding(.horizontal, 10)
                                 .frame(width: 60, height: 25)
                                 .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                  borderColor: Color(hex: 0x616161),
-                                                  borderWidth: 1,
-                                                  topLeft: 0, topRight: 2,
-                                                  bottomLeft: 0, bottomRight: 2,
-                                                  shadowColor: .clear,
-                                                  shadowRadius: 0,
-                                                  shadowX: 0, shadowY: 0)
+                                                 borderColor: Color(hex: 0x616161),
+                                                 borderWidth: 1,
+                                                 topLeft: 0, topRight: 2,
+                                                 bottomLeft: 0, bottomRight: 2,
+                                                 shadowColor: .clear,
+                                                 shadowRadius: 0,
+                                                 shadowX: 0, shadowY: 0)
                             }
                             .frame(width: 220, height: 25)
                             .containerHelper(backgroundColor: Color.clear,
-                                              borderColor: Color(hex: 0x616161),
-                                              borderWidth: 1,
-                                              topLeft: 2, topRight: 2,
-                                              bottomLeft: 2, bottomRight: 2,
-                                              shadowColor: Color.white.opacity(0.5),
-                                              shadowRadius: 8,
-                                              shadowX: 0, shadowY: 0)
+                                             borderColor: Color(hex: 0x616161),
+                                             borderWidth: 1,
+                                             topLeft: 2, topRight: 2,
+                                             bottomLeft: 2, bottomRight: 2,
+                                             shadowColor: Color.white.opacity(0.5),
+                                             shadowRadius: 8,
+                                             shadowX: 0, shadowY: 0)
                             if replaceState {
                                 HStack(spacing: 0) {
                                     TabularTextField(placeholder: "Replace with...", text: $replaceQuery)
@@ -422,13 +424,13 @@ struct TabularView: View {
                                         .padding(.horizontal, 10)
                                         .frame(width: 100, height: 25)
                                         .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                          borderColor: Color(hex: 0x616161),
-                                                          borderWidth: 1,
-                                                          topLeft: 2, topRight: 0,
-                                                          bottomLeft: 2, bottomRight: 0,
-                                                          shadowColor: .clear,
-                                                          shadowRadius: 0,
-                                                          shadowX: 0, shadowY: 0)
+                                                         borderColor: Color(hex: 0x616161),
+                                                         borderWidth: 1,
+                                                         topLeft: 2, topRight: 0,
+                                                         bottomLeft: 2, bottomRight: 0,
+                                                         shadowColor: .clear,
+                                                         shadowRadius: 0,
+                                                         shadowX: 0, shadowY: 0)
                                         .hoverEffect(opacity: 0.8)
                                     HStack {
                                         TabularButtonMain {
@@ -483,23 +485,23 @@ struct TabularView: View {
                                     .padding(.horizontal, 10)
                                     .frame(width: 60, height: 25)
                                     .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                      borderColor: Color(hex: 0x616161),
-                                                      borderWidth: 1,
-                                                      topLeft: 0, topRight: 2,
-                                                      bottomLeft: 0, bottomRight: 2,
-                                                      shadowColor: .clear,
-                                                      shadowRadius: 0,
-                                                      shadowX: 0, shadowY: 0)
+                                                     borderColor: Color(hex: 0x616161),
+                                                     borderWidth: 1,
+                                                     topLeft: 0, topRight: 2,
+                                                     bottomLeft: 0, bottomRight: 2,
+                                                     shadowColor: .clear,
+                                                     shadowRadius: 0,
+                                                     shadowX: 0, shadowY: 0)
                                 }
                                 .frame(width: 160, height: 25)
                                 .containerHelper(backgroundColor: Color.clear,
-                                                  borderColor: Color(hex: 0x616161),
-                                                  borderWidth: 1,
-                                                  topLeft: 2, topRight: 2,
-                                                  bottomLeft: 2, bottomRight: 2,
-                                                  shadowColor: Color.white.opacity(0.5),
-                                                  shadowRadius: 8,
-                                                  shadowX: 0, shadowY: 0)
+                                                 borderColor: Color(hex: 0x616161),
+                                                 borderWidth: 1,
+                                                 topLeft: 2, topRight: 2,
+                                                 bottomLeft: 2, bottomRight: 2,
+                                                 shadowColor: Color.white.opacity(0.5),
+                                                 shadowRadius: 8,
+                                                 shadowX: 0, shadowY: 0)
                                 .padding(.leading, 10)
                             }
                         }
@@ -608,13 +610,13 @@ struct TabularView: View {
                 .padding(.bottom, 15)
                 .padding(.horizontal, 20)
                 .containerHelper(backgroundColor: Color(hex: 0x171717).opacity(0.9),
-                                  borderColor: Color.clear,
-                                  borderWidth: 0,
-                                  topLeft: 0, topRight: 0,
-                                  bottomLeft: 0, bottomRight: 0,
-                                  shadowColor: Color.clear,
-                                  shadowRadius: 0,
-                                  shadowX: 0, shadowY: 0)
+                                 borderColor: Color.clear,
+                                 borderWidth: 0,
+                                 topLeft: 0, topRight: 0,
+                                 bottomLeft: 0, bottomRight: 0,
+                                 shadowColor: Color.clear,
+                                 shadowRadius: 0,
+                                 shadowX: 0, shadowY: 0)
                 .overlay(
                     Rectangle()
                         .frame(height: 0.5)
@@ -819,7 +821,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -853,7 +855,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -903,7 +905,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -937,7 +939,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -998,7 +1000,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1053,7 +1055,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1114,7 +1116,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1148,7 +1150,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1208,7 +1210,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1252,7 +1254,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1296,7 +1298,7 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1346,7 +1348,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1379,7 +1381,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1412,7 +1414,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1420,7 +1422,7 @@ struct TabularView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                         alignment: .bottom
                     )
-                            
+                    
                     TabularButtonMain {
                         if let selection = cellSelection {
                             let minRow = min(selection.startRow, selection.endRow)
@@ -1445,7 +1447,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1453,7 +1455,7 @@ struct TabularView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                         alignment: .bottom
                     )
-                                
+                    
                     TabularButtonMain {
                         if let selection = cellSelection {
                             let minRow = min(selection.startRow, selection.endRow)
@@ -1478,7 +1480,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1486,7 +1488,7 @@ struct TabularView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                         alignment: .bottom
                     )
-                            
+                    
                     TabularButtonMain {
                         if let selection = cellSelection {
                             let minRow = min(selection.startRow, selection.endRow)
@@ -1511,7 +1513,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1519,7 +1521,7 @@ struct TabularView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                         alignment: .bottom
                     )
-                                
+                    
                     TabularButtonMain {
                         if let selection = cellSelection {
                             let minRow = min(selection.startRow, selection.endRow)
@@ -1544,7 +1546,7 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
                     .overlay(
                         Rectangle()
@@ -1552,7 +1554,7 @@ struct TabularView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
                         alignment: .bottom
                     )
-                            
+                    
                     Spacer()
                 }
                 .frame(width: 160, height: 300)
@@ -1567,9 +1569,126 @@ struct TabularView: View {
                     y: labelRects[4].maxY + 150
                 )
             }
-
+            
             if showFilterMenu {
                 VStack(spacing: 0) {
+                    TabularButtonMain {
+                        filterCriteria = "A-Z"
+                        isFilterActive = true
+                        applyFilter()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Sort A-Z")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        filterCriteria = "Z-A"
+                        isFilterActive = true
+                        applyFilter()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Sort Z-A")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        filterCriteria = "Smallest to Largest"
+                        isFilterActive = true
+                        applyFilter()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Sort Smallest to Largest")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        filterCriteria = "Largest to Smallest"
+                        isFilterActive = true
+                        applyFilter()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Sort Largest to Smallest")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    Spacer()
                 }
                 .frame(width: 160, height: 200)
                 .containerHelper(
@@ -1812,7 +1931,55 @@ struct TabularView: View {
             }
         }
     }
+    
+    private func applyFilter() {
+        guard let selection = cellSelection else { return }
+        let oldData = dataModel.getAllData()
+        let minCol = min(selection.startColumn, selection.endColumn)
+        let maxCol = max(selection.startColumn, selection.endColumn)
+        
+        var rowsWithSelectedColumns: [(rowIndex: Int, rowData: [String], selectedValues: [String])] = []
+        for row in 0..<totalRows {
+            let rowData = (0..<totalColumns).map { dataModel.getValue(row: row, column: $0) }
+            let selectedValues = (minCol...maxCol).map { dataModel.getValue(row: row, column: $0) }
+            rowsWithSelectedColumns.append((rowIndex: row, rowData: rowData, selectedValues: selectedValues))
+        }
 
+        rowsWithSelectedColumns = rowsWithSelectedColumns.filter {
+            !$0.selectedValues.allSatisfy { $0.isEmpty }
+        }
+
+        switch filterCriteria {
+        case "A-Z":
+            rowsWithSelectedColumns.sort { $0.selectedValues.joined() < $1.selectedValues.joined() }
+        case "Z-A":
+            rowsWithSelectedColumns.sort { $0.selectedValues.joined() > $1.selectedValues.joined() }
+        case "Smallest to Largest":
+            rowsWithSelectedColumns.sort {
+                $0.selectedValues.compactMap { Int($0) }.reduce(0,+)
+                < $1.selectedValues.compactMap { Int($0) }.reduce(0,+)
+            }
+        case "Largest to Smallest":
+            rowsWithSelectedColumns.sort {
+                $0.selectedValues.compactMap { Int($0) }.reduce(0,+)
+                > $1.selectedValues.compactMap { Int($0) }.reduce(0,+)
+            }
+        default:
+            break
+        }
+
+        var newData: [[String]] = Array(
+            repeating: Array(repeating: "", count: totalColumns),
+            count: totalRows
+        )
+        for (index, row) in rowsWithSelectedColumns.enumerated() {
+            newData[index] = row.rowData
+        }
+
+        dataModel.setAllDataUndoable(oldData: oldData, newData: newData)
+        hasUnsavedChanges = true
+    }
+    
     private func performSearch() {
         searchMatches.removeAll()
         let query = searchCaseSensitive ? searchQuery : searchQuery.lowercased()
@@ -2989,9 +3156,23 @@ private class DataTableModel: ObservableObject {
         self.rows = rows
         self.columns = columns
         self.data = Array(repeating: Array(repeating: "", count: columns), count: rows)
-        self.alignments = Array(repeating: Array(repeating: .left, count: columns), count: rows)
+        self.alignments = Array(repeating: Array(repeating: .center, count: columns), count: rows)
         self.cellBorders = Array(repeating: Array(repeating: CellBorders(), count: columns), count: rows)
         self.undoManager.levelsOfUndo = 0
+    }
+    
+    func getAllData() -> [[String]] {
+        return data
+    }
+
+    func setAllDataUndoable(oldData: [[String]], newData: [[String]]) {
+        guard newData != oldData else { return }
+
+        undoManager.registerUndo(withTarget: self) { target in
+            target.setAllDataUndoable(oldData: newData, newData: oldData)
+        }
+        data = newData
+        objectWillChange.send()
     }
     
     func loadData(_ parsedData: [[String]], totalRows: Int, totalColumns: Int) {
