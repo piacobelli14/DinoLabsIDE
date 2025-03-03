@@ -454,7 +454,7 @@ struct DinoLabsPlayground: View {
         "makefile": "makefileExtension",
         "git": "githubExtension"
     ]
-    
+
     private func openTab(url: URL, lineNumber: Int?) {
         let ext = url.pathExtension.lowercased()
         if ext == "csv" {
@@ -470,7 +470,24 @@ struct DinoLabsPlayground: View {
                 noFileSelected = false
             }
             return
+        } else if ["txt", "md"].contains(ext) {
+            if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
+                activeTabId = existingTab.id
+                SessionStateManager.shared.updateActiveTab(id: existingTab.id)
+                noFileSelected = false
+            } else {
+                var newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
+                if let content = try? String(contentsOf: url) {
+                    newTab.fileContent = content
+                }
+                openTabs.append(newTab)
+                activeTabId = newTab.id
+                SessionStateManager.shared.updateActiveTab(id: newTab.id)
+                noFileSelected = false
+            }
+            return
         }
+        
         let codeLanguage = codeLanguage(for: url)
         guard codeLanguage != "plaintext" else {
             alertTitle = "Unsupported file type"
@@ -1857,7 +1874,18 @@ struct DinoLabsPlayground: View {
                                                 geometry: geometry,
                                                 fileURL: activeTab.fileURL,
                                                 leftPanelWidthRatio: $leftPanelWidthRatio,
-                                                hasUnsavedChanges:  $openTabs[index].hasUnsavedChanges
+                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges
+                                            )
+                                            .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
+                                                updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
+                                            }
+                                            .id(activeTab.id)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        } else if ["txt", "md"].contains(activeTab.fileURL.pathExtension.lowercased()) {
+                                            TextView(
+                                                fileURL: activeTab.fileURL,
+                                                fileContent: $openTabs[index].fileContent,
+                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges
                                             )
                                             .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
                                                 updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)

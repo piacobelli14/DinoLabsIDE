@@ -70,14 +70,14 @@ struct ContentView: View {
             auth.token = nil
             auth.isAdmin = false
             isLoggedOut = true
-            currentView = .DinoLabsPlayground
+            currentView = .LoginAuth
         }
     }
 
     func redirectToLogin() {
         withAnimation {
             isLoggedOut = true
-            currentView = .DinoLabsPlayground
+            currentView = .LoginAuth
         }
     }
 
