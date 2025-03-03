@@ -1322,8 +1322,240 @@ struct TabularView: View {
             
             if showInsertMenu {
                 VStack(spacing: 0) {
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyAllBorders(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("All Borders")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyOutsideBorders(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Outside Borders")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyTopBorder(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Top Border")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                            
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyBottomBorder(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Bottom Border")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                                
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyRightBorder(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Right Border")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                            
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.applyLeftBorder(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("Left Border")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                                
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            dataModel.clearBorders(toRange: (startRow: minRow, endRow: maxRow, startColumn: minCol, endColumn: maxCol))
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Text("No Borders")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                            
+                    Spacer()
                 }
-                .frame(width: 160, height: 200)
+                .frame(width: 160, height: 300)
                 .containerHelper(
                     backgroundColor: Color(hex: 0x181818),
                     borderColor: Color(hex: 0x262626),
@@ -1332,9 +1564,10 @@ struct TabularView: View {
                 )
                 .position(
                     x: labelRects[4].minX + 80,
-                    y: labelRects[4].maxY + 100
+                    y: labelRects[4].maxY + 150
                 )
             }
+
             if showFilterMenu {
                 VStack(spacing: 0) {
                 }
@@ -2377,6 +2610,74 @@ fileprivate class DataTableWrapper: NSView {
                 let textField = textFields[row][col]
                 let container = textField.superview!
                 
+                container.layer?.sublayers?.forEach { layer in
+                    if layer.name == "insertedBorder" {
+                        layer.removeFromSuperlayer()
+                    }
+                }
+                
+                let borders = dataModel.getBorders(row: row, column: col)
+                let borderWidth = borders.borderWidth
+                let borderColor = borders.borderColor.cgColor
+                
+                if borders.top {
+                    let borderLayer = CALayer()
+                    borderLayer.name = "insertedBorder"
+                    borderLayer.backgroundColor = borderColor
+                    borderLayer.frame = CGRect(
+                        x: 0,
+                        y: container.bounds.height - borderWidth,
+                        width: container.bounds.width,
+                        height: borderWidth
+                    )
+                    container.layer?.addSublayer(borderLayer)
+                }
+                
+                if borders.bottom {
+                    let cellBelowHasTopBorder = row < totalRows - 1 && dataModel.getBorders(row: row + 1, column: col).top
+                    if !cellBelowHasTopBorder {
+                        let borderLayer = CALayer()
+                        borderLayer.name = "insertedBorder"
+                        borderLayer.backgroundColor = borderColor
+                        borderLayer.frame = CGRect(
+                            x: 0,
+                            y: 0,
+                            width: container.bounds.width,
+                            height: borderWidth
+                        )
+                        container.layer?.addSublayer(borderLayer)
+                    }
+                }
+                
+                if borders.left {
+                    let cellLeftHasRightBorder = col > 0 && dataModel.getBorders(row: row, column: col - 1).right
+                    if !cellLeftHasRightBorder {
+                        let borderLayer = CALayer()
+                        borderLayer.name = "insertedBorder"
+                        borderLayer.backgroundColor = borderColor
+                        borderLayer.frame = CGRect(
+                            x: 0,
+                            y: 0,
+                            width: borderWidth,
+                            height: container.bounds.height
+                        )
+                        container.layer?.addSublayer(borderLayer)
+                    }
+                }
+                
+                if borders.right {
+                    let borderLayer = CALayer()
+                    borderLayer.name = "insertedBorder"
+                    borderLayer.backgroundColor = borderColor
+                    borderLayer.frame = CGRect(
+                        x: container.bounds.width - borderWidth,
+                        y: 0,
+                        width: borderWidth,
+                        height: container.bounds.height
+                    )
+                    container.layer?.addSublayer(borderLayer)
+                }
+                
                 if let active = activeCell, active.row == row && active.column == col {
                     container.layer?.backgroundColor = NSColor(red: 0, green: 0.5, blue: 0, alpha: 0.2).cgColor
                     container.layer?.borderColor = NSColor.green.cgColor
@@ -2679,6 +2980,7 @@ extension DataTableWrapper: NSTextFieldDelegate {
 private class DataTableModel: ObservableObject {
     private var data: [[String]]
     private var alignments: [[NSTextAlignment]]
+    private var cellBorders: [[CellBorders]]
     private let rows: Int
     private let columns: Int
     private let undoManager = UndoManager()
@@ -2688,6 +2990,7 @@ private class DataTableModel: ObservableObject {
         self.columns = columns
         self.data = Array(repeating: Array(repeating: "", count: columns), count: rows)
         self.alignments = Array(repeating: Array(repeating: .left, count: columns), count: rows)
+        self.cellBorders = Array(repeating: Array(repeating: CellBorders(), count: columns), count: rows)
         self.undoManager.levelsOfUndo = 0
     }
     
@@ -2697,6 +3000,20 @@ private class DataTableModel: ObservableObject {
                 data[row][col] = parsedData[row][col]
             }
         }
+        objectWillChange.send()
+    }
+    
+    func updateCell(row: Int, column: Int, value: String) {
+        guard row < data.count && column < data[row].count else { return }
+        let oldValue = data[row][column]
+        if oldValue == value { return }
+        
+        undoManager.registerUndo(withTarget: self) { target in
+            target.updateCell(row: row, column: column, value: value)
+            target.updateCell(row: row, column: column, value: oldValue)
+        }
+        
+        data[row][column] = value
         objectWillChange.send()
     }
     
@@ -2710,36 +3027,143 @@ private class DataTableModel: ObservableObject {
         return alignments[row][column]
     }
     
-    func updateCell(row: Int, column: Int, value: String) {
-        guard row < data.count && column < data[row].count else { return }
-        let oldValue = data[row][column]
-        if oldValue == value { return }
-        data[row][column] = value
-        undoManager.registerUndo(withTarget: self) { target in
-            target.updateCell(row: row, column: column, value: oldValue)
-        }
-        objectWillChange.send()
-    }
-    
     func setAlignment(row: Int, column: Int, alignment: NSTextAlignment) {
         guard row < alignments.count && column < alignments[row].count else { return }
         let oldAlignment = alignments[row][column]
         if oldAlignment == alignment { return }
-        alignments[row][column] = alignment
+        
         undoManager.registerUndo(withTarget: self) { target in
+            target.setAlignment(row: row, column: column, alignment: alignment)
             target.setAlignment(row: row, column: column, alignment: oldAlignment)
+        }
+        
+        alignments[row][column] = alignment
+        objectWillChange.send()
+    }
+    
+    func getBorders(row: Int, column: Int) -> CellBorders {
+        if row < cellBorders.count && column < cellBorders[row].count {
+            return cellBorders[row][column]
+        }
+        return CellBorders()
+    }
+    
+    private func setBordersForSelection(startRow: Int, endRow: Int, startColumn: Int, endColumn: Int, borders: CellBorders) {
+        var oldBorders: [[CellBorders]] = []
+        
+        for row in startRow...endRow {
+            var rowBorders: [CellBorders] = []
+            for col in startColumn...endColumn {
+                rowBorders.append(cellBorders[row][col])
+            }
+            oldBorders.append(rowBorders)
+        }
+        
+        undoManager.registerUndo(withTarget: self) { target in
+            target.setBordersForSelection(startRow: startRow, endRow: endRow, startColumn: startColumn, endColumn: endColumn, borders: borders)
+            for (rowIndex, row) in (startRow...endRow).enumerated() {
+                for (colIndex, col) in (startColumn...endColumn).enumerated() {
+                    target.cellBorders[row][col] = oldBorders[rowIndex][colIndex]
+                }
+            }
+            target.objectWillChange.send()
+        }
+        
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                cellBorders[row][col] = borders
+            }
         }
         objectWillChange.send()
     }
     
-    func undo() {
-        undoManager.undo()
+    func applyAllBorders(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        let borders = CellBorders(top: true, bottom: true, left: true, right: true)
+        setBordersForSelection(startRow: startRow, endRow: endRow, startColumn: startColumn, endColumn: endColumn, borders: borders)
+    }
+
+    func applyOutsideBorders(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                var border = CellBorders()
+                if row == startRow { border.top = true }
+                if row == endRow { border.bottom = true }
+                if col == startColumn { border.left = true }
+                if col == endColumn { border.right = true }
+                cellBorders[row][col] = border
+            }
+        }
         objectWillChange.send()
+    }
+
+    func applyTopBorder(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                var border = cellBorders[row][col]
+                border.top = true
+                cellBorders[row][col] = border
+            }
+        }
+        objectWillChange.send()
+    }
+
+    func applyBottomBorder(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                var border = cellBorders[row][col]
+                border.bottom = true
+                cellBorders[row][col] = border
+            }
+        }
+        objectWillChange.send()
+    }
+
+    func applyLeftBorder(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                var border = cellBorders[row][col]
+                border.left = true
+                cellBorders[row][col] = border
+            }
+        }
+        objectWillChange.send()
+    }
+
+    func applyRightBorder(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        for row in startRow...endRow {
+            for col in startColumn...endColumn {
+                var border = cellBorders[row][col]
+                border.right = true
+                cellBorders[row][col] = border
+            }
+        }
+        objectWillChange.send()
+    }
+
+    func clearBorders(toRange range: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)) {
+        let (startRow, endRow, startColumn, endColumn) = range
+        let borders = CellBorders()
+        setBordersForSelection(startRow: startRow, endRow: endRow, startColumn: startColumn, endColumn: endColumn, borders: borders)
+    }
+
+    func undo() {
+        if undoManager.canUndo {
+            undoManager.undo()
+            objectWillChange.send()
+        }
     }
     
     func redo() {
-        undoManager.redo()
-        objectWillChange.send()
+        if undoManager.canRedo {
+            undoManager.redo()
+            objectWillChange.send()
+        }
     }
 }
 
@@ -2857,4 +3281,13 @@ class CellTextField: NSTextField {
             super.mouseUp(with: event)
         }
     }
+}
+
+struct CellBorders {
+    var top: Bool = false
+    var bottom: Bool = false
+    var left: Bool = false
+    var right: Bool = false
+    var borderWidth: CGFloat = 2.0
+    var borderColor: NSColor = NSColor.gray.withAlphaComponent(0.8)
 }
