@@ -22,7 +22,6 @@ struct TabularView: View {
     @State private var showFileMenu = false
     @State private var showEditMenu = false
     @State private var showFormatMenu = false
-    @State private var showToolsMenu = false
     @State private var showInsertMenu = false
     @State private var showFilterMenu = false
     @State private var labelRects: [CGRect] = Array(repeating: .zero, count: 6)
@@ -101,7 +100,6 @@ struct TabularView: View {
                                     showFileMenu.toggle()
                                     showEditMenu = false
                                     showFormatMenu = false
-                                    showToolsMenu = false
                                     showInsertMenu = false
                                     showFilterMenu = false
                                 }
@@ -137,7 +135,6 @@ struct TabularView: View {
                                     showEditMenu.toggle()
                                     showFileMenu = false
                                     showFormatMenu = false
-                                    showToolsMenu = false
                                     showInsertMenu = false
                                     showFilterMenu = false
                                 }
@@ -173,43 +170,6 @@ struct TabularView: View {
                                     showFormatMenu.toggle()
                                     showFileMenu = false
                                     showEditMenu = false
-                                    showToolsMenu = false
-                                    showInsertMenu = false
-                                    showFilterMenu = false
-                                }
-                            
-                            Text("Tools")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.horizontal, 6)
-                                .padding(.top, 1)
-                                .padding(.bottom, 5)
-                                .font(.system(size: 11, weight: showToolsMenu ? .semibold : .regular))
-                                .foregroundColor(showToolsMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                .containerHelper(
-                                    backgroundColor: showToolsMenu ? Color.white.opacity(0.1) : Color.clear,
-                                    borderColor: Color.clear,
-                                    borderWidth: 0,
-                                    topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                    shadowColor: .white.opacity(showToolsMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                )
-                                .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                .background(
-                                    GeometryReader { g in
-                                        Color.clear
-                                            .onAppear {
-                                                labelRects[3] = g.frame(in: .named("MenuBar"))
-                                            }
-                                            .onChange(of: g.size) { _ in
-                                                labelRects[3] = g.frame(in: .named("MenuBar"))
-                                            }
-                                    }
-                                )
-                                .onTapGesture {
-                                    showToolsMenu.toggle()
-                                    showFileMenu = false
-                                    showEditMenu = false
-                                    showFormatMenu = false
                                     showInsertMenu = false
                                     showFilterMenu = false
                                 }
@@ -246,7 +206,6 @@ struct TabularView: View {
                                     showFileMenu = false
                                     showEditMenu = false
                                     showFormatMenu = false
-                                    showToolsMenu = false
                                     showFilterMenu = false
                                 }
                             
@@ -282,7 +241,6 @@ struct TabularView: View {
                                     showFileMenu = false
                                     showEditMenu = false
                                     showFormatMenu = false
-                                    showToolsMenu = false
                                     showInsertMenu = false
                                 }
                             
@@ -821,14 +779,13 @@ struct TabularView: View {
                 }
             }
             
-            if showFileMenu || showEditMenu || showFormatMenu || showToolsMenu || showInsertMenu || showFilterMenu {
+            if showFileMenu || showEditMenu || showFormatMenu || showInsertMenu || showFilterMenu {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture {
                         showFileMenu = false
                         showEditMenu = false
                         showFormatMenu = false
-                        showToolsMenu = false
                         showInsertMenu = false
                         showFilterMenu = false
                     }
@@ -1216,6 +1173,139 @@ struct TabularView: View {
             }
             if showFormatMenu {
                 VStack(spacing: 0) {
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            for row in minRow...maxRow {
+                                for col in minCol...maxCol {
+                                    dataModel.setAlignment(row: row, column: col, alignment: .center)
+                                }
+                            }
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "text.justify")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Center Align")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            for row in minRow...maxRow {
+                                for col in minCol...maxCol {
+                                    dataModel.setAlignment(row: row, column: col, alignment: .left)
+                                }
+                            }
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "text.justify.left")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Left Align")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TabularButtonMain {
+                        if let selection = cellSelection {
+                            let minRow = min(selection.startRow, selection.endRow)
+                            let maxRow = max(selection.startRow, selection.endRow)
+                            let minCol = min(selection.startColumn, selection.endColumn)
+                            let maxCol = max(selection.startColumn, selection.endColumn)
+                            for row in minRow...maxRow {
+                                for col in minCol...maxCol {
+                                    dataModel.setAlignment(row: row, column: col, alignment: .right)
+                                }
+                            }
+                        }
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "text.justify.right")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Right Align")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    Spacer()
                 }
                 .frame(width: 160, height: 200)
                 .containerHelper(
@@ -1229,21 +1319,7 @@ struct TabularView: View {
                     y: labelRects[2].maxY + 100
                 )
             }
-            if showToolsMenu {
-                VStack(spacing: 0) {
-                }
-                .frame(width: 160, height: 200)
-                .containerHelper(
-                    backgroundColor: Color(hex: 0x181818),
-                    borderColor: Color(hex: 0x262626),
-                    borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 6, bottomRight: 6,
-                    shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0
-                )
-                .position(
-                    x: labelRects[3].minX + 80,
-                    y: labelRects[3].maxY + 100
-                )
-            }
+            
             if showInsertMenu {
                 VStack(spacing: 0) {
                 }
@@ -1454,7 +1530,12 @@ struct TabularView: View {
             try csv.write(to: fileURL, atomically: true, encoding: .utf8)
             hasUnsavedChanges = false
         } catch {
-            return
+            let alert = NSAlert()
+            alert.messageText = "Error Saving File"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .critical
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
         }
     }
     
@@ -1988,6 +2069,11 @@ fileprivate class DataTableWrapper: NSView {
                 let textFieldFrame = NSRect(x: 0, y: (rowHeight - textHeight) / 2, width: 100, height: textHeight)
                 let textField = CellTextField(frame: textFieldFrame)
                 textField.stringValue = dataModel.getValue(row: row, column: col)
+                let newAlignment = dataModel.getAlignment(row: row, column: col)
+                textField.alignment = newAlignment
+                if let cell = textField.cell as? NSTextFieldCell {
+                    cell.alignment = newAlignment
+                }
                 textField.isBordered = false
                 textField.backgroundColor = .clear
                 textField.focusRingType = .none
@@ -1997,7 +2083,6 @@ fileprivate class DataTableWrapper: NSView {
                 textField.tag = row * totalColumns + col
                 textField.wantsLayer = true
                 textField.layer?.zPosition = 0
-                textField.alignment = .center
                 if let cell = textField.cell as? NSTextFieldCell {
                     cell.lineBreakMode = .byTruncatingTail
                 }
@@ -2352,9 +2437,13 @@ fileprivate class DataTableWrapper: NSView {
         for row in 0..<totalRows {
             for col in 0..<totalColumns {
                 let textField = textFields[row][col]
-                if textField.currentEditor() == nil {
-                    textField.stringValue = dataModel.getValue(row: row, column: col)
+                textField.stringValue = dataModel.getValue(row: row, column: col)
+                let newAlignment = dataModel.getAlignment(row: row, column: col)
+                textField.alignment = newAlignment
+                if let cell = textField.cell as? NSTextFieldCell {
+                    cell.alignment = newAlignment
                 }
+
             }
         }
         updateCellHighlight()
@@ -2589,6 +2678,7 @@ extension DataTableWrapper: NSTextFieldDelegate {
 
 private class DataTableModel: ObservableObject {
     private var data: [[String]]
+    private var alignments: [[NSTextAlignment]]
     private let rows: Int
     private let columns: Int
     private let undoManager = UndoManager()
@@ -2597,6 +2687,7 @@ private class DataTableModel: ObservableObject {
         self.rows = rows
         self.columns = columns
         self.data = Array(repeating: Array(repeating: "", count: columns), count: rows)
+        self.alignments = Array(repeating: Array(repeating: .left, count: columns), count: rows)
         self.undoManager.levelsOfUndo = 0
     }
     
@@ -2614,6 +2705,11 @@ private class DataTableModel: ObservableObject {
         return data[row][column]
     }
     
+    func getAlignment(row: Int, column: Int) -> NSTextAlignment {
+        guard row < alignments.count && column < alignments[row].count else { return .left }
+        return alignments[row][column]
+    }
+    
     func updateCell(row: Int, column: Int, value: String) {
         guard row < data.count && column < data[row].count else { return }
         let oldValue = data[row][column]
@@ -2621,6 +2717,17 @@ private class DataTableModel: ObservableObject {
         data[row][column] = value
         undoManager.registerUndo(withTarget: self) { target in
             target.updateCell(row: row, column: column, value: oldValue)
+        }
+        objectWillChange.send()
+    }
+    
+    func setAlignment(row: Int, column: Int, alignment: NSTextAlignment) {
+        guard row < alignments.count && column < alignments[row].count else { return }
+        let oldAlignment = alignments[row][column]
+        if oldAlignment == alignment { return }
+        alignments[row][column] = alignment
+        undoManager.registerUndo(withTarget: self) { target in
+            target.setAlignment(row: row, column: column, alignment: oldAlignment)
         }
         objectWillChange.send()
     }
@@ -2702,6 +2809,17 @@ private class DraggableSelectionView: NSView {
 }
 
 class CellTextField: NSTextField {
+    override var alignment: NSTextAlignment {
+        didSet {
+            super.alignment = alignment
+        }
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        self.alignment = alignment
+    }
+
     override func keyDown(with event: NSEvent) {
         let keysToForward: Set<UInt16> = [123, 124, 125, 126, 36, 76]
         if keysToForward.contains(event.keyCode) {
@@ -2712,17 +2830,18 @@ class CellTextField: NSTextField {
         }
         super.keyDown(with: event)
     }
-    
+
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2 {
             super.mouseDown(with: event)
             return
         }
-        
+
         if let container = self.superview {
             container.mouseDown(with: event)
         }
     }
+
     override func mouseDragged(with event: NSEvent) {
         if let container = self.superview {
             container.mouseDragged(with: event)
@@ -2730,6 +2849,7 @@ class CellTextField: NSTextField {
             super.mouseDragged(with: event)
         }
     }
+
     override func mouseUp(with event: NSEvent) {
         if let container = self.superview {
             container.mouseUp(with: event)
