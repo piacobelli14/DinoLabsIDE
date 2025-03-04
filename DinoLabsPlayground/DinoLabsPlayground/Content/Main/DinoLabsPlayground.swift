@@ -457,6 +457,7 @@ struct DinoLabsPlayground: View {
 
     private func openTab(url: URL, lineNumber: Int?) {
         let ext = url.pathExtension.lowercased()
+        
         if ext == "csv" {
             if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
                 activeTabId = existingTab.id
@@ -470,16 +471,14 @@ struct DinoLabsPlayground: View {
                 noFileSelected = false
             }
             return
-        } else if ["txt", "md"].contains(ext) {
+        }
+        else if ["txt", "md"].contains(ext) {
             if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
                 activeTabId = existingTab.id
                 SessionStateManager.shared.updateActiveTab(id: existingTab.id)
                 noFileSelected = false
             } else {
-                var newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
-                if let content = try? String(contentsOf: url) {
-                    newTab.fileContent = content
-                }
+                let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
                 openTabs.append(newTab)
                 activeTabId = newTab.id
                 SessionStateManager.shared.updateActiveTab(id: newTab.id)
@@ -495,6 +494,7 @@ struct DinoLabsPlayground: View {
             showAlert = true
             return
         }
+        
         if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
             activeTabId = existingTab.id
             SessionStateManager.shared.updateActiveTab(id: existingTab.id)
@@ -1883,9 +1883,11 @@ struct DinoLabsPlayground: View {
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         } else if ["txt", "md"].contains(activeTab.fileURL.pathExtension.lowercased()) {
                                             TextView(
+                                                geometry: geometry,
                                                 fileURL: activeTab.fileURL,
-                                                fileContent: $openTabs[index].fileContent,
-                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges
+                                                leftPanelWidthRatio: $leftPanelWidthRatio,
+                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
+                                                showAlert: $showAlert
                                             )
                                             .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
                                                 updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)

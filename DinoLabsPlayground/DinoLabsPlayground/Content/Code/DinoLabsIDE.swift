@@ -1,4 +1,3 @@
-
 //
 //  DinoLabsIDE.swift
 //
@@ -66,6 +65,7 @@ struct IDEView: View {
                                         .hoverEffect(opacity: 0.8)
                                         .onChange(of: searchQuery) { _ in
                                             NotificationCenter.default.post(name: Notification.Name("SearchQueryChanged"), object: nil)
+                                            NotificationCenter.default.post(name: Notification.Name("JumpToNextSearchMatch"), object: nil)
                                         }
                                     HStack {
                                         CodeButtonMain {
@@ -570,16 +570,20 @@ struct IDEView: View {
 
     private func replaceNextOccurrence() {
         guard !searchQuery.isEmpty else { return }
-        if let foundRange = nextRange(of: searchQuery, in: fileContent, caseSensitive: searchCaseSensitive) {
-            let nsRange = NSRange(foundRange, in: fileContent)
-            let oldContent = fileContent
-            NotificationCenter.default.post(name: Notification.Name("PerformReplacementNext"), object: nil, userInfo: ["range": nsRange, "replacement": replaceQuery, "oldContent": oldContent])
-            hasUnsavedChanges = true
-            let tempSearch = searchQuery
-            searchQuery = ""
-            DispatchQueue.main.async {
-                self.searchQuery = tempSearch
-            }
+        NotificationCenter.default.post(
+            name: Notification.Name("PerformSingleReplacement"),
+            object: nil,
+            userInfo: [
+                "search": searchQuery,
+                "replacement": replaceQuery,
+                "caseSensitive": searchCaseSensitive
+            ]
+        )
+        hasUnsavedChanges = true
+        let tempSearch = searchQuery
+        searchQuery = ""
+        DispatchQueue.main.async {
+            self.searchQuery = tempSearch
         }
     }
     
@@ -588,16 +592,20 @@ struct IDEView: View {
         let oldContent = fileContent
         let tempSearch = searchQuery
         searchQuery = ""
-        NotificationCenter.default.post(name: Notification.Name("PerformReplacementAll"), object: nil, userInfo: ["search": tempSearch, "replacement": replaceQuery, "oldContent": oldContent, "caseSensitive": searchCaseSensitive])
+        NotificationCenter.default.post(
+            name: Notification.Name("PerformReplacementAll"),
+            object: nil,
+            userInfo: [
+                "search": tempSearch,
+                "replacement": replaceQuery,
+                "oldContent": oldContent,
+                "caseSensitive": searchCaseSensitive
+            ]
+        )
         hasUnsavedChanges = true
         DispatchQueue.main.async {
             self.searchQuery = tempSearch
         }
-    }
-    
-    private func nextRange(of needle: String, in haystack: String, caseSensitive: Bool) -> Range<String.Index>? {
-        let options: String.CompareOptions = caseSensitive ? [] : .caseInsensitive
-        return haystack.range(of: needle, options: options)
     }
 }
 
@@ -714,6 +722,7 @@ struct IDEEditorView: NSViewRepresentable {
         init(_ parent: IDEEditorView) {
             self.parent = parent
             super.init()
+            
             NotificationCenter.default.addObserver(forName: Notification.Name("NavigateToLine"), object: nil, queue: .main) { [weak self] notification in
                 if let lineNumber = notification.userInfo?["lineNumber"] as? Int {
                     self?.navigateToLine(lineNumber)
@@ -734,16 +743,30 @@ struct IDEEditorView: NSViewRepresentable {
             NotificationCenter.default.addObserver(forName: Notification.Name("PerformRedo"), object: nil, queue: .main) { [weak self] _ in
                 self?.textView?.undoManager?.redo()
             }
-            NotificationCenter.default.addObserver(forName: Notification.Name("PerformReplacementNext"), object: nil, queue: .main) { [weak self] notification in
+            
+            NotificationCenter.default.addObserver(forName: Notification.Name("PerformSingleReplacement"), object: nil, queue: .main) { [weak self] notification in
                 guard let self = self, let textView = self.textView else { return }
-                guard let userInfo = notification.userInfo,
-                      let nsRange = userInfo["range"] as? NSRange,
-                      let replacement = userInfo["replacement"] as? String else { return }
-                if textView.shouldChangeText(in: nsRange, replacementString: replacement) {
-                    textView.replaceCharacters(in: nsRange, with: replacement)
-                    textView.didChangeText()
+                guard
+                    let userInfo    = notification.userInfo,
+                    let search      = userInfo["search"] as? String,
+                    let replacement = userInfo["replacement"] as? String,
+                    let caseSensitive = userInfo["caseSensitive"] as? Bool
+                else { return }
+
+                let selectedRange = textView.selectedRange()
+                if selectedRange.length > 0 {
+                    let selectedText = (textView.string as NSString).substring(with: selectedRange)
+                    let compareOpts: NSString.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
+                    
+                    if selectedText.compare(search, options: compareOpts) == .orderedSame {
+                        if textView.shouldChangeText(in: selectedRange, replacementString: replacement) {
+                            textView.replaceCharacters(in: selectedRange, with: replacement)
+                            textView.didChangeText()
+                        }
+                    }
                 }
             }
+            
             NotificationCenter.default.addObserver(forName: Notification.Name("PerformReplacementAll"), object: nil, queue: .main) { [weak self] notification in
                 guard let self = self, let textView = self.textView else { return }
                 guard let userInfo = notification.userInfo,
@@ -771,6 +794,7 @@ struct IDEEditorView: NSViewRepresentable {
                     }
                 }
             }
+            
             NotificationCenter.default.addObserver(self, selector: #selector(handleSelectionDidChange(_:)), name: NSTextView.didChangeSelectionNotification, object: nil)
         }
         

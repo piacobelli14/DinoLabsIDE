@@ -1,13 +1,13 @@
 //
-//  TabularTextField.swift
+//  TextTextField.swift
 //
-//  Created by Peter Iacobelli on 3/1/25.
+//  Created by Peter Iacobelli on 3/3/25.
 //
 
 import SwiftUI
 import AppKit
 
-struct TabularTextField: NSViewRepresentable {
+struct TextTextField: NSViewRepresentable {
     var placeholder: String
     @Binding var text: String
     var isSecure: Bool = false
@@ -32,7 +32,7 @@ struct TabularTextField: NSViewRepresentable {
             secureField.textColor = .white
             textField = secureField
         } else {
-            let normalField = TabularNSTextField()
+            let normalField = TextNSTextField()
             normalField.isBordered = false
             normalField.drawsBackground = false
             normalField.backgroundColor = .clear
@@ -69,9 +69,9 @@ struct TabularTextField: NSViewRepresentable {
     }
     
     class Coordinator: NSObject, NSTextFieldDelegate {
-        var parent: TabularTextField
+        var parent: TextTextField
         
-        init(_ parent: TabularTextField) {
+        init(_ parent: TextTextField) {
             self.parent = parent
         }
         
@@ -91,7 +91,7 @@ struct TabularTextField: NSViewRepresentable {
     }
 }
 
-class TabularNSTextField: NSTextField {
+class TextNSTextField: NSTextField, NSTextViewDelegate {
     var onReturnKeyPressed: (() -> Void)? = nil
     
     override func keyDown(with event: NSEvent) {
@@ -104,15 +104,15 @@ class TabularNSTextField: NSTextField {
     
     override func becomeFirstResponder() -> Bool {
         let success = super.becomeFirstResponder()
-        if let fieldEditor = self.window?.fieldEditor(true, for: self) as? NSTextView {
-            fieldEditor.delegate = self
+        if success, let fieldEditor = self.window?.fieldEditor(true, for: self) as? NSTextView {
+            fieldEditor.delegate = self as NSTextViewDelegate
         }
         return success
     }
-}
-
-extension TabularNSTextField: NSTextViewDelegate {
-    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+    
+    func textView(_ textView: NSTextView,
+                  shouldChangeTextIn affectedCharRange: NSRange,
+                  replacementString: String?) -> Bool {
         if let replacement = replacementString, replacement == ". " {
             textView.replaceCharacters(in: affectedCharRange, with: "  ")
             return false

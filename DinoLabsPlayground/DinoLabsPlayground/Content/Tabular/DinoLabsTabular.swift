@@ -20,13 +20,13 @@ struct TabularView: View {
     private let totalColumns = 15
     @State private var horizontalOffset: CGFloat = 0
     @State private var verticalOffset: CGFloat = 0
+    @State private var cellSelection: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)? = nil
     @State private var showFileMenu = false
     @State private var showEditMenu = false
     @State private var showFormatMenu = false
     @State private var showInsertMenu = false
     @State private var showFilterMenu = false
     @State private var labelRects: [CGRect] = Array(repeating: .zero, count: 6)
-    @State private var cellSelection: (startRow: Int, endRow: Int, startColumn: Int, endColumn: Int)? = nil
     @State private var copyIcon = "square.on.square"
     @State private var searchState: Bool = false
     @State private var replaceState: Bool = false
@@ -36,8 +36,8 @@ struct TabularView: View {
     @State private var isReplacing: Bool = false
     @State private var currentSearchMatch: Int = 0
     @State private var totalSearchMatches: Int = 0
-    @State private var cmdFMonitor: Any? = nil
-    @State private var undoRedoMonitor: Any? = nil
+    @State private var searchMonitor: Any? = nil
+    @State private var stackMonitor: Any? = nil
     @State private var keyBindMonitor: Any? = nil
     @State private var copiedData: [[String]] = []
     @State private var searchMatches: [(row: Int, column: Int)] = []
@@ -1699,14 +1699,15 @@ struct TabularView: View {
         }
         .onAppear {
             loadSheet()
-            cmdFMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            
+            searchMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers?.lowercased() == "f" {
                     searchState = true
                     return nil
                 }
                 return event
             }
-            undoRedoMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            stackMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.modifierFlags.contains(.command) {
                     if event.charactersIgnoringModifiers?.lowercased() == "z" {
                         dataModel.undo()
@@ -1834,13 +1835,13 @@ struct TabularView: View {
             }
         }
         .onDisappear {
-            if let monitor = cmdFMonitor {
+            if let monitor = searchMonitor {
                 NSEvent.removeMonitor(monitor)
-                cmdFMonitor = nil
+                searchMonitor = nil
             }
-            if let monitor = undoRedoMonitor {
+            if let monitor = stackMonitor {
                 NSEvent.removeMonitor(monitor)
-                undoRedoMonitor = nil
+                stackMonitor = nil
             }
             if let monitor = keyBindMonitor {
                 NSEvent.removeMonitor(monitor)

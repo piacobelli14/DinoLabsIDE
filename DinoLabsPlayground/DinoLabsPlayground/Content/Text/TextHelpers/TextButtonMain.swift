@@ -1,13 +1,13 @@
 //
-//  TabularButtonMain.swift
+//  TextButtonMain.swift
 //
-//  Created by Peter Iacobelli on 2/26/25.
+//  Created by Peter Iacobelli on 3/3/25.
 //
 
 import SwiftUI
 import AppKit
 
-struct TabularButtonMain: NSViewRepresentable {
+struct TextButtonMain: NSViewRepresentable {
     let action: () -> Void
 
     func makeCoordinator() -> Coordinator {
