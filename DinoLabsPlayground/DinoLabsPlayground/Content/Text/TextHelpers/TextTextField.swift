@@ -91,7 +91,7 @@ struct TextTextField: NSViewRepresentable {
     }
 }
 
-class TextNSTextField: NSTextField {
+class TextNSTextField: NSTextField, NSTextViewDelegate {
     var onReturnKeyPressed: (() -> Void)? = nil
     
     override func keyDown(with event: NSEvent) {

@@ -806,8 +806,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -840,8 +840,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -890,8 +890,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -924,8 +924,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -985,8 +985,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1040,8 +1040,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1101,8 +1101,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1135,8 +1135,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1158,6 +1158,7 @@ struct TabularView: View {
                     y: labelRects[1].maxY + 100
                 )
             }
+            
             if showFormatMenu {
                 VStack(spacing: 0) {
                     TabularButtonMain {
@@ -1195,8 +1196,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1239,8 +1240,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1283,8 +1284,8 @@ struct TabularView: View {
                                 .allowsHitTesting(false)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1333,8 +1334,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1366,8 +1367,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1399,8 +1400,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1432,8 +1433,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1465,8 +1466,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1498,8 +1499,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1531,8 +1532,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1577,8 +1578,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1606,8 +1607,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1635,8 +1636,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)
@@ -1664,8 +1665,8 @@ struct TabularView: View {
                                 .padding(.leading, 8)
                             Spacer()
                         }
-                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                     .overlay(
                         Rectangle()
                             .frame(height: 0.5)

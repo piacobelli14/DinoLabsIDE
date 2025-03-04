@@ -1,3 +1,5 @@
+
+
 //
 //  DinoLabsText.swift
 //
@@ -18,9 +20,6 @@ struct TextView: View {
     @State private var initialContent: String = ""
     @State private var showFileMenu = false
     @State private var showEditMenu = false
-    @State private var showFormatMenu = false
-    @State private var showInsertMenu = false
-    @State private var showFilterMenu = false
     @State private var labelRects: [CGRect] = Array(repeating: .zero, count: 6)
     @State private var copyIcon = "square.on.square"
     @State private var searchState: Bool = false
@@ -81,9 +80,6 @@ struct TextView: View {
                                             .onTapGesture {
                                                 showFileMenu.toggle()
                                                 showEditMenu = false
-                                                showFormatMenu = false
-                                                showInsertMenu = false
-                                                showFilterMenu = false
                                             }
                                         
                                         Text("Edit")
@@ -116,114 +112,6 @@ struct TextView: View {
                                             .onTapGesture {
                                                 showEditMenu.toggle()
                                                 showFileMenu = false
-                                                showFormatMenu = false
-                                                showInsertMenu = false
-                                                showFilterMenu = false
-                                            }
-                                        
-                                        Text("Format")
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .padding(.horizontal, 6)
-                                            .padding(.top, 1)
-                                            .padding(.bottom, 5)
-                                            .font(.system(size: 11, weight: showFormatMenu ? .semibold : .regular))
-                                            .foregroundColor(showFormatMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                            .containerHelper(
-                                                backgroundColor: showFormatMenu ? Color.white.opacity(0.1) : Color.clear,
-                                                borderColor: Color.clear,
-                                                borderWidth: 0,
-                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                                shadowColor: .white.opacity(showFormatMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                            )
-                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                            .background(
-                                                GeometryReader { g in
-                                                    Color.clear
-                                                        .onAppear {
-                                                            labelRects[2] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                        .onChange(of: g.size) { _ in
-                                                            labelRects[2] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                }
-                                            )
-                                            .onTapGesture {
-                                                showFormatMenu.toggle()
-                                                showFileMenu = false
-                                                showEditMenu = false
-                                                showInsertMenu = false
-                                                showFilterMenu = false
-                                            }
-                                        
-                                        Text("Insert")
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .padding(.horizontal, 6)
-                                            .padding(.top, 1)
-                                            .padding(.bottom, 5)
-                                            .font(.system(size: 11, weight: showInsertMenu ? .semibold : .regular))
-                                            .foregroundColor(showInsertMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                            .containerHelper(
-                                                backgroundColor: showInsertMenu ? Color.white.opacity(0.1) : Color.clear,
-                                                borderColor: Color.clear,
-                                                borderWidth: 0,
-                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                                shadowColor: .white.opacity(showInsertMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                            )
-                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                            .background(
-                                                GeometryReader { g in
-                                                    Color.clear
-                                                        .onAppear {
-                                                            labelRects[4] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                        .onChange(of: g.size) { _ in
-                                                            labelRects[4] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                }
-                                            )
-                                            .onTapGesture {
-                                                showInsertMenu.toggle()
-                                                showFileMenu = false
-                                                showEditMenu = false
-                                                showFormatMenu = false
-                                                showFilterMenu = false
-                                            }
-                                        
-                                        Text("Filter")
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .padding(.horizontal, 6)
-                                            .padding(.top, 1)
-                                            .padding(.bottom, 5)
-                                            .font(.system(size: 11, weight: showFilterMenu ? .semibold : .regular))
-                                            .foregroundColor(showFilterMenu ? Color.white.opacity(0.8) : Color.white.opacity(0.5))
-                                            .containerHelper(
-                                                backgroundColor: showFilterMenu ? Color.white.opacity(0.1) : Color.clear,
-                                                borderColor: Color.clear,
-                                                borderWidth: 0,
-                                                topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0,
-                                                shadowColor: .white.opacity(showFilterMenu ? 0.0 : 0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0
-                                            )
-                                            .hoverEffect(opacity: 0.8, cursor: .pointingHand)
-                                            .background(
-                                                GeometryReader { g in
-                                                    Color.clear
-                                                        .onAppear {
-                                                            labelRects[5] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                        .onChange(of: g.size) { _ in
-                                                            labelRects[5] = g.frame(in: .named("MenuBar"))
-                                                        }
-                                                }
-                                            )
-                                            .onTapGesture {
-                                                showFilterMenu.toggle()
-                                                showFileMenu = false
-                                                showEditMenu = false
-                                                showFormatMenu = false
-                                                showInsertMenu = false
                                             }
                                         
                                         Spacer()
@@ -369,7 +257,6 @@ struct TextView: View {
                                                              shadowRadius: 0,
                                                              shadowX: 0, shadowY: 0)
                                             .hoverEffect(opacity: 0.8)
-                                        
                                         HStack {
                                             TextButtonMain {
                                                 NotificationCenter.default.post(
@@ -576,11 +463,15 @@ struct TextView: View {
                 
                 HStack(spacing: 0) {
                     Spacer()
-                    TextViewWrapper(text: $fileContent, isEditable: !showAlert, onTextChange: { newValue in
-                        if newValue != initialContent {
-                            hasUnsavedChanges = true
+                    TextViewWrapper(
+                        text: $fileContent,
+                        isEditable: !(showAlert || showFileMenu || showEditMenu),
+                        onTextChange: { newValue in
+                            if newValue != initialContent {
+                                hasUnsavedChanges = true
+                            }
                         }
-                    })
+                    )
                     .containerHelper(
                         backgroundColor: Color(hex: 0x202020),
                         borderColor: Color.clear,
@@ -600,7 +491,324 @@ struct TextView: View {
                     shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0
                 )
             }
+            
+            if showFileMenu || showEditMenu {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        showFileMenu = false
+                        showEditMenu = false
+                    }
+                    .ignoresSafeArea()
+            }
+            
+            if showFileMenu {
+                VStack(spacing: 0) {
+                    TextButtonMain {
+                       saveFile()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "arrow.down.doc.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Save File")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        downloadFile()
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "square.and.arrow.down.on.square.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Download File")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    Spacer()
+                }
+                .frame(width: 160, height: 200)
+                .containerHelper(
+                    backgroundColor: Color(hex: 0x181818),
+                    borderColor: Color(hex: 0x262626),
+                    borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 6, bottomRight: 6,
+                    shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0
+                )
+                .position(
+                    x: labelRects[0].minX + 80,
+                    y: labelRects[0].maxY + 100
+                )
+            }
+            
+            if showEditMenu {
+                VStack(spacing: 0) {
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestUndo, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "arrow.uturn.backward")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Undo")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestRedo, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "arrow.uturn.forward")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Redo")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestCut, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "scissors")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Cut")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestCopy, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "square.on.square")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Copy")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestPaste, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "doc.on.clipboard.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Paste")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    TextButtonMain {
+                        NotificationCenter.default.post(name: .requestSelectAll, object: nil)
+                    }
+                    .frame(height: 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 8)
+                    .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color.clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "cursorarrow.motionlines")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 8)
+                                .padding(.trailing, 4)
+                                .allowsHitTesting(false)
+                            Text("Select All")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .allowsHitTesting(false)
+                            Spacer()
+                        }
+                    )
+                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.2)),
+                        alignment: .bottom
+                    )
+                    
+                    Spacer()
+                }
+                .frame(width: 160, height: 200)
+                .containerHelper(
+                    backgroundColor: Color(hex: 0x181818),
+                    borderColor: Color(hex: 0x262626),
+                    borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 6, bottomRight: 6,
+                    shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0
+                )
+                .position(
+                    x: labelRects[1].minX + 80,
+                    y: labelRects[1].maxY + 100
+                )
+            }
         }
+        .coordinateSpace(name: "MenuBar")
         .onAppear {
             loadFile()
         }
@@ -635,6 +843,19 @@ struct TextView: View {
             initialContent = fileContent
         } catch {
             return
+        }
+    }
+    
+    private func downloadFile() {
+        let panel = NSSavePanel()
+        panel.title = "Save a Copy"
+        panel.nameFieldStringValue = fileURL.lastPathComponent
+        if panel.runModal() == .OK, let newURL = panel.url {
+            do {
+                try fileContent.write(to: newURL, atomically: true, encoding: .utf8)
+            } catch {
+                print("Error saving file: \(error)")
+            }
         }
     }
     
@@ -837,6 +1058,38 @@ struct TextViewWrapper: NSViewRepresentable {
         ) { [weak textView] _ in
             textView?.undoManager?.redo()
         }
+        
+        NotificationCenter.default.addObserver(
+            forName: .requestCut,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.cut(nil)
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .requestCopy,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.copy(nil)
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .requestPaste,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.paste(nil)
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .requestSelectAll,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.selectAll(nil)
+        }
 
         return scrollView
     }
@@ -1006,8 +1259,42 @@ class TextViewModel: NSTextView {
     @objc func requestRedoContext(_ sender: Any?) {
         NotificationCenter.default.post(name: .requestRedo, object: nil)
     }
+    
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        let rect = self.visibleRect
+        if !self.isEditable {
+            self.addCursorRect(rect, cursor: NSCursor.pointingHand)
+        } else {
+            self.addCursorRect(rect, cursor: NSCursor.iBeam)
+        }
+    }
+    
+    override func mouseEntered(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+    
+    override func mouseMoved(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+    
+    override func cursorUpdate(with event: NSEvent) {
+        if !self.isEditable {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
 }
-
+ 
 extension Notification.Name {
     static let scrollToRange = Notification.Name("scrollToRange")
     static let updateSearchHighlighting = Notification.Name("updateSearchHighlighting")
@@ -1018,4 +1305,8 @@ extension Notification.Name {
     static let requestUndo = Notification.Name("requestUndo")
     static let requestRedo = Notification.Name("requestRedo")
     static let requestSave = Notification.Name("requestSave")
+    static let requestCut = Notification.Name("requestCut")
+    static let requestCopy = Notification.Name("requestCopy")
+    static let requestPaste = Notification.Name("requestPaste")
+    static let requestSelectAll = Notification.Name("requestSelectAll")
 }
