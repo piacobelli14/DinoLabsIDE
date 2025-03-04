@@ -486,6 +486,20 @@ struct DinoLabsPlayground: View {
             }
             return
         }
+        else if ["png", "jpg", "jpeg", "svg"].contains(ext) {
+            if let existingTab = openTabs.first(where: { $0.fileURL == url }) {
+                activeTabId = existingTab.id
+                SessionStateManager.shared.updateActiveTab(id: existingTab.id)
+                noFileSelected = false
+            } else {
+                let newTab = FileTab(fileName: url.lastPathComponent, fileURL: url)
+                openTabs.append(newTab)
+                activeTabId = newTab.id
+                SessionStateManager.shared.updateActiveTab(id: newTab.id)
+                noFileSelected = false
+            }
+            return
+        }
         
         let codeLanguage = codeLanguage(for: url)
         guard codeLanguage != "plaintext" else {
@@ -1888,6 +1902,18 @@ struct DinoLabsPlayground: View {
                                                 leftPanelWidthRatio: $leftPanelWidthRatio,
                                                 hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
                                                 showAlert: $showAlert
+                                            )
+                                            .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
+                                                updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
+                                            }
+                                            .id(activeTab.id)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        } else if ["png", "jpg", "jpeg", "svg"].contains(activeTab.fileURL.pathExtension.lowercased()) {
+                                            ImageView(
+                                                geometry: geometry,
+                                                fileURL: activeTab.fileURL,
+                                                hasUnsavedChanges: $openTabs[index].hasUnsavedChanges,
+                                                leftPanelWidthRatio: $leftPanelWidthRatio
                                             )
                                             .onChange(of: openTabs[index].hasUnsavedChanges) { newValue in
                                                 updateUnsavedChangesInFileItems(for: activeTab.fileURL, unsaved: newValue)
