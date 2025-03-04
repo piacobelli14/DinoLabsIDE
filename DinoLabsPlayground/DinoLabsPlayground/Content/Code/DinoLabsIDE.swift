@@ -277,6 +277,10 @@ struct IDEView: View {
                                 if !replaceState {
                                     replaceState = true
                                     searchState = false
+                                    if searchState {
+                                        currentSearchMatch = currentSearchMatch
+                                        totalSearchMatches = totalSearchMatches
+                                    }
                                 } else {
                                     replaceState = false
                                     searchState = false

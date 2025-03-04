@@ -6,6 +6,7 @@
 
 import SwiftUI
 import AppKit
+import ObjectiveC.runtime
 
 struct TextView: View {
     let geometry: GeometryProxy
@@ -483,7 +484,10 @@ struct TextView: View {
                                 if !replaceState {
                                     replaceState = true
                                     searchState = false
-                                    clearSearchResults()
+                                    if searchState {
+                                        currentSearchMatch = currentSearchMatch
+                                        totalSearchMatches = totalSearchMatches
+                                    }
                                 } else {
                                     replaceState = false
                                     searchState = false
@@ -510,6 +514,7 @@ struct TextView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             TextButtonMain {
+                                NotificationCenter.default.post(name: .requestUndo, object: nil)
                             }
                             .containerHelper(backgroundColor: Color(hex: 0x414141),
                                              borderColor: Color(hex: 0x414141),
@@ -529,6 +534,7 @@ struct TextView: View {
                             .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                             
                             TextButtonMain {
+                                NotificationCenter.default.post(name: .requestRedo, object: nil)
                             }
                             .containerHelper(backgroundColor: Color(hex: 0x414141),
                                              borderColor: Color(hex: 0x414141),
@@ -603,6 +609,12 @@ struct TextView: View {
                 performSearch()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .requestSearch)) { _ in
+            searchState = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .requestSave)) { _ in
+            saveFile()
+        }
     }
     
     private func loadFile() {
@@ -612,7 +624,7 @@ struct TextView: View {
             initialContent = content
             hasUnsavedChanges = false
         } catch {
-            print("Failed to load file: \(error)")
+            return
         }
     }
     
@@ -622,7 +634,7 @@ struct TextView: View {
             hasUnsavedChanges = false
             initialContent = fileContent
         } catch {
-            print("Failed to save file: \(error)")
+            return
         }
     }
     
@@ -711,6 +723,9 @@ struct TextViewWrapper: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
         let textView = scrollView.documentView as! NSTextView
+        textView.isSelectable = true
+        
+        object_setClass(textView, TextViewModel.self)
         
         textView.delegate = context.coordinator
         textView.isEditable = isEditable
@@ -718,7 +733,8 @@ struct TextViewWrapper: NSViewRepresentable {
         textView.backgroundColor = NSColor(hex: 0x202020)
         textView.textColor = NSColor.white
         textView.insertionPointColor = NSColor.white
-        textView.selectedTextAttributes = [.backgroundColor: NSColor.clear]
+        textView.allowsUndo = true
+        textView.undoManager?.levelsOfUndo = 0
         
         context.coordinator.textView = textView
         
@@ -806,6 +822,22 @@ struct TextViewWrapper: NSViewRepresentable {
             }
         }
         
+        NotificationCenter.default.addObserver(
+            forName: .requestUndo,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.undoManager?.undo()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .requestRedo,
+            object: nil,
+            queue: .main
+        ) { [weak textView] _ in
+            textView?.undoManager?.redo()
+        }
+
         return scrollView
     }
     
@@ -911,10 +943,79 @@ struct TextViewWrapper: NSViewRepresentable {
     }
 }
 
+class TextViewModel: NSTextView {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "f" {
+            NotificationCenter.default.post(name: .requestSearch, object: nil)
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "a" {
+            self.selectAll(nil)
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "x" {
+            self.cut(nil)
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "c" {
+            self.copy(nil)
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "v" {
+            self.paste(nil)
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "z" {
+            undoManager?.undo()
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "y" {
+            undoManager?.redo()
+            return true
+        } else if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "s" {
+            NotificationCenter.default.post(name: .requestSave, object: nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+    
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu()
+        
+        let copyItem = NSMenuItem(title: "Copy", action: #selector(copy(_:)), keyEquivalent: "")
+        copyItem.target = self
+        menu.addItem(copyItem)
+        
+        let pasteItem = NSMenuItem(title: "Paste", action: #selector(paste(_:)), keyEquivalent: "")
+        pasteItem.target = self
+        menu.addItem(pasteItem)
+        
+        let cutItem = NSMenuItem(title: "Cut", action: #selector(cut(_:)), keyEquivalent: "")
+        cutItem.target = self
+        menu.addItem(cutItem)
+        
+        let undoItem = NSMenuItem(title: "Undo", action: #selector(requestUndoContext(_:)), keyEquivalent: "")
+        undoItem.target = self
+        menu.addItem(undoItem)
+        
+        let redoItem = NSMenuItem(title: "Redo", action: #selector(requestRedoContext(_:)), keyEquivalent: "")
+        redoItem.target = self
+        menu.addItem(redoItem)
+        
+        return menu
+    }
+    
+    @objc func requestUndoContext(_ sender: Any?) {
+        NotificationCenter.default.post(name: .requestUndo, object: nil)
+    }
+    
+    @objc func requestRedoContext(_ sender: Any?) {
+        NotificationCenter.default.post(name: .requestRedo, object: nil)
+    }
+}
+
 extension Notification.Name {
     static let scrollToRange = Notification.Name("scrollToRange")
     static let updateSearchHighlighting = Notification.Name("updateSearchHighlighting")
     static let performSingleReplacementText = Notification.Name("performSingleReplacementText")
     static let performReplaceAllText = Notification.Name("performReplaceAllText")
     static let reSearchAfterReplacement = Notification.Name("reSearchAfterReplacement")
+    static let requestSearch = Notification.Name("requestSearch")
+    static let requestUndo = Notification.Name("requestUndo")
+    static let requestRedo = Notification.Name("requestRedo")
+    static let requestSave = Notification.Name("requestSave")
 }

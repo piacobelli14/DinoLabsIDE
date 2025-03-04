@@ -91,7 +91,7 @@ struct TextTextField: NSViewRepresentable {
     }
 }
 
-class TextNSTextField: NSTextField, NSTextViewDelegate {
+class TextNSTextField: NSTextField {
     var onReturnKeyPressed: (() -> Void)? = nil
     
     override func keyDown(with event: NSEvent) {
@@ -103,20 +103,6 @@ class TextNSTextField: NSTextField, NSTextViewDelegate {
     }
     
     override func becomeFirstResponder() -> Bool {
-        let success = super.becomeFirstResponder()
-        if success, let fieldEditor = self.window?.fieldEditor(true, for: self) as? NSTextView {
-            fieldEditor.delegate = self as NSTextViewDelegate
-        }
-        return success
-    }
-    
-    func textView(_ textView: NSTextView,
-                  shouldChangeTextIn affectedCharRange: NSRange,
-                  replacementString: String?) -> Bool {
-        if let replacement = replacementString, replacement == ". " {
-            textView.replaceCharacters(in: affectedCharRange, with: "  ")
-            return false
-        }
-        return true
+        return super.becomeFirstResponder()
     }
 }
