@@ -1,3 +1,9 @@
+//
+//  DinoLabsImage.swift
+//
+//  Created by Peter Iacobelli on 3/4/25.
+//
+
 import SwiftUI
 
 struct ImageView: View {
@@ -10,9 +16,19 @@ struct ImageView: View {
     @State private var yPos: String = "0.0"
     @State private var imageWidth: String = "0.0"
     @State private var imageHeight: String = "0.0"
-    @State private var preserveAspectRatio: Bool = true
+    @State private var preserveAspectRatio: Bool = true {
+        didSet {
+            hasUnsavedChanges = true
+        }
+    }
     @State private var isCropping: Bool = false
     @State private var isCircleCropping: Bool = false
+    @State private var imageSize: CGSize = .zero
+    @State private var originalAspectRatio: CGFloat = 1.0
+    @State private var lastDragPosition: CGPoint?
+    @State private var imagePosition: CGPoint = .zero
+    @State private var initialDragImageSize: CGSize?
+    @State private var initialDragImagePosition: CGPoint?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -74,12 +90,8 @@ struct ImageView: View {
                                         .allowsHitTesting(false)
                                 )
                                 .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                
                             }
                             .padding(.trailing, 12)
-                            
-                            
-                            
                         }
                         .padding(.top, 15)
                         .padding(.bottom, 12)
@@ -108,7 +120,6 @@ struct ImageView: View {
                                 .padding(.bottom, 8)
                                 
                                 HStack(spacing: 8) {
-                                    
                                     CodeTextField(placeholder: "", text: $xPos, onReturnKeyPressed: {
                                         
                                     })
@@ -309,8 +320,6 @@ struct ImageView: View {
                                 .foregroundColor(Color(hex: 0xc1c1c1))
                             
                             Spacer()
-                            
-                            
                         }
                         .padding(.top, 15)
                         .padding(.bottom, 12)
@@ -339,7 +348,6 @@ struct ImageView: View {
                                 .padding(.bottom, 8)
                                 
                                 HStack(spacing: 8) {
-                                    
                                     CodeTextField(placeholder: "", text: $imageWidth, onReturnKeyPressed: {
                                         
                                     })
@@ -419,7 +427,6 @@ struct ImageView: View {
                                             } else {
                                                 isCircleCropping = true
                                             }
-                                            
                                         }
                                         .containerHelper(backgroundColor: isCircleCropping ? Color(hex: 0xAD6ADD) : Color(hex: 0x515151),
                                                          borderColor: Color(hex: 0x616161),
@@ -546,8 +553,6 @@ struct ImageView: View {
                             .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
                         alignment: .bottom
                     )
-                    
-                    
                     Spacer()
                 }
                 .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
@@ -572,10 +577,66 @@ struct ImageView: View {
                 VStack(spacing: 0) {
                     VStack {
                         if let image = NSImage(contentsOf: fileURL) {
-                            Image(nsImage: image)
-                                .resizable()
-                                .scaledToFit()
-                                .padding(20)
+                            GeometryReader { proxy in
+                                ZStack {
+                                    Image(nsImage: image)
+                                        .resizable()
+                                        .frame(width: imageSize.width, height: imageSize.height)
+                                        .position(imagePosition)
+                                    
+                                    Group {
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(.white)
+                                            .position(
+                                                x: imagePosition.x - imageSize.width/2 - 4,
+                                                y: imagePosition.y - imageSize.height/2 - 4
+                                            )
+                                            .gesture(dragGesture(for: .topLeft))
+                                        
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(.white)
+                                            .position(
+                                                x: imagePosition.x + imageSize.width/2 + 4,
+                                                y: imagePosition.y - imageSize.height/2 - 4
+                                            )
+                                            .gesture(dragGesture(for: .topRight))
+                                        
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(.white)
+                                            .position(
+                                                x: imagePosition.x - imageSize.width/2 - 4,
+                                                y: imagePosition.y + imageSize.height/2 + 4
+                                            )
+                                            .gesture(dragGesture(for: .bottomLeft))
+                                        
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(.white)
+                                            .position(
+                                                x: imagePosition.x + imageSize.width/2 + 4,
+                                                y: imagePosition.y + imageSize.height/2 + 4
+                                            )
+                                            .gesture(dragGesture(for: .bottomRight))
+                                    }
+                                }
+                                .onAppear {
+                                    if imageSize == .zero {
+                                        originalAspectRatio = image.size.width / image.size.height
+                                        let maxWidth = proxy.size.width * 0.8
+                                        let maxHeight = proxy.size.height * 0.8
+                                        let scale = min(maxWidth / image.size.width, maxHeight / image.size.height)
+                                        imageSize = CGSize(
+                                            width: image.size.width * scale,
+                                            height: image.size.height * scale
+                                        )
+                                        imagePosition = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                                        updateTextFields()
+                                    }
+                                }
+                            }
                         } else {
                             Text("Unable to load image.")
                                 .font(.system(size: 12, weight: .semibold))
@@ -609,14 +670,13 @@ struct ImageView: View {
                                 textColor: .white.opacity(0.8),
                                 fontSize: 9,
                                 fontWeight: .bold,
-                                activeText: "Preseve Aspect Ratio",
+                                activeText: "Preserve Aspect Ratio",
                                 inactiveText: "Ignore Aspect Ratio",
                                 showText: true,
                                 animationDuration: 0.2,
                                 animationDamping: 0.8
                             ))
                             .padding(.trailing, 20)
-                        
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.7, height: 60)
                     .containerHelper(
@@ -659,5 +719,96 @@ struct ImageView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private enum Corner {
+        case topLeft, topRight, bottomLeft, bottomRight
+    }
+    
+    private func dragGesture(for corner: Corner) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                if lastDragPosition == nil {
+                    lastDragPosition = value.startLocation
+                    initialDragImageSize = imageSize
+                    initialDragImagePosition = imagePosition
+                    if preserveAspectRatio {
+                        originalAspectRatio = imageSize.width / imageSize.height
+                    }
+                }
+                
+                guard let last = lastDragPosition else { return }
+                let deltaX = value.location.x - last.x
+                let deltaY = value.location.y - last.y
+                let sensitivity: CGFloat = 0.5
+                
+                var newWidth = imageSize.width
+                var newHeight = imageSize.height
+                
+                switch corner {
+                case .topLeft:
+                    newWidth = max(50, imageSize.width - deltaX * sensitivity)
+                    newHeight = preserveAspectRatio ?
+                        newWidth / originalAspectRatio :
+                        max(50, imageSize.height - deltaY * sensitivity)
+                case .topRight:
+                    newWidth = max(50, imageSize.width + deltaX * sensitivity)
+                    newHeight = preserveAspectRatio ?
+                        newWidth / originalAspectRatio :
+                        max(50, imageSize.height - deltaY * sensitivity)
+                case .bottomLeft:
+                    newWidth = max(50, imageSize.width - deltaX * sensitivity)
+                    newHeight = preserveAspectRatio ?
+                        newWidth / originalAspectRatio :
+                        max(50, imageSize.height + deltaY * sensitivity)
+                case .bottomRight:
+                    newWidth = max(50, imageSize.width + deltaX * sensitivity)
+                    newHeight = preserveAspectRatio ?
+                        newWidth / originalAspectRatio :
+                        max(50, imageSize.height + deltaY * sensitivity)
+                }
+                
+                if !preserveAspectRatio {
+                    guard let initialPosition = initialDragImagePosition,
+                          let initialSize = initialDragImageSize else { return }
+                    switch corner {
+                    case .topLeft:
+                        let fixed = CGPoint(x: initialPosition.x + initialSize.width/2,
+                                            y: initialPosition.y + initialSize.height/2)
+                        imagePosition = CGPoint(x: fixed.x - newWidth/2,
+                                                y: fixed.y - newHeight/2)
+                    case .topRight:
+                        let fixed = CGPoint(x: initialPosition.x - initialSize.width/2,
+                                            y: initialPosition.y + initialSize.height/2)
+                        imagePosition = CGPoint(x: fixed.x + newWidth/2,
+                                                y: fixed.y - newHeight/2)
+                    case .bottomLeft:
+                        let fixed = CGPoint(x: initialPosition.x + initialSize.width/2,
+                                            y: initialPosition.y - initialSize.height/2)
+                        imagePosition = CGPoint(x: fixed.x - newWidth/2,
+                                                y: fixed.y + newHeight/2)
+                    case .bottomRight:
+                        let fixed = CGPoint(x: initialPosition.x - initialSize.width/2,
+                                            y: initialPosition.y - initialSize.height/2)
+                        imagePosition = CGPoint(x: fixed.x + newWidth/2,
+                                                y: fixed.y + newHeight/2)
+                    }
+                }
+                
+                imageSize = CGSize(width: newWidth, height: newHeight)
+                updateTextFields()
+                lastDragPosition = value.location
+            }
+            .onEnded { _ in
+                lastDragPosition = nil
+                initialDragImageSize = nil
+                initialDragImagePosition = nil
+                hasUnsavedChanges = true
+            }
+    }
+    
+    private func updateTextFields() {
+        imageWidth = String(format: "W: %.1fpx", imageSize.width)
+        imageHeight = String(format: "H: %.1fpx", imageSize.height)
     }
 }
