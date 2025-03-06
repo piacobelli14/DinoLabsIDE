@@ -29,6 +29,8 @@ struct ImageView: View {
     @State private var imagePosition: CGPoint = .zero
     @State private var initialDragImageSize: CGSize?
     @State private var initialDragImagePosition: CGPoint?
+    @State private var editorSize: CGSize = .zero
+    @State private var initialDragOffset: CGPoint? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -583,46 +585,48 @@ struct ImageView: View {
                                         .resizable()
                                         .frame(width: imageSize.width, height: imageSize.height)
                                         .position(imagePosition)
+                                        .gesture(imageDragGesture())
                                     
                                     Group {
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: 2)
                                             .frame(width: 8, height: 8)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color(hex: 0x818181))
                                             .position(
-                                                x: imagePosition.x - imageSize.width/2 - 4,
-                                                y: imagePosition.y - imageSize.height/2 - 4
+                                                x: imagePosition.x - imageSize.width/2,
+                                                y: imagePosition.y - imageSize.height/2
                                             )
                                             .gesture(dragGesture(for: .topLeft))
                                         
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: 2)
                                             .frame(width: 8, height: 8)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color(hex: 0x818181))
                                             .position(
-                                                x: imagePosition.x + imageSize.width/2 + 4,
-                                                y: imagePosition.y - imageSize.height/2 - 4
+                                                x: imagePosition.x + imageSize.width/2,
+                                                y: imagePosition.y - imageSize.height/2
                                             )
                                             .gesture(dragGesture(for: .topRight))
                                         
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: 2)
                                             .frame(width: 8, height: 8)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color(hex: 0x818181))
                                             .position(
-                                                x: imagePosition.x - imageSize.width/2 - 4,
-                                                y: imagePosition.y + imageSize.height/2 + 4
+                                                x: imagePosition.x - imageSize.width/2,
+                                                y: imagePosition.y + imageSize.height/2
                                             )
                                             .gesture(dragGesture(for: .bottomLeft))
                                         
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: 2)
                                             .frame(width: 8, height: 8)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color(hex: 0x818181))
                                             .position(
-                                                x: imagePosition.x + imageSize.width/2 + 4,
-                                                y: imagePosition.y + imageSize.height/2 + 4
+                                                x: imagePosition.x + imageSize.width/2,
+                                                y: imagePosition.y + imageSize.height/2
                                             )
                                             .gesture(dragGesture(for: .bottomRight))
                                     }
                                 }
                                 .onAppear {
+                                    editorSize = proxy.size
                                     if imageSize == .zero {
                                         originalAspectRatio = image.size.width / image.size.height
                                         let maxWidth = proxy.size.width * 0.8
@@ -795,6 +799,21 @@ struct ImageView: View {
                     }
                 }
                 
+                if editorSize != .zero {
+                    if preserveAspectRatio {
+                        let maxWidth = 2 * min(imagePosition.x, editorSize.width - imagePosition.x)
+                        let maxHeight = 2 * min(imagePosition.y, editorSize.height - imagePosition.y)
+                        let maxAllowedWidth = min(maxWidth, maxHeight * originalAspectRatio)
+                        newWidth = min(newWidth, maxAllowedWidth)
+                        newHeight = newWidth / originalAspectRatio
+                    } else {
+                        let maxAllowedWidth = 2 * min(imagePosition.x, editorSize.width - imagePosition.x)
+                        let maxAllowedHeight = 2 * min(imagePosition.y, editorSize.height - imagePosition.y)
+                        newWidth = min(newWidth, maxAllowedWidth)
+                        newHeight = min(newHeight, maxAllowedHeight)
+                    }
+                }
+                
                 imageSize = CGSize(width: newWidth, height: newHeight)
                 updateTextFields()
                 lastDragPosition = value.location
@@ -803,12 +822,33 @@ struct ImageView: View {
                 lastDragPosition = nil
                 initialDragImageSize = nil
                 initialDragImagePosition = nil
-                hasUnsavedChanges = true
+            }
+    }
+    
+    private func imageDragGesture() -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if initialDragOffset == nil {
+                    initialDragOffset = imagePosition
+                }
+                let newX = initialDragOffset!.x + value.translation.width
+                let newY = initialDragOffset!.y + value.translation.height
+                let halfWidth = imageSize.width / 2
+                let halfHeight = imageSize.height / 2
+                let clampedX = min(max(newX, halfWidth), editorSize.width - halfWidth)
+                let clampedY = min(max(newY, halfHeight), editorSize.height - halfHeight)
+                imagePosition = CGPoint(x: clampedX, y: clampedY)
+                updateTextFields()
+            }
+            .onEnded { _ in
+                initialDragOffset = nil
             }
     }
     
     private func updateTextFields() {
         imageWidth = String(format: "W: %.1fpx", imageSize.width)
         imageHeight = String(format: "H: %.1fpx", imageSize.height)
+        xPos = String(format: "X: %.1f", imagePosition.x)
+        yPos = String(format: "Y: %.1f", imagePosition.y)
     }
 }
