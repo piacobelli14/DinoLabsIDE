@@ -1,3 +1,9 @@
+//
+//  DinoLabsImage.swift
+//
+//  Created by Peter Iacobelli on 3/4/25.
+//
+
 import SwiftUI
 
 struct ImageView: View {
@@ -30,10 +36,8 @@ struct ImageView: View {
     @State private var flipVertical: Bool = false
     @State private var initialLoadedImageSize: CGSize = .zero
     @State private var initialLoadedImagePosition: CGPoint = .zero
-    
     @State private var currentImage: NSImage? = nil
     @State private var cropHistory: [(image: NSImage, size: CGSize, position: CGPoint)] = []
-    
     @State private var cropRectPosition: CGPoint = .zero
     @State private var cropRectSize: CGSize = .zero
     @State private var initialCropDragOffset: CGPoint? = nil
@@ -41,569 +45,156 @@ struct ImageView: View {
     @State private var initialCropRectPosition: CGPoint? = nil
     @State private var cropRotationAngle: Angle = .zero
     @State private var initialCropRotationOffset: Angle? = nil
+    @State private var opacityValue: CGFloat = 1.0
+    @State private var hueValue: Double = 0.0
+    @State private var saturationValue: CGFloat = 1.0
+    @State private var brightnessValue: CGFloat = 0.0
+    @State private var contrastValue: CGFloat = 1.0
+    @State private var blurValue: CGFloat = 0.0
+    @State private var grayscaleValue: CGFloat = 0.0
+    @State private var sepiaValue: CGFloat = 0.0
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                VStack(spacing: 0) {
+                ScrollView {
                     VStack(spacing: 0) {
-                        HStack(spacing: 0) {
-                            Image(systemName: "photo.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 15, height: 15)
-                                .font(.system(size: 15, weight: .semibold))
-                                .padding(.leading, 12)
-                                .padding(.trailing, 8)
-                            
-                            Text("Layout")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xc1c1c1))
-                            
-                            Spacer()
-                            
-                            HStack(spacing: 12) {
-                                ImageButtonMain {
-                                    imageSize = initialLoadedImageSize
-                                    imagePosition = initialLoadedImagePosition
-                                    rotationAngle = .zero
-                                    flipHorizontal = false
-                                    flipVertical = false
-                                    isCropping = false
-                                    isCircleCropping = false
-                                    cropRectSize = .zero
-                                    cropRectPosition = .zero
-                                    currentImage = NSImage(contentsOf: fileURL)
-                                    cropHistory = []
-                                    updateTextFields()
-                                    hasUnsavedChanges = true
-                                }
-                                .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                 borderColor: Color(hex: 0x616161),
-                                                 borderWidth: 1,
-                                                 topLeft: 2, topRight: 2,
-                                                 bottomLeft: 2, bottomRight: 2,
-                                                 shadowColor: Color.white.opacity(0.5),
-                                                 shadowRadius: 1,
-                                                 shadowX: 0, shadowY: 0)
-                                .frame(width: 20, height: 20)
-                                .overlay(
-                                    Image(systemName: "arrow.clockwise")
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                        .allowsHitTesting(false)
-                                )
-                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        VStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                Image(systemName: "photo.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 15, height: 15)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .padding(.leading, 12)
+                                    .padding(.trailing, 8)
                                 
-                                ImageButtonMain {
-                                    
-                                }
-                                .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                 borderColor: Color(hex: 0x616161),
-                                                 borderWidth: 1,
-                                                 topLeft: 2, topRight: 2,
-                                                 bottomLeft: 2, bottomRight: 2,
-                                                 shadowColor: Color.white.opacity(0.5),
-                                                 shadowRadius: 1,
-                                                 shadowX: 0, shadowY: 0)
-                                .frame(width: 20, height: 20)
-                                .overlay(
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                        .allowsHitTesting(false)
-                                )
-                                .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                            }
-                            .padding(.trailing, 12)
-                        }
-                        .padding(.top, 15)
-                        .padding(.bottom, 12)
-                        .containerHelper(
-                            backgroundColor: Color(hex: 0x121212),
-                            borderColor: .clear,
-                            borderWidth: 0,
-                            topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                            shadowColor: .clear,
-                            shadowRadius: 0,
-                            shadowX: 0,
-                            shadowY: 0
-                        )
-                            
-                        HStack {
-                            Spacer()
-                            VStack(alignment: .leading, spacing: 0) {
-                                HStack {
-                                    Text("Position")
-                                        .font(.system(size: 9, weight: .semibold))
-                                        .foregroundColor(Color(hex: 0xc1c1c1))
-                                        .padding(.leading, 2)
-                                    Spacer()
-                                }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.bottom, 8)
+                                Text("Layout")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xc1c1c1))
                                 
-                                HStack(spacing: 8) {
-                                    CodeTextField(placeholder: "", text: $xPos, onReturnKeyPressed: {
-                                        let numericString = extractNumeric(from: xPos)
-                                        if let newX = Double(numericString) {
-                                            imagePosition.x = CGFloat(newX)
-                                            hasUnsavedChanges = true
-                                            updateTextFields()
-                                        }
-                                    })
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .frame(height: 25)
-                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: .white.opacity(0.5),
-                                                     shadowRadius: 0.5,
-                                                     shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.8)
-                                    
-                                    CodeTextField(placeholder: "", text: $yPos, onReturnKeyPressed: {
-                                        let numericString = extractNumeric(from: yPos)
-                                        if let newY = Double(numericString) {
-                                            imagePosition.y = CGFloat(newY)
-                                            hasUnsavedChanges = true
-                                            updateTextFields()
-                                        }
-                                    })
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .frame(height: 25)
-                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: .white.opacity(0.5),
-                                                     shadowRadius: 0.5,
-                                                     shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.8)
-                                    
-                                    Spacer()
-                                }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.bottom, 16)
+                                Spacer()
                                 
-                                HStack(spacing: 8) {
+                                HStack(spacing: 12) {
                                     ImageButtonMain {
-                                        let scale: CGFloat = 1.1
-                                        let newWidth = imageSize.width * scale
-                                        let newHeight = imageSize.height * scale
-                                        imageSize = CGSize(width: newWidth, height: newHeight)
-                                        updateTextFields()
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "plus.magnifyingglass")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    ImageButtonMain {
-                                        let scale: CGFloat = 0.9
-                                        let newWidth = max(50, imageSize.width * scale)
-                                        let newHeight = max(50, imageSize.height * scale)
-                                        imageSize = CGSize(width: newWidth, height: newHeight)
-                                        updateTextFields()
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "minus.magnifyingglass")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    ImageButtonMain {
-                                        rotationAngle -= .degrees(90)
-                                        hasUnsavedChanges = true
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "rotate.left")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    ImageButtonMain {
-                                        rotationAngle += .degrees(90)
-                                        hasUnsavedChanges = true
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "rotate.right")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    ImageButtonMain {
-                                        flipHorizontal.toggle()
-                                        hasUnsavedChanges = true
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "arrow.left.arrow.right")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    ImageButtonMain {
-                                        flipVertical.toggle()
-                                        hasUnsavedChanges = true
-                                    }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "arrow.up.arrow.down")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    Spacer()
-                                }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.leading, 2)
-                                .padding(.bottom, 16)
-                            }
-                            Spacer()
-                        }
-                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
-                        .padding(.top, 12)
-                    }
-                    .padding(.bottom, 12)
-                    .overlay(
-                        Rectangle()
-                            .frame(height: 0.5)
-                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
-                        alignment: .bottom
-                    )
-                    
-                    VStack(spacing: 0) {
-                        HStack(spacing: 0) {
-                            Image(systemName: "ruler")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 15, height: 15)
-                                .font(.system(size: 15, weight: .semibold))
-                                .padding(.leading, 12)
-                                .padding(.trailing, 8)
-                            
-                            Text("Dimensions")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xc1c1c1))
-                            
-                            Spacer()
-                        }
-                        .padding(.top, 15)
-                        .padding(.bottom, 12)
-                        .containerHelper(
-                            backgroundColor: Color(hex: 0x121212),
-                            borderColor: .clear,
-                            borderWidth: 0,
-                            topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                            shadowColor: .clear,
-                            shadowRadius: 0,
-                            shadowX: 0,
-                            shadowY: 0
-                        )
-                            
-                        HStack {
-                            Spacer()
-                            VStack(alignment: .leading, spacing: 0) {
-                                HStack {
-                                    Text("Image Size")
-                                        .font(.system(size: 9, weight: .semibold))
-                                        .foregroundColor(Color(hex: 0xc1c1c1))
-                                        .padding(.leading, 2)
-                                    Spacer()
-                                }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.bottom, 8)
-                                
-                                HStack(spacing: 8) {
-                                    CodeTextField(placeholder: "", text: $imageWidth, onReturnKeyPressed: {
-                                        let numericString = extractNumeric(from: imageWidth)
-                                        if let newWidth = Double(numericString) {
-                                            hasUnsavedChanges = true
-                                            if preserveAspectRatio {
-                                                imageSize.width = CGFloat(newWidth)
-                                                imageSize.height = CGFloat(newWidth) / originalAspectRatio
-                                            } else {
-                                                imageSize.width = CGFloat(newWidth)
-                                            }
-                                            updateTextFields()
-                                        }
-                                    })
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .frame(height: 25)
-                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: .white.opacity(0.5),
-                                                     shadowRadius: 0.5,
-                                                     shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.8)
-                                    
-                                    CodeTextField(placeholder: "", text: $imageHeight, onReturnKeyPressed: {
-                                        let numericString = extractNumeric(from: imageHeight)
-                                        if let newHeight = Double(numericString) {
-                                            hasUnsavedChanges = true
-                                            if preserveAspectRatio {
-                                                imageSize.height = CGFloat(newHeight)
-                                                imageSize.width = CGFloat(newHeight) * originalAspectRatio
-                                            } else {
-                                                imageSize.height = CGFloat(newHeight)
-                                            }
-                                            updateTextFields()
-                                        }
-                                    })
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .textFieldStyle(PlainTextFieldStyle())
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .frame(height: 25)
-                                    .containerHelper(backgroundColor: Color(hex: 0x222222),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: .white.opacity(0.5),
-                                                     shadowRadius: 0.5,
-                                                     shadowX: 0, shadowY: 0)
-                                    .hoverEffect(opacity: 0.8)
-                                    
-                                    Spacer()
-                                }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.bottom, 16)
-                                
-                                HStack(spacing: 8) {
-                                    ImageButtonMain {
-                                        if isCropping {
-                                            cropImage()
-                                            isCropping = false
-                                            isCircleCropping = false
-                                        } else {
-                                            isCropping = true
-                                            isCircleCropping = false
-                                            cropRectPosition = imagePosition
-                                            cropRectSize = imageSize
-                                        }
-                                    }
-                                    .containerHelper(backgroundColor: isCropping ? Color(hex: 0xAD6ADD) : Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
-                                    .overlay(
-                                        Image(systemName: "crop")
-                                            .font(.system(size: 10, weight: .semibold))
-                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                            .allowsHitTesting(false)
-                                    )
-                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    
-                                    if isCropping {
-                                        ImageButtonMain {
-                                            if isCircleCropping {
-                                                isCircleCropping = false
-                                            } else {
-                                                isCircleCropping = true
-                                                cropRectSize = imageSize
-                                                cropRectPosition = imagePosition
-                                            }
-                                        }
-                                        .containerHelper(backgroundColor: isCircleCropping ? Color(hex: 0xAD6ADD) : Color(hex: 0x515151),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 2,
-                                                         bottomLeft: 2, bottomRight: 2,
-                                                         shadowColor: Color.white.opacity(0.5),
-                                                         shadowRadius: 1,
-                                                         shadowX: 0, shadowY: 0)
-                                        .frame(width: geometry.size.width * 0.02, height: 20)
-                                        .overlay(
-                                            Image(systemName: "circle.dotted")
-                                                .font(.system(size: 10, weight: .semibold))
-                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                                .allowsHitTesting(false)
-                                        )
-                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    }
-                                    
-                                    if isCropping {
-                                        ImageButtonMain {
-                                            isCropping = false
-                                            cropRectSize = .zero
-                                            cropRectPosition = .zero
-                                        }
-                                        .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 2,
-                                                         bottomLeft: 2, bottomRight: 2,
-                                                         shadowColor: Color.white.opacity(0.5),
-                                                         shadowRadius: 1,
-                                                         shadowX: 0, shadowY: 0)
-                                        .frame(width: geometry.size.width * 0.02, height: 20)
-                                        .overlay(
-                                            Image(systemName: "xmark.square.fill")
-                                                .font(.system(size: 10, weight: .semibold))
-                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
-                                                .allowsHitTesting(false)
-                                        )
-                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
-                                    }
-                                    
-                                    ImageButtonMain {
-                                        if let previousState = cropHistory.popLast() {
-                                            currentImage = previousState.image
-                                            imageSize = previousState.size
-                                            imagePosition = previousState.position
-                                            hasUnsavedChanges = true
-                                        }
+                                        imageSize = initialLoadedImageSize
+                                        imagePosition = initialLoadedImagePosition
+                                        rotationAngle = .zero
+                                        flipHorizontal = false
+                                        flipVertical = false
                                         isCropping = false
+                                        isCircleCropping = false
                                         cropRectSize = .zero
                                         cropRectPosition = .zero
+                                        currentImage = NSImage(contentsOf: fileURL)
+                                        cropHistory = []
+                                        opacityValue = 1.0
+                                        hueValue = 0.0
+                                        saturationValue = 1.0
+                                        brightnessValue = 0.0
+                                        contrastValue = 1.0
+                                        blurValue = 0.0
+                                        grayscaleValue = 0.0
+                                        sepiaValue = 0.0
+                                        updateTextFields()
+                                        hasUnsavedChanges = true
                                     }
-                                    .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                     borderColor: Color(hex: 0x616161),
-                                                     borderWidth: 1,
-                                                     topLeft: 2, topRight: 2,
-                                                     bottomLeft: 2, bottomRight: 2,
-                                                     shadowColor: Color.white.opacity(0.5),
-                                                     shadowRadius: 1,
-                                                     shadowX: 0, shadowY: 0)
-                                    .frame(width: geometry.size.width * 0.02, height: 20)
+                                    .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                    .frame(width: 20, height: 20)
                                     .overlay(
-                                        Image(systemName: "arrow.uturn.backward.square.fill")
+                                        Image(systemName: "arrow.clockwise")
                                             .font(.system(size: 10, weight: .semibold))
                                             .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                             .allowsHitTesting(false)
                                     )
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                     
-                                    Spacer()
+                                    ImageButtonMain {
+                                        
+                                    }
+                                    .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                    .frame(width: 20, height: 20)
+                                    .overlay(
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                            .allowsHitTesting(false)
+                                    )
+                                    .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                 }
-                                .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
-                                .padding(.leading, 2)
-                                .padding(.bottom, 16)
-                                
-                                if isCropping {
+                                .padding(.trailing, 12)
+                            }
+                            .padding(.top, 15)
+                            .padding(.bottom, 12)
+                            .containerHelper(backgroundColor: Color(hex: 0x121212), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Position")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 8)
+                                    
+                                    HStack(spacing: 8) {
+                                        CodeTextField(placeholder: "", text: $xPos, onReturnKeyPressed: {
+                                            let numericString = extractNumeric(from: xPos)
+                                            if let newX = Double(numericString) {
+                                                imagePosition.x = CGFloat(newX)
+                                                hasUnsavedChanges = true
+                                                updateTextFields()
+                                            }
+                                        })
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: .white.opacity(0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                        
+                                        CodeTextField(placeholder: "", text: $yPos, onReturnKeyPressed: {
+                                            let numericString = extractNumeric(from: yPos)
+                                            if let newY = Double(numericString) {
+                                                imagePosition.y = CGFloat(newY)
+                                                hasUnsavedChanges = true
+                                                updateTextFields()
+                                            }
+                                        })
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: .white.opacity(0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                        
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                    
                                     HStack(spacing: 8) {
                                         ImageButtonMain {
-                                            let presetRatio: CGFloat = 1.0
-                                            let currentWidth = imageSize.width
-                                            let currentHeight = imageSize.height
-                                            var newWidth: CGFloat = currentWidth
-                                            var newHeight: CGFloat = currentHeight
-                                            if currentWidth / currentHeight > presetRatio {
-                                                newHeight = currentHeight
-                                                newWidth = newHeight * presetRatio
-                                            } else {
-                                                newWidth = currentWidth
-                                                newHeight = newWidth / presetRatio
-                                            }
-                                            cropRectSize = CGSize(width: newWidth, height: newHeight)
-                                            cropRectPosition = imagePosition
+                                            let scale: CGFloat = 1.1
+                                            let newWidth = imageSize.width * scale
+                                            let newHeight = imageSize.height * scale
+                                            imageSize = CGSize(width: newWidth, height: newHeight)
+                                            updateTextFields()
                                         }
-                                        .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 2,
-                                                         bottomLeft: 2, bottomRight: 2,
-                                                         shadowColor: Color.white.opacity(0.5),
-                                                         shadowRadius: 1,
-                                                         shadowX: 0, shadowY: 0)
-                                        .frame(width: geometry.size.width * 0.03, height: 20)
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
                                         .overlay(
-                                            Text("1:1")
+                                            Image(systemName: "plus.magnifyingglass")
                                                 .font(.system(size: 10, weight: .semibold))
                                                 .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                                 .allowsHitTesting(false)
@@ -611,32 +202,16 @@ struct ImageView: View {
                                         .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                         
                                         ImageButtonMain {
-                                            let presetRatio: CGFloat = 4.0/3.0
-                                            let currentWidth = imageSize.width
-                                            let currentHeight = imageSize.height
-                                            var newWidth: CGFloat = currentWidth
-                                            var newHeight: CGFloat = currentHeight
-                                            if currentWidth / currentHeight > presetRatio {
-                                                newHeight = currentHeight
-                                                newWidth = newHeight * presetRatio
-                                            } else {
-                                                newWidth = currentWidth
-                                                newHeight = newWidth / presetRatio
-                                            }
-                                            cropRectSize = CGSize(width: newWidth, height: newHeight)
-                                            cropRectPosition = imagePosition
+                                            let scale: CGFloat = 0.9
+                                            let newWidth = max(50, imageSize.width * scale)
+                                            let newHeight = max(50, imageSize.height * scale)
+                                            imageSize = CGSize(width: newWidth, height: newHeight)
+                                            updateTextFields()
                                         }
-                                        .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 2,
-                                                         bottomLeft: 2, bottomRight: 2,
-                                                         shadowColor: Color.white.opacity(0.5),
-                                                         shadowRadius: 1,
-                                                         shadowX: 0, shadowY: 0)
-                                        .frame(width: geometry.size.width * 0.03, height: 20)
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
                                         .overlay(
-                                            Text("4:3")
+                                            Image(systemName: "minus.magnifyingglass")
                                                 .font(.system(size: 10, weight: .semibold))
                                                 .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                                 .allowsHitTesting(false)
@@ -644,32 +219,55 @@ struct ImageView: View {
                                         .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                         
                                         ImageButtonMain {
-                                            let presetRatio: CGFloat = 16.0/9.0
-                                            let currentWidth = imageSize.width
-                                            let currentHeight = imageSize.height
-                                            var newWidth: CGFloat = currentWidth
-                                            var newHeight: CGFloat = currentHeight
-                                            if currentWidth / currentHeight > presetRatio {
-                                                newHeight = currentHeight
-                                                newWidth = newHeight * presetRatio
-                                            } else {
-                                                newWidth = currentWidth
-                                                newHeight = newWidth / presetRatio
-                                            }
-                                            cropRectSize = CGSize(width: newWidth, height: newHeight)
-                                            cropRectPosition = imagePosition
+                                            rotationAngle -= .degrees(90)
+                                            hasUnsavedChanges = true
                                         }
-                                        .containerHelper(backgroundColor: Color(hex: 0x515151),
-                                                         borderColor: Color(hex: 0x616161),
-                                                         borderWidth: 1,
-                                                         topLeft: 2, topRight: 2,
-                                                         bottomLeft: 2, bottomRight: 2,
-                                                         shadowColor: Color.white.opacity(0.5),
-                                                         shadowRadius: 1,
-                                                         shadowX: 0, shadowY: 0)
-                                        .frame(width: geometry.size.width * 0.03, height: 20)
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
                                         .overlay(
-                                            Text("16:9")
+                                            Image(systemName: "rotate.left")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        
+                                        ImageButtonMain {
+                                            rotationAngle += .degrees(90)
+                                            hasUnsavedChanges = true
+                                        }
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
+                                        .overlay(
+                                            Image(systemName: "rotate.right")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        
+                                        ImageButtonMain {
+                                            flipHorizontal.toggle()
+                                            hasUnsavedChanges = true
+                                        }
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
+                                        .overlay(
+                                            Image(systemName: "arrow.left.arrow.right")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        
+                                        ImageButtonMain {
+                                            flipVertical.toggle()
+                                            hasUnsavedChanges = true
+                                        }
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
+                                        .overlay(
+                                            Image(systemName: "arrow.up.arrow.down")
                                                 .font(.system(size: 10, weight: .semibold))
                                                 .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
                                                 .allowsHitTesting(false)
@@ -682,39 +280,604 @@ struct ImageView: View {
                                     .padding(.leading, 2)
                                     .padding(.bottom, 16)
                                 }
+                                Spacer()
                             }
-                            Spacer()
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
                         }
-                        .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
-                        .padding(.top, 12)
+                        .padding(.bottom, 12)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 0.5)
+                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
+                            alignment: .bottom
+                        )
+                        
+                        VStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                Image(systemName: "ruler")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 15, height: 15)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .padding(.leading, 12)
+                                    .padding(.trailing, 8)
+                                
+                                Text("Dimensions")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xc1c1c1))
+                                
+                                Spacer()
+                            }
+                            .padding(.top, 15)
+                            .padding(.bottom, 12)
+                            .containerHelper(backgroundColor: Color(hex: 0x121212), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Image Size")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 8)
+                                    
+                                    HStack(spacing: 8) {
+                                        CodeTextField(placeholder: "", text: $imageWidth, onReturnKeyPressed: {
+                                            let numericString = extractNumeric(from: imageWidth)
+                                            if let newWidth = Double(numericString) {
+                                                hasUnsavedChanges = true
+                                                if preserveAspectRatio {
+                                                    imageSize.width = CGFloat(newWidth)
+                                                    imageSize.height = CGFloat(newWidth) / originalAspectRatio
+                                                } else {
+                                                    imageSize.width = CGFloat(newWidth)
+                                                }
+                                                updateTextFields()
+                                            }
+                                        })
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: .white.opacity(0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                        
+                                        CodeTextField(placeholder: "", text: $imageHeight, onReturnKeyPressed: {
+                                            let numericString = extractNumeric(from: imageHeight)
+                                            if let newHeight = Double(numericString) {
+                                                hasUnsavedChanges = true
+                                                if preserveAspectRatio {
+                                                    imageSize.height = CGFloat(newHeight)
+                                                    imageSize.width = CGFloat(newHeight) * originalAspectRatio
+                                                } else {
+                                                    imageSize.height = CGFloat(newHeight)
+                                                }
+                                                updateTextFields()
+                                            }
+                                        })
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 8, weight: .semibold))
+                                        .padding(.horizontal, 10)
+                                        .frame(height: 25)
+                                        .containerHelper(backgroundColor: Color(hex: 0x222222), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: .white.opacity(0.5), shadowRadius: 0.5, shadowX: 0, shadowY: 0)
+                                        .hoverEffect(opacity: 0.8)
+                                        
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                    
+                                    HStack(spacing: 8) {
+                                        ImageButtonMain {
+                                            if isCropping {
+                                                cropImage()
+                                                isCropping = false
+                                                isCircleCropping = false
+                                            } else {
+                                                isCropping = true
+                                                isCircleCropping = false
+                                                cropRectPosition = imagePosition
+                                                cropRectSize = imageSize
+                                            }
+                                        }
+                                        .containerHelper(backgroundColor: isCropping ? Color(hex: 0xAD6ADD) : Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
+                                        .overlay(
+                                            Image(systemName: "crop")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        
+                                        if isCropping {
+                                            ImageButtonMain {
+                                                if isCircleCropping {
+                                                    isCircleCropping = false
+                                                } else {
+                                                    isCircleCropping = true
+                                                    cropRectSize = imageSize
+                                                    cropRectPosition = imagePosition
+                                                }
+                                            }
+                                            .containerHelper(backgroundColor: isCircleCropping ? Color(hex: 0xAD6ADD) : Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                            .frame(width: geometry.size.width * 0.02, height: 20)
+                                            .overlay(
+                                                Image(systemName: "circle.dotted")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        }
+                                        
+                                        if isCropping {
+                                            ImageButtonMain {
+                                                isCropping = false
+                                                cropRectSize = .zero
+                                                cropRectPosition = .zero
+                                            }
+                                            .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                            .frame(width: geometry.size.width * 0.02, height: 20)
+                                            .overlay(
+                                                Image(systemName: "xmark.square.fill")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        }
+                                        
+                                        ImageButtonMain {
+                                            if let previousState = cropHistory.popLast() {
+                                                currentImage = previousState.image
+                                                imageSize = previousState.size
+                                                imagePosition = previousState.position
+                                                hasUnsavedChanges = true
+                                            }
+                                            isCropping = false
+                                            cropRectSize = .zero
+                                            cropRectPosition = .zero
+                                        }
+                                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                        .frame(width: geometry.size.width * 0.02, height: 20)
+                                        .overlay(
+                                            Image(systemName: "arrow.uturn.backward.square.fill")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                .allowsHitTesting(false)
+                                        )
+                                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                        
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.leading, 2)
+                                    .padding(.bottom, 16)
+                                    
+                                    if isCropping {
+                                        HStack(spacing: 8) {
+                                            ImageButtonMain {
+                                                let presetRatio: CGFloat = 1.0
+                                                let currentWidth = imageSize.width
+                                                let currentHeight = imageSize.height
+                                                var newWidth: CGFloat = currentWidth
+                                                var newHeight: CGFloat = currentHeight
+                                                if currentWidth / currentHeight > presetRatio {
+                                                    newHeight = currentHeight
+                                                    newWidth = newHeight * presetRatio
+                                                } else {
+                                                    newWidth = currentWidth
+                                                    newHeight = newWidth / presetRatio
+                                                }
+                                                cropRectSize = CGSize(width: newWidth, height: newHeight)
+                                                cropRectPosition = imagePosition
+                                            }
+                                            .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                            .frame(width: geometry.size.width * 0.03, height: 20)
+                                            .overlay(
+                                                Text("1:1")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                            
+                                            ImageButtonMain {
+                                                let presetRatio: CGFloat = 4.0/3.0
+                                                let currentWidth = imageSize.width
+                                                let currentHeight = imageSize.height
+                                                var newWidth: CGFloat = currentWidth
+                                                var newHeight: CGFloat = currentHeight
+                                                if currentWidth / currentHeight > presetRatio {
+                                                    newHeight = currentHeight
+                                                    newWidth = newHeight * presetRatio
+                                                } else {
+                                                    newWidth = currentWidth
+                                                    newHeight = newWidth / presetRatio
+                                                }
+                                                cropRectSize = CGSize(width: newWidth, height: newHeight)
+                                                cropRectPosition = imagePosition
+                                            }
+                                            .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                            .frame(width: geometry.size.width * 0.03, height: 20)
+                                            .overlay(
+                                                Text("4:3")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                            
+                                            ImageButtonMain {
+                                                let presetRatio: CGFloat = 16.0/9.0
+                                                let currentWidth = imageSize.width
+                                                let currentHeight = imageSize.height
+                                                var newWidth: CGFloat = currentWidth
+                                                var newHeight: CGFloat = currentHeight
+                                                if currentWidth / currentHeight > presetRatio {
+                                                    newHeight = currentHeight
+                                                    newWidth = newHeight * presetRatio
+                                                } else {
+                                                    newWidth = currentWidth
+                                                    newHeight = newWidth / presetRatio
+                                                }
+                                                cropRectSize = CGSize(width: newWidth, height: newHeight)
+                                                cropRectPosition = imagePosition
+                                            }
+                                            .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                            .frame(width: geometry.size.width * 0.03, height: 20)
+                                            .overlay(
+                                                Text("16:9")
+                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                                    .allowsHitTesting(false)
+                                            )
+                                            .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                                            
+                                            Spacer()
+                                        }
+                                        .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                        .padding(.leading, 2)
+                                        .padding(.bottom, 16)
+                                    }
+                                }
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                        }
+                        .padding(.bottom, 12)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 0.5)
+                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
+                            alignment: .bottom
+                        )
+                        
+                        VStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                Image(systemName: "paintbrush")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 15, height: 15)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .padding(.leading, 12)
+                                    .padding(.trailing, 8)
+                                
+                                Text("Styles")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Color(hex: 0xc1c1c1))
+                                
+                                Spacer()
+                            }
+                            .padding(.top, 15)
+                            .padding(.bottom, 12)
+                            .containerHelper(backgroundColor: Color(hex: 0x121212), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Opacity")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(opacityValue) },
+                                                set: { opacityValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...1.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, showText: false, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Hue")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { hueValue },
+                                                set: { hueValue = $0 }
+                                            ),
+                                            range: 0.0...360.0, step: 1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, textColor: .white.opacity(0.8), fontSize: 9, fontWeight: .bold, textFormatter: { "\(Int($0))°" }, showText: true, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Saturation")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(saturationValue) },
+                                                set: { saturationValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...2.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, showText: false, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Brightness")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(brightnessValue) },
+                                                set: { brightnessValue = CGFloat($0) }
+                                            ),
+                                            range: -1.0...1.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, textColor: .white.opacity(0.8), fontSize: 9, fontWeight: .bold, textFormatter: { String(format: "%.1f", $0) }, showText: true, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Contrast")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(contrastValue) },
+                                                set: { contrastValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...2.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, showText: false, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Blur")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(blurValue) },
+                                                set: { blurValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...10.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, textColor: .white.opacity(0.8), fontSize: 9, fontWeight: .bold, textFormatter: { String(format: "%.1f", $0) }, showText: true, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Grayscale")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(grayscaleValue) },
+                                                set: { grayscaleValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...1.0, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, showText: false, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                            
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Text("Sepia")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundColor(Color(hex: 0xc1c1c1))
+                                            .padding(.leading, 2)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 12)
+                                    
+                                    HStack(spacing: 0) {
+                                        
+                                        Slider(
+                                            value: Binding<Double>(
+                                                get: { Double(sepiaValue) },
+                                                set: { sepiaValue = CGFloat($0) }
+                                            ),
+                                            range: 0.0...0.5, step: 0.1, sliderWidth: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.85, sliderHeight: 8, thumbSize: 12, activeColor: .purple, inactiveColor: Color(white: 0.3), thumbColor: .white, textColor: .white.opacity(0.8), fontSize: 9, fontWeight: .bold, textFormatter: { "\(Int($0 / 0.5 * 100))%" }, showText: true, animationDuration: 0.2, animationDamping: 0.7
+                                        )
+                                        .padding(.leading, 4)
+                                        Spacer()
+                                    }
+                                    .frame(width: (geometry.size.width * (1 - leftPanelWidthRatio) * 0.3) * 0.9)
+                                    .padding(.bottom, 16)
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                            .padding(.top, 12)
+                        }
+                        .padding(.bottom, 12)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 0.5)
+                                .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
+                            alignment: .bottom
+                        )
+                        
+                        Spacer()
                     }
-                    .padding(.bottom, 12)
+                    .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
+                    .frame(maxHeight: .infinity)
+                    .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                     .overlay(
                         Rectangle()
-                            .frame(height: 0.5)
-                            .foregroundColor(Color(hex: 0xc1c1c1).opacity(0.4)),
-                        alignment: .bottom
+                            .frame(width: 3.0)
+                            .foregroundColor(Color(hex: 0x121212).opacity(0.4)),
+                        alignment: .trailing
                     )
-                    Spacer()
                 }
-                .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.3)
-                .frame(maxHeight: .infinity)
-                .containerHelper(
-                    backgroundColor: Color(hex: 0x171717),
-                    borderColor: .clear,
-                    borderWidth: 0,
-                    topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                    shadowColor: .clear,
-                    shadowRadius: 0,
-                    shadowX: 0,
-                    shadowY: 0
-                )
-                .overlay(
-                    Rectangle()
-                        .frame(width: 3.0)
-                        .foregroundColor(Color(hex: 0x121212).opacity(0.4)),
-                    alignment: .trailing
-                )
 
                 VStack(spacing: 0) {
                     VStack {
@@ -726,6 +889,17 @@ struct ImageView: View {
                                         .frame(width: imageSize.width, height: imageSize.height)
                                         .rotationEffect(rotationAngle)
                                         .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
+                                        .opacity(Double(opacityValue))
+                                        .hueRotation(Angle(degrees: hueValue))
+                                        .saturation(saturationValue)
+                                        .brightness(brightnessValue)
+                                        .contrast(contrastValue)
+                                        .blur(radius: blurValue)
+                                        .grayscale(grayscaleValue)
+                                        .overlay(
+                                            Color(red: 89/255, green: 77/255, blue: 51/255)
+                                                .opacity(Double(sepiaValue))
+                                        )
                                         .position(imagePosition)
                                         .gesture(isCropping ? nil : imageDragGesture())
                                     
@@ -808,60 +982,32 @@ struct ImageView: View {
                                         Group {
                                             RoundedRectangle(cornerRadius: 2)
                                                 .frame(width: 8, height: 8)
-                                                .containerHelper(backgroundColor: Color.clear,
-                                                                 borderColor: Color.white,
-                                                                 borderWidth: 0,
-                                                                 topLeft: 0, topRight: 0,
-                                                                 bottomLeft: 0, bottomRight: 0,
-                                                                 shadowColor: Color.white,
-                                                                 shadowRadius: 1,
-                                                                 shadowX: 0, shadowY: 0)
-                                                .foregroundColor(Color(hex: 0x919191))
+                                                .containerHelper(backgroundColor: Color.clear, borderColor: Color.white, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.white, shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                                .foregroundColor(Color(hex: 0x919189))
                                                 .hoverEffect(opacity: 0.6, cursor: .openHand)
                                                 .position(cropRotationHandlePosition(for: .topLeft))
                                                 .gesture(cropRotationGesture())
                                             
                                             RoundedRectangle(cornerRadius: 2)
                                                 .frame(width: 8, height: 8)
-                                                .containerHelper(backgroundColor: Color.clear,
-                                                                  borderColor: Color.white,
-                                                                  borderWidth: 0,
-                                                                  topLeft: 0, topRight: 0,
-                                                                  bottomLeft: 0, bottomRight: 0,
-                                                                  shadowColor: Color.white,
-                                                                  shadowRadius: 1,
-                                                                  shadowX: 0, shadowY: 0)
-                                                .foregroundColor(Color(hex: 0x919191))
+                                                .containerHelper(backgroundColor: Color.clear, borderColor: Color.white, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.white, shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                                .foregroundColor(Color(hex: 0x919189))
                                                 .hoverEffect(opacity: 0.6, cursor: .openHand)
                                                 .position(cropRotationHandlePosition(for: .topRight))
                                                 .gesture(cropRotationGesture())
                                             
                                             RoundedRectangle(cornerRadius: 2)
                                                 .frame(width: 8, height: 8)
-                                                .containerHelper(backgroundColor: Color.clear,
-                                                                  borderColor: Color.white,
-                                                                  borderWidth: 0,
-                                                                  topLeft: 0, topRight: 0,
-                                                                  bottomLeft: 0, bottomRight: 0,
-                                                                  shadowColor: Color.white,
-                                                                  shadowRadius: 1,
-                                                                  shadowX: 0, shadowY: 0)
-                                                .foregroundColor(Color(hex: 0x919191))
+                                                .containerHelper(backgroundColor: Color.clear, borderColor: Color.white, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.white, shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                                .foregroundColor(Color(hex: 0x919189))
                                                 .hoverEffect(opacity: 0.6, cursor: .openHand)
                                                 .position(cropRotationHandlePosition(for: .bottomLeft))
                                                 .gesture(cropRotationGesture())
                                             
                                             RoundedRectangle(cornerRadius: 2)
                                                 .frame(width: 8, height: 8)
-                                                .containerHelper(backgroundColor: Color.clear,
-                                                                  borderColor: Color.white,
-                                                                  borderWidth: 0,
-                                                                  topLeft: 0, topRight: 0,
-                                                                  bottomLeft: 0, bottomRight: 0,
-                                                                  shadowColor: Color.white,
-                                                                  shadowRadius: 1,
-                                                                  shadowX: 0, shadowY: 0)
-                                                .foregroundColor(Color(hex: 0x919191))
+                                                .containerHelper(backgroundColor: Color.clear, borderColor: Color.white, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: Color.white, shadowRadius: 1, shadowX: 0, shadowY: 0)
+                                                .foregroundColor(Color(hex: 0x919189))
                                                 .hoverEffect(opacity: 0.6, cursor: .openHand)
                                                 .position(cropRotationHandlePosition(for: .bottomRight))
                                                 .gesture(cropRotationGesture())
@@ -899,16 +1045,7 @@ struct ImageView: View {
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.7)
                     .frame(maxHeight: .infinity - 60)
-                    .containerHelper(
-                        backgroundColor: Color(hex: 0x242424),
-                        borderColor: .clear,
-                        borderWidth: 0,
-                        topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                        shadowColor: .clear,
-                        shadowRadius: 0,
-                        shadowX: 0,
-                        shadowY: 0
-                    )
+                    .containerHelper(backgroundColor: Color(hex: 0x242424), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                     
                     HStack(spacing: 0) {
                         Spacer()
@@ -932,16 +1069,7 @@ struct ImageView: View {
                             .padding(.trailing, 20)
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.7, height: 60)
-                    .containerHelper(
-                        backgroundColor: Color(hex: 0x171717),
-                        borderColor: .clear,
-                        borderWidth: 0,
-                        topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                        shadowColor: .clear,
-                        shadowRadius: 0,
-                        shadowX: 0,
-                        shadowY: 0
-                    )
+                    .containerHelper(backgroundColor: Color(hex: 0x171717), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
                     .overlay(
                         Rectangle()
                             .frame(height: 3.0)
@@ -954,16 +1082,7 @@ struct ImageView: View {
             }
             .frame(width: geometry.size.width * (1 - leftPanelWidthRatio))
             .frame(maxHeight: .infinity)
-            .containerHelper(
-                backgroundColor: Color(hex: 0x242424),
-                borderColor: .clear,
-                borderWidth: 0,
-                topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0,
-                shadowColor: .clear,
-                shadowRadius: 0,
-                shadowX: 0,
-                shadowY: 0
-            )
+            .containerHelper(backgroundColor: Color(hex: 0x242424), borderColor: .clear, borderWidth: 0, topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, shadowColor: .clear, shadowRadius: 0, shadowX: 0, shadowY: 0)
             .overlay(
                 Rectangle()
                     .frame(height: 0.5)
