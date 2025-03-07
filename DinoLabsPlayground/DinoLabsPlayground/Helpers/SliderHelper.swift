@@ -119,9 +119,10 @@ struct Slider: View {
             }
             .frame(width: sliderWidth * 0.6)
             
-            Spacer()
+            
             
             if showText {
+                Spacer()
                 Text(textFormatter(value))
                     .foregroundColor(textColor)
                     .font(.system(size: fontSize, weight: fontWeight))

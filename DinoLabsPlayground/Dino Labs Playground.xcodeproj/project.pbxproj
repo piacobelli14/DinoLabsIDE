@@ -88,7 +88,7 @@
 		CB9A90AA2D76770A00AA034A /* DinoLabsText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsText.swift; sourceTree = "<group>"; };
 		CB9A90AD2D76857D00AA034A /* TextTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextTextField.swift; sourceTree = "<group>"; };
 		CB9A90AF2D76858C00AA034A /* TextButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextButtonMain.swift; sourceTree = "<group>"; };
-		CB9A90B12D77BE7800AA034A /* DinoLabsImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsImage.swift; sourceTree = "<group>"; };
+		CB9A90B12D77BE7800AA034A /* DinoLabsImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsImage.swift; sourceTree = "<group>"; wrapsLines = 1; };
 		CB9A90B42D77DCBF00AA034A /* ImageTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextField.swift; sourceTree = "<group>"; };
 		CB9A90B62D77DCCB00AA034A /* ImageButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageButtonMain.swift; sourceTree = "<group>"; };
 		CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsTabular.swift; sourceTree = "<group>"; wrapsLines = 0; };
