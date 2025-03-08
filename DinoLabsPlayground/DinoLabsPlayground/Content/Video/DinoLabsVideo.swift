@@ -1,12 +1,14 @@
 //
-//  DinoLabsImage.swift
+//  DinoLabsVideo.swift
 //
-//  Created by Peter Iacobelli on 3/4/25.
+//  Created by Peter Iacobelli on 3/7/25.
 //
 
 import SwiftUI
+import AVKit
+import AVFoundation
 
-struct ImageView: View {
+struct VideoView: View {
     let geometry: GeometryProxy
     let fileURL: URL
     @Binding var hasUnsavedChanges: Bool
@@ -50,6 +52,17 @@ struct ImageView: View {
     @State private var grayscaleValue: CGFloat = 0.0
     @State private var sepiaValue: CGFloat = 0.0
     @State private var imageScaleFactor: CGFloat = 1.0
+    @State private var isPlaying: Bool = false
+    
+    @State private var player: AVPlayer
+    
+    init(geometry: GeometryProxy, fileURL: URL, hasUnsavedChanges: Binding<Bool>, leftPanelWidthRatio: Binding<CGFloat>) {
+        self.geometry = geometry
+        self.fileURL = fileURL
+        self._hasUnsavedChanges = hasUnsavedChanges
+        self._leftPanelWidthRatio = leftPanelWidthRatio
+        self._player = State(initialValue: AVPlayer(url: fileURL))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -94,6 +107,7 @@ struct ImageView: View {
                                         grayscaleValue = 0.0
                                         sepiaValue = 0.0
                                         updateTextFields()
+                                        player.seek(to: .zero)
                                     }
                                     .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
                                     .frame(width: 20, height: 20)
@@ -106,27 +120,7 @@ struct ImageView: View {
                                     .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
                                     
                                     ImageButtonMain {
-                                        guard let finalImage = generateFinalImage() else { return }
                                         
-                                        let panel = NSSavePanel()
-                                        panel.nameFieldStringValue = fileURL.lastPathComponent
-                                        panel.allowedFileTypes = ["png", "jpg", "jpeg", "svg"]
-                                        panel.begin { response in
-                                            if response == .OK, let destinationURL = panel.url {
-                                                let ext = destinationURL.pathExtension.lowercased()
-                                                var imageData: Data?
-                                                if ext == "png" {
-                                                    imageData = finalImage.pngData()
-                                                } else if ext == "jpg" || ext == "jpeg" {
-                                                    imageData = finalImage.jpegData(compressionQuality: 1.0)
-                                                } else if ext == "svg" {
-                                                    imageData = finalImage.pngData()
-                                                }
-                                                if let data = imageData {
-                                                    try? data.write(to: destinationURL)
-                                                }
-                                            }
-                                        }
                                     }
                                     .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
                                     .frame(width: 20, height: 20)
@@ -625,7 +619,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(opacityValue) },
@@ -659,7 +652,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { hueValue },
@@ -693,7 +685,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(saturationValue) },
@@ -727,7 +718,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(brightnessValue) },
@@ -761,7 +751,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(contrastValue) },
@@ -795,7 +784,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(blurValue) },
@@ -829,7 +817,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(grayscaleValue) },
@@ -863,7 +850,6 @@ struct ImageView: View {
                                     .padding(.bottom, 12)
                                     
                                     HStack(spacing: 0) {
-                                        
                                         Slider(
                                             value: Binding<Double>(
                                                 get: { Double(sepiaValue) },
@@ -906,136 +892,129 @@ struct ImageView: View {
 
                 VStack(spacing: 0) {
                     VStack {
-                        if let image = currentImage ?? NSImage(contentsOf: fileURL) {
-                            GeometryReader { proxy in
-                                ZStack {
-                                    Image(nsImage: image)
-                                        .resizable()
-                                        .frame(width: imageSize.width, height: imageSize.height)
-                                        .rotationEffect(rotationAngle)
-                                        .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
-                                        .opacity(Double(opacityValue))
-                                        .hueRotation(Angle(degrees: hueValue))
-                                        .saturation(saturationValue)
-                                        .brightness(brightnessValue)
-                                        .contrast(contrastValue)
-                                        .blur(radius: blurValue)
-                                        .grayscale(grayscaleValue)
-                                        .overlay(
-                                            Color(red: 89/255, green: 77/255, blue: 51/255)
-                                                .opacity(Double(sepiaValue))
-                                        )
-                                        .position(imagePosition)
-                                        .gesture(isCropping ? nil : imageDragGesture())
-                                    
-                                    if !isCropping {
-                                        Group {
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color(hex: 0x818181))
-                                                .position(calculateCornerPosition(.topLeft))
-                                                .gesture(dragGesture(for: .topLeft))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color(hex: 0x818181))
-                                                .position(calculateCornerPosition(.topRight))
-                                                .gesture(dragGesture(for: .topRight))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color(hex: 0x818181))
-                                                .position(calculateCornerPosition(.bottomLeft))
-                                                .gesture(dragGesture(for: .bottomLeft))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color(hex: 0x818181))
-                                                .position(calculateCornerPosition(.bottomRight))
-                                                .gesture(dragGesture(for: .bottomRight))
-                                        }
-                                    }
-                                    
-                                    if isCropping {
-                                        if isCircleCropping {
-                                            Ellipse()
-                                                .fill(Color.black.opacity(0.3))
-                                                .frame(width: cropRectSize.width, height: cropRectSize.height)
-                                                .overlay(
-                                                    Ellipse()
-                                                        .stroke(Color.white.opacity(0.8), lineWidth: 2)
-                                                )
-                                                .rotationEffect(cropRotationAngle + rotationAngle)
-                                                .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
-                                                .position(cropRectPosition)
-                                                .gesture(cropDragGesture())
-                                        } else {
-                                            Rectangle()
-                                                .fill(Color.black.opacity(0.3))
-                                                .frame(width: cropRectSize.width, height: cropRectSize.height)
-                                                .border(Color.white.opacity(0.8), width: 2)
-                                                .rotationEffect(cropRotationAngle + rotationAngle)
-                                                .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
-                                                .position(cropRectPosition)
-                                                .gesture(cropDragGesture())
-                                        }
+                        GeometryReader { proxy in
+                            ZStack {
+                                VideoPlayerView(player: player)
+                                    .frame(width: imageSize.width, height: imageSize.height)
+                                    .rotationEffect(rotationAngle)
+                                    .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
+                                    .opacity(Double(opacityValue))
+                                    .hueRotation(Angle(degrees: hueValue))
+                                    .saturation(saturationValue)
+                                    .brightness(brightnessValue)
+                                    .contrast(contrastValue)
+                                    .blur(radius: blurValue)
+                                    .grayscale(grayscaleValue)
+                                    .overlay(
+                                        Color(red: 89/255, green: 77/255, blue: 51/255)
+                                            .opacity(Double(sepiaValue))
+                                    )
+                                    .position(imagePosition)
+                                    .gesture(isCropping ? nil : imageDragGesture())
+                                
+                                if !isCropping {
+                                    Group {
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color(hex: 0x818181))
+                                            .position(calculateCornerPosition(.topLeft))
+                                            .gesture(dragGesture(for: .topLeft))
                                         
-                                        Group {
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color.white.opacity(0.8))
-                                                .position(rotatedCropCornerPosition(for: .topLeft))
-                                                .gesture(cropResizeGesture(for: .topLeft))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color.white.opacity(0.8))
-                                                .position(rotatedCropCornerPosition(for: .topRight))
-                                                .gesture(cropResizeGesture(for: .topRight))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color.white.opacity(0.8))
-                                                .position(rotatedCropCornerPosition(for: .bottomLeft))
-                                                .gesture(cropResizeGesture(for: .bottomLeft))
-                                            
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .frame(width: 8, height: 8)
-                                                .foregroundColor(Color.white.opacity(0.8))
-                                                .position(rotatedCropCornerPosition(for: .bottomRight))
-                                                .gesture(cropResizeGesture(for: .bottomRight))
-                                        }
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color(hex: 0x818181))
+                                            .position(calculateCornerPosition(.topRight))
+                                            .gesture(dragGesture(for: .topRight))
+                                        
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color(hex: 0x818181))
+                                            .position(calculateCornerPosition(.bottomLeft))
+                                            .gesture(dragGesture(for: .bottomLeft))
+                                        
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color(hex: 0x818181))
+                                            .position(calculateCornerPosition(.bottomRight))
+                                            .gesture(dragGesture(for: .bottomRight))
                                     }
                                 }
-                                .onAppear {
-                                    editorSize = proxy.size
-                                    if imageSize == .zero {
-                                        originalAspectRatio = image.size.width / image.size.height
+                                
+                                if isCropping {
+                                    if isCircleCropping {
+                                        Ellipse()
+                                            .fill(Color.black.opacity(0.3))
+                                            .frame(width: cropRectSize.width, height: cropRectSize.height)
+                                            .overlay(
+                                                Ellipse()
+                                                    .stroke(Color.white.opacity(0.8), lineWidth: 2)
+                                            )
+                                            .rotationEffect(cropRotationAngle + rotationAngle)
+                                            .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
+                                            .position(cropRectPosition)
+                                            .gesture(cropDragGesture())
+                                    } else {
+                                        Rectangle()
+                                            .fill(Color.black.opacity(0.3))
+                                            .frame(width: cropRectSize.width, height: cropRectSize.height)
+                                            .border(Color.white.opacity(0.8), width: 2)
+                                            .rotationEffect(cropRotationAngle + rotationAngle)
+                                            .scaleEffect(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
+                                            .position(cropRectPosition)
+                                            .gesture(cropDragGesture())
+                                    }
+                                    
+                                    Group {
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color.white.opacity(0.8))
+                                            .position(rotatedCropCornerPosition(for: .topLeft))
+                                            .gesture(cropResizeGesture(for: .topLeft))
+                                        
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color.white.opacity(0.8))
+                                            .position(rotatedCropCornerPosition(for: .topRight))
+                                            .gesture(cropResizeGesture(for: .topRight))
+                                        
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color.white.opacity(0.8))
+                                            .position(rotatedCropCornerPosition(for: .bottomLeft))
+                                            .gesture(cropResizeGesture(for: .bottomLeft))
+                                        
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .frame(width: 8, height: 8)
+                                            .foregroundColor(Color.white.opacity(0.8))
+                                            .position(rotatedCropCornerPosition(for: .bottomRight))
+                                            .gesture(cropResizeGesture(for: .bottomRight))
+                                    }
+                                }
+                            }
+                            .onAppear {
+                                editorSize = proxy.size
+                                if imageSize == .zero {
+                                    let asset = AVAsset(url: fileURL)
+                                    if let track = asset.tracks(withMediaType: .video).first {
+                                        let naturalSize = track.naturalSize
+                                        originalAspectRatio = naturalSize.width / naturalSize.height
                                         let maxWidth = proxy.size.width * 0.8
                                         let maxHeight = proxy.size.height * 0.8
-                                        let scale = min(maxWidth / image.size.width, maxHeight / image.size.height)
+                                        let scale = min(maxWidth / naturalSize.width, maxHeight / naturalSize.height)
                                         imageScaleFactor = scale
                                         imageSize = CGSize(
-                                            width: image.size.width * scale,
-                                            height: image.size.height * scale
+                                            width: naturalSize.width * scale,
+                                            height: naturalSize.height * scale
                                         )
                                         imagePosition = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
                                         initialLoadedImageSize = imageSize
                                         initialLoadedImagePosition = imagePosition
                                         updateTextFields()
-                                        if currentImage == nil {
-                                            currentImage = image
-                                        }
                                     }
                                 }
                             }
-                            .clipped()
-                        } else {
-                            Text("Unable to load image.")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(Color(hex: 0xc1c1c1))
-                                .padding()
                         }
+                        .clipped()
                     }
                     .frame(width: geometry.size.width * (1 - leftPanelWidthRatio) * 0.7)
                     .frame(maxHeight: .infinity - 60)
@@ -1043,6 +1022,26 @@ struct ImageView: View {
                     
                     HStack(spacing: 0) {
                         Spacer()
+                        
+                        ImageButtonMain {
+                            if isPlaying {
+                                player.pause()
+                            } else {
+                                player.play()
+                            }
+                            isPlaying.toggle()
+                        }
+                        .containerHelper(backgroundColor: Color(hex: 0x515151), borderColor: Color(hex: 0x616161), borderWidth: 1, topLeft: 2, topRight: 2, bottomLeft: 2, bottomRight: 2, shadowColor: Color.white.opacity(0.5), shadowRadius: 1, shadowX: 0, shadowY: 0)
+                        .frame(width: 30, height: 30)
+                        .overlay(
+                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Color(hex: 0xf5f5f5).opacity(0.8))
+                                .allowsHitTesting(false)
+                        )
+                        .hoverEffect(opacity: 0.5, scale: 1.02, cursor: .pointingHand)
+                        .padding(.trailing, 10)
+                        
                         Toggle("", isOn: $preserveAspectRatio)
                             .toggleStyle(ToggleSwitch(
                                 toggleWidth: 25,
@@ -1453,81 +1452,25 @@ struct ImageView: View {
             }
         }
     }
+}
+
+struct VideoPlayerView: NSViewRepresentable {
+    let player: AVPlayer
     
-    private func generateFinalImage() -> NSImage? {
-        guard let baseImage = currentImage ?? NSImage(contentsOf: fileURL),
-              let cgBase = baseImage.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        else { return nil }
-        
-        let originalSize = CGSize(width: CGFloat(cgBase.width), height: CGFloat(cgBase.height))
-        let scaleX = originalSize.width / imageSize.width
-        let scaleY = originalSize.height / imageSize.height
-        let ciImage = CIImage(cgImage: cgBase)
-        var outputImage = ciImage
-        var transform = CGAffineTransform.identity
-        transform = transform.scaledBy(x: flipHorizontal ? -1 : 1, y: flipVertical ? -1 : 1)
-        transform = transform.rotated(by: CGFloat(rotationAngle.radians))
-        transform = transform.scaledBy(x: scaleX, y: scaleY)
-        outputImage = outputImage.transformed(by: transform)
-        
-        if let hueAdjust = CIFilter(name: "CIHueAdjust") {
-            hueAdjust.setValue(outputImage, forKey: kCIInputImageKey)
-            hueAdjust.setValue(NSNumber(value: hueValue * Double.pi / 180), forKey: "inputAngle")
-            if let result = hueAdjust.outputImage {
-                outputImage = result
-            }
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.frame = view.bounds
+        playerLayer.videoGravity = .resizeAspect
+        view.layer = playerLayer
+        view.wantsLayer = true
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let playerLayer = nsView.layer as? AVPlayerLayer {
+            playerLayer.player = player
         }
-        
-        if let colorControls = CIFilter(name: "CIColorControls") {
-            colorControls.setValue(outputImage, forKey: kCIInputImageKey)
-            colorControls.setValue(saturationValue, forKey: kCIInputSaturationKey)
-            colorControls.setValue(brightnessValue, forKey: kCIInputBrightnessKey)
-            colorControls.setValue(contrastValue, forKey: kCIInputContrastKey)
-            if let result = colorControls.outputImage {
-                outputImage = result
-            }
-        }
-        
-        if blurValue > 0, let blurFilter = CIFilter(name: "CIGaussianBlur") {
-            blurFilter.setValue(outputImage, forKey: kCIInputImageKey)
-            blurFilter.setValue(blurValue, forKey: kCIInputRadiusKey)
-            if let result = blurFilter.outputImage {
-                outputImage = result
-            }
-        }
-        
-        if sepiaValue > 0, let sepia = CIFilter(name: "CISepiaTone") {
-            sepia.setValue(outputImage, forKey: kCIInputImageKey)
-            sepia.setValue(sepiaValue, forKey: kCIInputIntensityKey)
-            if let result = sepia.outputImage {
-                outputImage = result
-            }
-        }
-        
-        if grayscaleValue >= 0.5, let desaturate = CIFilter(name: "CIColorControls") {
-            desaturate.setValue(outputImage, forKey: kCIInputImageKey)
-            desaturate.setValue(0.0, forKey: kCIInputSaturationKey)
-            if let result = desaturate.outputImage {
-                outputImage = result
-            }
-        }
-        
-        if let opacityFilter = CIFilter(name: "CIColorMatrix") {
-            opacityFilter.setValue(outputImage, forKey: kCIInputImageKey)
-            opacityFilter.setValue(CIVector(x: 1, y: 0, z: 0, w: 0), forKey: "inputRVector")
-            opacityFilter.setValue(CIVector(x: 0, y: 1, z: 0, w: 0), forKey: "inputGVector")
-            opacityFilter.setValue(CIVector(x: 0, y: 0, z: 1, w: 0), forKey: "inputBVector")
-            opacityFilter.setValue(CIVector(x: 0, y: 0, z: 0, w: opacityValue), forKey: "inputAVector")
-            if let result = opacityFilter.outputImage {
-                outputImage = result
-            }
-        }
-        
-        let context = CIContext(options: nil)
-        if let cgOutput = context.createCGImage(outputImage, from: outputImage.extent) {
-            return NSImage(cgImage: cgOutput, size: NSSize(width: cgOutput.width, height: cgOutput.height))
-        }
-        return nil
     }
 }
 
@@ -1543,19 +1486,5 @@ private extension NSImage {
         guard let cgImage = self.cgImage(forProposedRect: nil, context: nil, hints: nil),
               let croppedCGImage = cgImage.cropping(to: rect) else { return nil }
         return NSImage(cgImage: croppedCGImage, size: rect.size)
-    }
-}
-
-private extension NSImage {
-    func pngData() -> Data? {
-        guard let tiffData = self.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData) else { return nil }
-        return bitmap.representation(using: .png, properties: [:])
-    }
-    
-    func jpegData(compressionQuality: CGFloat) -> Data? {
-        guard let tiffData = self.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData) else { return nil }
-        return bitmap.representation(using: .jpeg, properties: [.compressionFactor: compressionQuality])
     }
 }

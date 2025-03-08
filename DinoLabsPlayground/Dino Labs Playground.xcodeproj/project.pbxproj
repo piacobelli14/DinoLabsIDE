@@ -28,6 +28,9 @@
 		CB9A90B22D77BE7900AA034A /* DinoLabsImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90B12D77BE7800AA034A /* DinoLabsImage.swift */; };
 		CB9A90B52D77DCBF00AA034A /* ImageTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90B42D77DCBF00AA034A /* ImageTextField.swift */; };
 		CB9A90B72D77DCCB00AA034A /* ImageButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90B62D77DCCB00AA034A /* ImageButtonMain.swift */; };
+		CB9A90BA2D7BB6DA00AA034A /* DinoLabsVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90B92D7BB6DA00AA034A /* DinoLabsVideo.swift */; };
+		CB9A90BD2D7BB6F500AA034A /* VideoTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90BC2D7BB6F500AA034A /* VideoTextField.swift */; };
+		CB9A90BF2D7BB70700AA034A /* VideoButtonMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9A90BE2D7BB70700AA034A /* VideoButtonMain.swift */; };
 		CBB19EF92D6EB12C002E7805 /* DinoLabsTabular.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */; };
 		CBBB64A92D60374C008A9AEC /* BackgroundVideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */; };
 		CBDF23522D6807B40049F865 /* AccountTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBDF23512D6807B40049F865 /* AccountTextField.swift */; };
@@ -91,6 +94,9 @@
 		CB9A90B12D77BE7800AA034A /* DinoLabsImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsImage.swift; sourceTree = "<group>"; wrapsLines = 1; };
 		CB9A90B42D77DCBF00AA034A /* ImageTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextField.swift; sourceTree = "<group>"; };
 		CB9A90B62D77DCCB00AA034A /* ImageButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageButtonMain.swift; sourceTree = "<group>"; };
+		CB9A90B92D7BB6DA00AA034A /* DinoLabsVideo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsVideo.swift; sourceTree = "<group>"; };
+		CB9A90BC2D7BB6F500AA034A /* VideoTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextField.swift; sourceTree = "<group>"; };
+		CB9A90BE2D7BB70700AA034A /* VideoButtonMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoButtonMain.swift; sourceTree = "<group>"; };
 		CBB19EF82D6EB12C002E7805 /* DinoLabsTabular.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DinoLabsTabular.swift; sourceTree = "<group>"; wrapsLines = 0; };
 		CBBB64A82D60374C008A9AEC /* BackgroundVideoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundVideoHelper.swift; sourceTree = "<group>"; };
 		CBDF23512D6807B40049F865 /* AccountTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountTextField.swift; sourceTree = "<group>"; };
@@ -207,6 +213,24 @@
 			path = ImageHelpers;
 			sourceTree = "<group>";
 		};
+		CB9A90B82D7BB6BC00AA034A /* Video */ = {
+			isa = PBXGroup;
+			children = (
+				CB9A90BB2D7BB6E000AA034A /* VideoHelpers */,
+				CB9A90B92D7BB6DA00AA034A /* DinoLabsVideo.swift */,
+			);
+			path = Video;
+			sourceTree = "<group>";
+		};
+		CB9A90BB2D7BB6E000AA034A /* VideoHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CB9A90BC2D7BB6F500AA034A /* VideoTextField.swift */,
+				CB9A90BE2D7BB70700AA034A /* VideoButtonMain.swift */,
+			);
+			path = VideoHelpers;
+			sourceTree = "<group>";
+		};
 		CBDF235F2D6AA0950049F865 /* CodeHelpers */ = {
 			isa = PBXGroup;
 			children = (
@@ -313,6 +337,7 @@
 				CB5B4AE12D600C1100492970 /* Navigator */,
 				CBEC15BD2D5D8FAF009A0FAF /* Text */,
 				CBEC15BC2D5D8FA2009A0FAF /* Tabular */,
+				CB9A90B82D7BB6BC00AA034A /* Video */,
 				CBEC15BB2D5D8F9D009A0FAF /* Images */,
 				CBEC15BA2D5D8F96009A0FAF /* Code */,
 				CBEC15B92D5D8F8F009A0FAF /* Account */,
@@ -493,8 +518,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				CBEC15BF2D5D8FC7009A0FAF /* DinoLabsPlayground.swift in Sources */,
+				CB9A90BD2D7BB6F500AA034A /* VideoTextField.swift in Sources */,
 				CB9A90B02D76858C00AA034A /* TextButtonMain.swift in Sources */,
 				CBDF23522D6807B40049F865 /* AccountTextField.swift in Sources */,
+				CB9A90BF2D7BB70700AA034A /* VideoButtonMain.swift in Sources */,
 				CBFDA88B2D64FC3700EA87BB /* TabHelper.swift in Sources */,
 				CB9A90AE2D76857D00AA034A /* TextTextField.swift in Sources */,
 				CBEC15CB2D5D9176009A0FAF /* NetworkManager.swift in Sources */,
@@ -547,6 +574,7 @@
 				CBEC15DE2D5E937C009A0FAF /* ResetAuth.swift in Sources */,
 				CB9A90B22D77BE7900AA034A /* DinoLabsImage.swift in Sources */,
 				CB5B4AD72D5FC56D00492970 /* AlertButtonMain.swift in Sources */,
+				CB9A90BA2D7BB6DA00AA034A /* DinoLabsVideo.swift in Sources */,
 				CB9A90AB2D76770A00AA034A /* DinoLabsText.swift in Sources */,
 				CBDF23632D6AA0BB0049F865 /* CodeButtonMain.swift in Sources */,
 			);
